@@ -49,10 +49,13 @@ class RepoAnalyzer:
     @property
     def file_index(self) -> list[Path]:
         if self._file_index is None:
+            # Sort directories and files so traversal order is deterministic
+            # across filesystems. Without this, output (and any drift-detection
+            # gates downstream) differs between macOS APFS, Linux ext4, etc.
             self._file_index = []
             for root, dirs, files in os.walk(self.repo_path):
-                dirs[:] = [d for d in dirs if d not in self.SKIP_DIRS]
-                for f in files:
+                dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
+                for f in sorted(files):
                     self._file_index.append(Path(root) / f)
         return self._file_index
 
