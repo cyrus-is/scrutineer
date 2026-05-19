@@ -959,11 +959,12 @@ def main():
     parser.add_argument("repo_path", help="Path to the repository to analyze")
     parser.add_argument("--output", "-o", default=".claude/commands/security-review.md",
                         help="Output path relative to repo root (default: .claude/commands/security-review.md)")
-    parser.add_argument("--service-map", "-s", default=None,
-                        help="Path to servicemap.json for richer context. "
-                             "If omitted, auto-discovered at <repo>/servicemap.json.")
-    parser.add_argument("--no-service-map", action="store_true",
-                        help="Disable service-map auto-discovery and run without one")
+    sm_group = parser.add_mutually_exclusive_group()
+    sm_group.add_argument("--service-map", "-s", default=None,
+                          help="Path to servicemap.json for richer context. "
+                               "If omitted, auto-discovered at <repo>/servicemap.json.")
+    sm_group.add_argument("--no-service-map", action="store_true",
+                          help="Disable service-map auto-discovery and run without one")
     parser.add_argument("--guidance", "-g", default=None,
                         help="Path to security guidance YAML (default: bundled security_guidance.yaml)")
     parser.add_argument("--dry-run", "-n", action="store_true",

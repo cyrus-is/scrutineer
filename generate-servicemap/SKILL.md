@@ -151,7 +151,7 @@ Work through components one at a time (or in small batches if they're lightweigh
   - **Use the actual cloud service name for `engine` types.** Azure Blob Storage is
     `azure-blob-storage`, not `s3`. Azure Service Bus is `azure-service-bus`, not `sqs`.
     Cosmos DB is `cosmosdb`, not `mongodb`. Never map one cloud provider's service to another's
-    equivalent. Secret stores (`vault-kv`, `aws-secretsmanager`, `azure-keyvault`,
+    equivalent. Secret stores (`vault-kv`, `aws-secrets-manager`, `azure-key-vault`,
     `google-secret-manager`) and container registries (`aws-ecr`, `azure-container-registry`,
     `google-artifact-registry`, `docker-hub`, `ghcr`) are first-class datastore engines — do not
     collapse them under `s3` or `redis`. See the schema for the full list of valid engine values.
