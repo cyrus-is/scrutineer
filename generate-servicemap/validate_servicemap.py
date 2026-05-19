@@ -267,7 +267,9 @@ def validate(data):
                     seen_names.add(repo["name"])
                 if "monorepo" not in repo:
                     error(f"{rctx}.monorepo is required")
-                if "last_crawled" in repo:
+                if "last_crawled" not in repo:
+                    error(f"{rctx}.last_crawled is required")
+                else:
                     check_iso_timestamp(repo["last_crawled"], f"{rctx}.last_crawled")
     else:
         # 1.0.x singular form (or version missing — fall back to 1.0 shape).
