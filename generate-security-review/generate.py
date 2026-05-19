@@ -36,10 +36,26 @@ import yaml
 class RepoAnalyzer:
     """Scans a repository to detect languages, frameworks, and infrastructure."""
 
+    # Directories to skip during repo scan. Includes language-specific build,
+    # cache, and test-coverage output that's gitignored by convention. Without
+    # these, locally-generated artifacts (e.g. `coverage/*.js` left over from a
+    # past `pnpm test --coverage` run) get picked up as Node source files,
+    # producing different platform-detection output on developer machines than
+    # on a fresh CI clone.
     SKIP_DIRS = {
-        ".git", ".claude", "node_modules", "vendor", "venv", ".venv", "__pycache__",
-        ".next", "build", "dist", "target", ".gradle", ".idea", ".vscode",
-        "Pods", ".build", "DerivedData", ".terraform",
+        # VCS / editor / IDE
+        ".git", ".claude", ".idea", ".vscode",
+        # JS / TS
+        "node_modules", ".next", "build", "dist", "coverage",
+        # Python
+        "__pycache__", "venv", ".venv", ".pytest_cache", ".mypy_cache",
+        ".ruff_cache", ".tox", ".eggs", "htmlcov",
+        # Go / Rust / Java
+        "vendor", "target", ".gradle",
+        # iOS / macOS
+        "Pods", ".build", "DerivedData",
+        # Infra
+        ".terraform",
     }
 
     def __init__(self, repo_path: str):
