@@ -94,19 +94,15 @@ python generate-servicemap/validate_servicemap.py servicemap.json
 
 ```bash
 # Peer review skill
-python generate-peer-review/generate.py \
-  --repo /path/to/your-repo \
-  --servicemap /path/to/your-repo/servicemap.json \
-  --output /path/to/your-repo/.claude/commands/peercodereview.md
+python generate-peer-review/generate.py /path/to/your-repo \
+  --output .claude/commands/peercodereview.md
 
 # Security review skill
-python generate-security-review/generate.py \
-  --repo /path/to/your-repo \
-  --servicemap /path/to/your-repo/servicemap.json \
-  --output /path/to/your-repo/.claude/commands/security-review.md
+python generate-security-review/generate.py /path/to/your-repo \
+  --output .claude/commands/security-review.md
 ```
 
-Skip `--servicemap` if you didn't generate one. The tools will still produce useful skills based on repo scanning alone.
+Both generators **auto-discover `servicemap.json` at the repo root** when present, producing the richer cross-service-aware skill. Pass `--service-map /path/to/servicemap.json` for a non-standard location, or `--no-service-map` to deliberately skip it.
 
 ### 3. Use the skills
 
