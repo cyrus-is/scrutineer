@@ -50,11 +50,15 @@ def check_confidence(value, context):
         error(f"confidence in {context} must be 0.0–1.0, got {value}")
 
 
-def validate_component(comp, idx, all_ids):
+def validate_component(comp, idx, all_ids, is_v1_1_plus=False, known_repos=None):
     ctx = f"components[{idx}]"
 
     # Required fields
-    for field in ["id", "name", "type", "confidence", "discovery_method", "last_crawled", "stub"]:
+    required = ["id", "name", "type", "confidence", "discovery_method", "last_crawled", "stub"]
+    if is_v1_1_plus:
+        # source_repo is required in 1.1+ (may be None for unresolved stubs)
+        required.append("source_repo")
+    for field in required:
         if field not in comp:
             error(f"{ctx} missing required field: {field}")
 
@@ -99,6 +103,14 @@ def validate_component(comp, idx, all_ids):
     # Path required for non-stubs (except external)
     if not comp.get("stub") and comp_type != "external" and not comp.get("path"):
         warn(f"{ctx}: non-stub, non-external component should have a path")
+
+    # source_repo must reference a declared repository (v1.1+); null is acceptable for unresolved stubs.
+    if is_v1_1_plus and known_repos is not None and "source_repo" in comp:
+        sr = comp["source_repo"]
+        if sr is not None and sr not in known_repos:
+            error(f"{ctx}: source_repo '{sr}' does not match any entry in repositories[]")
+        if sr is None and not comp.get("stub"):
+            warn(f"{ctx}: source_repo is null but component is not a stub")
 
     # Endpoint validation for services/apps
     if comp_type in ("service", "app"):
@@ -161,14 +173,27 @@ def validate_connection(conn, idx, component_ids):
         check_confidence(conn["confidence"], ctx)
 
 
-def validate_metadata(meta, components, connections):
+def validate_metadata(meta, components, connections, is_v1_1_plus=False):
     ctx = "metadata"
 
-    for field in ["total_components", "total_connections", "total_stubs", "component_counts",
-                   "low_confidence_components", "shared_datastores",
-                   "unauthenticated_public_endpoints", "unmonitored_services"]:
+    required = ["total_components", "total_connections", "total_stubs", "component_counts",
+                "low_confidence_components", "shared_datastores",
+                "unauthenticated_public_endpoints", "unmonitored_services"]
+    if is_v1_1_plus:
+        required.append("repo_staleness")
+    for field in required:
         if field not in meta:
             error(f"{ctx} missing required field: {field}")
+
+    # repo_staleness shape check (v1.1+)
+    if is_v1_1_plus and isinstance(meta.get("repo_staleness"), list):
+        for i, entry in enumerate(meta["repo_staleness"]):
+            ectx = f"{ctx}.repo_staleness[{i}]"
+            for f in ["repo", "last_crawled", "components", "age_days"]:
+                if f not in entry:
+                    error(f"{ectx} missing required field: {f}")
+            if "last_crawled" in entry:
+                check_iso_timestamp(entry["last_crawled"], f"{ectx}.last_crawled")
 
     # Cross-check counts
     if meta.get("total_components") != len(components):
@@ -188,33 +213,74 @@ def validate_metadata(meta, components, connections):
                 warn(f"{ctx}: component_counts.{comp_type} ({count}) != actual ({actual_counts.get(comp_type, 0)})")
 
 
+def _parse_schema_version(sv):
+    """Return (major, minor, patch) tuple, or None if unparseable."""
+    if not sv:
+        return None
+    parts = sv.split(".")
+    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+        return None
+    return tuple(int(p) for p in parts)
+
+
 def validate(data):
-    # Root fields
-    for field in ["schema_version", "generated_at", "repository", "components", "connections", "metadata"]:
+    # Schema version drives which root shape we expect.
+    # 1.0.x: singular `repository` object.
+    # 1.1.0+: plural `repositories[]` array (with per-component `source_repo`).
+    sv = data.get("schema_version", "")
+    parsed = _parse_schema_version(sv)
+    if sv and not parsed:
+        error(f"schema_version must be semver (e.g., '1.0.0'), got '{sv}'")
+
+    is_v1_1_plus = parsed is not None and (parsed[0], parsed[1]) >= (1, 1)
+    repo_field = "repositories" if is_v1_1_plus else "repository"
+
+    # Root fields — repo field name depends on schema version.
+    for field in ["schema_version", "generated_at", repo_field, "components", "connections", "metadata"]:
         if field not in data:
             error(f"Missing required root field: {field}")
 
-    # Schema version
-    sv = data.get("schema_version", "")
-    if sv:
-        parts = sv.split(".")
-        if len(parts) != 3 or not all(p.isdigit() for p in parts):
-            error(f"schema_version must be semver (e.g., '1.0.0'), got '{sv}'")
+    # Track known repo names for source_repo cross-referencing on components.
+    known_repos = None
+    if is_v1_1_plus and isinstance(data.get("repositories"), list):
+        known_repos = {r["name"] for r in data["repositories"] if isinstance(r, dict) and "name" in r}
 
     if "generated_at" in data:
         check_iso_timestamp(data["generated_at"], "generated_at")
 
-    # Repository
-    repo = data.get("repository", {})
-    if "name" not in repo:
-        error("repository.name is required")
-    if "monorepo" not in repo:
-        error("repository.monorepo is required")
+    # Repository / Repositories
+    if is_v1_1_plus:
+        repos = data.get("repositories", [])
+        if not isinstance(repos, list):
+            error("repositories must be an array")
+        elif not repos:
+            error("repositories must contain at least one entry")
+        else:
+            seen_names = set()
+            for i, repo in enumerate(repos):
+                rctx = f"repositories[{i}]"
+                if "name" not in repo:
+                    error(f"{rctx}.name is required")
+                else:
+                    if repo["name"] in seen_names:
+                        error(f"{rctx}.name '{repo['name']}' is duplicated")
+                    seen_names.add(repo["name"])
+                if "monorepo" not in repo:
+                    error(f"{rctx}.monorepo is required")
+                if "last_crawled" in repo:
+                    check_iso_timestamp(repo["last_crawled"], f"{rctx}.last_crawled")
+    else:
+        # 1.0.x singular form (or version missing — fall back to 1.0 shape).
+        repo = data.get("repository", {})
+        if "name" not in repo:
+            error("repository.name is required")
+        if "monorepo" not in repo:
+            error("repository.monorepo is required")
 
     # Components
     component_ids = set()
     for i, comp in enumerate(data.get("components", [])):
-        validate_component(comp, i, component_ids)
+        validate_component(comp, i, component_ids, is_v1_1_plus=is_v1_1_plus, known_repos=known_repos)
 
     # Connections
     for i, conn in enumerate(data.get("connections", [])):
@@ -222,7 +288,8 @@ def validate(data):
 
     # Metadata
     if "metadata" in data:
-        validate_metadata(data["metadata"], data.get("components", []), data.get("connections", []))
+        validate_metadata(data["metadata"], data.get("components", []), data.get("connections", []),
+                          is_v1_1_plus=is_v1_1_plus)
 
 
 def main():
@@ -250,12 +317,20 @@ def main():
     low_conf = [c for c in components if c.get("confidence", 1) < 0.5]
     type_counts = Counter(c.get("type") for c in components)
 
+    sv_parsed = _parse_schema_version(data.get("schema_version", ""))
+    is_v1_1 = sv_parsed is not None and (sv_parsed[0], sv_parsed[1]) >= (1, 1)
+    if is_v1_1:
+        repos = data.get("repositories", [])
+        repo_label = ", ".join(r.get("name", "?") for r in repos) if repos else "MISSING"
+    else:
+        repo_label = data.get("repository", {}).get("name", "MISSING")
+
     print(f"\n{'='*60}")
     print(f"  servicemap.json Validation Report")
     print(f"{'='*60}")
     print(f"  Schema version: {data.get('schema_version', 'MISSING')}")
     print(f"  Generated at:   {data.get('generated_at', 'MISSING')}")
-    print(f"  Repository:     {data.get('repository', {}).get('name', 'MISSING')}")
+    print(f"  Repository:     {repo_label}")
     print(f"{'='*60}")
     print(f"\n  Components: {len(components)}")
     for t, count in sorted(type_counts.items()):

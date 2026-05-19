@@ -927,6 +927,12 @@ def main():
     # Write
     output_path = repo_path / args.output
     if output_path.exists() and not args.force:
+        # Detect non-interactive callers (CI, agents, pipes). input() would raise
+        # EOFError with a stack trace; surface a clear error instead.
+        if not sys.stdin.isatty():
+            print(f"\nERROR: {output_path} already exists and --force was not passed.", file=sys.stderr)
+            print("Pass --force (-f) to overwrite, or remove the file first.", file=sys.stderr)
+            sys.exit(1)
         response = input(f"\n{output_path} already exists. Overwrite? [y/N] ")
         if response.lower() != "y":
             print("Aborted.")
