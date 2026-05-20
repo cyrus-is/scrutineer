@@ -251,8 +251,8 @@ Every component shares these base fields regardless of type.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `iac_tool` | string | yes | One of: `terraform`, `opentofu`, `pulumi`, `cloudformation`, `cdk`, `bicep`. |
-| `provider` | string | yes | Cloud provider: `aws`, `gcp`, `azure`, `cloudflare`, etc. |
+| `iac_tool` | string | yes | One of: `terraform`, `opentofu`, `pulumi`, `cloudformation`, `cdk`, `bicep`, `helm`, `argocd`, `kustomize`, `kyverno`, `crossplane`. The last five cover Kubernetes-declarative IaC — use them when describing in-cluster resource management rather than stretching `cdk` or `terraform`. |
+| `provider` | string | yes | Cloud provider: `aws`, `gcp`, `azure`, `cloudflare`, `kubernetes` (for in-cluster IaC like Helm/ArgoCD/Kustomize/Kyverno), etc. |
 | `resources` | array | yes | Resources managed by this module. |
 | `variables` | array | optional | Input variables. |
 | `outputs` | array | optional | Outputs exposed to other modules. |
@@ -312,7 +312,7 @@ Every component shares these base fields regardless of type.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `engine` | string | yes | Use the actual service name, not cross-cloud equivalents. **Databases:** `postgresql`, `mysql`, `mssql`, `mongodb`, `cosmosdb`, `dynamodb`, `redis`, `memcached`, `elasticsearch`, `sqlite`. **Object storage:** `s3`, `azure-blob-storage`, `gcs`. **Queues/messaging:** `sqs`, `sns`, `azure-queue-storage`, `azure-service-bus`, `google-pubsub`, `kafka`, `rabbitmq`, `nats`. **Table/KV stores:** `dynamodb`, `azure-table-storage`, `google-bigtable`. **Never map Azure→AWS or vice versa** (e.g., Azure Blob is NOT `s3`, Azure Service Bus is NOT `sqs`). |
+| `engine` | string | yes | Use the actual service name, not cross-cloud equivalents. **Databases:** `postgresql`, `mysql`, `mssql`, `mongodb`, `cosmosdb`, `dynamodb`, `redis`, `memcached`, `elasticsearch`, `sqlite`. **Object storage:** `s3`, `azure-blob-storage`, `gcs`. **Queues/messaging:** `sqs`, `sns`, `azure-queue-storage`, `azure-service-bus`, `google-pubsub`, `kafka`, `rabbitmq`, `nats`. **Table/KV stores:** `dynamodb`, `azure-table-storage`, `google-bigtable`. **Secret stores:** `vault-kv`, `aws-secrets-manager`, `azure-key-vault`, `google-secret-manager`. **Container registries:** `aws-ecr`, `azure-container-registry`, `google-artifact-registry`, `docker-hub`, `ghcr`. **HashiCorp suite:** `vault-pki`, `consul-kv`. **Never map Azure→AWS or vice versa** (e.g., Azure Blob is NOT `s3`, Azure Service Bus is NOT `sqs`). Never collapse a secret store or container registry under `s3` or `redis` — they have distinct semantics and downstream filters depend on the actual service name. |
 | `version` | string | optional | Engine version. |
 | `managed_by` | string | optional | Component ID of the IaC that provisions this store. |
 | `connection_pattern` | string | optional | `direct`, `pooled`, `orm`, `sdk`. |

@@ -959,8 +959,12 @@ def main():
     parser.add_argument("repo_path", help="Path to the repository to analyze")
     parser.add_argument("--output", "-o", default=".claude/commands/security-review.md",
                         help="Output path relative to repo root (default: .claude/commands/security-review.md)")
-    parser.add_argument("--service-map", "-s", default=None,
-                        help="Path to servicemap.json for richer context")
+    sm_group = parser.add_mutually_exclusive_group()
+    sm_group.add_argument("--service-map", "-s", default=None,
+                          help="Path to servicemap.json for richer context. "
+                               "If omitted, auto-discovered at <repo>/servicemap.json.")
+    sm_group.add_argument("--no-service-map", action="store_true",
+                          help="Disable service-map auto-discovery and run without one")
     parser.add_argument("--guidance", "-g", default=None,
                         help="Path to security guidance YAML (default: bundled security_guidance.yaml)")
     parser.add_argument("--dry-run", "-n", action="store_true",
@@ -979,7 +983,15 @@ def main():
     print(f"Loading guidance from: {guidance_path}")
     guidance = load_guidance(guidance_path)
 
-    # Load service map
+    # Resolve service map: explicit --service-map, else auto-discover at repo root,
+    # unless --no-service-map opts out. Silent degradation (running without a map
+    # the user forgot to point at) is the worst failure mode here.
+    if not args.service_map and not args.no_service_map:
+        candidate = Path(args.repo_path).resolve() / "servicemap.json"
+        if candidate.exists():
+            args.service_map = str(candidate)
+            print(f"Auto-detected service map at: {candidate}")
+
     service_map = None
     if args.service_map:
         sm_path = Path(args.service_map)
