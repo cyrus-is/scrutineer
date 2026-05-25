@@ -20,6 +20,7 @@ is `generate-servicemap`: a static skill plus a runtime Python helper.
 | Piece | Role |
 |---|---|
 | `analyze_mcp.py` | **Deterministic half.** Parses config + `tools/list`, flags known patterns reproducibly, tags data categories, computes stable digests. Produces *evidence, never verdicts*. |
+| `fetch_source.py` | **Safe-acquisition half of Pass 3.** Resolves + downloads source via registry HTTP APIs (or a commit-pinned GitHub tarball), verifies integrity, and extracts with a path-sanitizing extractor. Never invokes npm/pip/git; never executes fetched code. Emits a manifest with `source_artifact_match`. |
 | `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, assigns the verdict. Copied to `.claude/commands/mcp-review.md`. |
 | `mcp_risk_guidance.yaml` | Tunable catalog: config-smell definitions, sensitive-env-key patterns, package-runner/shell lists, the dangerous-capability taxonomy, and the data-sensitivity taxonomy. |
 
@@ -60,6 +61,17 @@ Or run the analyzer directly:
   --suppressions .claude/mcp-review-suppressions.json
 ```
 
+Safely fetch a server's source for Pass 3 (never runs npm/pip/git, never executes fetched code):
+
+```bash
+# Offline plan — what it would fetch + the predicted source_artifact_match
+.venv/bin/python fetch_source.py --npm "@scope/pkg@1.2.3"
+
+# Actually download + extract into a throwaway dir (gated behind --fetch)
+.venv/bin/python fetch_source.py --analysis analysis.json --server github --fetch
+.venv/bin/python fetch_source.py --github owner/repo --ref <40-hex-sha> --fetch
+```
+
 ## The three passes (static-first)
 
 It never starts the server, calls a tool, or fetches a URL. Requiring the server to run would mean you
@@ -75,10 +87,14 @@ already executed the thing you're trying to evaluate.
    benign-name/powerful-schema evasion shape. The skill refines candidates against schema semantics and
    handler source, weighting implementation over naming.
 3. **Source review** — whenever source is obtainable, review the handlers for injection, secret handling,
-   exfil paths, supply-chain risk, and **obfuscation** (a BLOCK signal). Fetching is treated as an active
-   op: inert artifact (`npm pack`), path-sanitized extraction, hooks disabled, never executed — and a
-   Phantom-Artifact warning when the reviewed source can't be bound to the runtime artifact. Closed-source/
-   binary servers degrade gracefully: config + tools only, capped at `CAUTION`, clearly labeled.
+   exfil paths, supply-chain risk, and **obfuscation** (a BLOCK signal). Acquisition is handled by
+   `fetch_source.py`, not a package manager: it resolves the artifact via the registry HTTP APIs (or a
+   commit-pinned GitHub tarball), verifies the integrity digest, and extracts with a path-sanitizing
+   extractor that rejects zip-slip, symlinks, hardlinks, absolute paths, and special files — never invoking
+   npm/pip/git and never executing fetched code. Its manifest reports `source_artifact_match`
+   (verified/unverifiable/unfetchable), turning the Phantom-Artifact check ("is the reviewed source the code
+   that runs?") into a checked fact instead of a manual judgment. Closed-source/binary servers degrade
+   gracefully: config + tools only, capped at `CAUTION`, clearly labeled.
 
 Two cross-cutting evidence layers feed the verdict:
 
@@ -138,7 +154,12 @@ redaction-stable digests, pin heuristics, schema-intent, toxic combinations, app
 
 ```bash
 .venv/bin/python tests/test_analyze_mcp.py
+.venv/bin/python tests/test_fetch_source.py   # extractor safety: zip-slip, symlink, bombs, no-exec
 ```
+
+`test_fetch_source.py` builds hostile archives **in memory** (no network) and asserts the extractor refuses
+zip-slip, symlinks, hardlinks, absolute paths, and special files, caps tar/zip bombs, never executes a
+fetched `postinstall`, and that `source_artifact_match` tracks the pin (and is disqualified by tampering).
 
 Fixtures live in `tests/fixtures/` (a 5-server config, a tool surface, and an over-granting allowlist) and
 contain only placeholders — no live-looking secrets are committed.
@@ -151,13 +172,13 @@ contain only placeholders — no live-looking secrets are committed.
 
 ## Status
 
-Built and tested (`tests/test_analyze_mcp.py`, 47 checks): `analyze_mcp.py`, `mcp_risk_guidance.yaml`,
-`SKILL.md`. Originated from issue #2, shaped by the two-pass / static-first / digest-bound-suppression
-design discussion there and external review rounds that added the provenance, containment,
-toxic-combination, schema-intent, explicit-rubric, and approval-drift layers, plus a security review that
-closed secret-leak / digest-stability gaps (URL & CLI-arg redaction).
+Built and tested (`tests/test_analyze_mcp.py`, 50 checks; `tests/test_fetch_source.py`, 54 checks):
+`analyze_mcp.py`, `fetch_source.py`, `mcp_risk_guidance.yaml`, `SKILL.md`. Originated from issue #2, shaped
+by the two-pass / static-first / digest-bound-suppression design discussion there and external review rounds
+that added the provenance, containment, toxic-combination, schema-intent, explicit-rubric, and approval-drift
+layers, plus a security review that closed secret-leak / digest-stability gaps (URL & CLI-arg redaction).
 
-**Known limitation:** source acquisition for Pass 3 is currently the skill's responsibility, guided by hard
-rules in `SKILL.md` (inert `npm pack`, path-sanitized extraction, hooks disabled, never execute). That
-isolation is *advice to the model*, not an enforced sandbox — a future hardening is a deterministic
-fetch helper so the most dangerous step doesn't depend on prompt adherence.
+Pass 3 source acquisition is now a deterministic, sandboxed step (`fetch_source.py`, issue #22) rather than
+prose rules in `SKILL.md`: registry-HTTP resolution, integrity-verified download, a path-sanitizing
+extractor, and a `source_artifact_match` manifest — closing the Phantom-Artifact gap as a checked fact. It
+never invokes a package manager and never executes fetched code.

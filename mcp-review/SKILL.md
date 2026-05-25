@@ -174,20 +174,41 @@ If source is obtainable — an open-source repo, the published package source, o
 it**. This is a core pass, not an optional extra: if you can read it, you review it. Closed-source/binary
 servers are the only ones that skip it (see degradation, below).
 
-**Fetching source is itself an active, weaponizable operation — do it safely:**
-- **Never execute the fetched code, install scripts, or build steps.** No `npm install` (runs lifecycle
-  scripts), no running the server. Prefer `npm pack` / `pip download` to get the *published artifact*
-  inert, and extract with a path-sanitized extractor — a malicious tarball can path-traverse (`../../`),
-  use symlinks, or drop git hooks.
-- **Clone with hooks disabled** and no checkout side effects (e.g. `git -c core.hooksPath=/dev/null clone --depth 1`),
-  into a throwaway directory. Read only.
-- If you can't fetch safely, say so and treat the server as effectively closed-source for this review.
+**Fetching source is itself an active, weaponizable operation — use the bundled helper, never a package
+manager.** `fetch_source.py` does the acquisition deterministically so the most dangerous step in the
+review isn't left to prompt adherence. It resolves the artifact through the registry HTTP APIs (or a
+commit-pinned GitHub tarball), downloads the content-addressed bytes, verifies the registry integrity
+digest, and extracts with a path-sanitizing extractor that rejects zip-slip (`../../`), symlinks, hardlinks,
+absolute paths, and special files. It **never invokes npm/pip/git and never executes fetched code**, so no
+lifecycle/`postinstall` script or git hook can run. Network egress is gated behind `--fetch`.
 
-**Tie what you review to what actually runs (the Phantom-Artifact problem).** Check `provenance`: if the
-server launches via an unpinned runner (`mutable_install_path: true`) but you reviewed a GitHub repo, you
-are **not** reviewing the code that executes — an author can publish a malicious registry build while
-keeping the repo pristine. Emit the explicit warning: *"Reviewed source at &lt;ref&gt;, but cannot verify
-the registry/runtime artifact matches it."* This is itself a finding and caps the verdict (see rubric).
+```bash
+# Chain off the analyzer (recommended): reads the server's provenance.spec + launch command
+mcp-review/.venv/bin/python mcp-review/fetch_source.py --analysis analysis.json --server github --fetch
+# …or point it at a spec directly:
+mcp-review/.venv/bin/python mcp-review/fetch_source.py --npm "@scope/pkg@1.2.3" --fetch
+mcp-review/.venv/bin/python mcp-review/fetch_source.py --github owner/repo --ref <40-hex-sha> --fetch
+```
+
+Without `--fetch` it prints an **offline plan** — what it would download and the predicted match — so the
+action stays inspectable before any egress. Review the extracted tree **read-only**; never run it. If the
+manifest reports `extraction.tampering_detected: true` (a member tried to escape the extract dir or smuggle
+a symlink/hardlink), treat that as a **BLOCK-level** malice signal in its own right — an artifact that
+attacks its reviewer is hostile.
+
+**Tie what you review to what actually runs (the Phantom-Artifact problem) — now a checked fact.** The
+manifest's `source_artifact_match` answers it deterministically; don't re-derive it by hand:
+- `verified` — the bytes you reviewed **are** the runtime artifact (exact version pin or commit SHA, with
+  the integrity digest checked). Source findings bind to what executes.
+- `unverifiable` — you reviewed *a* version, not necessarily the one that runs (a dist-tag/range/`latest`/
+  floating branch — i.e. `mutable_install_path: true` — or a tampering attempt was detected). Emit the
+  explicit warning: *"Reviewed source at &lt;ref&gt;, but cannot verify the registry/runtime artifact
+  matches it,"* and let it cap the verdict (see rubric).
+- `unfetchable` — remote endpoint / local binary / closed source: there is no artifact to bind. Degrade as
+  below.
+
+If you can't fetch safely or the helper is unavailable, say so and treat the server as effectively
+closed-source for this review.
 
 **Look for obfuscation** — it is a BLOCK-level signal in source meant to be auditable: minified/packed code
 in what should be readable source, base64/hex blobs decoded at runtime, dynamic `eval`/`exec`/`Function()`
@@ -269,6 +290,8 @@ order:
   inspect it nor bound it.
 - **Obfuscation in source** — minified/packed code where readable source is expected, base64/hex payloads
   decoded at runtime, or dynamic `eval`/`exec`/`Function()` wired to a tool parameter.
+- **Source-acquisition tampering** — `fetch_source.py` reported `tampering_detected` (a package member
+  tried to escape the extract dir or smuggled a symlink/hardlink): the artifact actively attacks its reviewer.
 - **`egress_with_sensitive_fs` approval drift** — a network-egress tool is exposed while the client already
   grants filesystem access to sensitive paths (`.env`/`.ssh`/credentials): a live read-then-send exfil path.
 
@@ -284,7 +307,8 @@ actually verify — `config+tools+source` with `strong` binding is high; `config
 | **Low capability severity** | **SAFE** | **CAUTION** |
 
 A `mutable_install_path` / `remote_endpoint` / closed-source server **cannot be SAFE** — cap it at CAUTION,
-because you can't bind what you reviewed to what runs.
+because you can't bind what you reviewed to what runs. Concretely: any server whose `source_artifact_match`
+is `unverifiable` or `unfetchable` is capped at CAUTION; only a `verified` match supports SAFE.
 
 **Over-privilege is a CAUTION signal in its own right.** Cross-reference the credentials the server holds
 (`sensitive_env_keys`) against what its tools actually appear to need: a database-viewer requesting a
