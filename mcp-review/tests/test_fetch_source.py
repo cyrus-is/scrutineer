@@ -218,13 +218,44 @@ def _zip_benign(d):
 _rep, _exists = _in_tmp(_zip_benign)
 check("zip benign extracts", _rep["extracted"] == 1 and _exists)
 
-# --- source_artifact_match: pin drives it; tampering disqualifies -----------
-check("match verified when exact + clean",
-      F.compute_match({"pin_is_exact": True}, {"tampering_detected": False}) == F.MATCH_VERIFIED)
+# --- source_artifact_match: requires immutable ref AND a byte binding --------
+clean = {"tampering_detected": False}
+check("match npm exact + integrity verified -> verified",
+      F.compute_match({"pin_is_exact": True, "ecosystem": "npm"}, clean, True) == F.MATCH_VERIFIED)
+# exact version but NO/failed cryptographic binding must NOT be 'verified'
+check("match npm exact + integrity unverified -> unverifiable",
+      F.compute_match({"pin_is_exact": True, "ecosystem": "npm"}, clean, None) == F.MATCH_UNVERIFIABLE)
+check("match npm exact + integrity False -> unverifiable",
+      F.compute_match({"pin_is_exact": True, "ecosystem": "npm"}, clean, False) == F.MATCH_UNVERIFIABLE)
+# github: the commit SHA itself is the binding (no published digest exists)
+check("match github exact -> verified (no digest needed)",
+      F.compute_match({"pin_is_exact": True, "ecosystem": "github"}, clean, None) == F.MATCH_VERIFIED)
 check("match unverifiable when not exact",
-      F.compute_match({"pin_is_exact": False}, {"tampering_detected": False}) == F.MATCH_UNVERIFIABLE)
+      F.compute_match({"pin_is_exact": False, "ecosystem": "npm"}, clean, True) == F.MATCH_UNVERIFIABLE)
 check("match downgraded by tampering",
-      F.compute_match({"pin_is_exact": True}, {"tampering_detected": True}) == F.MATCH_UNVERIFIABLE)
+      F.compute_match({"pin_is_exact": True, "ecosystem": "github"}, {"tampering_detected": True}, True)
+      == F.MATCH_UNVERIFIABLE)
+
+# --- a member resolving onto a directory must reject, not crash the run ------
+def _dot_member(d):
+    # a benign file plus a hostile '.' member; the run must survive and still
+    # extract the benign file rather than aborting on IsADirectoryError.
+    tb = _tar_bytes([("package/", "dir", ""), ("package/ok.js", "file", "x"), (".", "file", "evil")])
+    return F.safe_extract_tar(tb, d)
+
+_rep = _in_tmp(_dot_member)
+check("dot-member rejected not fatal", any(r["reason"] == "invalid_name" for r in _rep["rejected"]))
+check("dot-member run still extracts benign", _rep["extracted"] == 1)
+_rep = _in_tmp(lambda d: F.safe_extract_tar(_tar_bytes([("pkg/", "dir", ""), ("pkg/.", "file", "x")]), d))
+check("dir-resolving member rejected", any(r["reason"] == "invalid_name" for r in _rep["rejected"]))
+
+# --- github URL hardening: userinfo stripped, segments encoded ---------------
+check("gh strips userinfo token",
+      F.parse_github_spec("https://user:ghp_tok@github.com/o/r.git#v1") == ("o", "r", "v1"))
+check("gh url stays on codeload host",
+      F.resolve_github("o", "r", "a/../../evil")["artifact_url"].startswith("https://codeload.github.com/o/r/tar.gz/"))
+check("gh token never in resolved url",
+      "ghp_tok" not in json.dumps(F.resolve_github(*F.parse_github_spec("https://x:ghp_tok@github.com/o/r#" + "a" * 40))))
 
 # --- manifest binding digest is stable across runs --------------------------
 b = {"ecosystem": "npm", "name": "pkg", "resolved_version": "1.2.3", "content_sha256": "abc"}

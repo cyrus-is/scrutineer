@@ -145,10 +145,13 @@ def parse_github_spec(spec: str) -> tuple[str, str, str]:
         s, ref = s.split("#", 1)
     s = re.sub(r"^git\+", "", s)
     s = re.sub(r"^github:", "", s)
+    # Drop any userinfo (user:token@) BEFORE the host so a credential in a
+    # tokenized clone URL is never carried into the constructed codeload URL.
+    s = re.sub(r"^https?://[^/@]*@", "https://", s)
     s = re.sub(r"^https?://github\.com/", "", s)
     s = re.sub(r"\.git$", "", s).strip("/")
     parts = s.split("/")
-    if len(parts) < 2:
+    if len(parts) < 2 or not parts[0] or not parts[1]:
         raise ValueError(f"cannot parse owner/repo from github spec: {spec!r}")
     return parts[0], parts[1], ref
 
@@ -318,11 +321,14 @@ def resolve_pypi(spec: str) -> dict:
 
 def resolve_github(owner: str, repo: str, ref: str) -> dict:
     exact = bool(_GIT_SHA.match(ref))
+    # Percent-encode each path segment so an exotic owner/repo/ref cannot inject
+    # extra path structure (the host stays pinned to codeload.github.com).
+    seg = lambda x: quote(x, safe="")
     return {
         "ecosystem": "github",
         "name": f"{owner}/{repo}",
         "resolved_version": ref or "HEAD",
-        "artifact_url": f"{GH_CODELOAD}/{owner}/{repo}/tar.gz/{ref or 'HEAD'}",
+        "artifact_url": f"{GH_CODELOAD}/{seg(owner)}/{seg(repo)}/tar.gz/{seg(ref) or 'HEAD'}",
         "integrity": "",            # codeload is bound to the ref, not a published digest
         "pin_is_exact": exact,
         "archive_kind": "tar",
@@ -358,6 +364,25 @@ def _new_report(dest: Path) -> dict:
 
 # Reasons that signal active malice (vs. a benign oversized file).
 _MALICIOUS_REASONS = {"path_escape", "absolute_path", "symlink", "hardlink", "special_file"}
+
+
+def _safe_write(target: str, dest_real: str, payload: bytes, report: dict, name: str) -> bool:
+    """Write one validated member's bytes. Rejects (rather than crashes on) a
+    name that resolves onto an existing directory — e.g. a member literally
+    named '.' or 'pkg/.' — which would otherwise raise IsADirectoryError and
+    abort the whole extraction, letting one hostile entry deny the review."""
+    if target == dest_real or os.path.isdir(target):
+        _reject(report, name, "invalid_name")
+        return False
+    try:
+        os.makedirs(os.path.dirname(target) or dest_real, exist_ok=True)
+        with open(target, "wb") as fh:                # write bytes; never execute
+            fh.write(payload)
+        os.chmod(target, 0o600)                        # strip any setuid/exec bits from the archive
+    except OSError:
+        _reject(report, name, "write_error")
+        return False
+    return True
 
 
 def _finalize(report: dict) -> dict:
@@ -401,16 +426,17 @@ def safe_extract_tar(data: bytes, dest: Path) -> dict:
                 _reject(report, member.name, "entry_too_large"); continue
             if report["total_bytes"] + member.size > MAX_TOTAL_BYTES:
                 _reject(report, member.name, "total_too_large"); break
-            src = tar.extractfile(member)
-            if src is None:
+            try:
+                src = tar.extractfile(member)
+                payload = src.read(MAX_ENTRY_BYTES + 1) if src is not None else None
+            except (OSError, tarfile.TarError):
                 _reject(report, member.name, "unreadable"); continue
-            payload = src.read(MAX_ENTRY_BYTES + 1)
-            if len(payload) > MAX_ENTRY_BYTES:
+            if payload is None:
+                _reject(report, member.name, "unreadable"); continue
+            if len(payload) > MAX_ENTRY_BYTES:        # actual bytes, not the (forgeable) header size
                 _reject(report, member.name, "entry_too_large"); continue
-            os.makedirs(os.path.dirname(target) or dest_real, exist_ok=True)
-            with open(target, "wb") as fh:           # write bytes; never execute
-                fh.write(payload)
-            os.chmod(target, 0o600)                   # strip any setuid/exec bits from the archive
+            if not _safe_write(target, dest_real, payload, report, member.name):
+                continue
             report["extracted"] += 1
             report["total_bytes"] += len(payload)
             parts = Path(member.name.replace("\\", "/")).parts
@@ -445,14 +471,15 @@ def safe_extract_zip(data: bytes, dest: Path) -> dict:
                 _reject(report, name, "entry_too_large"); continue
             if report["total_bytes"] + info.file_size > MAX_TOTAL_BYTES:
                 _reject(report, name, "total_too_large"); break
-            with zf.open(info) as src:
-                payload = src.read(MAX_ENTRY_BYTES + 1)
-            if len(payload) > MAX_ENTRY_BYTES:
+            try:
+                with zf.open(info) as src:
+                    payload = src.read(MAX_ENTRY_BYTES + 1)
+            except (OSError, zipfile.BadZipFile, RuntimeError):
+                _reject(report, name, "unreadable"); continue
+            if len(payload) > MAX_ENTRY_BYTES:        # actual decompressed bytes, not the declared size
                 _reject(report, name, "entry_too_large"); continue
-            os.makedirs(os.path.dirname(target) or dest_real, exist_ok=True)
-            with open(target, "wb") as fh:
-                fh.write(payload)
-            os.chmod(target, 0o600)
+            if not _safe_write(target, dest_real, payload, report, name):
+                continue
             report["extracted"] += 1
             report["total_bytes"] += len(payload)
             parts = Path(name.replace("\\", "/")).parts
@@ -469,12 +496,27 @@ def safe_extract(data: bytes, dest: Path, archive_kind: str) -> dict:
 # Fetch + manifest
 # ---------------------------------------------------------------------------
 
-def compute_match(resolved: dict, extraction: dict) -> str:
-    """The verdict-facing confidence. A tampering attempt during extraction is
-    disqualifying regardless of pin strength."""
+def compute_match(resolved: dict, extraction: dict, integrity_verified) -> str:
+    """The verdict-facing confidence — deliberately strict, since a false
+    `verified` is the worst failure mode (it tells the reviewer the bytes they
+    read ARE what runs when they may not be).
+
+    `verified` requires BOTH an immutable reference AND a cryptographic binding
+    of the fetched bytes:
+      * github: a 40/64-hex commit SHA is itself the binding — codeload serves
+        exactly that object — so an exact ref suffices.
+      * npm / pypi: an exact version is necessary but NOT sufficient; the
+        published digest must have actually checked out (integrity_verified is
+        True). An exact version with a missing/unverifiable hash is downgraded,
+        because a private or compromised registry could swap the bytes.
+    A tampering attempt during extraction disqualifies regardless of pin."""
     if extraction.get("tampering_detected"):
         return MATCH_UNVERIFIABLE
-    return MATCH_VERIFIED if resolved.get("pin_is_exact") else MATCH_UNVERIFIABLE
+    if not resolved.get("pin_is_exact"):
+        return MATCH_UNVERIFIABLE
+    if resolved.get("ecosystem") == "github":
+        return MATCH_VERIFIED
+    return MATCH_VERIFIED if integrity_verified is True else MATCH_UNVERIFIABLE
 
 
 def fetch_and_extract(resolved: dict, dest: Path) -> dict:
@@ -500,7 +542,7 @@ def fetch_and_extract(resolved: dict, dest: Path) -> dict:
         raise ValueError(f"integrity check FAILED for {url} (registry digest mismatch)")
 
     extraction = safe_extract(data, dest, resolved.get("archive_kind", "tar"))
-    match = compute_match(resolved, extraction)
+    match = compute_match(resolved, extraction, integrity_verified)
     binding = {
         "ecosystem": resolved["ecosystem"],
         "name": resolved["name"],
