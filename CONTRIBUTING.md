@@ -1,4 +1,4 @@
-# Contributing to vibecheck
+# Contributing to Scrutineer
 
 Contributions are welcome! All PRs require approval before merging.
 

@@ -62,7 +62,7 @@ If several exist, ask the user which to review rather than guessing.
 
 ## Before you start
 
-1. **Locate the analyzer.** It lives next to this skill in the vibecheck repo as
+1. **Locate the analyzer.** It lives next to this skill in the scrutineer repo as
    `mcp-review/analyze_mcp.py`, run via its venv (`mcp-review/.venv/bin/python`). If you can't find it,
    tell the user and fall back to doing the config/tool parsing yourself by hand — but note that
    digest-bound suppression won't work without it.

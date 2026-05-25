@@ -65,7 +65,7 @@ MAX_ENTRY_BYTES = 64 * 1024 * 1024       # 64 MiB per file
 MAX_ENTRIES = 20000                      # member count
 MAX_DOWNLOAD_BYTES = 128 * 1024 * 1024   # 128 MiB on the wire
 HTTP_TIMEOUT = 30
-USER_AGENT = "vibecheck-mcp-review-fetch/1 (+https://github.com/cyrus-is/vibecheck)"
+USER_AGENT = "scrutineer-mcp-review-fetch/1 (+https://github.com/cyrus-is/scrutineer)"
 
 NPM_REGISTRY = "https://registry.npmjs.org"
 PYPI_JSON = "https://pypi.org/pypi"
