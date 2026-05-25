@@ -40,7 +40,7 @@ Scans your repo and generates a Claude Code skill (`.claude/commands/peercoderev
 - **PR review** — review a pull request by number, optionally post findings as a PR comment
 - **Component review** — deep review of an entire service or app directory (requires service map)
 
-The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 20+ platforms supported via `peer_review_guidance.yaml`.
+The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 15+ platforms supported via `peer_review_guidance.yaml`.
 
 ### generate-security-review
 
@@ -49,7 +49,7 @@ Same scan-and-generate approach, producing `.claude/commands/security-review.md`
 **Analysis flow:**
 1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
 2. **Universal checklist** — 11 areas including auth, injection, secrets, crypto, rate limiting, dependencies
-3. **Platform-specific checklists** — vulnerability patterns for 30+ platforms with OWASP mapping
+3. **Platform-specific checklists** — vulnerability patterns for 25+ platforms with OWASP mapping
 4. **Agentic analysis** — input tracing from entry to storage, auth boundary auditing, attack chain reasoning
 
 Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays in your terminal — it does not auto-post to PRs, because security findings may be sensitive.
