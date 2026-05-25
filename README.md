@@ -54,6 +54,24 @@ Same scan-and-generate approach, producing `.claude/commands/security-review.md`
 
 Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays in your terminal — it does not auto-post to PRs, because security findings may be sensitive.
 
+### mcp-review
+
+A standalone auditor for MCP servers — the `npm audit` equivalent for the [Model Context Protocol](https://modelcontextprotocol.io). Installing an MCP server grants it tool access, data access, and usually a live credential; `/mcp-review` makes that trust decision inspectable **before** the server runs. Unlike the generators, it reviews an *external* server rather than your repo, so there's no generate step — it's a static skill plus a runtime analyzer (`analyze_mcp.py`), evidence in Python and judgment in the skill.
+
+It reports **two independent axes** — a server can be perfectly secure and still want to read every message you've ever sent:
+
+- **Security verdict** — `SAFE / CAUTION / BLOCK`
+- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE`
+
+**Three passes, static-first (never starts the server, calls a tool, or fetches a URL):**
+1. **Config review** — install/transport/secret/scope smells, plus *provenance* (can the reviewed code be tied to what actually runs?) and *containment*
+2. **Tool-surface review** — capability classification (allow/ask/deny), the data categories each tool touches, and schema-intent signals that expose the benign-name/powerful-schema evasion shape
+3. **Source review** — handler injection, secret handling, exfil paths, and obfuscation, with source safely acquired by `fetch_source.py` (resolves via registry APIs, integrity-verified, path-sanitized extraction — never runs a package manager or executes fetched code)
+
+Plus **toxic combinations** (individually-tolerable capabilities that together form an attack primitive — e.g. secrets-access + network-egress = read-then-send exfil) and **approval drift** (what your client has already auto-authorized vs. what review recommends). Findings bind to a SHA-256 digest so false-positive suppressions auto-expire the moment the server's config or tool surface changes.
+
+See [`mcp-review/README.md`](mcp-review/README.md) for the full design.
+
 ## How the tools relate
 
 ```
