@@ -1,5 +1,7 @@
 # vibecheck
 
+[![Release](https://img.shields.io/github/v/release/cyrus-is/vibecheck?label=release)](https://github.com/cyrus-is/vibecheck/releases/latest)
+
 Agentic code review toolkit for [Claude Code](https://claude.ai/code). Three generators that scan your repo and produce tailored review skills — a principal engineer peer review, a security audit, and a service topology map that makes both smarter.
 
 ## What's in the box
