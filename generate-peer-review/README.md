@@ -4,6 +4,11 @@ Scans a repository (and optionally a `servicemap.json`) to generate a tailored
 `.claude/commands/scrutineer-code.md` — a Principal Engineer-level code review skill
 with platform-specific pre-flight checks, focus areas, and 8 evaluation lenses.
 
+> **Most users don't run this directly.** The top-level installer does it for you —
+> `scrutineer install <repo>` (or the `/scrutineer-setup` skill); see the
+> [main README](../README.md). Run the generator directly when you want control over
+> the output path, guidance file, or service-map wiring.
+
 ## Quick Start
 
 ```bash
@@ -12,11 +17,12 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # Basic (file scanning only):
 .venv/bin/python generate.py /path/to/repo
 
-# With service map (richer context, enables component review mode):
-.venv/bin/python generate.py /path/to/repo --service-map tools/servicemap.json
+# With a service map (richer context, enables component review mode). A servicemap.json
+# at the repo root is auto-discovered; pass --service-map only for a non-standard path:
+.venv/bin/python generate.py /path/to/repo --service-map servicemap.json
 
 # Dry run:
-.venv/bin/python generate.py /path/to/repo --service-map tools/servicemap.json --dry-run
+.venv/bin/python generate.py /path/to/repo --dry-run
 ```
 
 ## What It Does
@@ -24,10 +30,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 1. **Scans** the repo for languages, frameworks, and infrastructure
 2. **Loads** platform-specific pre-flight checks and focus areas from `peer_review_guidance.yaml`
 3. **Optionally reads** `servicemap.json` to discover reviewable components (services + apps)
-4. **Generates** a `/scrutineer-code` skill with three invocation modes:
+4. **Generates** a `/scrutineer-code` skill with four invocation modes:
    - `/scrutineer-code` — review current branch diff vs main
    - `/scrutineer-code 123` — review PR #123 (fetches, diffs, posts findings as comment)
-   - `/scrutineer-code neighbors` — full review of all code in a service/app directory
+   - `/scrutineer-code <component-name>` — full review of a service/app directory (requires service map)
+   - `/scrutineer-code --deep` — deep repo-wide review tracing cross-service flows and systemic issues
 5. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
 
 ## The 8 Evaluation Lenses
@@ -55,7 +62,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 When `--service-map` is provided, the generated skill includes a component lookup table
 enabling Mode 3 (full service/app review). Without it, only Mode 1 and 2 are available.
 
-Generate a service map first: see `tools/generate-servicemap/`.
+Generate a service map first: see `../generate-servicemap/`.
 
 ## Options
 
@@ -75,4 +82,4 @@ Generate a service map first: see `tools/generate-servicemap/`.
 | **Findings** | Vulnerability + OWASP category | Bug/risk + failure mode + lens |
 | **Severity** | CRITICAL/HIGH/MEDIUM/LOW | ISSUE/CONCERN/PASS per lens |
 | **Verdict** | PASS/BLOCK | APPROVE/REQUEST CHANGES/DISCUSS |
-| **Invocation** | Current diff only | Diff, PR, or full component review |
+| **Invocation** | Diff, PR, component, or `--deep` (PR findings to terminal) | Diff, PR, component, or `--deep` (PR findings posted) |

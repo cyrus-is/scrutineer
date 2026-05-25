@@ -29,11 +29,15 @@ real hashing** a prompt can't do reliably.
 
 ## Quick start
 
+> The top-level installer copies this skill into your repo for you (`scrutineer install <repo>` or
+> the `/scrutineer-setup` skill; see the [main README](../README.md)). You still set up the analyzer
+> venv below, and can run `analyze_mcp.py` / `fetch_source.py` directly.
+
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
-Install the skill into your target repo (or use Claude Desktop's commands dir):
+Install the skill into your target repo by hand (or use Claude Desktop's commands dir):
 
 ```bash
 cp SKILL.md /path/to/your-repo/.claude/commands/scrutineer-mcp.md

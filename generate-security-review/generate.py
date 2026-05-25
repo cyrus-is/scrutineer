@@ -6,14 +6,15 @@ Scans a repository (and optionally consumes a servicemap.json) to generate a
 tailored .claude/commands/scrutineer-security.md with platform-specific vulnerability
 checklists.
 
-The generated skill supports three invocation modes:
-  /scrutineer-security              — review current branch diff vs main
-  /scrutineer-security 123          — review PR #123 (git fetch + diff)
-  /scrutineer-security neighbors    — full security review of a service/app from the service map
+The generated skill supports four invocation modes:
+  /scrutineer-security                  — review current branch diff vs main
+  /scrutineer-security 123              — review PR #123 (git fetch + diff)
+  /scrutineer-security <component-name> — full security review of a service/app from the service map
+  /scrutineer-security --deep           — deep repo-wide audit across services
 
 Usage:
     python generate.py /path/to/repo
-    python generate.py /path/to/repo --service-map tools/servicemap.json
+    python generate.py /path/to/repo --service-map servicemap.json
     python generate.py /path/to/repo --dry-run
 """
 
@@ -952,7 +953,7 @@ def main():
         epilog=textwrap.dedent("""\
             Examples:
               %(prog)s /path/to/repo
-              %(prog)s /path/to/repo --service-map tools/servicemap.json
+              %(prog)s /path/to/repo --service-map servicemap.json
               %(prog)s /path/to/repo --dry-run
         """),
     )

@@ -6,14 +6,15 @@ Scans a repository (and optionally consumes a servicemap.json) to generate a
 tailored .claude/commands/scrutineer-code.md with platform-specific pre-flight
 checks, focus areas, and evaluation lenses.
 
-The generated skill supports three invocation modes:
-  /scrutineer-code          — review current branch diff vs main
-  /scrutineer-code 123      — review PR #123 (git pull + checkout)
-  /scrutineer-code neighbors — full review of a service/app from the service map
+The generated skill supports four invocation modes:
+  /scrutineer-code                  — review current branch diff vs main
+  /scrutineer-code 123              — review PR #123 (git pull + checkout)
+  /scrutineer-code <component-name> — full review of a service/app from the service map
+  /scrutineer-code --deep           — deep repo-wide review across services
 
 Usage:
     python generate.py /path/to/repo
-    python generate.py /path/to/repo --service-map tools/servicemap.json
+    python generate.py /path/to/repo --service-map servicemap.json
     python generate.py /path/to/repo --dry-run
 """
 
@@ -866,7 +867,7 @@ def main():
         epilog=textwrap.dedent("""\
             Examples:
               %(prog)s /path/to/repo
-              %(prog)s /path/to/repo --service-map tools/servicemap.json
+              %(prog)s /path/to/repo --service-map servicemap.json
               %(prog)s /path/to/repo --dry-run
         """),
     )

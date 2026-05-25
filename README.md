@@ -36,10 +36,11 @@ Scans your repo and generates a Claude Code skill (`.claude/commands/scrutineer-
 | Performance | Will this scale? Any hidden N+1s, unbounded queries, or hot paths? |
 | Maintainability | Will someone understand this in 6 months? |
 
-**Three review modes:**
+**Four review modes:**
 - **Branch diff** — review your current branch vs main
 - **PR review** — review a pull request by number, optionally post findings as a PR comment
-- **Component review** — deep review of an entire service or app directory (requires service map)
+- **Component review** — full review of an entire service or app directory (requires service map)
+- **Deep repo review** (`--deep`) — trace cross-service flows and surface systemic issues
 
 The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 15+ platforms supported via `peer_review_guidance.yaml`.
 
@@ -173,12 +174,15 @@ Both generators **auto-discover `servicemap.json` at the repo root** when presen
 In Claude Code, inside your repo:
 
 ```
-/scrutineer-code                    # Review current branch diff
-/scrutineer-code --pr 123           # Review a pull request
-/scrutineer-code --component api    # Deep review of a component
+/scrutineer-code                       # Review current branch diff
+/scrutineer-code 123                   # Review PR #123
+/scrutineer-code <component-name>      # Full review of a service/app (requires service map)
+/scrutineer-code --deep                # Deep repo-wide review across services
 
 /scrutineer-security                   # Security audit of current branch diff
-/scrutineer-security --pr 123          # Audit a pull request
+/scrutineer-security 123               # Audit PR #123 (findings to terminal, not posted)
+/scrutineer-security <component-name>  # Full audit of a service/app (requires service map)
+/scrutineer-security --deep            # Deep repo-wide audit across services
 ```
 
 #### 4. Audit an MCP server (standalone)
