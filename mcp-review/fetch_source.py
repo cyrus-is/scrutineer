@@ -301,9 +301,18 @@ def resolve_pypi(spec: str) -> dict:
     name, ver = split_pypi_spec(spec)
     meta = http_get_json(f"{PYPI_JSON}/{quote(name)}/json")
     exact = bool(ver)
-    resolved = ver if exact else meta.get("info", {}).get("version")
     releases = meta.get("releases", {})
-    files = releases.get(resolved) or meta.get("urls", [])
+    if exact:
+        resolved = ver
+        # Do NOT fall back to another version's files: silently resolving a
+        # missing exact pin to 'latest' would mislabel it 'verified' at the
+        # pinned string while reviewing different bytes.
+        files = releases.get(resolved)
+        if not files:
+            raise ValueError(f"version {ver} not found on PyPI for {name}")
+    else:
+        resolved = meta.get("info", {}).get("version")
+        files = releases.get(resolved) or meta.get("urls", []) or []
     sdist = next((f for f in files if f.get("packagetype") == "sdist"), None)
     if sdist is None:
         raise ValueError(f"no source distribution (sdist) published for {name} {resolved}")

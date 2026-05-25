@@ -300,6 +300,32 @@ try:
 finally:
     shutil.rmtree(_d, ignore_errors=True)
 
+# --- resolver layer with a stubbed registry (no network) --------------------
+_saved = F.http_get_json
+try:
+    F.http_get_json = lambda url: {
+        "versions": {"1.2.3": {"dist": {"tarball": "https://r/x-1.2.3.tgz", "integrity": "sha512-AAA"}}},
+        "dist-tags": {"latest": "1.2.3"}}
+    r = F.resolve_npm("pkg@1.2.3")
+    check("resolve_npm exact binds version", r["resolved_version"] == "1.2.3" and r["pin_is_exact"])
+    r = F.resolve_npm("pkg@latest")
+    check("resolve_npm dist-tag not exact", r["resolved_version"] == "1.2.3" and not r["pin_is_exact"])
+
+    F.http_get_json = lambda url: {
+        "info": {"version": "2.0.0"},
+        "releases": {"2.0.0": [{"packagetype": "sdist", "url": "https://f/x-2.0.0.tar.gz",
+                                "digests": {"sha256": "dead"}}]}}
+    r = F.resolve_pypi("pkg==2.0.0")
+    check("resolve_pypi exact binds version", r["resolved_version"] == "2.0.0" and r["pin_is_exact"])
+    _raised = False
+    try:
+        F.resolve_pypi("pkg==9.9.9")          # missing exact must NOT silently fall back to latest
+    except ValueError:
+        _raised = True
+    check("resolve_pypi missing exact raises (no silent fallback)", _raised)
+finally:
+    F.http_get_json = _saved
+
 # ----------------------------------------------------------------------------
 fails = [n for n, ok in _results if not ok]
 for n, ok in _results:
