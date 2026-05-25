@@ -181,13 +181,15 @@ The service map schema is documented in `references/schema.md`.
 
 ## Supported platforms
 
-**Backend:** Go, Python, Java, Node.js, Rust, C#, Ruby, PHP
-**Web:** React/Next.js, Vue/Nuxt
-**Mobile:** iOS (Swift), Android (Kotlin)
-**Infrastructure:** Terraform, Docker, GitHub Actions
-**API:** OpenAPI, GraphQL
+**Backend:** Go, Python, Java, Node.js / JavaScript, Rust, C# / .NET, Ruby, PHP
+**Web:** React / Next.js, Vue.js, Angular
+**Mobile:** iOS (Swift), Android (Kotlin/Java), React Native, Flutter
+**Infrastructure:** Terraform, Docker, Kubernetes, GitHub Actions, GitLab CI
+**API:** OpenAPI / REST, GraphQL, gRPC
 **Database:** SQL, MongoDB
 **Auth:** JWT, OAuth 2.0
+
+Peer review covers a subset; the security review covers the full set above.
 
 Missing your stack? Add it to the guidance YAML and open a PR.
 
