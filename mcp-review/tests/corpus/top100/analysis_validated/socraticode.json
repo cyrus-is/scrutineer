@@ -1,0 +1,1952 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "socraticode",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "socraticode"
+      ],
+      "env_keys": [
+        "EMBEDDING_MODEL",
+        "EMBEDDING_PROVIDER",
+        "GOOGLE_API_KEY",
+        "OLLAMA_URL",
+        "OPENAI_API_KEY",
+        "QDRANT_API_KEY",
+        "QDRANT_MODE",
+        "QDRANT_URL"
+      ],
+      "sensitive_env_keys": [
+        "GOOGLE_API_KEY",
+        "OPENAI_API_KEY",
+        "QDRANT_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "socraticode",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:0cf97f067ab156df642c6b1f9313057c0ec577436ca962581609e08815fbb0fd",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'socraticode' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: socraticode.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "socraticode",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'socraticode' package spec 'socraticode' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "socraticode",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'socraticode' requires credential-like env keys: GOOGLE_API_KEY, OPENAI_API_KEY, QDRANT_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "GOOGLE_API_KEY",
+              "OPENAI_API_KEY",
+              "QDRANT_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "socraticode",
+      "name": "codebase_index",
+      "description": "Start indexing a codebase in the background. Returns immediately. Call codebase_status to poll progress until 100%. Do NOT search until indexing is complete. If already indexing, returns current progress.",
+      "param_names": [
+        "extraExtensions",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_index codebase index"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. If omitted, uses the current"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' matched is filesystem terminology (project directory), not an address book or contact roster."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "env var",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "globally via EXTRA_EXTENSIONS env var."
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets.",
+          "validated_out": true,
+          "validation_reason": "'env var' reference is just a configuration option name, not actual system state, process list, or environment dump access."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "rogress. Absolute path to the project directory. If omitted, uses t"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:d31127cd4f4b41dcb5af99ed4d636feb3350bf6985531ffc89ee47b36aa3ac9b"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_update",
+      "description": "Incrementally update an existing codebase index. Only re-indexes changed files. Runs synchronously. Usually not needed if file watcher is active.",
+      "param_names": [
+        "extraExtensions",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_update codebase update"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Comma-separated list of addi"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "active. Absolute path to the project directory. Comma-separated li"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:a7c628039991701b75de83dcd73ebc0fb5c3991c9e23b152633b7630947cee58"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_remove",
+      "description": "Remove a project's codebase index entirely from the vector database. Safely stops the file watcher, cancels any in-progress indexing/update (with drain), and waits for any in-flight graph build before deleting.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_remove codebase remove"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Remove a project's codebase index entirely fro"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:5c47fd6b174c88f9adafc322428c26ab31600af2b85b5608dafa0b5eac6cdd07"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_stop",
+      "description": "Gracefully stop an in-progress indexing operation. The current batch will finish and checkpoint, preserving all progress. Re-run codebase_index to resume from where it left off.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_stop codebase stop"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. If omitted, uses the current"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eft off. Absolute path to the project directory. If omitted, uses t"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:c5b2ee06d610b99e741b1d53ba2d765bcf3b4965c4bad1661c4f8b9c214a6ec8"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_watch",
+      "description": "Start/stop watching a project directory for file changes and automatically update the index. When starting, first runs an incremental update to catch any changes made since the last session, then keeps the index up to date via debounced file system watching.",
+      "param_names": [
+        "action",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_watch codebase watch"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Start/stop watching a project directory for file changes and automati"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Start/stop watching a project directory for file changes an"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:17ddf9bc256c6d5c3957d03e0b0373fd085109a9c80b8cc15bda876f03ee4415"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_search",
+      "description": "Semantic search across an indexed codebase. Only use after codebase_index is complete (check codebase_status first). Returns relevant code chunks matching a natural language query.",
+      "param_names": [
+        "fileFilter",
+        "includeLinked",
+        "languageFilter",
+        "limit",
+        "minScore",
+        "projectPath",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "database connection",
+            "pattern": "\\b(database|db|datastore)[\\s_-]?(query|exec|execute|connection|table|schema|record)\\b",
+            "snippet": "'authentication middleware', 'database connection setup'). Absolute path to the"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'database connection setup' is an example query phrase users might type, not a description of the tool's capability\u2014it searches indexed source code, not databases."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_search codebase search"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Maximum number of results to"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "env var",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "ally via SEARCH_DEFAULT_LIMIT env var). Filter results to a specifi"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets.",
+          "validated_out": true,
+          "validation_reason": "'env var' reference is just configuration parameter name, not system state access."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "setup'). Absolute path to the project directory. Maximum number of"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:436976861642209b63551d2dbe69bd38fb238beaae269e4fa57567cd5b6afd11"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_status",
+      "description": "Check index status: chunk count, indexing progress (%), last completed operation, file watcher state. Call after codebase_index to poll until 100% complete.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_status codebase status"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "codebase_status codebase status"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "Check index status: chunk count, indexing progress (%), last"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:9f106367826f60ebe253338b319ce6c4b9340060e8966dba22b7fe4dd9cb966b"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_build",
+      "description": "Build a dependency graph of the codebase using static analysis (ast-grep). Maps import/require/export relationships between files. Runs in the background \u2014 call codebase_graph_status to poll progress until complete.",
+      "param_names": [
+        "extraExtensions",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_build codebase graph build"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Comma-separated list of addi"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "env var",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "globally via EXTRA_EXTENSIONS env var."
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets.",
+          "validated_out": true,
+          "validation_reason": "'env var' reference is configuration option, not system state access."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "omplete. Absolute path to the project directory. Comma-separated li"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:fdedb6ec2634035ea85de501f51db705f7364c7297bfb39ff797de0fa7ffcc7e"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_query",
+      "description": "Query the code dependency graph for a specific file. Returns what the file imports and what files depend on it.",
+      "param_names": [
+        "filePath",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_query codebase graph query"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Relative path of the file to"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "d on it. Absolute path to the project directory. Relative path of t"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:24136c5afdeeb74194332ea1b13093f12b8a4d070ccdf1a86de66b126082d6ea"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_stats",
+      "description": "Get statistics about the code dependency graph: total files, edges, most connected files, orphan files, circular dependencies.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_stats codebase graph stats"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "dencies. Absolute path to the project directory."
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "ut the code dependency graph: total files, edges, most connected"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:cfc55900b73c5d851a1cc11b7f6c90f875917446cdd3ab7a6d64f25f3e5d3ed1"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_circular",
+      "description": "Find circular dependencies in the codebase.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_circular codebase graph circular"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "odebase. Absolute path to the project directory."
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:69c6b15e719ec227c69fba2625a93acdebb227df4a4e9b7d2f1f465fcbc7052a"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_visualize",
+      "description": "Visualise the code dependency graph. Two modes:\n  \u2022 mode=\"mermaid\" (default) \u2014 returns a Mermaid diagram (text) colour-coded by language, circular deps highlighted. Best for inline rendering inside chat, GitHub, or editors that render Mermaid.\n  \u2022 mode=\"interactive\" \u2014 writes a self-contained HTML page (vendored Cytoscape.js + Dagre, works offline) and opens it in the user's default browser. Shows the file graph and, when a symbol graph is available and fits, a Symbols toggle with the symbol-level call graph. Interactions: click node for sidebar with imports/dependents/symbols list; right-click node to highlight its blast radius (reverse-transitive closure); live search; layout switcher (Dagre / force / concentric / breadth-first / grid / circle); PNG export. Use this when the user asks for a visual/interactive view, wants to explore visually, or needs a shareable diagram.",
+      "param_names": [
+        "mode",
+        "open",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "chat",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "t for inline rendering inside chat, GitHub, or editors that rend"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "'chat' is mentioned only as an output destination format, not as content the tool handles or accesses."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_visualize codebase graph visualize"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. \"mermaid\" (default \u2014 text di"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "diagram. Absolute path to the project directory. \"mermaid\" (default"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:77beff06fdce0c7cd10d83abf80661bd29b9ff3fcbff8fe35dde0e4b89c82926"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_remove",
+      "description": "Remove a project's persisted code graph. Waits for any in-flight graph build to finish first. The graph can be rebuilt with codebase_graph_build or will be rebuilt automatically on the next codebase_index.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_remove codebase graph remove"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Remove a project's persisted code graph. Waits"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:dc8cbd1d479c54b5c87dc09a130503092c08bb83d8c9de686634c31579f4a988"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_graph_status",
+      "description": "Check the status of the code dependency graph: build progress (if building), node/edge count, when it was last built, whether it's cached in memory. Use this to poll progress after calling codebase_graph_build.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_graph_status codebase graph status"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "e_graph_status codebase graph status"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "ress (if building), node/edge count, when it was last built, whet"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:3320f27836d9cd6687fa4d0825a08c9f43995a9cff62926def1bed34491b5635"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_impact",
+      "description": "Impact Analysis \u2014 return the BLAST RADIUS for a file or symbol. Lists every file (and, where helpful, function) that could break if you change the target. Polymorphic on target: a path-like string ('src/foo.ts') triggers file-mode; a name-like string ('validateUser') triggers symbol-mode. Use this BEFORE refactoring, renaming, or deleting code to know what depends on it.",
+      "param_names": [
+        "depth",
+        "projectPath",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_impact codebase impact"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Target file path (relative)"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "s on it. Absolute path to the project directory. Target file path ("
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:9cc3c7daf807bb24962387b23625496b93af3116d9a52288f6799017cdf12776"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_flow",
+      "description": "Trace the EXECUTION FLOW forward from an entry point \u2014 what does this code call into? With NO args, returns a ranked list of auto-detected entry points (orphans with outgoing calls, conventional names like main(), framework routes, tests). With an entrypoint argument, returns the call tree.",
+      "param_names": [
+        "depth",
+        "entrypoint",
+        "file",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_flow codebase flow"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Symbol name to trace from. O"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ll tree. Absolute path to the project directory. Symbol name to tra"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:c7b6c09b7471c33d80776061a12ee40d404bfedba3fb9ddc5ad55fd3dbe7d70c"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_symbol",
+      "description": "360\u00b0 view of a symbol: definition, kind, callers, callees, confidence levels. Use to understand a function or class before changing it.",
+      "param_names": [
+        "file",
+        "name",
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_symbol codebase symbol"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Symbol name (e.g. 'validateU"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ging it. Absolute path to the project directory. Symbol name (e.g."
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:8eff9d47cd4652f19807a5e73e5a66de4c4c26ba789808e47149d4d60235454b"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_symbols",
+      "description": "List symbols in a file, or search by name across the project. Use to discover what exists before drilling into a single symbol with codebase_symbol.",
+      "param_names": [
+        "file",
+        "limit",
+        "projectPath",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_symbols codebase symbols"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Relative file path \u2014 list al"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "or search by name across the project. Use to discover what exists"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:fa9f14f642cbeddc0d5daf49f6f1a22314a116e31e6000612ce2e8724aff18a5"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_context",
+      "description": "List all context artifacts defined in .socraticodecontextartifacts.json \u2014 database schemas, API specs, infra configs, architecture docs, etc. Shows each artifact's name, description, path, and index status. Use this to discover what project knowledge is available beyond source code.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_context codebase context"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. If omitted, uses the current"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "description, path, and index status. Use this to discover what pr"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:3613b857ebbd8ff7bc5e639ed3655f5ee1bd3f5516a1d69a115ee9629083fc2f"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_context_search",
+      "description": "Semantic search across context artifacts (database schemas, API specs, infra configs, etc.) defined in .socraticodecontextartifacts.json. Auto-indexes on first use and auto-detects stale artifacts. Use this to find relevant infrastructure or domain knowledge.",
+      "param_names": [
+        "artifactName",
+        "limit",
+        "minScore",
+        "projectPath",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "database-schema",
+            "pattern": "\\b(database|db|datastore)[\\s_-]?(query|exec|execute|connection|table|schema|record)\\b",
+            "snippet": "cific artifact by name (e.g. 'database-schema'). Omit to search across all"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false,
+          "needs_source": true
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_context_search codebase context search"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "billing",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "uery (e.g. 'tables related to billing', 'authentication endpoints',"
+          },
+          "rationale": "Direct financial exposure and a regulated data class.",
+          "needs_source": true
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory. Filter search to a specific"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "env var",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "globally via SEARCH_MIN_SCORE env var). Set to 0 to disable filteri"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets.",
+          "validated_out": true,
+          "validation_reason": "'env var' reference is configuration option, not system state access."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "imits'). Absolute path to the project directory. Filter search to a"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:cb426838d1a164115ed0a0b5835c028fd20f166c6d699d85bf57aca1cf513ea1"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_context_index",
+      "description": "Index or re-index all context artifacts defined in .socraticodecontextartifacts.json. Chunks and embeds artifact content into the vector database for semantic search. Usually not needed \u2014 codebase_context_search auto-indexes on first use.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_context_index codebase context index"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "rst use. Absolute path to the project directory."
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:135d7f7b2bf3d666f1eb4ab3cf36bff8c7a615d47fab0b5e51322ab3a741e18d"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_context_remove",
+      "description": "Remove all indexed context artifacts for a project from the vector database. Blocked while indexing is in progress \u2014 use codebase_stop or wait for the operation to finish first.",
+      "param_names": [
+        "projectPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_context_remove codebase context remove"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Absolute path to the project directory."
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'directory' is filesystem terminology, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "dexed context artifacts for a project from the vector database. Blo"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:404e3498991318ad408983945d3e04ee70ee7dedca17f5d4845adaf4019d4da8"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_health",
+      "description": "Check the health of all infrastructure: Docker, Qdrant container, Ollama, and embedding model. Use this to diagnose setup issues.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_health codebase health"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:0542412fc046c51ef467f45a2f2d0480df7829e296e655d89e093525cc8f0691"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_list_projects",
+      "description": "List all projects that have been indexed (have collections in Qdrant).",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_list_projects codebase list projects"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "list projects",
+            "pattern": "\\b(list|get)[\\s_-]?(project|task|issue|ticket)s?\\b",
+            "snippet": "debase_list_projects codebase list projects"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:de3839b690781dfefc603b0ad86b04530b4c4b0f4a2409ef60a0f29e5609da7d"
+    },
+    {
+      "server": "socraticode",
+      "name": "codebase_about",
+      "description": "Display information about SocratiCode \u2014 what it is, its tools and how to use it. Use this to get a quick overview of the MCP tools and their purpose.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "codebase_about codebase about"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:bbb508f9a6ff48aad9d896339baa7d56ea36bc82515395c84b58bf6601a0fdd1"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 25,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 22,
+        "confidence": "medium"
+      },
+      "system_state": {
+        "label": "System / process / environment state",
+        "tier": "high",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 23,
+        "confidence": "high"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 25,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "contacts",
+      "financial",
+      "project_metadata",
+      "public_data",
+      "source_code",
+      "system_state"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 51,
+      "false_positive": 28,
+      "needs_source": 2,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::codebase_index::contacts",
+        "reason": "'directory' matched is filesystem terminology (project directory), not an address book or contact roster."
+      },
+      {
+        "id": "data::codebase_index::system_state",
+        "reason": "'env var' reference is just a configuration option name, not actual system state, process list, or environment dump access."
+      },
+      {
+        "id": "data::codebase_update::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_remove::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_stop::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_watch::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "cap::codebase_search::database_access",
+        "reason": "'database connection setup' is an example query phrase users might type, not a description of the tool's capability\u2014it searches indexed source code, not databases."
+      },
+      {
+        "id": "data::codebase_search::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_search::system_state",
+        "reason": "'env var' reference is just configuration parameter name, not system state access."
+      },
+      {
+        "id": "data::codebase_status::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_build::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_build::system_state",
+        "reason": "'env var' reference is configuration option, not system state access."
+      },
+      {
+        "id": "data::codebase_graph_query::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_stats::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_circular::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_visualize::communications_content",
+        "reason": "'chat' is mentioned only as an output destination format, not as content the tool handles or accesses."
+      },
+      {
+        "id": "data::codebase_graph_visualize::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_remove::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_graph_status::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_impact::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_flow::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_symbol::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_symbols::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_context::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_context_search::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_context_search::system_state",
+        "reason": "'env var' reference is configuration option, not system state access."
+      },
+      {
+        "id": "data::codebase_context_index::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      },
+      {
+        "id": "data::codebase_context_remove::contacts",
+        "reason": "'directory' is filesystem terminology, not contacts."
+      }
+    ]
+  }
+}

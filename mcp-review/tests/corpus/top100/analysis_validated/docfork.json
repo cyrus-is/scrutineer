@@ -1,0 +1,299 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "docfork",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "docfork"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "docfork",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:756c923259c40fb0b6c5ae6cf3605e7ab4bb4ce447aa977ccd3ba68e564e202b",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'docfork' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: docfork.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "docfork",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'docfork' package spec 'docfork' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "docfork",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "docfork",
+      "name": "search_docs",
+      "description": "Search a library's indexed documentation and return relevant sections with titles, summaries, and URLs. Results are sourced from official, versioned documentation.\n\nUsage:\n- Be specific in your query. Include the feature, API, or concept you need. Good: \"server-side rendering with App Router\". Bad: \"rendering\".\n- The library parameter accepts a simple name (e.g., react, nextjs) or exact owner/repo for precision (e.g., vercel/next.js, TanStack/query).\n- When multiple library candidates appear, prefer exact name matches and official organizations over forks.\n- After 2 searches without finding the relevant section, switch to fetch_doc on the best result URL or the library's documentation root rather than searching again.\n- Use fetch_doc on result URLs to retrieve full documentation content.",
+      "param_names": [
+        "library",
+        "query",
+        "tokens"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "fetch_doc on the best result URL or the library's documentatio"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "react, nextjs) or exact owner/repo for precision (e.g., vercel/n"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "The matched 'repo' refers to library names used as search parameters (e.g., 'vercel/nextjs'), not source code access; tool searches indexed documentation, not repositories."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:96972b74d15e4bddba4f47bd2e0194c53aaa0def775e4687b99a4364ad189c64"
+    },
+    {
+      "server": "docfork",
+      "name": "fetch_doc",
+      "description": "Retrieve full documentation content from a URL and return it as rendered markdown. Use this tool to get complete pages \u2014 including code examples, API signatures, and prose \u2014 from search_docs result URLs.\n\n- Pass a URL directly from search_docs results to retrieve that section's full content.\n- Trim the URL anchor or path to a parent directory to get a broader table of contents with section previews.\n- Returns rendered markdown that preserves code blocks, headings, and document structure.\n- Only works on Docfork-indexed documentation \u2014 use WebFetch for URLs not returned by search_docs.\n- If search_docs returns sparse or no results, try fetch_doc on the library's root documentation URL (e.g. https://github.com/owner/repo/tree/main/docs) to browse available content.",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "fetch_doc fetch doc"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "e.g. https://github.com/owner/repo/tree/main/docs) to browse ava"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "needs_source": true
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "doc",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "fetch_doc fetch doc"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "RL anchor or path to a parent directory to get a broader table of con"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' refers to filesystem/URL path navigation ('parent directory'), not a contacts directory; technical jargon mismatch with intended data category."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:50adf8e0e2521e7ce19d19b9066c4b3d5e073b40ab5b1fd84a55109a290299d1"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "files_documents",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 3,
+      "false_positive": 2,
+      "needs_source": 2,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::search_docs::source_code",
+        "reason": "The matched 'repo' refers to library names used as search parameters (e.g., 'vercel/nextjs'), not source code access; tool searches indexed documentation, not repositories."
+      },
+      {
+        "id": "data::fetch_doc::contacts",
+        "reason": "Matched 'directory' refers to filesystem/URL path navigation ('parent directory'), not a contacts directory; technical jargon mismatch with intended data category."
+      }
+    ]
+  }
+}

@@ -1,0 +1,1217 @@
+{
+  "server": "autots",
+  "captured_at": "2026-05-26T22:24:52Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "autots",
+    "version": "1.27.1"
+  },
+  "tools": [
+    {
+      "name": "list_cache",
+      "title": "List Cached Objects",
+      "description": "List all cached objects across all cache types (predictions, autots_models, event_risk, feature_detectors, data). Call this to discover existing IDs before calling any get_*, plot_*, or apply_* tools.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "clear_cache",
+      "title": "Clear Cache",
+      "description": "Clear cache: specific object by ID+type, an entire cache type, or all caches. Destructive \u2014 freed objects cannot be recovered.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "object_id": {
+            "type": "string",
+            "description": "Specific object ID to clear"
+          },
+          "cache_type": {
+            "type": "string",
+            "enum": [
+              "prediction",
+              "autots",
+              "event_risk",
+              "feature_detector",
+              "data"
+            ],
+            "description": "Cache type to clear (omit both params to clear all)"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "load_sample_data",
+      "title": "Load Sample Dataset",
+      "description": "Load a built-in sample time series dataset. Returns data_id for use as the data_id parameter in forecast_*, detect_features, forecast_event_risk, clean_data, and get_data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "hourly",
+              "weekly",
+              "monthly",
+              "yearly",
+              "linear",
+              "sine",
+              "artificial"
+            ],
+            "default": "daily",
+            "description": "Sample dataset to load"
+          },
+          "long": {
+            "type": "boolean",
+            "default": false,
+            "description": "Return long format (default: wide)"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass as data_id to other tools"
+          },
+          "source": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "load_live_data",
+      "title": "Load Live Data (FRED / Stocks)",
+      "description": "Load live data from external sources (FRED economic data, stock tickers). Returns data_id. Requires network access.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fred_key": {
+            "type": "string",
+            "description": "FRED API key"
+          },
+          "fred_series": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "FRED series codes"
+          },
+          "tickers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stock tickers"
+          },
+          "long": {
+            "type": "boolean",
+            "default": false,
+            "description": "Return long format"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass as data_id to other tools"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "generate_synthetic_data",
+      "title": "Generate Synthetic Time Series",
+      "description": "Generate synthetic time series data with labeled components for testing. Returns data_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "n_series": {
+            "type": "integer",
+            "default": 5,
+            "description": "Number of series to generate"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass as data_id to other tools"
+          },
+          "n_series": {
+            "type": "integer"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "load_data_from_file",
+      "title": "Load Data from File or URL",
+      "description": "Load a CSV from a local file path or URL. Returns data_id. CSV must have a datetime column as the first column (index).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filepath": {
+            "type": "string",
+            "description": "Local file path or URL to CSV"
+          }
+        },
+        "required": [
+          "filepath"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass as data_id to other tools"
+          },
+          "source": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_data",
+      "title": "Get Cached Data",
+      "description": "Retrieve cached data as JSON (wide or long) or save as CSV. Requires data_id from load_sample_data, load_live_data, load_data_from_file, generate_synthetic_data, convert_long_to_wide, or clean_data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "output_format": {
+            "type": "string",
+            "enum": [
+              "json_wide",
+              "json_long",
+              "csv_wide",
+              "csv_long"
+            ],
+            "default": "json_wide",
+            "description": "Output format"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "convert_long_to_wide",
+      "title": "Convert Long Format to Wide",
+      "description": "Convert long-format data (datetime, series_id, value columns) to wide format. Provide either data (inline dict) or data_id. Returns new data_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Long format data with datetime, series_id, value columns"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID (alternative to data)"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID for converted wide-format data"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "clean_data",
+      "title": "Clean Time Series Data",
+      "description": "Clean time series data: fill missing values and handle outliers. Provide either data (inline dict) or data_id. Returns new data_id with cleaned data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "fillna": {
+            "type": "string",
+            "enum": [
+              "ffill",
+              "mean",
+              "median",
+              "rolling_mean",
+              "linear"
+            ],
+            "default": "ffill",
+            "description": "Missing value fill method"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID for cleaned data"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "cols": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "forecast_fast",
+      "title": "Fast Mosaic Ensemble Forecast",
+      "description": "FAST: Pre-configured mosaic ensemble forecast using fit_data (no model search). Use for quick results. Provide data or data_id. Returns prediction_id for use in get_forecast, plot_forecast, apply_constraints, apply_adjustments, get_model_params.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "forecast_length": {
+            "type": "integer",
+            "default": 30,
+            "description": "Periods to forecast"
+          },
+          "profile_template": {
+            "type": "object",
+            "description": "Optional custom mosaic profile JSON"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_forecast, plot_forecast, apply_constraints, apply_adjustments, get_model_params"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID for the input data \u2014 pass as data_id to apply_adjustments when using align_last_value"
+          },
+          "forecast_length": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "data_id",
+          "forecast_length"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "forecast_explainable",
+      "title": "Explainable Model Forecast",
+      "description": "MODERATE: AutoTS model search restricted to EXPLAINABLE models (Cassandra, TVVAR, BasicLinearModel). Use when interpretability matters. Provide data or data_id. Returns prediction_id and autots_id. Use get_forecast_components on prediction_id for component decomposition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "forecast_length": {
+            "type": "integer",
+            "default": 30,
+            "description": "Periods to forecast"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_forecast, plot_forecast, get_forecast_components, apply_constraints, apply_adjustments"
+          },
+          "autots_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_validation_results, plot_validation"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID for the input data \u2014 pass as data_id to apply_adjustments when using align_last_value"
+          },
+          "forecast_length": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "autots_id",
+          "data_id",
+          "forecast_length"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "forecast_custom",
+      "title": "Custom AutoTS Forecast",
+      "description": "CUSTOM: AutoTS with user-specified parameters or template. Use when forecast_fast results are insufficient. Read the autots://docs/forecast_custom_params resource for available parameters. Defaults to 'scalable' model_list. Provide data or data_id. Returns prediction_id and autots_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "forecast_length": {
+            "type": "integer",
+            "default": 30,
+            "description": "Periods to forecast"
+          },
+          "autots_params": {
+            "type": "object",
+            "description": "AutoTS initialization parameters (defaults: model_list='scalable')"
+          },
+          "model_template": {
+            "type": "object",
+            "description": "Specific model template to run"
+          },
+          "future_regressor_train": {
+            "type": "object",
+            "description": "Future regressor for training (wide format DataFrame)"
+          },
+          "future_regressor_forecast": {
+            "type": "object",
+            "description": "Future regressor for forecast period (wide format DataFrame)"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_forecast, plot_forecast, get_forecast_components, apply_constraints, apply_adjustments"
+          },
+          "autots_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_validation_results, plot_validation"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cache ID for the input data \u2014 pass as data_id to apply_adjustments when using align_last_value"
+          },
+          "forecast_length": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "autots_id",
+          "data_id",
+          "forecast_length"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "get_forecast",
+      "title": "Get Forecast Data",
+      "description": "Retrieve forecast values from a cached prediction as JSON or CSV. Requires prediction_id from forecast_fast, forecast_explainable, forecast_custom, or forecast_from_features. Use output='all' to get point, upper, and lower forecasts combined with a forecast_type column.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID"
+          },
+          "output": {
+            "type": "string",
+            "enum": [
+              "forecast",
+              "upper_forecast",
+              "lower_forecast",
+              "all"
+            ],
+            "default": "forecast",
+            "description": "Which forecast to return. 'all' returns point, upper, and lower combined in long format with forecast_type column"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json_wide",
+              "json_long",
+              "csv_wide",
+              "csv_long"
+            ],
+            "default": "json_wide",
+            "description": "Output format. Note: 'all' output uses long format automatically"
+          }
+        },
+        "required": [
+          "prediction_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "plot_forecast",
+      "title": "Plot Forecast",
+      "description": "Plot forecast with optional history and prediction intervals. Requires prediction_id from forecast_fast, forecast_explainable, forecast_custom, or forecast_from_features. Returns base64-encoded PNG image. Defaults to first series only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID"
+          },
+          "include_history": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include historical data"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific series to plot (by name/id)"
+          },
+          "plot_all": {
+            "type": "boolean",
+            "default": false,
+            "description": "Plot all series (overrides series parameter)"
+          }
+        },
+        "required": [
+          "prediction_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "apply_constraints",
+      "title": "Apply Forecast Constraints",
+      "description": "Apply constraints to a forecast (dampen growth, enforce upper/lower bounds, or quantile clipping). Requires prediction_id from a forecast tool. Returns a new prediction_id with constrained values.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID"
+          },
+          "constraint_method": {
+            "type": "string",
+            "enum": [
+              "dampen",
+              "upper",
+              "lower",
+              "quantile"
+            ],
+            "description": "Constraint type"
+          },
+          "constraint_value": {
+            "type": "number",
+            "description": "Constraint value"
+          },
+          "constraint_direction": {
+            "type": "string",
+            "enum": [
+              "upper",
+              "lower"
+            ],
+            "description": "Direction for bounds"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "constraint_method"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID for the constrained forecast"
+          },
+          "constraint_method": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "constraint_method"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "apply_adjustments",
+      "title": "Apply Forecast Adjustments",
+      "description": "Apply post-hoc adjustments to a forecast. Requires prediction_id from a forecast tool. Three types: 1) 'basic'/'linear'/'ramp' \u2014 linear ramp between start/end dates with start/end values (additive or multiplicative); 2) 'align_last_value'/'alignlastvalue' \u2014 align forecast to recent history (also requires data_id); 3) 'smoothing'/'ewma' \u2014 exponential smoothing with span parameter. Optionally restrict to specific series_ids. Returns new prediction_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID for training data (required for align_last_value)"
+          },
+          "adjustment_method": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "linear",
+              "ramp",
+              "align_last_value",
+              "alignlastvalue",
+              "smoothing",
+              "ewma"
+            ],
+            "description": "Adjustment type"
+          },
+          "adjustment_params": {
+            "type": "object",
+            "description": "Adjustment parameters. For basic: {start_date, end_date, start_value, end_value, value, method='additive'|'multiplicative'}. For align_last_value: {rows, lag, method, strength}. For smoothing: {span}"
+          },
+          "series_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Series IDs to apply adjustment to. If omitted, applies to all series."
+          }
+        },
+        "required": [
+          "prediction_id",
+          "adjustment_method"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID for the adjusted forecast"
+          },
+          "adjustment_method": {
+            "type": "string"
+          },
+          "series_ids_applied": {}
+        },
+        "required": [
+          "prediction_id",
+          "adjustment_method"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "get_model_params",
+      "title": "Get Model Parameters",
+      "description": "Get model name, parameters, and transformation parameters from a cached prediction. Requires prediction_id from any forecast tool.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID"
+          }
+        },
+        "required": [
+          "prediction_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "get_forecast_components",
+      "title": "Get Forecast Component Decomposition",
+      "description": "Get decomposed forecast components (trend, seasonality, etc.) if available. Only works for Cassandra and TVVAR models \u2014 use forecast_explainable to guarantee these model types. Requires prediction_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cached prediction ID (must be from a Cassandra or TVVAR model)"
+          }
+        },
+        "required": [
+          "prediction_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "get_validation_results",
+      "title": "Get Validation Results",
+      "description": "Get cross-validation results and top model rankings from an AutoTS model search. Requires autots_id from forecast_explainable or forecast_custom.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "autots_id": {
+            "type": "string",
+            "description": "Cached AutoTS ID"
+          }
+        },
+        "required": [
+          "autots_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "plot_validation",
+      "title": "Plot Validation Forecasts",
+      "description": "Plot cross-validation forecasts from an AutoTS model search. Requires autots_id from forecast_explainable or forecast_custom. Returns base64-encoded PNG.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "autots_id": {
+            "type": "string",
+            "description": "Cached AutoTS ID"
+          }
+        },
+        "required": [
+          "autots_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "forecast_event_risk",
+      "title": "Forecast Event Risk Probabilities",
+      "description": "Forecast the probability of crossing a threshold over future periods (e.g., stockout risk, capacity breach). Threshold in [0,1] is treated as a historical quantile; values outside [0,1] are absolute. Provide data or data_id. Returns event_risk_id for use in get_event_risk_results and plot_event_risk.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          },
+          "forecast_length": {
+            "type": "integer",
+            "default": 30,
+            "description": "Periods to forecast"
+          },
+          "threshold": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            ],
+            "description": "Threshold value (required). Float in [0,1] = historical quantile. Outside [0,1] = absolute threshold. Can be 2D array of shape (forecast_length, num_series)."
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "upper",
+              "lower"
+            ],
+            "default": "upper",
+            "description": "Detect crossing above (upper) or below (lower) the threshold"
+          },
+          "tune": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable model tuning (slower but more accurate)"
+          }
+        },
+        "required": [
+          "threshold"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "event_risk_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_event_risk_results or plot_event_risk"
+          },
+          "threshold": {},
+          "direction": {
+            "type": "string"
+          },
+          "forecast_length": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_risk_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "get_event_risk_results",
+      "title": "Get Event Risk Probabilities",
+      "description": "Get event risk probability values from a cached EventRiskForecast. Requires event_risk_id from forecast_event_risk. Returns probabilities per period per series.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_risk_id": {
+            "type": "string",
+            "description": "Cached event risk ID"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json_wide",
+              "json_long",
+              "csv_wide",
+              "csv_long"
+            ],
+            "default": "json_wide",
+            "description": "Output format"
+          }
+        },
+        "required": [
+          "event_risk_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "plot_event_risk",
+      "title": "Plot Event Risk Probabilities",
+      "description": "Plot event risk probabilities over the forecast horizon. Requires event_risk_id from forecast_event_risk. Returns base64-encoded PNG.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_risk_id": {
+            "type": "string",
+            "description": "Cached event risk ID"
+          }
+        },
+        "required": [
+          "event_risk_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "detect_features",
+      "title": "Detect Time Series Features",
+      "description": "Detect anomalies, changepoints, level shifts, holidays, and seasonality patterns across all series. Provide data or data_id. Returns detector_id for use in get_detected_features, plot_features, and forecast_from_features.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Wide format data"
+          },
+          "data_id": {
+            "type": "string",
+            "description": "Cached data ID"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "data"
+            ]
+          },
+          {
+            "required": [
+              "data_id"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "detector_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_detected_features, plot_features, forecast_from_features"
+          },
+          "series_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "detector_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "get_detected_features",
+      "title": "Get Detected Features",
+      "description": "Query detected features (anomalies, changepoints, level shifts, holidays, seasonality) from a cached detector. Requires detector_id from detect_features. Supports filtering by date range, specific date, or series name. Use include_components=true for time-series component values. Examples: 'was there an anomaly on 2024-12-25?', 'when was the first level shift?'",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detector_id": {
+            "type": "string",
+            "description": "Cached detector ID"
+          },
+          "date_start": {
+            "type": "string",
+            "description": "Optional start date filter (YYYY-MM-DD)"
+          },
+          "date_end": {
+            "type": "string",
+            "description": "Optional end date filter (YYYY-MM-DD)"
+          },
+          "specific_date": {
+            "type": "string",
+            "description": "Optional single date to query (YYYY-MM-DD)"
+          },
+          "series_name": {
+            "type": "string",
+            "description": "Optional series name to filter results"
+          },
+          "include_components": {
+            "type": "boolean",
+            "description": "Include component time-series values (default: false)"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "description": "Include metadata like noise levels and scales (default: false)"
+          }
+        },
+        "required": [
+          "detector_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "plot_features",
+      "title": "Plot Detected Features",
+      "description": "Plot detected features overlaid on the time series. Requires detector_id from detect_features. Returns base64-encoded PNG.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detector_id": {
+            "type": "string",
+            "description": "Cached detector ID"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific series to plot"
+          }
+        },
+        "required": [
+          "detector_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "forecast_from_features",
+      "title": "Forecast from Detected Features (Experimental)",
+      "description": "EXPERIMENTAL: Create a forecast using the decomposed components from a feature detector. Only use after detect_features, not as a standalone forecasting method. Requires detector_id from detect_features. Returns prediction_id for use in get_forecast, plot_forecast.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detector_id": {
+            "type": "string",
+            "description": "Cached detector ID"
+          },
+          "forecast_length": {
+            "type": "integer",
+            "default": 30,
+            "description": "Periods to forecast"
+          }
+        },
+        "required": [
+          "detector_id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prediction_id": {
+            "type": "string",
+            "description": "Cache ID \u2014 pass to get_forecast or plot_forecast"
+          },
+          "forecast_length": {
+            "type": "integer"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "forecast_length"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false
+      }
+    }
+  ]
+}

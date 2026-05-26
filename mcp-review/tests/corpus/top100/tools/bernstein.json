@@ -1,0 +1,5 @@
+{
+  "server": "bernstein",
+  "error": "initialize: timeout waiting for id=1",
+  "tools": []
+}

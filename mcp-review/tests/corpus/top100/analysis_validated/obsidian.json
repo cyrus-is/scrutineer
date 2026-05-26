@@ -1,0 +1,1045 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "obsidian",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp-server"
+      ],
+      "env_keys": [
+        "MCP_LOG_LEVEL",
+        "OBSIDIAN_API_KEY",
+        "OBSIDIAN_BASE_URL",
+        "OBSIDIAN_ENABLE_COMMANDS",
+        "OBSIDIAN_READ_ONLY",
+        "OBSIDIAN_READ_PATHS",
+        "OBSIDIAN_REQUEST_TIMEOUT_MS",
+        "OBSIDIAN_VERIFY_SSL",
+        "OBSIDIAN_WRITE_PATHS"
+      ],
+      "sensitive_env_keys": [
+        "OBSIDIAN_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "obsidian-mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:e8b244f07abfc167794efd0f3585b46ce04cf64975d38a854c291ba21c2b0c01",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'obsidian' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: obsidian-mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "obsidian-mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'obsidian' package spec 'obsidian-mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "obsidian-mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'obsidian' requires credential-like env keys: OBSIDIAN_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "OBSIDIAN_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "obsidian",
+      "name": "obsidian_get_note",
+      "description": "Read a note from the vault \u2014 by path, the active file, or a periodic note. Choose a `format` projection: raw body, full object, structural document map, or a single section.",
+      "param_names": [
+        "format",
+        "includeLinks",
+        "section",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "Read a note from the vault \u2014 by path, the active file, o"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is standard terminology for a note collection, not a credential storage vault."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "Read a note from the vault \u2014 by path, the active file, o"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; the pattern conflates Obsidian's domain terminology with security vaults."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "body, full object, structural document map, or a single section. Whi"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:55519550ce3402d889f8427d35afcc8c5cf5cbe9e2a91cdf5999494cbc3f927e"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_list_notes",
+      "description": "List notes and subdirectories at a vault path. Defaults to the vault root when `path` is omitted. Tune recursion with `depth`, or filter the walk with `extension` / `nameRegex`. Capped at 1000 entries per call \u2014 when reached, walking stops and `excluded` is set; narrow `path` or tighten filters to surface the rest.",
+      "param_names": [
+        "depth",
+        "extension",
+        "nameRegex",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "notes and subdirectories at a vault path. Defaults to the vault r"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "notes and subdirectories at a vault path. Defaults to the vault r"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection, not a credential store."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "face the rest. Vault-relative directory path. Omit for the vault root"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' refers to file system directory paths, not a contacts/address-book directory."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:bb354c9bf3648ec269164c8d0ead677a21bd383d1512b6a82dfbe0ee511490cb"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_list_tags",
+      "description": "List every tag found across the vault, with usage counts. Includes hierarchical parents \u2014 `work/tasks` contributes to both `work` and `work/tasks`. To find notes by tag, use `obsidian_search_notes` in dataview mode (e.g. `TABLE FROM #work`).",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "st every tag found across the vault, with usage counts. Includes"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' refers to the note collection, not secret storage."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "st every tag found across the vault, with usage counts. Includes"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; no credential risk from listing tags across notes."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:50e589654428d08f50dd6a9fe925ad0b36864b59b6985f593d6f6f734a358fa5"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_search_notes",
+      "description": "Search the vault by text substring, Dataview DQL query, or JSONLogic predicate. Pick the mode that matches the query shape. Results cap at 100 hits with an `excluded` indicator when more were available; text-mode hits also clip per file at `maxMatchesPerHit`. On large vaults, narrow with `pathPrefix` or lower `maxMatchesPerHit` to keep responses compact.",
+      "param_names": [
+        "contextLength",
+        "logic",
+        "maxMatchesPerHit",
+        "mode",
+        "pathPrefix",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "Search the vault by text substring, Dataview D"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is the note collection being searched, not a credential vault."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "Search the vault by text substring, Dataview D"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; searching notes does not indicate credential-specific capability."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:303127c61c94bc3bdb947d681f31dccfc6660275958872e4406a9d01fd1b0801"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_open_in_ui",
+      "description": "Open a file in the Obsidian app UI. By default fails when the path does not exist; the `failIfMissing` flag controls the open-or-create behavior.",
+      "param_names": [
+        "failIfMissing",
+        "newLeaf",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "the open-or-create behavior. Vault-relative path of the file to"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'Vault' (capitalized) is standard terminology for the note storage container, not secrets."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "the open-or-create behavior. Vault-relative path of the file to"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'Vault' refers to the note collection; opening a file path does not indicate credential access."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:75cf1ec67b53e809b3c4befbe908c4d1a08317c66508dae4d4a53b9e8a07240d"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_write_note",
+      "description": "Create or overwrite a note. With `section`, replaces just that heading/block/frontmatter section in place; nested headings need `Parent::Child` syntax \u2014 use `obsidian_get_note` with `format: \"document-map\"` to discover available targets. Whole-file writes fail with `file_exists` against an existing note unless `overwrite: true` \u2014 for in-place edits, prefer `obsidian_patch_note` (sections), `obsidian_append_to_note` (append), or `obsidian_replace_in_note` (find-and-replace). For heading sections, `content` is the new body; the heading line is preserved automatically.",
+      "param_names": [
+        "content",
+        "contentType",
+        "overwrite",
+        "section",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is the note collection, not a credential storage system."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; writing notes does not inherently risk credential exposure."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "overwrite"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:be6b0156c94ca0be7f220be39782b9d98b71d6a74e37dadc7917749c6ec8ffcf"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_append_to_note",
+      "description": "Append content to a note. Without `section`, the body is appended to the end of the file. With `section`, the content is appended to the end of that heading/block/frontmatter; nested headings need `Parent::Child` syntax \u2014 use `obsidian_get_note` with `format: \"document-map\"` to discover available targets. For block-reference targets, content is concatenated adjacent to the block line without inserting a separator \u2014 include a leading newline in `content` if you want one. Set `createTargetIfMissing` to bring the target section into existence rather than failing when it does not exist.",
+      "param_names": [
+        "content",
+        "contentType",
+        "createTargetIfMissing",
+        "section",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; appending content does not indicate credential handling."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:3175f2ed6337b08dc2151a82f3ff962f67e7b6668444a4bf21d6822d213b2c2f"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_patch_note",
+      "description": "Edit a heading, block reference, or frontmatter field in place \u2014 append to, prepend to, or replace the target's body. Use `obsidian_get_note` with `format: \"document-map\"` to discover available targets first; nested headings need `Parent::Child` syntax.",
+      "param_names": [
+        "content",
+        "contentType",
+        "operation",
+        "patchOptions",
+        "section",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is the note collection, not credential storage."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; editing sections does not indicate credential-specific access."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:71724c6ecb55f900ad30a0025eb366d54fb77f0d18f68ad6f1a1e1e7573b7b99"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_replace_in_note",
+      "description": "Search and replace inside a single note, literally or by regex. Replacements run in array order, each over the previous one's output. Use for edits that don't fit `obsidian_patch_note`'s structural targets \u2014 e.g., body-wide find-and-replace.",
+      "param_names": [
+        "replacements",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets storage system."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; find-and-replace does not indicate credential handling."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:ff2ffd75a2e8e9cdf5929f753f09aa39e39ff3e92c301dea3021c125165439ee"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_manage_frontmatter",
+      "description": "Get, set, or delete a single frontmatter key on a note, atomically. `set` requires a JSON-typed `value` (string, number, boolean, array, or object).",
+      "param_names": [
+        "key",
+        "operation",
+        "target",
+        "value"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is the note collection; managing frontmatter is standard note metadata access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; frontmatter fields are note metadata, not credentials."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:d44d414f68800f513857d3ea85288b4745ffca42a91f4267f41d36e8878e43b0"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_manage_tags",
+      "description": "Add, remove, or list a note's tags. The server reconciles both representations \u2014 frontmatter `tags:` array and inline `#tag` syntax \u2014 so an `add` ensures the tag is present in the requested location(s), and a `remove` strips it. Inline `#tag` occurrences inside fenced code blocks are intentionally left alone. Inline-location additions append the new tag at the end of the file. `list` ignores the input `tags` array.",
+      "param_names": [
+        "location",
+        "operation",
+        "tags",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is the note collection; tag management does not indicate secrets access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "lives. Address a note by its vault-relative path. Address by vau"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; tagging operations do not indicate credential handling."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "pe period date operation tags location"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "Matched 'location' parameter specifies tag placement (frontmatter vs inline), not geographic location data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:5ff0ebe9e5ecbe745118f14f22c93925a896ae7cb3c3db33f46cde32f5060c5a"
+    },
+    {
+      "server": "obsidian",
+      "name": "obsidian_delete_note",
+      "description": "Permanently delete a note from the vault. Confirms with the user before deleting when the client supports interactive confirmation. Recovery requires the local trash in Obsidian \u2014 there is no API-level undo.",
+      "param_names": [
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "nently delete a note from the vault. Confirms with the user befor"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; deletion capability does not inherently access credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "vault",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "nently delete a note from the vault. Confirms with the user befor"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Obsidian 'vault' is a note collection; deletion does not indicate credential-specific access."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:097cd85c274d35212728f5bb7f7079a914fbc1fca0de79291497447404ffd42c"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 12,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "credentials_secrets"
+    ],
+    "note": "Rating reflects high-confidence matches; credentials_secrets matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 12,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 12,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 13,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "credentials_secrets",
+      "files_documents",
+      "location"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 4,
+      "false_positive": 26,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::obsidian_get_note::secrets_access",
+        "reason": "Obsidian 'vault' is standard terminology for a note collection, not a credential storage vault."
+      },
+      {
+        "id": "data::obsidian_get_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; the pattern conflates Obsidian's domain terminology with security vaults."
+      },
+      {
+        "id": "cap::obsidian_list_notes::secrets_access",
+        "reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+      },
+      {
+        "id": "data::obsidian_list_notes::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection, not a credential store."
+      },
+      {
+        "id": "data::obsidian_list_notes::contacts",
+        "reason": "Matched 'directory' refers to file system directory paths, not a contacts/address-book directory."
+      },
+      {
+        "id": "cap::obsidian_list_tags::secrets_access",
+        "reason": "Obsidian 'vault' refers to the note collection, not secret storage."
+      },
+      {
+        "id": "data::obsidian_list_tags::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; no credential risk from listing tags across notes."
+      },
+      {
+        "id": "cap::obsidian_search_notes::secrets_access",
+        "reason": "Obsidian 'vault' is the note collection being searched, not a credential vault."
+      },
+      {
+        "id": "data::obsidian_search_notes::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; searching notes does not indicate credential-specific capability."
+      },
+      {
+        "id": "cap::obsidian_open_in_ui::secrets_access",
+        "reason": "Obsidian 'Vault' (capitalized) is standard terminology for the note storage container, not secrets."
+      },
+      {
+        "id": "data::obsidian_open_in_ui::credentials_secrets",
+        "reason": "Obsidian 'Vault' refers to the note collection; opening a file path does not indicate credential access."
+      },
+      {
+        "id": "cap::obsidian_write_note::secrets_access",
+        "reason": "Obsidian 'vault' is the note collection, not a credential storage system."
+      },
+      {
+        "id": "data::obsidian_write_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; writing notes does not inherently risk credential exposure."
+      },
+      {
+        "id": "cap::obsidian_append_to_note::secrets_access",
+        "reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+      },
+      {
+        "id": "data::obsidian_append_to_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; appending content does not indicate credential handling."
+      },
+      {
+        "id": "cap::obsidian_patch_note::secrets_access",
+        "reason": "Obsidian 'vault' is the note collection, not credential storage."
+      },
+      {
+        "id": "data::obsidian_patch_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; editing sections does not indicate credential-specific access."
+      },
+      {
+        "id": "cap::obsidian_replace_in_note::secrets_access",
+        "reason": "Obsidian 'vault' is a note collection, not a secrets storage system."
+      },
+      {
+        "id": "data::obsidian_replace_in_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; find-and-replace does not indicate credential handling."
+      },
+      {
+        "id": "cap::obsidian_manage_frontmatter::secrets_access",
+        "reason": "Obsidian 'vault' is the note collection; managing frontmatter is standard note metadata access."
+      },
+      {
+        "id": "data::obsidian_manage_frontmatter::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; frontmatter fields are note metadata, not credentials."
+      },
+      {
+        "id": "cap::obsidian_manage_tags::secrets_access",
+        "reason": "Obsidian 'vault' is the note collection; tag management does not indicate secrets access."
+      },
+      {
+        "id": "data::obsidian_manage_tags::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; tagging operations do not indicate credential handling."
+      },
+      {
+        "id": "data::obsidian_manage_tags::location",
+        "reason": "Matched 'location' parameter specifies tag placement (frontmatter vs inline), not geographic location data."
+      },
+      {
+        "id": "cap::obsidian_delete_note::secrets_access",
+        "reason": "Obsidian 'vault' is a note collection; deletion capability does not inherently access credentials."
+      },
+      {
+        "id": "data::obsidian_delete_note::credentials_secrets",
+        "reason": "Obsidian 'vault' is a note collection; deletion does not indicate credential-specific access."
+      }
+    ]
+  }
+}

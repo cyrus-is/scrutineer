@@ -1,0 +1,231 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "airweave-mcp-search",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "airweave-mcp-search"
+      ],
+      "env_keys": [
+        "AIRWEAVE_API_KEY",
+        "AIRWEAVE_BASE_URL",
+        "AIRWEAVE_COLLECTION"
+      ],
+      "sensitive_env_keys": [
+        "AIRWEAVE_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "airweave-mcp-search",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:2e13d5bffab935c41196a4cd2c85c050e7da5c610f8a2ddc340351ff7df32b48",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'airweave-mcp-search' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: airweave-mcp-search.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "airweave-mcp-search",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'airweave-mcp-search' package spec 'airweave-mcp-search' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "airweave-mcp-search",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'airweave-mcp-search' requires credential-like env keys: AIRWEAVE_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "AIRWEAVE_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "airweave-mcp-search",
+      "name": "search-placeholder-not-a-real-credential",
+      "description": "Search the Airweave collection 'placeholder-not-a-real-credential' with three tiers of depth.\n\n**Tiers:**\n- `instant`: Direct vector search \u2014 fastest, sub-second latency\n- `classic` (default): AI-optimized \u2014 LLM plans the strategy, ~2-5s\n- `agentic`: Multi-step agent \u2014 iterative search with tool calling, deepest results\n\n**Parameters:**\n- `query` (required): Search text\n- `tier`: Search tier (default: classic)\n- `retrieval_strategy`: hybrid|semantic|keyword (instant tier only)\n- `limit`: Max results (default: 100)\n- `offset`: Skip results for pagination (instant/classic only)\n- `thinking`: Enable chain-of-thought (agentic tier only)\n- `filter`: Structured filters for precise matching\n\n**Filter example:**\n```json\n{\"filter\": [{\"conditions\": [\n  {\"field\": \"airweave_system_metadata.source_name\", \"operator\": \"equals\", \"value\": \"notion\"}\n]}]}\n```",
+      "param_names": [
+        "filter",
+        "limit",
+        "offset",
+        "query",
+        "retrieval_strategy",
+        "thinking",
+        "tier"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "search-placeholder-not-a-real-credential search placeholder not a real"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The matched token 'credential' appears in a tool name explicitly labeled 'placeholder-not-a-real-credential' \u2014 the 'placeholder-not-a-real' prefix negates the semantic meaning; this is a dummy/test tool, not a credentials-access capability."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "search-placeholder-not-a-real-credential search placeholder not a real"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Same root cause: the tool name itself declares 'not-a-real-credential', so the regex match on 'credential' is a false signal from a placeholder tool name, not an actual data-access risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:b12f1b9f3c69229e91a68dc9ab94f67d33416e8d6f4a96c0f4db2d9383e17442"
+    },
+    {
+      "server": "airweave-mcp-search",
+      "name": "get-config",
+      "description": "Get the current Airweave MCP server configuration",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b331127cf8e1e577c296413acfca5490bfb58ad89cc9ac0892e66a2047d4d9d0"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "credentials_secrets"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 0,
+      "false_positive": 2,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::search-placeholder-not-a-real-credential::secrets_access",
+        "reason": "The matched token 'credential' appears in a tool name explicitly labeled 'placeholder-not-a-real-credential' \u2014 the 'placeholder-not-a-real' prefix negates the semantic meaning; this is a dummy/test tool, not a credentials-access capability."
+      },
+      {
+        "id": "data::search-placeholder-not-a-real-credential::credentials_secrets",
+        "reason": "Same root cause: the tool name itself declares 'not-a-real-credential', so the regex match on 'credential' is a false signal from a placeholder tool name, not an actual data-access risk."
+      }
+    ]
+  }
+}

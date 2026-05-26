@@ -1,0 +1,1163 @@
+{
+  "server": "hex-line",
+  "captured_at": "2026-05-26T22:24:50Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "hex-line-mcp",
+    "version": "1.30.1"
+  },
+  "tools": [
+    {
+      "name": "read_file",
+      "title": "Read File",
+      "description": "Read file with progressive disclosure. Default: minimal plain partial read for discovery; enable edit-ready metadata explicitly when preparing a verified edit.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "description": "File path",
+            "type": "string"
+          },
+          "file_paths": {
+            "description": "Array of file paths to read (batch mode)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "offset": {
+            "description": "Start line (1-indexed, default: 1)",
+            "type": "number"
+          },
+          "limit": {
+            "description": "Max lines (default: 200 for discovery, 2000 for edit-ready, 0 = all)",
+            "type": "number"
+          },
+          "ranges": {
+            "description": "Line ranges, e.g. [\"10-25\", {\"start\":40,\"end\":55}]",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "start": {
+                          "type": "number"
+                        },
+                        "end": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "plain": {
+            "description": "Omit hashes (lineNum|content)",
+            "type": "boolean"
+          },
+          "verbosity": {
+            "description": "Response budget. `minimal` is discovery-first, `compact` adds revision context, `full` preserves the richest payload.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "edit_ready": {
+            "description": "Include hash/checksum edit protocol blocks explicitly. Default: false for discovery reads.",
+            "type": "boolean"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "file_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "content": {
+            "type": "string"
+          },
+          "edit_ready": {
+            "type": "boolean"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "edit_file",
+      "title": "Edit File",
+      "description": "Apply hash-verified partial edits to one file. Carry base_revision on same-file follow-ups. Preserves existing line endings and trailing-newline shape; conservative conflicts return retry helpers. boundary_mode=inclusive deletes the anchor lines themselves; new_text must close any delimiter whose opening falls inside the replaced range.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "File to edit"
+          },
+          "edits": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ],
+            "description": "JSON array of canonical edits.\n[{\"set_line\":{\"anchor\":\"ab.12\",\"new_text\":\"x\"}}]\n[{\"replace_lines\":{\"start_anchor\":\"ab.10\",\"end_anchor\":\"cd.15\",\"new_text\":\"x\",\"range_checksum\":\"10-15:a1b2\"}}]\n[{\"insert_after\":{\"anchor\":\"ab.20\",\"text\":\"x\"}}]\n[{\"replace_between\":{\"start_anchor\":\"ab.10\",\"end_anchor\":\"cd.40\",\"new_text\":\"x\",\"boundary_mode\":\"inclusive\",\"range_checksum\":\"10-40:a1b2\"}}]\nPrefer replace_lines with range_checksum when either anchor is a lone delimiter (}, ), ]) \u2014 replace_between anchors use short line-content hashes and may fuzzy-match a sibling delimiter."
+          },
+          "dry_run": {
+            "description": "Preview changes without writing",
+            "type": "boolean"
+          },
+          "restore_indent": {
+            "description": "Auto-fix indentation to match anchor (default: false)",
+            "type": "boolean"
+          },
+          "base_revision": {
+            "description": "Prior revision from read_file/edit_file. Enables conservative auto-rebase for same-file follow-up edits.",
+            "type": "string"
+          },
+          "conflict_policy": {
+            "description": "Conflict handling (default: \"conservative\"). \"conservative\" returns structured CONFLICT output with recovery_ranges, retry_edit/retry_edits, suggested_read_call, and retry_plan when available.",
+            "type": "string",
+            "enum": [
+              "strict",
+              "conservative"
+            ]
+          },
+          "allow_external": {
+            "description": "Allow editing a path outside the current project root. Use only when you intentionally target a temp or external file.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "file_path",
+          "edits"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "write_file",
+      "title": "Write File",
+      "description": "Create a new file or overwrite existing. Creates parent dirs. For existing files prefer edit_file (shows diff, verifies hashes).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "File path"
+          },
+          "content": {
+            "type": "string",
+            "description": "File content"
+          },
+          "allow_external": {
+            "description": "Allow writing a path outside the current project root. Use only when you intentionally target a temp or external file.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "file_path",
+          "content"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "grep_search",
+      "title": "Search Files",
+      "description": "Search file contents with ripgrep. Default: summary-first discovery output; use `content` with `edit_ready=true` when you need verified edit hunks.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Search pattern (regex by default, literal if literal:true)"
+          },
+          "path": {
+            "description": "Search dir/file (default: cwd)",
+            "type": "string"
+          },
+          "glob": {
+            "description": "Glob filter (e.g. \"*.ts\")",
+            "type": "string"
+          },
+          "type": {
+            "description": "File type (e.g. \"js\", \"py\")",
+            "type": "string"
+          },
+          "output_mode": {
+            "description": "Output format (default: summary)",
+            "type": "string",
+            "enum": [
+              "summary",
+              "content",
+              "files_with_matches",
+              "count"
+            ]
+          },
+          "case_insensitive": {
+            "description": "Ignore case (-i)",
+            "type": "boolean"
+          },
+          "smart_case": {
+            "description": "CI when pattern is all lowercase, CS if uppercase (-S)",
+            "type": "boolean"
+          },
+          "literal": {
+            "description": "Literal string search, no regex (-F)",
+            "type": "boolean"
+          },
+          "multiline": {
+            "description": "Pattern can span multiple lines (-U)",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Symmetric context lines around matches (-C)",
+            "type": "number"
+          },
+          "context_before": {
+            "description": "Context lines BEFORE match (-B)",
+            "type": "number"
+          },
+          "context_after": {
+            "description": "Context lines AFTER match (-A)",
+            "type": "number"
+          },
+          "limit": {
+            "description": "Max matches per file (default: 20 for summary discovery, 100 for content)",
+            "type": "number"
+          },
+          "head_limit": {
+            "description": "Total match events across all files; multiline matches count as 1 (default: 50 for summary discovery, 200 for content, 1000 for files_with_matches/count, 0 = unlimited)",
+            "type": "number"
+          },
+          "plain": {
+            "description": "Omit hash tags, return file:line:content",
+            "type": "boolean"
+          },
+          "edit_ready": {
+            "description": "Preserve hash/checksum search hunks in `content` mode. Default: false.",
+            "type": "boolean"
+          },
+          "allow_large_output": {
+            "description": "Bypass the default content-mode block/char caps when you intentionally need a larger payload.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "outline",
+      "title": "File Outline",
+      "description": "AST-based structural outline with hash anchors for direct edit_file usage. Supports JavaScript/TypeScript, Python, C#, and PHP code files plus markdown headings (.md/.mdx, fence-aware).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Source file path"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "verify",
+      "title": "Verify Checksums",
+      "description": "Check if held checksums are still valid without rereading. Use before delayed or mixed-tool follow-up edits; returns canonical status, next_action, and reread guidance.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "File path"
+          },
+          "checksums": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Checksum strings, e.g. [\"1-50:f7e2a1b0\", \"51-100:abcd1234\"]"
+          },
+          "base_revision": {
+            "description": "Optional prior revision to compare against latest state.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_path",
+          "checksums"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "inspect_path",
+      "title": "Inspect Path",
+      "description": "Inspect a file or directory path. Files return compact metadata; directories return a gitignore-aware tree or pattern matches.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File or directory path"
+          },
+          "pattern": {
+            "description": "Glob filter on names (e.g. \"*-mcp\", \"*.mjs\"). Returns flat match list instead of tree",
+            "type": "string"
+          },
+          "type": {
+            "description": "\"file\", \"dir\", or \"all\" (default). Like find -type f/d",
+            "type": "string",
+            "enum": [
+              "file",
+              "dir",
+              "all"
+            ]
+          },
+          "max_depth": {
+            "description": "Max recursion depth (default: 2 for discovery, or 20 in pattern mode)",
+            "type": "number"
+          },
+          "max_entries": {
+            "description": "Max entries to show in pattern mode before truncation metadata is returned (default: 60, 0 = unlimited)",
+            "type": "number"
+          },
+          "gitignore": {
+            "description": "Respect root .gitignore patterns (default: true). Nested .gitignore not supported",
+            "type": "boolean"
+          },
+          "format": {
+            "description": "\"compact\" = shorter path view, \"full\" = include sizes/metadata where available",
+            "type": "string",
+            "enum": [
+              "compact",
+              "full"
+            ]
+          },
+          "verbosity": {
+            "description": "Response budget. `minimal` returns the shortest tree summary.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "changes",
+      "title": "Semantic Diff",
+      "description": "Semantic diff against git ref (default: HEAD). Returns canonical status, summary, next_action, changed symbols, and graph-backed risk hints when available.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File or directory path"
+          },
+          "compare_against": {
+            "description": "Git ref to compare against (default: \"HEAD\")",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "bulk_replace",
+      "title": "Bulk Replace",
+      "description": "Search-and-replace text across multiple files inside an explicit root path. Use for renames and refactors when the project scope is known.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "replacements": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "old": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "new": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "old",
+                    "new"
+                  ]
+                }
+              }
+            ],
+            "description": "JSON array of {old, new} pairs: [{\"old\":\"foo\",\"new\":\"bar\"}]"
+          },
+          "glob": {
+            "description": "File glob (default: \"**/*.{md,mjs,json,yml,ts,js}\")",
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "Root directory for the replacement scope"
+          },
+          "dry_run": {
+            "description": "Preview without writing (default: false)",
+            "type": "boolean"
+          },
+          "max_files": {
+            "description": "Max files to process (default: 100)",
+            "type": "number"
+          },
+          "format": {
+            "description": "\"compact\" (default) = summary only, \"full\" = include capped diffs",
+            "type": "string",
+            "enum": [
+              "compact",
+              "full"
+            ]
+          },
+          "allow_external": {
+            "description": "Allow a replacement root outside the current project root. Use only when you intentionally target a temp or external directory.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "replacements",
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "AUTO_REBASED",
+              "CONFLICT",
+              "STALE",
+              "INVALID",
+              "NO_CHANGES",
+              "CHANGED",
+              "UNSUPPORTED"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

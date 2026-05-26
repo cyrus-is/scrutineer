@@ -1,0 +1,4513 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "token-optimizer",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "token-optimizer-mcp"
+      ],
+      "env_keys": [
+        "TOKEN_OPTIMIZER_CACHE_DIR"
+      ],
+      "sensitive_env_keys": [
+        "TOKEN_OPTIMIZER_CACHE_DIR"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "token-optimizer-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:220dd2c7d3e154a98fbc6cb09a4a75617a627c3857bd6a797ace717ad2ddae26",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'token-optimizer' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: token-optimizer-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "token-optimizer-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'token-optimizer' package spec 'token-optimizer-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "token-optimizer-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'token-optimizer' requires credential-like env keys: TOKEN_OPTIMIZER_CACHE_DIR.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "TOKEN_OPTIMIZER_CACHE_DIR"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "token-optimizer",
+      "name": "optimize_text",
+      "description": "Compress and cache text to reduce token usage. Returns compressed version and saves to cache for future use.",
+      "param_names": [
+        "key",
+        "quality",
+        "text"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ress and cache text to reduce token usage. Returns compressed ver"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token refers to LLM prompt tokens (cost metric), not credentials; tool compresses text for API usage."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:ba64883c886503b7d2d162f8f3689302baca171c68b829865307ee991fcfb7fa"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "get_cached",
+      "description": "Retrieve previously cached and optimized text. Returns the original text if found in cache.",
+      "param_names": [
+        "key"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9e51dc1813429434d519f04e94775aaa5797c1362264de03b6021ca765ec9eab"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "count_tokens",
+      "description": "Count tokens in text using tiktoken. Useful for understanding token usage before and after optimization.",
+      "param_names": [
+        "text"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ken. Useful for understanding token usage before and after optimi"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token counting for LLM prompt cost estimation, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "count_tokens count tokens"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "low",
+      "digest": "sha256:5a8a5b75836ae6babc2dcc82c585bed817bd77342ae3bcda0bacefb9734ee48a"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "compress_text",
+      "description": "Compress text using Brotli compression. Returns compressed text as base64 string.",
+      "param_names": [
+        "quality",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:66323c67b23be5d777794a6d129a50f7546757153e170c38b47e21239b878878"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "decompress_text",
+      "description": "Decompress base64-encoded Brotli-compressed text.",
+      "param_names": [
+        "compressed"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a11b0912b6f448466e0bce2b6f3470a2384165be164bcd5b11f8c44d1bebebcb"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "get_cache_stats",
+      "description": "Get cache statistics including hit rate, compression ratio, and token savings.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "rate, compression ratio, and token savings."
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token savings refers to LLM token reduction metrics, not secrets access."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:076b36c0d71be3c3c0d3f2aa0332719168e6d1b3963d6ed7280f746e65bdb642"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "clear_cache",
+      "description": "Clear all cached data. Use with caution.",
+      "param_names": [
+        "confirm"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:457e7957dedc2af4127483ae9b721e9a0d25fb54455062c7ade8f0964ed99619"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "analyze_optimization",
+      "description": "Analyze text and provide recommendations for optimization including compression benefits and token savings.",
+      "param_names": [
+        "text"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ding compression benefits and token savings. Text to analyze"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token savings is optimization metric, not credential access."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:2f32938d838e5c571d1dcae00016be8978203da2d2c871832dc9d228cdffd23f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "get_session_stats",
+      "description": "Get comprehensive statistics from the PowerShell wrapper session tracker including system reminders, tool operations, and total tokens with accurate tiktoken-based counting.",
+      "param_names": [
+        "sessionId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "minders, tool operations, and total tokens with accurate tiktoken"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:631b683d72b1498cead7ab1428d8cce20d8473be13c326086fe72d00b79bb83f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "optimize_session",
+      "description": "Analyzes operations in the current session from the operations CSV, identifies large text blocks from file-based tools (Read, Write, Edit), compresses them, and stores them in the cache to reduce future token usage. Returns a summary of the optimization.",
+      "param_names": [
+        "min_token_threshold",
+        "sessionId"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "token_threshold sessionId min token threshold"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token threshold is a cost-limiting parameter for caching, not secrets access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "active session. Minimum token count for a file operation to be co"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "low",
+      "digest": "sha256:d6f646d87251139a1647b847c1b2801c6a7ee5d2793e891162fa1dacb1e7f4c7"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "analyze_project_tokens",
+      "description": "Analyze token usage and estimate costs across multiple sessions within a project. Aggregates data from all operations-*.csv files, provides project-level statistics, identifies top contributing sessions and tools, and estimates monetary costs based on token usage.",
+      "param_names": [
+        "costPerMillionTokens",
+        "endDate",
+        "projectPath",
+        "startDate"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Analyze token usage and estimate costs acro"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token analysis is cost estimation across sessions, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "en usage. Path to the project directory. If not provided, uses the ho"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory refers to project file path, not address book or contact roster."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "nalyze_project_tokens analyze project tokens"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:8d4d389d76bcce065eaf86946dda39f7f0236d8a0fd9d2f3665c02936c495419"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "predictive_cache",
+      "description": "ML-based predictive caching with 91%+ token reduction using ARIMA, exponential smoothing, LSTM, and collaborative filtering",
+      "param_names": [
+        "cacheTTL",
+        "compress",
+        "confidence",
+        "epochs",
+        "horizon",
+        "key",
+        "learningRate",
+        "maxPredictions",
+        "modelFormat",
+        "modelPath",
+        "modelType",
+        "operation",
+        "timestamp",
+        "trainData",
+        "useCache",
+        "warmBatchSize",
+        "warmStrategy"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "predictive caching with 91%+ token reduction using ARIMA, expone"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction refers to ML-based caching optimization metrics."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:ed0b34de969f165a80adca6c488e4244e6011638b66b6b20ff2fd05fb714e02d"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_warmup",
+      "description": "Intelligent cache pre-warming with 87%+ token reduction, featuring schedule-based warming, pattern analysis, dependency resolution, and progressive warming strategies",
+      "param_names": [
+        "accessHistory",
+        "batchSize",
+        "cacheTTL",
+        "categories",
+        "delayBetweenBatches",
+        "dependencies",
+        "dryRun",
+        "enableRollback",
+        "hotKeyThreshold",
+        "keys",
+        "maxConcurrency",
+        "maxRetries",
+        "minAccessCount",
+        "operation",
+        "pattern",
+        "priority",
+        "progressInterval",
+        "reportProgress",
+        "retryDelay",
+        "schedule",
+        "scheduleId",
+        "strategy",
+        "timeWindow",
+        "timeout",
+        "useCache",
+        "warmupPercentage"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "t cache pre-warming with 87%+ token reduction, featuring schedule"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is caching efficiency metric, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "ies pattern priority strategy schedule scheduleId dependencies acces"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "n-based warmup Minimum access count for hot keys (default: 5) Tim"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:f2e471617ed23d9b0445f1943c647a2561c71221ea266e6b15126c850eb35a3a"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_ast_grep",
+      "description": "Perform structural code search with 83% token reduction through AST indexing and caching",
+      "param_names": [
+        "contextLines",
+        "enableCache",
+        "excludePatterns",
+        "filePattern",
+        "language",
+        "maxMatches",
+        "pattern",
+        "projectPath"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ructural code search with 83% token reduction through AST indexin"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is code search optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "$NAME($ARGS) { $BODY }\") Root directory of the project to search Prog"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contact/roster data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ODY }\") Root directory of the project to search Programming languag"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:5448e56fc8c8263fd7e1053c5114ae189da19a7be5523f3e621ee367b15f0555"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_analytics",
+      "description": "Comprehensive cache analytics with 88%+ token reduction. Real-time dashboards, trend analysis, alerting, heatmaps, bottleneck detection, and cost optimization.",
+      "param_names": [
+        "aggregation",
+        "alertConfig",
+        "alertType",
+        "cacheTTL",
+        "compareWith",
+        "filePath",
+        "format",
+        "granularity",
+        "heatmapType",
+        "metricTypes",
+        "operation",
+        "resolution",
+        "threshold",
+        "timeRange",
+        "trendType",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ive cache analytics with 88%+ token reduction. Real-time dashboar"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is caching analytics metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:bdc79da33754655995a7e3c500af1f953e5258a844d5fb11278ff9151152ab4d"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache-benchmark",
+      "description": "Cache Performance Benchmarking with 89% token reduction through comprehensive testing and analysis.\n\nFeatures:\n- Strategy comparison (LRU vs LFU vs FIFO vs TTL vs size vs hybrid)\n- Load testing with configurable concurrency and ramp-up\n- Latency profiling with percentiles (p50, p90, p95, p99, p99.9)\n- Throughput testing (operations per second)\n- Comprehensive reports in markdown, HTML, JSON, PDF\n- Workload simulation (read-heavy, write-heavy, mixed, realistic)\n\nOperations:\n- run-benchmark: Execute complete benchmark suite\n- compare: Compare multiple cache configurations\n- load-test: Stress test cache under load\n- latency-test: Measure latency distribution with percentiles\n- throughput-test: Measure throughput limits\n- report: Generate comprehensive benchmark report\n\nToken Reduction:\n- Benchmark results: ~89% (summary only)\n- Comparison: ~91% (rankings + winner)\n- Load test: ~88% (summary + breaking point)\n- Latency test: ~87% (percentiles only)\n- Throughput test: ~90% (key metrics only)\n- Report: ~85% (formatted summary)\n- Average: 89% reduction",
+      "param_names": [
+        "benchmarkId",
+        "cacheTTL",
+        "concurrency",
+        "config",
+        "configs",
+        "duration",
+        "format",
+        "includeCharts",
+        "maxConcurrency",
+        "operation",
+        "outputPath",
+        "percentiles",
+        "rampUp",
+        "stepSize",
+        "targetTPS",
+        "useCache",
+        "warmupDuration",
+        "workloadRatio",
+        "workloadType"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Operations:\n- run-benchmark: Execute complete benchmark suite\n- co"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ormance Benchmarking with 89% token reduction through comprehensi"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is benchmarking performance metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "PDF",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "orts in markdown, HTML, JSON, PDF\n- Workload simulation (read-h"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:46a92ee806827ff174578d43a1389b73f5c870f1cdef4c103d8fda506156fb2c"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_compression",
+      "description": "Advanced compression strategies for cache optimization with 89%+ token reduction. Supports 6 algorithms (gzip, brotli, lz4, zstd, snappy, custom), adaptive selection, dictionary-based compression, and delta compression for time-series data.",
+      "param_names": [
+        "algorithm",
+        "algorithms",
+        "autoSelect",
+        "cacheTTL",
+        "data",
+        "dataType",
+        "defaultAlgorithm",
+        "enableDelta",
+        "iterations",
+        "level",
+        "maxLatency",
+        "operation",
+        "targetRatio",
+        "useCache",
+        "workloadType"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "cache optimization with 89%+ token reduction. Supports 6 algorit"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is compression efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:9a61699c3cb9c83a0672278debfcfdd3fc861706f08e4fc8a7327d8bcd3c7b32"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_invalidation",
+      "description": "Comprehensive cache invalidation with 88%+ token reduction, dependency tracking, pattern matching, scheduled invalidation, and distributed coordination",
+      "param_names": [
+        "broadcastToNodes",
+        "cacheTTL",
+        "cascadeDepth",
+        "childKey",
+        "childKeys",
+        "cronExpression",
+        "enableAudit",
+        "executeAt",
+        "key",
+        "keys",
+        "maxAuditEntries",
+        "mode",
+        "nodeId",
+        "operation",
+        "parentKey",
+        "pattern",
+        "repeatInterval",
+        "revalidateOnInvalidate",
+        "scheduleId",
+        "skipExpired",
+        "strategy",
+        "tag",
+        "tags",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "nvalidation Timestamp when to execute invalidation Interval in ms f"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false,
+          "needs_source": true
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "cache invalidation with 88%+ token reduction, dependency trackin"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is cache management efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:cc0011111dece4072cff385eb2a21be0bfa097a67f01b162f24b99a794485f13"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_optimizer",
+      "description": "Advanced cache optimization with 89%+ token reduction. Analyzes performance, benchmarks strategies, provides ML-based recommendations, detects bottlenecks, and performs cost-benefit analysis.",
+      "param_names": [
+        "analysisWindow",
+        "cacheTTL",
+        "epochs",
+        "objective",
+        "operation",
+        "strategies",
+        "tuningMethod",
+        "useCache",
+        "workloadPattern"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "cache optimization with 89%+ token reduction. Analyzes performan"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is cache optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:40874bf735b85c59eb8163b3f3e248fd115f39547e93a02050e472b7a2d7d59f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_partition",
+      "description": "Advanced cache partitioning and sharding with 87%+ token reduction through consistent hashing, automatic rebalancing, and partition isolation",
+      "param_names": [
+        "cacheTTL",
+        "includeKeyDistribution",
+        "includeMemoryUsage",
+        "keyPattern",
+        "maxMigrations",
+        "operation",
+        "partitionFunction",
+        "partitionId",
+        "shardingStrategy",
+        "sourcePartition",
+        "strategy",
+        "targetDistribution",
+        "targetPartition",
+        "useCache",
+        "virtualNodes"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ioning and sharding with 87%+ token reduction through consistent"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is partitioning efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:0c942ec293f150ad904988cc72320155c342a91199157157c7a5bed8ab93d822"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "cache_replication",
+      "description": "Distributed cache replication with 88%+ token reduction. Supports primary-replica and multi-primary modes, strong/eventual consistency, automatic conflict resolution, failover, incremental sync, and health monitoring.",
+      "param_names": [
+        "cacheTTL",
+        "conflictResolution",
+        "consistency",
+        "deltaOnly",
+        "endpoint",
+        "force",
+        "heartbeatInterval",
+        "includeMetadata",
+        "mode",
+        "nodeId",
+        "operation",
+        "readQuorum",
+        "region",
+        "snapshotId",
+        "syncInterval",
+        "targetNodeId",
+        "useCache",
+        "weight",
+        "writeQuorum"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "orum readQuorum nodeId region endpoint weight targetNodeId force del"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "d cache replication with 88%+ token reduction. Supports primary-r"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is replication efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:7426ea35f5aedd041b8a9fe77b2e4dd656d8d6da970ffd77680e491f28ddc068"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_cache",
+      "description": "Advanced multi-tier cache with 90%+ token reduction, 6 eviction strategies, stampede prevention, and automatic tier management",
+      "param_names": [
+        "cacheTTL",
+        "defaultTTL",
+        "evictionStrategy",
+        "exportDelta",
+        "importData",
+        "key",
+        "keys",
+        "l1MaxSize",
+        "l2MaxSize",
+        "operation",
+        "targetTier",
+        "tier",
+        "ttl",
+        "useCache",
+        "value",
+        "values",
+        "writeMode"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ed multi-tier cache with 90%+ token reduction, 6 eviction strateg"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is multi-tier cache efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:59c9a2e5dd09612684f7ca00b78f1d7db0b1936b3c9ac08e2c7e504673242418"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_sql",
+      "description": "SQL query analyzer with optimization suggestions and execution plan analysis (83% token reduction)",
+      "param_names": [
+        "action",
+        "database",
+        "force",
+        "includeExecutionPlan",
+        "query",
+        "schema",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "execution plan analysis (83% token reduction) SQL query to analy"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is SQL query analysis optimization metric."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "sql",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "smart_sql smart sql"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:6b48561c7b1673850a3a5d04312d495577e3ca4951522a07856caa52996d3636"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_schema",
+      "description": "Database schema analyzer with intelligent caching and 83% token reduction. Supports PostgreSQL, MySQL, and SQLite. Provides schema introspection, relationship analysis, index recommendations, and schema diff.",
+      "param_names": [
+        "analyzeTables",
+        "compareWith",
+        "connectionString",
+        "detectUnusedIndexes",
+        "forceRefresh",
+        "includeData",
+        "mode"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "h intelligent caching and 83% token reduction. Supports PostgreSQ"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is schema analysis optimization metric."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQLite",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "pports PostgreSQL, MySQL, and SQLite. Provides schema introspectio"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "x recommendations, and schema diff. Database connection string ("
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:7281042074c2d1b84c2f1b63926e3b7592a682cf72b9963d389b14d20c4808fb"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_api_fetch",
+      "description": "Execute HTTP requests with intelligent caching and retry logic.\n\nFeatures:\n- Automatic retry with exponential backoff (1s, 2s, 4s, 8s)\n- Response caching with TTL-based invalidation (default: 5 minutes)\n- Request deduplication for in-flight requests\n- Circuit breaker pattern (opens after 5 consecutive failures)\n- ETag/Cache-Control header support\n- 83% average token reduction through intelligent output formatting\n\nToken Reduction Strategy:\n- Cached responses: 95% reduction (summary only)\n- Error responses: 90% reduction (error details only)\n- Retried requests: 85% reduction (success summary with retry info)\n- First requests: 80% reduction (compact summary)\n\nPerfect for:\n- API integration and testing\n- Webhook handling\n- External service communication\n- Data fetching with resilience",
+      "param_names": [
+        "body",
+        "followRedirects",
+        "force",
+        "headers",
+        "maxRetries",
+        "method",
+        "parseJson",
+        "timeout",
+        "ttl",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Execute HTTP requests with intelligen"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false,
+          "needs_source": true
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "smart_api_fetch smart api fetch"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "header support\n- 83% average token reduction through intelligent"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is HTTP caching efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:08677b4abf084a13217aad6a81bed692b83a77d60b11050184ec2a9ff2fe27f5"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart-cache-api",
+      "description": "API Response Caching with 83% token reduction through intelligent cache management.\n\nFeatures:\n- Multiple caching strategies (TTL, ETag, Event-based, LRU, Size-based)\n- Intelligent cache key generation with query normalization\n- Pattern-based and tag-based invalidation\n- Stale-while-revalidate support\n- Cache hit rate analysis and recommendations\n- Cache warming and preloading\n\nActions:\n- get: Retrieve cached API response\n- set: Cache an API response\n- invalidate: Remove cached entries (pattern/tag/manual)\n- analyze: Get cache performance metrics\n- warm: Pre-cache specific endpoints\n\nToken Reduction:\n- Cache hit: ~95% (summary only)\n- Cache miss: 0% (full response)\n- Stale cache: ~95% (stale summary)\n- Invalidation: ~98% (count only)\n- Analysis: ~90% (statistics only)\n- Average: 83% reduction",
+      "param_names": [
+        "action",
+        "endpoints",
+        "ignoreHeaders",
+        "invalidationPattern",
+        "maxCacheSize",
+        "maxEntries",
+        "normalizeQuery",
+        "pattern",
+        "request",
+        "response",
+        "staleTime",
+        "staleWhileRevalidate",
+        "strategy",
+        "tags",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "action request url method headers body params re"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "API Response Caching with 83% token reduction through intelligent"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is API response caching metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "aching strategies (TTL, ETag, Event-based, LRU, Size-based)\n- Int"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "validated_out": true,
+          "validation_reason": "Event-based refers to caching strategy type, not calendar/event data."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "ummary)\n- Invalidation: ~98% (count only)\n- Analysis: ~90% (stati"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:c3181e6744d20db6ba93826969e74defed77d7059e768dab06289b33c0bc499f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_database",
+      "description": "Database query optimizer with connection pooling, circuit breaking, and 83% token reduction. Supports query execution, EXPLAIN analysis, performance optimization, health monitoring, slow query detection, and batch operations.",
+      "param_names": [
+        "action",
+        "batchSize",
+        "enableCache",
+        "enableCircuitBreaker",
+        "enableRetry",
+        "engine",
+        "force",
+        "limit",
+        "maxPoolSize",
+        "maxRetries",
+        "parallelBatches",
+        "params",
+        "poolSize",
+        "queries",
+        "query",
+        "slowQueryThreshold",
+        "timeout",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "efault: generic) SQL query to execute (required for query/explain/a"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false,
+          "needs_source": true
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ng, circuit breaking, and 83% token reduction. Supports query exe"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is query optimization metric."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQL",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ase engine (default: generic) SQL query to execute (required fo"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:1aa53040c12b38ad687c5cc2d73ba612e8cefb85e34182923d5090502fe532a4"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_graphql",
+      "description": "GraphQL query optimizer with complexity analysis and caching (83% token reduction)",
+      "param_names": [
+        "analyzeComplexity",
+        "detectN1",
+        "endpoint",
+        "force",
+        "operationName",
+        "query",
+        "suggestOptimizations",
+        "ttl",
+        "variables"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "query variables operationName endpoint analyzeComplexity detectN1 su"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ity analysis and caching (83% token reduction) GraphQL query to a"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is GraphQL query optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:c3e22aa8cc63e9579a79716fc6e9e3d0300786a0be7cd61b7e05b5db45acce3d"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_migration",
+      "description": "Database migration tracker with status monitoring and 83% token reduction. Supports listing migrations, checking status, viewing history, rollback operations, and migration generation.",
+      "param_names": [
+        "action",
+        "direction",
+        "force",
+        "limit",
+        "migrationId",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ith status monitoring and 83% token reduction. Supports listing m"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is migration tracking optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "tabase migration tracker with status monitoring and 83% token redu"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "medium",
+      "digest": "sha256:0438d8b58874f698a53f1999e06203fdd6b1aae1e3e11862a0d0845a85a501e8"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_orm",
+      "description": "ORM query optimizer with N+1 detection (83% token reduction)",
+      "param_names": [
+        "analyzeRelationships",
+        "detectN1",
+        "estimateQueries",
+        "force",
+        "modelDefinitions",
+        "ormCode",
+        "ormType",
+        "suggestEagerLoading",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "mizer with N+1 detection (83% token reduction) ORM query code to"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is ORM optimization metric."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQL",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "lt: false) Estimate generated SQL queries (default: false) Opti"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:2171c0d789a46fb0dd466b8ab2b9208d51c418540ce520ed1dcfc70654612d1f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_rest",
+      "description": "REST API analyzer with endpoint discovery and health scoring (83% token reduction)",
+      "param_names": [
+        "analyzeEndpoints",
+        "baseUrl",
+        "checkHealth",
+        "detectPatterns",
+        "force",
+        "generateDocs",
+        "methods",
+        "resourceFilter",
+        "specContent",
+        "specUrl",
+        "ttl"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "REST API analyzer with endpoint discovery and health scoring"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "overy and health scoring (83% token reduction) OpenAPI/Swagger sp"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is REST API analysis optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:31364617b87ef9f049117cffabd025eca7a478f48dcead301217778e91b64198"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_websocket",
+      "description": "WebSocket connection manager with message tracking (83% token reduction)",
+      "param_names": [
+        "action",
+        "analyzeHealth",
+        "detectPatterns",
+        "force",
+        "maxHistory",
+        "maxReconnectAttempts",
+        "message",
+        "protocols",
+        "trackMessages",
+        "ttl",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url protocols action message trac"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "er with message tracking (83% token reduction) WebSocket URL (ws:"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is WebSocket management metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "url protocols action message trackMessages detectPatterns"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:82856a945c0da231fc1e53418f07ba66898b1832cfe4c33e890d25b70c719065"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "alert_manager",
+      "description": "Comprehensive alerting system with multi-channel notifications, intelligent routing, and 89% token reduction through aggressive caching and history aggregation",
+      "param_names": [
+        "alertId",
+        "alertName",
+        "cacheTTL",
+        "channelConfig",
+        "channels",
+        "condition",
+        "limit",
+        "operation",
+        "severity",
+        "silenceDuration",
+        "silenceReason",
+        "threshold",
+        "timeRange",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "webhook",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "ail to subject template slack webhook channel mentionUsers webhook"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "intelligent routing, and 89% token reduction through aggressive"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is alerting efficiency metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "cent timeWindow channelConfig email to subject template slack web"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "template"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:f12a86495a1af6237a55426ae021f36a8688d702016129459f3ab1906ae357cd"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "metric_collector",
+      "description": "Comprehensive metrics collection and aggregation with multi-source support, time-series compression, and 88% token reduction through delta encoding and intelligent caching",
+      "param_names": [
+        "aggregation",
+        "compress",
+        "destination",
+        "format",
+        "metrics",
+        "operation",
+        "query",
+        "retentionPeriod",
+        "source",
+        "sourceId",
+        "sourceName",
+        "tags",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "rt format Export destination (URL or file path) Compress export"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "e-series compression, and 88% token reduction through delta encod"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is metrics aggregation efficiency metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:376a13ecea41a0d9dfdf44781f4fb85fa9d6a9cf48dad67a1f07ddce6131824b"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "monitoring_integration",
+      "description": "External monitoring platform integration with 87% token reduction through data compression and intelligent caching",
+      "param_names": [
+        "connection",
+        "connectionId",
+        "connectionName",
+        "operation",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "ctionName connection platform url apiKey useCache"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "apiKey",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "nName connection platform url apiKey useCache"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "apiKey",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "nName connection platform url apiKey useCache"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:1221f3dc0ee9774e99dcced43594cf5318495333fa09d4277ff483646649dccd"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "custom_widget",
+      "description": "Create and manage custom dashboard widgets with 88% token reduction through template caching and configuration compression",
+      "param_names": [
+        "cacheTTL",
+        "config",
+        "dataSource",
+        "includeData",
+        "operation",
+        "renderFormat",
+        "templateConfig",
+        "templateDescription",
+        "templateName",
+        "type",
+        "useCache",
+        "widgetId",
+        "widgetName"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "om dashboard widgets with 88% token reduction through template ca"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is widget rendering optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:c5c39c1c0ccbfafbc7a840b7700975cffc837836288075c688c56aefc527cd05"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "data_visualizer",
+      "description": "Create and manage interactive data visualizations with 92% token reduction through SVG/Canvas optimization and configuration caching",
+      "param_names": [
+        "animationConfig",
+        "cacheTTL",
+        "chartConfig",
+        "chartId",
+        "chartType",
+        "data",
+        "exportFormat",
+        "exportHeight",
+        "exportWidth",
+        "heatmapConfig",
+        "networkConfig",
+        "operation",
+        "renderFormat",
+        "sankeyConfig",
+        "timelineConfig",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "data visualizations with 92% token reduction through SVG/Canvas"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is visualization optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:33c99190c69a2d0be35dc8c5b1cf088e4333dfdc9389fdcfd7b94b9ceeb8483a"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "health_monitor",
+      "description": "Monitor system and application health with 91% token reduction through health state compression and metric aggregation",
+      "param_names": [
+        "cacheTTL",
+        "config",
+        "diagnosticType",
+        "endpointId",
+        "endpointName",
+        "endpointType",
+        "interval",
+        "operation",
+        "thresholds",
+        "timeRange",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "n Health monitoring operation Endpoint ID Endpoint name Type of endp"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "d application health with 91% token reduction through health stat"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is health monitoring metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:2d09b4c2bc0bd5af39a8b7e71062ac3f38936e99e741afff0038e875b999fb67"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "log_dashboard",
+      "description": "Interactive log analysis dashboard with filtering, searching, pattern detection, and 90% token reduction through intelligent caching and compression",
+      "param_names": [
+        "aggregation",
+        "anomaly",
+        "dashboardId",
+        "dashboardName",
+        "filterName",
+        "follow",
+        "format",
+        "lines",
+        "logFiles",
+        "operation",
+        "outputPath",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "g, pattern detection, and 90% token reduction through intelligent"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is log analysis optimization metric."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:4b4a807f398daa73e39ef69e48b5c73adf1232eba747497fed1acfcb41a06553"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "intelligent-assistant",
+      "description": "Provides intelligent assistance including contextual help, suggestions, explanations, and troubleshooting",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1f358dcf61c09cf396cf4bd80909c38be1875ad527180e52843b3648b94b2e6e"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "natural-language-query",
+      "description": "Natural language query translation and optimization",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2afdacf1c3f72010bca83e46a40a8ebc6384044543f3d2a9151bcd9ad779e8b9"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "pattern-recognition",
+      "description": "Pattern detection and analysis in logs, metrics, and events",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:14ae4e5dd52b69d701acba4531f47d304b76dd60296d4e4834a7b719c8ac0089"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "predictive-analytics",
+      "description": "Predictive modeling and forecasting for system metrics",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:17de7e35c8bd972e770ce53fa8b68d385a680f4023c34d7530abbfb08192933a"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "recommendation-engine",
+      "description": "Intelligent recommendations for optimization and resource allocation",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5ed8613f20f12cc144c26ca0ab40d37b9ef9b7f9c84d0d9435541490f949c188"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart-summarization",
+      "description": "Intelligent content summarization and digest generation",
+      "param_names": [
+        "data",
+        "operation",
+        "query",
+        "useCache"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:af703825a0d80f9ca4db1b3cefe122121cf7033e834a01fb6e2933f268b4ef64"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_processes",
+      "description": "Monitor and analyze system processes with anomaly detection and resource tracking",
+      "param_names": [
+        "compareWithPrevious",
+        "cpuThreshold",
+        "filter",
+        "includeSystem",
+        "limit",
+        "memoryThreshold",
+        "projectRoot"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "rocesses to show Project root directory Compare with previous snapsho"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contact roster."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "m number of processes to show Project root directory Compare with p"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:d4fd9c90853196fedf4e456af66fa62b03bc026316a24150ff2ea55f9fe19027"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_network",
+      "description": "Network diagnostics and monitoring with connectivity testing, port scanning, DNS resolution, and anomaly detection",
+      "param_names": [
+        "hostnames",
+        "hosts",
+        "maxCacheAge",
+        "operation",
+        "pingCount",
+        "ports",
+        "projectRoot",
+        "timeout"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "in milliseconds Project root directory Maximum cache age in seconds"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "host Timeout in milliseconds Project root directory Maximum cache"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:a52c599e2bc39fefae9fcebc1dee2d1ad9f72ddf6f92f5267b78abb1c5dfd06c"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_logs",
+      "description": "System log aggregation and analysis with multi-source support, pattern filtering, error detection, and insights",
+      "param_names": [
+        "follow",
+        "level",
+        "maxCacheAge",
+        "pattern",
+        "projectRoot",
+        "since",
+        "sources",
+        "tail"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "h', '24h', '7d') Project root directory Maximum cache age in seconds"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ter (e.g., '1h', '24h', '7d') Project root directory Maximum cache"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": ", and insights Log sources to aggregate (file paths or system logs) F"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:f39713a625937133b67dcedab94faf17e2d763e6b0667795f4453903340cea82"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_lint",
+      "description": "Run ESLint with intelligent caching, incremental analysis, and auto-fix suggestions",
+      "param_names": [
+        "files",
+        "fix",
+        "force",
+        "includeIgnored",
+        "maxCacheAge",
+        "onlyNew",
+        "projectRoot"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Auto-fix issues Project root directory Show only new issues since la"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ignore cache) Auto-fix issues Project root directory Show only new"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:22f45855ad8cbe992cac217a331dfacd0d248b0ba95633ca8ab8f2e18b50e185"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_install",
+      "description": "Package installation with dependency analysis, conflict detection, and smart caching for npm/yarn/pnpm",
+      "param_names": [
+        "dev",
+        "force",
+        "maxCacheAge",
+        "packageManager",
+        "packages",
+        "projectRoot"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "l (ignore cache) Project root directory Package manager to use (auto-"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "orce reinstall (ignore cache) Project root directory Package manage"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:7197fe2c5730d702ab04766f997e3eff79b9ce99eba300c2b5c2c1ab443c11ce"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_docker",
+      "description": "Docker operations with build/run/stop/logs support, image layer analysis, and optimization suggestions",
+      "param_names": [
+        "containerName",
+        "context",
+        "dockerfile",
+        "env",
+        "follow",
+        "force",
+        "imageName",
+        "maxCacheAge",
+        "operation",
+        "ports",
+        "projectRoot",
+        "tail"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "n (ignore cache) Project root directory Dockerfile path Image name fo"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "orce operation (ignore cache) Project root directory Dockerfile pat"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:f934ab47ff1abb36bce04ddc46337db3109d6aa2bd0fef1113e796b5e58052bb"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_build",
+      "description": "Run TypeScript build with intelligent caching, diff-based change detection, and token-optimized output",
+      "param_names": [
+        "force",
+        "includeWarnings",
+        "maxCacheAge",
+        "projectRoot",
+        "tsconfig",
+        "watch"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "f-based change detection, and token-optimized output Force full r"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token-optimized output is build output optimization, not secrets access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "ild with intelligent caching, diff-based change detection, and t"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ontinuous builds Project root directory TypeScript config file path I"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ch mode for continuous builds Project root directory TypeScript con"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:4e0fbaf486d5f68634e91fd8c68162482b931012ed7701c2efbea6f638b3dd24"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_system_metrics",
+      "description": "System resource monitoring with CPU, memory, disk usage tracking, anomaly detection, and performance recommendations",
+      "param_names": [
+        "detectAnomalies",
+        "diskPaths",
+        "force",
+        "includeDisk",
+        "maxCacheAge",
+        "projectRoot"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "n (ignore cache) Project root directory Include disk metrics Disk pat"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "orce operation (ignore cache) Project root directory Include disk m"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:de3fe0b629048e5d96ca3051f294031911adb309fc20f21ef44031e3d52919ed"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_test",
+      "description": "Run tests with intelligent caching, coverage tracking, and incremental test execution",
+      "param_names": [
+        "coverage",
+        "force",
+        "maxCacheAge",
+        "onlyChanged",
+        "pattern",
+        "projectRoot",
+        "watch"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ntinuous testing Project root directory Maximum cache age in seconds"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "h mode for continuous testing Project root directory Maximum cache"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:69c439a172f5fc86febd73f8b324135dadebac783f14b14d32f6cb9364405069"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_typecheck",
+      "description": "Run TypeScript type checking with intelligent caching and categorized error reporting",
+      "param_names": [
+        "force",
+        "maxCacheAge",
+        "projectRoot",
+        "tsconfig",
+        "watch"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "us type checking Project root directory TypeScript config file path M"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is project root file path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "for continuous type checking Project root directory TypeScript con"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:5d285735a15d4fbe6faf81a6736435deb7a1187c88296371b5bbf29804da4863"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_cron",
+      "description": "Intelligent scheduled task management with smart caching (85%+ token reduction). Manage cron jobs (Linux/macOS) and Windows Task Scheduler with validation, history tracking, and next run predictions.",
+      "param_names": [
+        "command",
+        "description",
+        "enabled",
+        "historyLimit",
+        "operation",
+        "predictCount",
+        "schedule",
+        "schedulerType",
+        "taskName",
+        "ttl",
+        "useCache",
+        "user",
+        "workingDirectory"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "r Windows schedule Command to execute User to run the task as Worki"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ment with smart caching (85%+ token reduction). Manage cron jobs"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is cron metrics optimization."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "ration schedulerType taskName schedule command user workingDirectory"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "er to run the task as Working directory for the command Task descript"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is working directory, not contact data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Intelligent scheduled task management with smart caching"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "command"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:42020e1b86344230372a96764f6477c2dabc40903d3aafb169ab9d36f8d7196b"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_user",
+      "description": "Intelligent user and permission management with smart caching (86%+ token reduction). Manage users, groups, permissions, ACLs, and perform security audits across Windows, Linux, and macOS.",
+      "param_names": [
+        "groupname",
+        "includeSystemGroups",
+        "includeSystemUsers",
+        "operation",
+        "path",
+        "ttl",
+        "useCache",
+        "username"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ment with smart caching (86%+ token reduction). Manage users, gro"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is user management optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "roup-specific operations File/directory path for permission checks an"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory refers to file/permission path, not contact roster."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:8be1a6f4bcecd350bfe5dc30e0ad9bc838a5f7163c9b4d34fa218a21aee79292"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_diff",
+      "description": "Get git diffs with 85% token reduction through diff-only output and smart filtering",
+      "param_names": [
+        "contextLines",
+        "cwd",
+        "filePattern",
+        "files",
+        "limit",
+        "source",
+        "staged",
+        "summaryOnly",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Get git diffs with 85% token reduction through diff-only o"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is diff output optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "smart_diff smart diff"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "t and smart filtering Working directory for git operations Source com"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is git working directory, not contacts."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:c41a6ad619e682ce03c36dbf2009fa30ba9a9ecf8bcf179108013dbc9feed3c4"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_branch",
+      "description": "List and manage git branches with 60% token reduction through structured JSON output and smart filtering",
+      "param_names": [
+        "all",
+        "cwd",
+        "includeCommit",
+        "includeTracking",
+        "limit",
+        "merged",
+        "namesOnly",
+        "pattern",
+        "remote",
+        "sortBy",
+        "unmerged"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "manage git branches with 60% token reduction through structured"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is branch listing optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "List and manage git branches with 60% token reduc"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "t and smart filtering Working directory for git operations Include bo"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is git working directory, not contacts."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:69b0da673bba9783729d4b2ee5b2fce5b192ac6740bdb089cc7ab0dd91129028"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_merge",
+      "description": "Manage git merges with 80% token reduction through structured status and conflict management",
+      "param_names": [
+        "branch",
+        "commit",
+        "conflictsOnly",
+        "cwd",
+        "ffOnly",
+        "includeContent",
+        "maxConflicts",
+        "mode",
+        "noCommit",
+        "noFf",
+        "squash",
+        "strategy",
+        "summaryOnly"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": "conflict information Include file content for conflicts Only return cou"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Manage git merges with 80% token reduction through structured"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is merge management optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "commit",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "cwd mode branch commit noCommit noFf ffOnly squash s"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "conflict information Include file content for conflicts Only return cou"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "d conflict management Working directory for git operations Operation"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is git working directory, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "reduction through structured status and conflict management Worki"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:2826f8db6ec70574405c2beb1a5735504da961064b81637cb60c25d84aa77d84"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_status",
+      "description": "Get git status with 70% token reduction through status-only output and smart filtering",
+      "param_names": [
+        "cwd",
+        "detailFiles",
+        "filePattern",
+        "includeDetail",
+        "limit",
+        "staged",
+        "statuses",
+        "summaryOnly",
+        "unstaged"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Get git status with 70% token reduction through status-only"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is git status optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Get git status with 70% token reducti"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "nd smart filtering Repository directory Filter by specific file statu"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Repository directory is git working path, not contacts."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "smart_status smart status"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:42756639458074898142359547f3fbbb73e77c9d4116bf5b7b4a11cdda1e1f0e"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_log",
+      "description": "Get git commit history with 75% token reduction through structured JSON output and smart filtering",
+      "param_names": [
+        "author",
+        "branch",
+        "cwd",
+        "filePath",
+        "format",
+        "grep",
+        "includeFiles",
+        "includeStats",
+        "limit",
+        "offset",
+        "since",
+        "until"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "t git commit history with 75% token reduction through structured"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is commit history optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "nch) Filter by author name or email Filter by commit message patt"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Get git commit history with 75% token"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "t and smart filtering Working directory for git operations Show commi"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is git working directory, not contacts."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:44bf83eb7bd6ada98820e3653f55151ca10eb1d3f366f8d37b735e91e25e479d"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_read",
+      "description": "Read files with 80% token reduction through intelligent caching, diff-based updates, and syntax-aware optimization",
+      "param_names": [
+        "chunkIndex",
+        "chunkSize",
+        "diffMode",
+        "maxSize",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read files",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "Read files with 80% token reduction thro"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Read files with 80% token reduction through intelligent"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is file reading optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "through intelligent caching, diff-based updates, and syntax-awa"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:db8c8766ab2122fba04ea4390d286cf645c2a5b9d43977db4a6ca62110de992a"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_write",
+      "description": "Write files with 85% token reduction through verification, atomic operations, and change tracking",
+      "param_names": [
+        "atomic",
+        "autoFormat",
+        "content",
+        "path",
+        "returnDiff",
+        "verifyBeforeWrite"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Write files with 85% token reduction through verificatio"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is file writing optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "at code before writing Return diff instead of full content"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:7d724b0eb5999bc42a443bbab4e1b284214f1725c49eb31b4571da3d60550762"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_edit",
+      "description": "Edit files with 90% token reduction through line-based operations and diff-only output",
+      "param_names": [
+        "createBackup",
+        "dryRun",
+        "operations",
+        "path",
+        "returnDiff"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Edit files with 90% token reduction through line-based"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is file editing optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "ugh line-based operations and diff-only output Path to the file"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:92066ad79b106fe9e646c36d485ef3ce0f651e3b7ab58778bb4269eb2da5557b"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_glob",
+      "description": "Search files with glob patterns and 75% token reduction through path-only results and smart filtering",
+      "param_names": [
+        "cwd",
+        "extensions",
+        "includeContent",
+        "includeMetadata",
+        "limit",
+        "pattern",
+        "sortBy"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": "modified date, etc.) Include file content for small files Filter by fil"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "es with glob patterns and 75% token reduction through path-only r"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is glob pattern optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "modified date, etc.) Include file content for small files Filter by fil"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "c/**/*.ts\", \"*.json\") Working directory for glob search Include file"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is working directory for search, not contacts."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:d6979ab29e3a57aab50e6db5e8e74db8e8a28e030af256a18f9625c64b91ba0f"
+    },
+    {
+      "server": "token-optimizer",
+      "name": "smart_grep",
+      "description": "Search file contents with 80% token reduction through match-only output and smart filtering",
+      "param_names": [
+        "caseSensitive",
+        "contextAfter",
+        "contextBefore",
+        "count",
+        "cwd",
+        "extensions",
+        "files",
+        "filesWithMatches",
+        "includeContext",
+        "limit",
+        "pattern",
+        "regex"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file contents",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": "Search file contents with 80% token reduction thro"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Search file contents with 80% token reduction through match-only"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Token reduction is grep output optimization metric."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ern (string or regex) Working directory for search File patterns to s"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Directory is working directory for search, not contacts."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "tAfter limit filesWithMatches count"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:65104d0a6bf50d4334f697f80c2e65124cd8b1ba3f0044942df4c70edf10b41d"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 7,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 21,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 16,
+        "confidence": "high"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 10,
+        "confidence": "high"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "HIGH",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "HIGH",
+      "title": "Arbitrary file read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. The read accepts an arbitrary path (or the server is scoped to a broad directory), so it can reach secrets/configs far beyond the task.",
+      "contributing": [
+        "file_read (arbitrary path)",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 67,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 70,
+    "toxic_combination_count": 3,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 55,
+      "MEDIUM": 20,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "calendar",
+      "communications_content",
+      "contacts",
+      "credentials_secrets",
+      "files_documents",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 66,
+      "false_positive": 68,
+      "needs_source": 3,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::optimize_text::secrets_access",
+        "reason": "Token refers to LLM prompt tokens (cost metric), not credentials; tool compresses text for API usage."
+      },
+      {
+        "id": "cap::count_tokens::secrets_access",
+        "reason": "Token counting for LLM prompt cost estimation, not credential access."
+      },
+      {
+        "id": "cap::get_cache_stats::secrets_access",
+        "reason": "Token savings refers to LLM token reduction metrics, not secrets access."
+      },
+      {
+        "id": "cap::analyze_optimization::secrets_access",
+        "reason": "Token savings is optimization metric, not credential access."
+      },
+      {
+        "id": "cap::optimize_session::secrets_access",
+        "reason": "Token threshold is a cost-limiting parameter for caching, not secrets access."
+      },
+      {
+        "id": "cap::analyze_project_tokens::secrets_access",
+        "reason": "Token analysis is cost estimation across sessions, not credential access."
+      },
+      {
+        "id": "data::analyze_project_tokens::contacts",
+        "reason": "Directory refers to project file path, not address book or contact roster."
+      },
+      {
+        "id": "cap::predictive_cache::secrets_access",
+        "reason": "Token reduction refers to ML-based caching optimization metrics."
+      },
+      {
+        "id": "cap::cache_warmup::secrets_access",
+        "reason": "Token reduction is caching efficiency metric, not credential access."
+      },
+      {
+        "id": "cap::smart_ast_grep::secrets_access",
+        "reason": "Token reduction is code search optimization metric."
+      },
+      {
+        "id": "data::smart_ast_grep::contacts",
+        "reason": "Directory is project root file path, not contact/roster data."
+      },
+      {
+        "id": "cap::cache_analytics::secrets_access",
+        "reason": "Token reduction is caching analytics metric."
+      },
+      {
+        "id": "cap::cache-benchmark::secrets_access",
+        "reason": "Token reduction is benchmarking performance metric."
+      },
+      {
+        "id": "cap::cache_compression::secrets_access",
+        "reason": "Token reduction is compression efficiency metric."
+      },
+      {
+        "id": "cap::cache_invalidation::secrets_access",
+        "reason": "Token reduction is cache management efficiency metric."
+      },
+      {
+        "id": "cap::cache_optimizer::secrets_access",
+        "reason": "Token reduction is cache optimization metric."
+      },
+      {
+        "id": "cap::cache_partition::secrets_access",
+        "reason": "Token reduction is partitioning efficiency metric."
+      },
+      {
+        "id": "cap::cache_replication::secrets_access",
+        "reason": "Token reduction is replication efficiency metric."
+      },
+      {
+        "id": "cap::smart_cache::secrets_access",
+        "reason": "Token reduction is multi-tier cache efficiency metric."
+      },
+      {
+        "id": "cap::smart_sql::secrets_access",
+        "reason": "Token reduction is SQL query analysis optimization metric."
+      },
+      {
+        "id": "cap::smart_schema::secrets_access",
+        "reason": "Token reduction is schema analysis optimization metric."
+      },
+      {
+        "id": "cap::smart_api_fetch::secrets_access",
+        "reason": "Token reduction is HTTP caching efficiency metric."
+      },
+      {
+        "id": "cap::smart-cache-api::secrets_access",
+        "reason": "Token reduction is API response caching metric."
+      },
+      {
+        "id": "data::smart-cache-api::calendar",
+        "reason": "Event-based refers to caching strategy type, not calendar/event data."
+      },
+      {
+        "id": "cap::smart_database::secrets_access",
+        "reason": "Token reduction is query optimization metric."
+      },
+      {
+        "id": "cap::smart_graphql::secrets_access",
+        "reason": "Token reduction is GraphQL query optimization metric."
+      },
+      {
+        "id": "cap::smart_migration::secrets_access",
+        "reason": "Token reduction is migration tracking optimization metric."
+      },
+      {
+        "id": "cap::smart_orm::secrets_access",
+        "reason": "Token reduction is ORM optimization metric."
+      },
+      {
+        "id": "cap::smart_rest::secrets_access",
+        "reason": "Token reduction is REST API analysis optimization metric."
+      },
+      {
+        "id": "cap::smart_websocket::secrets_access",
+        "reason": "Token reduction is WebSocket management metric."
+      },
+      {
+        "id": "cap::alert_manager::secrets_access",
+        "reason": "Token reduction is alerting efficiency metric."
+      },
+      {
+        "id": "cap::metric_collector::secrets_access",
+        "reason": "Token reduction is metrics aggregation efficiency metric."
+      },
+      {
+        "id": "cap::custom_widget::secrets_access",
+        "reason": "Token reduction is widget rendering optimization metric."
+      },
+      {
+        "id": "cap::data_visualizer::secrets_access",
+        "reason": "Token reduction is visualization optimization metric."
+      },
+      {
+        "id": "cap::health_monitor::secrets_access",
+        "reason": "Token reduction is health monitoring metric."
+      },
+      {
+        "id": "cap::log_dashboard::secrets_access",
+        "reason": "Token reduction is log analysis optimization metric."
+      },
+      {
+        "id": "data::smart_processes::contacts",
+        "reason": "Directory is project root file path, not contact roster."
+      },
+      {
+        "id": "data::smart_network::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_logs::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_lint::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_install::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_docker::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "cap::smart_build::secrets_access",
+        "reason": "Token-optimized output is build output optimization, not secrets access."
+      },
+      {
+        "id": "data::smart_build::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_system_metrics::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_test::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "data::smart_typecheck::contacts",
+        "reason": "Directory is project root file path, not contacts."
+      },
+      {
+        "id": "cap::smart_cron::secrets_access",
+        "reason": "Token reduction is cron metrics optimization."
+      },
+      {
+        "id": "data::smart_cron::contacts",
+        "reason": "Directory is working directory, not contact data."
+      },
+      {
+        "id": "cap::smart_user::secrets_access",
+        "reason": "Token reduction is user management optimization metric."
+      },
+      {
+        "id": "data::smart_user::contacts",
+        "reason": "Directory refers to file/permission path, not contact roster."
+      },
+      {
+        "id": "cap::smart_diff::secrets_access",
+        "reason": "Token reduction is diff output optimization metric."
+      },
+      {
+        "id": "data::smart_diff::contacts",
+        "reason": "Directory is git working directory, not contacts."
+      },
+      {
+        "id": "cap::smart_branch::secrets_access",
+        "reason": "Token reduction is branch listing optimization metric."
+      },
+      {
+        "id": "data::smart_branch::contacts",
+        "reason": "Directory is git working directory, not contacts."
+      },
+      {
+        "id": "cap::smart_merge::secrets_access",
+        "reason": "Token reduction is merge management optimization metric."
+      },
+      {
+        "id": "data::smart_merge::contacts",
+        "reason": "Directory is git working directory, not contacts."
+      },
+      {
+        "id": "cap::smart_status::secrets_access",
+        "reason": "Token reduction is git status optimization metric."
+      },
+      {
+        "id": "data::smart_status::contacts",
+        "reason": "Repository directory is git working path, not contacts."
+      },
+      {
+        "id": "cap::smart_log::secrets_access",
+        "reason": "Token reduction is commit history optimization metric."
+      },
+      {
+        "id": "data::smart_log::contacts",
+        "reason": "Directory is git working directory, not contacts."
+      },
+      {
+        "id": "cap::smart_read::secrets_access",
+        "reason": "Token reduction is file reading optimization metric."
+      },
+      {
+        "id": "cap::smart_write::secrets_access",
+        "reason": "Token reduction is file writing optimization metric."
+      },
+      {
+        "id": "cap::smart_edit::secrets_access",
+        "reason": "Token reduction is file editing optimization metric."
+      },
+      {
+        "id": "cap::smart_glob::secrets_access",
+        "reason": "Token reduction is glob pattern optimization metric."
+      },
+      {
+        "id": "data::smart_glob::contacts",
+        "reason": "Directory is working directory for search, not contacts."
+      },
+      {
+        "id": "cap::smart_grep::secrets_access",
+        "reason": "Token reduction is grep output optimization metric."
+      },
+      {
+        "id": "data::smart_grep::contacts",
+        "reason": "Directory is working directory for search, not contacts."
+      }
+    ]
+  }
+}

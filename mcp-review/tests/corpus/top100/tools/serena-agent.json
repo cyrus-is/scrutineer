@@ -1,0 +1,5 @@
+{
+  "server": "serena-agent",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

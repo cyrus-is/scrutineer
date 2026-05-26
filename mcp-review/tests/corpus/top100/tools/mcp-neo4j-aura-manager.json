@@ -1,0 +1,444 @@
+{
+  "server": "mcp-neo4j-aura-manager",
+  "captured_at": "2026-05-26T22:23:16Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "mcp-neo4j-aura-manager",
+    "version": "2.14.7"
+  },
+  "tools": [
+    {
+      "name": "placeholder-not-a-real-credential-list_instances",
+      "title": "List Instances",
+      "description": "List all Neo4j Aura database instances.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "List Instances",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-get_instance_details",
+      "title": "Get Instance Details",
+      "description": "Get details for one or more Neo4j Aura instances by ID.",
+      "inputSchema": {
+        "properties": {
+          "instance_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "instance_ids"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Get Instance Details",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-get_instance_by_name",
+      "title": "Get Instance by Name",
+      "description": "Find a Neo4j Aura instance by name and returns the details including the id.",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Get Instance by Name",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-create_instance",
+      "title": "Create Instance",
+      "description": "Create a new Neo4j Aura database instance.",
+      "inputSchema": {
+        "properties": {
+          "tenant_id": {
+            "description": "ID of the tenant/project where the instance will be created",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name for the new instance",
+            "type": "string"
+          },
+          "memory": {
+            "default": 1,
+            "description": "Memory allocation in GB",
+            "type": "integer"
+          },
+          "region": {
+            "default": "us-central1",
+            "description": "Region for the instance (e.g., 'us-central1')",
+            "type": "string"
+          },
+          "type": {
+            "default": "free-db",
+            "description": "Instance type (free-db, professional-db, enterprise-db, or business-critical)",
+            "type": "string"
+          },
+          "vector_optimized": {
+            "default": false,
+            "description": "Whether the instance is optimized for vector operations",
+            "type": "boolean"
+          },
+          "cloud_provider": {
+            "default": "gcp",
+            "description": "Cloud provider (gcp, aws, azure)",
+            "type": "string"
+          },
+          "graph_analytics_plugin": {
+            "default": false,
+            "description": "Whether to enable the graph analytics plugin",
+            "type": "boolean"
+          },
+          "source_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ID of the source instance to clone from"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Create Instance",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-update_instance_name",
+      "title": "Update Instance Name",
+      "description": "Update the name of a Neo4j Aura instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Update Instance Name",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-update_instance_memory",
+      "title": "Update Instance Memory",
+      "description": "Update the memory allocation of a Neo4j Aura instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          },
+          "memory": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance_id",
+          "memory"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Update Instance Memory",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-update_instance_vector_optimization",
+      "title": "Update Instance Vector Optimization",
+      "description": "Update the vector optimization setting of a Neo4j Aura instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          },
+          "vector_optimized": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "instance_id",
+          "vector_optimized"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Update Instance Vector Optimization",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-pause_instance",
+      "title": "Pause Instance",
+      "description": "Pause a Neo4j Aura database instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Pause Instance",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-resume_instance",
+      "title": "Resume Instance",
+      "description": "Resume a paused Neo4j Aura database instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Resume Instance",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-list_tenants",
+      "title": "List Tenants",
+      "description": "List all Neo4j Aura tenants/projects.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "List Tenants",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-get_tenant_details",
+      "title": "Get Tenant Details",
+      "description": "Get details for a specific Neo4j Aura tenant/project.",
+      "inputSchema": {
+        "properties": {
+          "tenant_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Get Tenant Details",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "placeholder-not-a-real-credential-delete_instance",
+      "title": "Delete Instance",
+      "description": "Delete a Neo4j Aura database instance.",
+      "inputSchema": {
+        "properties": {
+          "instance_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Delete Instance",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    }
+  ]
+}

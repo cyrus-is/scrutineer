@@ -1,0 +1,245 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-server-commands",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-commands"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@agent-infra/mcp-server-commands",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:5069d6ff82287d6b13d1e28bd9e219d56ab55087e19d63e660e3d9110f9aaec6",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-server-commands' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @agent-infra/mcp-server-commands.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@agent-infra/mcp-server-commands",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-server-commands' package spec '@agent-infra/mcp-server-commands' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@agent-infra/mcp-server-commands",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-server-commands",
+      "name": "run_command",
+      "description": "Run a command on this linux machine",
+      "param_names": [
+        "command",
+        "cwd"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "run_command",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "run_command run command"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "and with args Current working directory, leave empty in most cases"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' from 'Current working directory' (a filesystem path parameter), not a contacts/address directory; tool has no capability to access contacts."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "command"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:9ef152c8bd6414374b24661668c46d68a2a4aa92a8bab2230d8e33fd4d5c0f40"
+    },
+    {
+      "server": "mcp-server-commands",
+      "name": "run_script",
+      "description": "Run a script on this linux machine",
+      "param_names": [
+        "cwd",
+        "interpreter",
+        "script"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "run_script",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "run_script run script"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Script to run Current working directory, leave empty in most cases"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' from 'Current working directory' (filesystem parameter), not contacts; tool inherently has no contacts data access."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "script"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:e7ec6d098dea5525a6d6c96b7cf8b3dcc202e325d3c5b84a6b94d359da3d3539"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high"
+    ],
+    "categories": {
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 3,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 2,
+      "false_positive": 2,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::run_command::contacts",
+        "reason": "Matched 'directory' from 'Current working directory' (a filesystem path parameter), not a contacts/address directory; tool has no capability to access contacts."
+      },
+      {
+        "id": "data::run_script::contacts",
+        "reason": "Matched 'directory' from 'Current working directory' (filesystem parameter), not contacts; tool inherently has no contacts data access."
+      }
+    ]
+  }
+}

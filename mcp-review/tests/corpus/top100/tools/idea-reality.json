@@ -1,0 +1,46 @@
+{
+  "server": "idea-reality",
+  "captured_at": "2026-05-26T22:23:20Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "idea-reality-mcp",
+    "version": "3.3.1"
+  },
+  "tools": [
+    {
+      "name": "idea_check",
+      "description": "Check if a product idea already exists before building it.\n\nUse when users discuss new project ideas, ask about competition,\nmarket saturation, or whether something has been built before.\n\nTrigger phrases: \"has anyone built\", \"does this exist\",\n\"check competition\", \"is this idea original\",\n\"\u6709\u6c92\u6709\u4eba\u505a\u904e\", \"\u5e02\u5834\u4e0a\u6709\u985e\u4f3c\u7684\u55ce\", \"\u5e6b\u6211\u67e5\u9019\u500b\u9ede\u5b50\"",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "idea_text": {
+            "type": "string",
+            "description": "Natural-language description of the idea."
+          },
+          "depth": {
+            "default": "quick",
+            "enum": [
+              "quick",
+              "deep"
+            ],
+            "type": "string",
+            "description": "\"quick\" (GitHub + HN, fast) or \"deep\" (all sources in parallel)."
+          }
+        },
+        "required": [
+          "idea_text"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1111 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "hex-graph",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-graph-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@levnikolaevich/hex-graph-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:da89ae03ac5ca4b5f66aee748bd3dab2d8b32e8fccafae01bbf54349978ac1a4",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'hex-graph' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @levnikolaevich/hex-graph-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@levnikolaevich/hex-graph-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'hex-graph' package spec '@levnikolaevich/hex-graph-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@levnikolaevich/hex-graph-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "hex-graph",
+      "name": "index_project",
+      "description": "Scan and index a project into the graph kernel, honoring Git excludes by default and including precise/framework overlays when available.",
+      "param_names": [
+        "languages",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "to the graph kernel, honoring Git excludes by default and inclu"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "when available. Project root directory Filter indexed languages"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem directories, not contact/address book directories."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "index_project index project"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to code projects being indexed, not project management metadata (tasks/issues/tickets)."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:999fdfb99d4f83de054c1b5849708b07dd4cf3ec599ede8e8586705a68304eb6"
+    },
+    {
+      "server": "hex-graph",
+      "name": "install_graph_providers",
+      "description": "Detect graph-specific providers and optional SCIP exporters for the current project, then return exact remediation steps or install them on demand. This never installs runtimes or project dependencies.",
+      "param_names": [
+        "include_optional_scip",
+        "mode",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "CIP exporters for the current project, then return exact remediatio"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project being analyzed for graph providers, not task/issue tracking metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:a71888f6475825f3c558fc8450fa271f16ad037f1eb4891de1a8b6a280db201a"
+    },
+    {
+      "server": "hex-graph",
+      "name": "export_scip",
+      "description": "Export indexed symbol facts to a binary SCIP artifact. TypeScript/JavaScript uses the native compiler lane; Python, PHP, and C# use their upstream SCIP indexers.",
+      "param_names": [
+        "environment_path",
+        "include_external_symbols",
+        "language",
+        "output_path",
+        "path",
+        "project_name",
+        "project_namespace",
+        "target_only",
+        "working_directory"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "only environment path working directory"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' in 'working_directory' is a filesystem path parameter, not a contacts directory."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "uage include external symbols project name project namespace target"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Matches 'project' in naming parameters refer to the code project identifier, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:94b0eac13b819a40930f5bf08ae1f4ab8d67912c082df0a722a858d2596fd336"
+    },
+    {
+      "server": "hex-graph",
+      "name": "import_scip_overlay",
+      "description": "Import a binary SCIP artifact into provenance-tagged overlay facts without replacing the native graph. The import lane is derived from the artifact documents.",
+      "param_names": [
+        "artifact_path",
+        "path",
+        "replace_existing"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "e artifact documents. Indexed project root Path to a `.scip` artifa"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' in 'project root' refers to the code project directory structure, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:a0e141a007143d5727912596911bd095d14ed20296f4b6f2e800bcb35156b8e7"
+    },
+    {
+      "server": "hex-graph",
+      "name": "find_symbols",
+      "description": "Find candidate symbols by name or partial name before selecting a canonical identity for deeper graph analysis.",
+      "param_names": [
+        "kind",
+        "limit",
+        "path",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem location within the indexed project, not a contacts directory."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "o return (default: 8) Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:f737986a54a0661eaf704fca8e926e2a842291b22da343f434a629f4a62d0cc7"
+    },
+    {
+      "server": "hex-graph",
+      "name": "inspect_symbol",
+      "description": "Return a symbol-centric briefing: canonical resolution, local context, incoming and outgoing relations, reference summary, and implementation summary.",
+      "param_names": [
+        "expand",
+        "expand_limit",
+        "file",
+        "include_evidence",
+        "min_confidence",
+        "name",
+        "path",
+        "qualified_name",
+        "symbol_id",
+        "verbosity",
+        "workspace_qualified_name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem path specification, not contacts data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eep payloads compact. Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project context for symbol analysis, not task/issue metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "clude_evidence path symbol id workspace qualified name qualified name"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' in 'workspace_qualified_name' refers to code symbol namespace scope, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:2f9a852c6efbef1148d05650ba7d5f159fd85f6eb46077ae75645cf674eab7ef"
+    },
+    {
+      "server": "hex-graph",
+      "name": "trace_paths",
+      "description": "Trace graph paths from a canonical symbol through calls, references, imports, type, flow, or mixed edges. Mixed traces can include framework overlay hops.",
+      "param_names": [
+        "depth",
+        "direction",
+        "expand",
+        "expand_limit",
+        "file",
+        "include_evidence",
+        "limit",
+        "min_confidence",
+        "name",
+        "path",
+        "path_kind",
+        "qualified_name",
+        "symbol_id",
+        "to_file",
+        "to_name",
+        "to_qualified_name",
+        "to_symbol_id",
+        "to_workspace_qualified_name",
+        "verbosity",
+        "workspace_qualified_name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eep payloads compact. Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "clude_evidence path symbol id workspace qualified name qualified name"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' refers to code workspace/namespace scope in symbol tracing, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:2426346ad313feea4e3f516b906887e8217b74c4a1cc15f4d5c815f4aa5fa7c5"
+    },
+    {
+      "server": "hex-graph",
+      "name": "find_references",
+      "description": "Find semantic usages of a canonical symbol identity, including framework overlay wiring when present.",
+      "param_names": [
+        "expand",
+        "expand_limit",
+        "file",
+        "include_evidence",
+        "kind",
+        "limit",
+        "min_confidence",
+        "name",
+        "path",
+        "qualified_name",
+        "symbol_id",
+        "verbosity",
+        "workspace_qualified_name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eep payloads compact. Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "clude_evidence path symbol id workspace qualified name qualified name"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' refers to code symbol namespace, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:d87dc969073612f936fcfdaf7bd716a03192f522bc1e8fa490a64efa93c0be47"
+    },
+    {
+      "server": "hex-graph",
+      "name": "find_implementations",
+      "description": "Find implementations and overrides for a canonical symbol identity.",
+      "param_names": [
+        "expand",
+        "expand_limit",
+        "file",
+        "include_evidence",
+        "limit",
+        "name",
+        "path",
+        "qualified_name",
+        "symbol_id",
+        "verbosity",
+        "workspace_qualified_name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eep payloads compact. Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "clude_evidence path symbol id workspace qualified name qualified name"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' refers to code workspace scope for implementation analysis, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:b6e9fa90b7888dd6c5a661359cd697d6c03acc7b0972105d7e34ebf626245414"
+    },
+    {
+      "server": "hex-graph",
+      "name": "trace_dataflow",
+      "description": "Find deterministic source-to-sink dataflow paths between anchored flow points.",
+      "param_names": [
+        "expand",
+        "expand_limit",
+        "flow_kind",
+        "include_evidence",
+        "limit",
+        "max_hops",
+        "min_confidence",
+        "path",
+        "sink",
+        "source",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ndexed project root or a file/directory inside the indexed project"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eep payloads compact. Indexed project root or a file/directory insi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "path source symbol symbol id workspace qualified name qualified name"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' in dataflow tracing refers to code workspace scope, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:6acdeae8a634332521a86fbe6990e1dfebc740819151d31d733cf87f376230a6"
+    },
+    {
+      "server": "hex-graph",
+      "name": "analyze_changes",
+      "description": "Review a git diff, commit range, or worktree change set and return a compact semantic risk snapshot with changed symbols, deleted API warnings, and optional supporting paths.",
+      "param_names": [
+        "base_ref",
+        "head_ref",
+        "include_paths",
+        "max_paths",
+        "max_symbols",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Review a git diff, commit range, or worktr"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "nal supporting paths. Indexed project root Git baseline ref used to"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project context, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:be11973817ee64cc7e94f95e09f91b1ede312c9f4f3c80ab4906b3ffad26a332"
+    },
+    {
+      "server": "hex-graph",
+      "name": "analyze_edit_region",
+      "description": "Inspect the semantic impact of editing a concrete file range: edited symbols, external callers, downstream flow, framework wiring, and duplicate/code-clone risk.",
+      "param_names": [
+        "file",
+        "line_end",
+        "line_start",
+        "path",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "cate/code-clone risk. Indexed project root File path inside the ind"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to code project structure, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:42a9ecf72a5402e5333178b9c0930a69b5f08ea49651d329bfa268253b01e150"
+    },
+    {
+      "server": "hex-graph",
+      "name": "analyze_architecture",
+      "description": "Return a high-level architecture view with modules, dependency boundaries, cycles, coupling, framework surfaces, and top risks.",
+      "param_names": [
+        "limit",
+        "path",
+        "scope",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "faces, and top risks. Indexed project root Optional file path prefi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to code project architecture analysis, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:d8abbdaf8368e3a81e92b07717dd7b51d64fc2becf7305e13eddd6779e23a949"
+    },
+    {
+      "server": "hex-graph",
+      "name": "audit_workspace",
+      "description": "Audit the indexed workspace for cleanup and maintainability issues: unused exports, hotspots, and clone groups with a single review-oriented result.",
+      "param_names": [
+        "clone_member_limit",
+        "limit",
+        "path",
+        "scope",
+        "show_suppressed",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_metadata",
+          "label": "Communication metadata (who / where / when)",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "member",
+            "pattern": "\\b(list[\\s_-]?(channel|conversation|member|participant)s?|channel[\\s_-]?list|presence|who[\\s_-]?is|members?)\\b",
+            "snippet": "h scope verbosity limit clone member limit show suppressed"
+          },
+          "rationale": "Not the message bodies, but the social graph and channel structure.",
+          "validated_out": true,
+          "validation_reason": "Match 'member' in 'clone_member_limit' refers to code clone group members, not communication channel members."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "view-oriented result. Indexed project root Optional file path prefi"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match 'project' refers to the code project being audited, not project management metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "audit_workspace audit workspace"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "Match 'workspace' refers to code workspace audit for cleanup/maintainability, not organizational structure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:18de4ef4c31d707c732f1e272e7786465bd1ea4e7de8f78e3a979a87e7c24bb5"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 8,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 14,
+        "confidence": "high"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 6,
+        "confidence": "high"
+      },
+      "communications_metadata": {
+        "label": "Communication metadata (who / where / when)",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 14,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "communications_metadata",
+      "contacts",
+      "org_structure",
+      "project_metadata",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 2,
+      "false_positive": 29,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::index_project::contacts",
+        "reason": "Match 'directory' refers to filesystem directories, not contact/address book directories."
+      },
+      {
+        "id": "data::index_project::project_metadata",
+        "reason": "Match 'project' refers to code projects being indexed, not project management metadata (tasks/issues/tickets)."
+      },
+      {
+        "id": "data::install_graph_providers::project_metadata",
+        "reason": "Match 'project' refers to the code project being analyzed for graph providers, not task/issue tracking metadata."
+      },
+      {
+        "id": "data::export_scip::contacts",
+        "reason": "Match 'directory' in 'working_directory' is a filesystem path parameter, not a contacts directory."
+      },
+      {
+        "id": "data::export_scip::project_metadata",
+        "reason": "Matches 'project' in naming parameters refer to the code project identifier, not project management metadata."
+      },
+      {
+        "id": "data::import_scip_overlay::project_metadata",
+        "reason": "Match 'project' in 'project root' refers to the code project directory structure, not project management metadata."
+      },
+      {
+        "id": "data::find_symbols::contacts",
+        "reason": "Match 'directory' refers to filesystem location within the indexed project, not a contacts directory."
+      },
+      {
+        "id": "data::find_symbols::project_metadata",
+        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+      },
+      {
+        "id": "data::inspect_symbol::contacts",
+        "reason": "Match 'directory' refers to filesystem path specification, not contacts data."
+      },
+      {
+        "id": "data::inspect_symbol::project_metadata",
+        "reason": "Match 'project' refers to the code project context for symbol analysis, not task/issue metadata."
+      },
+      {
+        "id": "data::inspect_symbol::org_structure",
+        "reason": "Match 'workspace' in 'workspace_qualified_name' refers to code symbol namespace scope, not organizational structure."
+      },
+      {
+        "id": "data::trace_paths::contacts",
+        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+      },
+      {
+        "id": "data::trace_paths::project_metadata",
+        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+      },
+      {
+        "id": "data::trace_paths::org_structure",
+        "reason": "Match 'workspace' refers to code workspace/namespace scope in symbol tracing, not organizational structure."
+      },
+      {
+        "id": "data::find_references::contacts",
+        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+      },
+      {
+        "id": "data::find_references::project_metadata",
+        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+      },
+      {
+        "id": "data::find_references::org_structure",
+        "reason": "Match 'workspace' refers to code symbol namespace, not organizational structure."
+      },
+      {
+        "id": "data::find_implementations::contacts",
+        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+      },
+      {
+        "id": "data::find_implementations::project_metadata",
+        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+      },
+      {
+        "id": "data::find_implementations::org_structure",
+        "reason": "Match 'workspace' refers to code workspace scope for implementation analysis, not organizational structure."
+      },
+      {
+        "id": "data::trace_dataflow::contacts",
+        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+      },
+      {
+        "id": "data::trace_dataflow::project_metadata",
+        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+      },
+      {
+        "id": "data::trace_dataflow::org_structure",
+        "reason": "Match 'workspace' in dataflow tracing refers to code workspace scope, not organizational structure."
+      },
+      {
+        "id": "data::analyze_changes::project_metadata",
+        "reason": "Match 'project' refers to the code project context, not project management metadata."
+      },
+      {
+        "id": "data::analyze_edit_region::project_metadata",
+        "reason": "Match 'project' refers to code project structure, not project management metadata."
+      },
+      {
+        "id": "data::analyze_architecture::project_metadata",
+        "reason": "Match 'project' refers to code project architecture analysis, not project management metadata."
+      },
+      {
+        "id": "data::audit_workspace::communications_metadata",
+        "reason": "Match 'member' in 'clone_member_limit' refers to code clone group members, not communication channel members."
+      },
+      {
+        "id": "data::audit_workspace::project_metadata",
+        "reason": "Match 'project' refers to the code project being audited, not project management metadata."
+      },
+      {
+        "id": "data::audit_workspace::org_structure",
+        "reason": "Match 'workspace' refers to code workspace audit for cleanup/maintainability, not organizational structure."
+      }
+    ]
+  }
+}

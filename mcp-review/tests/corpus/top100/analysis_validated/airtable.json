@@ -1,0 +1,637 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "airtable",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "airtable-mcp-server"
+      ],
+      "env_keys": [
+        "AIRTABLE_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "AIRTABLE_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "airtable-mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:bb4469fade25adad97ed032d75a3e453431e9f22a1454047886c34753ccbfade",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'airtable' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: airtable-mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "airtable-mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'airtable' package spec 'airtable-mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "airtable-mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'airtable' requires credential-like env keys: AIRTABLE_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "AIRTABLE_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "airtable",
+      "name": "list_records",
+      "description": "List records from a table",
+      "param_names": [
+        "baseId",
+        "filterByFormula",
+        "maxRecords",
+        "sort",
+        "tableId",
+        "view"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "view in the table The maximum total number of records that will b"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:6c3191b788587e78bdbe54a387ddf73773b3867fda46947ba93eb1b3542c6f99"
+    },
+    {
+      "server": "airtable",
+      "name": "search_records",
+      "description": "Search for records containing specific text",
+      "param_names": [
+        "baseId",
+        "fieldIds",
+        "maxRecords",
+        "searchTerm",
+        "tableId",
+        "view"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "IDs to search in The maximum total number of records that will b"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:87512440a9176411b56a7165925f01bd5430df01a5dc2f6b7486d8c937bb66f5"
+    },
+    {
+      "server": "airtable",
+      "name": "list_bases",
+      "description": "List all accessible Airtable bases",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1d003776d8be8911df3e6eee8df987b1f5f90435995ab24f4ed2a4ddf3488a40"
+    },
+    {
+      "server": "airtable",
+      "name": "list_tables",
+      "description": "List all tables in a specific base",
+      "param_names": [
+        "baseId",
+        "detailLevel"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:68115ce88ff21deac6b16a205158f73eaecb8df1bf38d7cf4dad19bb445a1b31"
+    },
+    {
+      "server": "airtable",
+      "name": "describe_table",
+      "description": "Get detailed information about a specific table",
+      "param_names": [
+        "baseId",
+        "detailLevel",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:34b3f2a4243187a8d4f834a076835f37f278534bb8afce47442cb6a0b6bdfa53"
+    },
+    {
+      "server": "airtable",
+      "name": "get_record",
+      "description": "Get a specific record by ID",
+      "param_names": [
+        "baseId",
+        "recordId",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:81585e89c655358483f6d4fe15fc30423c7588f4af5f169d52dbf25779c3c9de"
+    },
+    {
+      "server": "airtable",
+      "name": "create_record",
+      "description": "Create a new record in a table",
+      "param_names": [
+        "baseId",
+        "fields",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:933e534967b45ea0c032fa47dd9f597cd089393997214a80510ca7f231747a5a"
+    },
+    {
+      "server": "airtable",
+      "name": "update_records",
+      "description": "Update up to 10 records in a table",
+      "param_names": [
+        "baseId",
+        "records",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f9f9697718d107bfa79bff30646c6352eb3b931cd250014c2fb892419af7ea60"
+    },
+    {
+      "server": "airtable",
+      "name": "delete_records",
+      "description": "Delete records from a table",
+      "param_names": [
+        "baseId",
+        "recordIds",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:63dec84ab603a3a20a6c0b0dbf19442ca9c422632a543e719958e8a763fcbbdc"
+    },
+    {
+      "server": "airtable",
+      "name": "create_table",
+      "description": "Create a new table in a base",
+      "param_names": [
+        "baseId",
+        "description",
+        "fields",
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f86bd3f0c019af42b3f7c5ed92141caf3a69301087e95843caf5a700a5bd2977"
+    },
+    {
+      "server": "airtable",
+      "name": "update_table",
+      "description": "Update a table's name or description",
+      "param_names": [
+        "baseId",
+        "description",
+        "name",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cb5ec97f4f9766bb3a2830d5ac2442c97295538d0ed29e1629667ee88afa975f"
+    },
+    {
+      "server": "airtable",
+      "name": "create_field",
+      "description": "Create a new field in a table",
+      "param_names": [
+        "baseId",
+        "nested",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:62921f6d380531769079d27d3cc1d00ce6c4de40efe92b0f56b8b3167cbe7c4f"
+    },
+    {
+      "server": "airtable",
+      "name": "update_field",
+      "description": "Update a field's name or description",
+      "param_names": [
+        "baseId",
+        "description",
+        "fieldId",
+        "name",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5f880381f0e6deb20b28156b755dc3f31c59d0ade1e4e760a92ec4048e4feccf"
+    },
+    {
+      "server": "airtable",
+      "name": "create_comment",
+      "description": "Create a comment on a record",
+      "param_names": [
+        "baseId",
+        "parentCommentId",
+        "recordId",
+        "tableId",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2c7fb7440bc89d19d7ad522f5fd91dd1c61dd9b889cb5ad7bcdaf8e99c9cd63c"
+    },
+    {
+      "server": "airtable",
+      "name": "list_comments",
+      "description": "List comments on a record",
+      "param_names": [
+        "baseId",
+        "offset",
+        "pageSize",
+        "recordId",
+        "tableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f7ca293809c3bc80917039cc6d8f2e0144a39b06297b8824f010a4c075af4119"
+    },
+    {
+      "server": "airtable",
+      "name": "upload_attachment",
+      "description": "Upload a file directly to an attachment field on an existing record using Airtable's upload API. Supports files up to 5 MB. For larger files, use create_record or update_records with a public URL. The record must already exist.",
+      "param_names": [
+        "attachmentFieldIdOrName",
+        "baseId",
+        "contentType",
+        "file",
+        "filename",
+        "recordId"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": "\"Images\") Raw base64-encoded file content (no data URL prefix) Filename"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The matched phrase 'file content' describes the input parameter (base64-encoded content you provide), not a capability to read files."
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "upload",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "upload_attachment upload attachment"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "attachment",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "upload_attachment upload attachment"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "cord or update_records with a public URL. The record must already"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "The matched token 'public' refers to 'public URL' as an upload method (publicly accessible URLs), not data being public or open."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:d0a306bd80f382c0f6d7a4ad04738c413ec9d6c194ab690f8b4a3c4199f82cee"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high",
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
+      "contributing": [
+        "sensitive_env_required",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "HIGH",
+      "title": "Arbitrary file read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. The read accepts an arbitrary path (or the server is scoped to a broad directory), so it can reach secrets/configs far beyond the task.",
+      "contributing": [
+        "file_read (arbitrary path)",
+        "network_egress"
+      ],
+      "confidence": "high",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 16,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 2,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "files_documents",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 2,
+      "false_positive": 4,
+      "needs_source": 2,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::list_records::public_data",
+        "reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+      },
+      {
+        "id": "data::search_records::public_data",
+        "reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+      },
+      {
+        "id": "cap::upload_attachment::file_read",
+        "reason": "The matched phrase 'file content' describes the input parameter (base64-encoded content you provide), not a capability to read files."
+      },
+      {
+        "id": "data::upload_attachment::public_data",
+        "reason": "The matched token 'public' refers to 'public URL' as an upload method (publicly accessible URLs), not data being public or open."
+      }
+    ]
+  }
+}

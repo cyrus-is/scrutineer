@@ -1,0 +1,678 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-server-browser",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-browser"
+      ],
+      "env_keys": [
+        "DISPLAY"
+      ],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@agent-infra/mcp-server-browser",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:522f96f25196dcf1d1713abe9f17c069f5452d3533d023d4c847066fe81aa8bc",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-server-browser' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @agent-infra/mcp-server-browser.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@agent-infra/mcp-server-browser",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-server-browser' package spec '@agent-infra/mcp-server-browser' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@agent-infra/mcp-server-browser",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_navigate",
+      "description": "Navigate to a URL",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:038d34709fe60ec073e9b217886f4b8bb1e4d45d9874d7099324ecdba480db6b"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_go_back",
+      "description": "Go back to the previous page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b2b63137a7d9a7cff9779dc3504d40c6816b2e1cd3a2b1cdb352c354e4944b86"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_go_forward",
+      "description": "Go forward to the next page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ead63edd7ca27db886ef1dae02c49f1d669de5efca34157dc808268eaa51afde"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_form_input_fill",
+      "description": "Fill out an input field, before using the tool, Either 'index' or 'selector' must be provided",
+      "param_names": [
+        "clear",
+        "index",
+        "selector",
+        "value"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:036dfaeca9352ec5595314a049000d12bf0be7a594161c8591c9c67bff9fad16"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_get_markdown",
+      "description": "Get the markdown content of the current page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3bea2b314f8ba9f38550da18bcdac65d4f30a4da11fbfad64b61c22d01ee0bca"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_get_text",
+      "description": "Get the text content of the current page",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "get text",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "browser_get_text browser get text"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The tool reads rendered page content (DOM/text), not file system objects; 'get text' matched a file_read pattern but describes browser page content, not file I/O."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:45ee3a4beec68d3bb614340faf3cb0a52659c6f40dda4a95d50a4d2e55075cfe"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_read_links",
+      "description": "Get all links on the current page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e19467e84899b561439f6cf05a2b899b30a67082fc9ee2cc81e15d2cefc1a122"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_new_tab",
+      "description": "Open a new tab",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:5ab3e44e1c5efb8d727e35cdecc3e8a5c6721b604ed24c42664771828cc6574e"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_tab_list",
+      "description": "Get the list of tabs",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1e353982ed6a3af3f51c63ae84ef600f797e2cde28c256925922d8f37a8cdc1c"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_switch_tab",
+      "description": "Switch to a specific tab",
+      "param_names": [
+        "index"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:209e2d74a172c37b192a1641d0859363f442015278d1d3ac753d0dbb2d7334d9"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_close_tab",
+      "description": "Close the current tab",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ac1e9cc1e706edf185dda7b0a4afc9f7febaa58b680f5e346a4f2b39226c3ef7"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_evaluate",
+      "description": "Execute JavaScript in the browser console",
+      "param_names": [
+        "script"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Execute JavaScript in the browser con"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "script"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:ab9ad4b249cdbfe8f7fdbc99752f0a2b1449be26b6a6fd452185f474ba3303ae"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_get_download_list",
+      "description": "Get the list of downloaded files",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "download",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "get_download_list browser get download list"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Download' in 'get download list' is a noun (files already downloaded), not the verb 'download'; the tool reads local metadata, not making outbound calls."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "download",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "get_download_list browser get download list"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:ee2a9de5ac1fd7cba2ff3112985c2e93e1432927c0bb12803a494f1334e4e42a"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_screenshot",
+      "description": "Take a screenshot of the current page or a specific element",
+      "param_names": [
+        "fullPage",
+        "height",
+        "highlight",
+        "index",
+        "name",
+        "selector",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0f88aa181ad21c6b0f39d20e8305d728fd73666f18b977906e00e3405cb60f29"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_click",
+      "description": "Click an element on the page, before using the tool, use `browser_get_clickable_elements` to get the index of the element, but not call `browser_get_clickable_elements` multiple times",
+      "param_names": [
+        "index"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:32e716bdf6d4af76a6356f8aa5bf0229bd4a1277df61559ce2ea5ab407c5cd9a"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_select",
+      "description": "Select an element on the page with index, Either 'index' or 'selector' must be provided",
+      "param_names": [
+        "index",
+        "selector",
+        "value"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:76af7a828a57dd664c08336a9414767028f110931fc6560b483adc6c3c37188c"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_hover",
+      "description": "Hover an element on the page, Either 'index' or 'selector' must be provided",
+      "param_names": [
+        "index",
+        "selector"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:61adfcebd82d375278725491d379a27ea88ed66f3288b00ebe6f6b2feb05c8ff"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_get_clickable_elements",
+      "description": "Get the clickable or hoverable or selectable elements on the current page, don't call this tool multiple times",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0388f176ef8016da37608878268817df74222d22e64a638f1e2fbf0d160022c5"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_scroll",
+      "description": "Scroll the page",
+      "param_names": [
+        "amount"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:02b4a4ea2eb6ba80f399b0596de5f60157537925666b6800d9bc98abec2620f7"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_close",
+      "description": "Close the browser when the task is done and the browser is not needed anymore",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Close the browser when the task is done and the browser is no"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "'Task' in the description refers to completing the automation task generically, not accessing project management tasks/metadata; the tool merely closes the browser."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:e3fc4ccb656129ab56be176dc9e03d7c7a7c81f289a78c9e1bfed286e2628526"
+    },
+    {
+      "server": "mcp-server-browser",
+      "name": "browser_press_key",
+      "description": "Press a key on the keyboard",
+      "param_names": [
+        "key"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e84bd8be8a18652b9661f9769d2f6b929fbbd1a14647fc05e7debdb8c357a9a1"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "The file_read component is not confirmed (false positive in claim 2); combination is invalid if one constituent capability does not exist."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 21,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 5,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "files_documents",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 4,
+      "false_positive": 4,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::browser_get_text::file_read",
+        "reason": "The tool reads rendered page content (DOM/text), not file system objects; 'get text' matched a file_read pattern but describes browser page content, not file I/O."
+      },
+      {
+        "id": "cap::browser_get_download_list::network_egress",
+        "reason": "'Download' in 'get download list' is a noun (files already downloaded), not the verb 'download'; the tool reads local metadata, not making outbound calls."
+      },
+      {
+        "id": "data::browser_close::project_metadata",
+        "reason": "'Task' in the description refers to completing the automation task generically, not accessing project management tasks/metadata; the tool merely closes the browser."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "The file_read component is not confirmed (false positive in claim 2); combination is invalid if one constituent capability does not exist."
+      }
+    ]
+  }
+}

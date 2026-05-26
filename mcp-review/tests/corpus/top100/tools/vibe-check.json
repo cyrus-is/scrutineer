@@ -1,0 +1,5 @@
+{
+  "server": "vibe-check",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

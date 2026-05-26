@@ -1,0 +1,956 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-server-chart",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@antv/mcp-server-chart"
+      ],
+      "env_keys": [
+        "DISABLED_TOOLS",
+        "SERVICE_ID",
+        "VIS_REQUEST_SERVER"
+      ],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@antv/mcp-server-chart",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:1e00be3b25305b3720da08b81cf390363156c4558338d1615e7bf0a11de6617f",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-server-chart' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @antv/mcp-server-chart.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@antv/mcp-server-chart",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-server-chart' package spec '@antv/mcp-server-chart' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@antv/mcp-server-chart",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_area_chart",
+      "description": "Generate a area chart to show data trends under continuous independent variables and observe the overall data trend, such as, displacement = velocity (average or instantaneous) \u00d7 time: s = v \u00d7 t. If the x-axis is time (t) and the y-axis is velocity (v) at each moment, an area chart allows you to observe the trend of velocity over time and infer the distance traveled by the area's size.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "stack",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:83f7096fad4d5c81062af5076b491e5c6b477e6a537ed70731c795fc203ec545"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_bar_chart",
+      "description": "Generate a horizontal bar chart to show data for numerical comparisons among different categories, such as, comparing categorical data and for horizontal comparisons.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "group",
+        "height",
+        "stack",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0382376cba26d9dd6b5093f405f70c89bcf325b5a002aa6fe3892398ab9d9ea2"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_boxplot_chart",
+      "description": "Generate a boxplot chart to show data for statistical summaries among different categories, such as, comparing the distribution of data points across categories.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:15dff0e31cdbc83c77d919017f128480925ab3e79016d093f3ac5bd800e622c8"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_column_chart",
+      "description": "Generate a column chart, which are best for comparing categorical data, such as, when values are close, column charts are preferable because our eyes are better at judging height than other visual elements like area or angles.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "group",
+        "height",
+        "stack",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:054d33580eb7863167a68f7703db40b9fb4c2d68f50b23f28fa27fa3353b08ed"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_district_map",
+      "description": "Generates regional distribution maps, which are usually used to show the administrative divisions and coverage of a dataset. It is not suitable for showing the distribution of specific locations, such as urban administrative divisions, GDP distribution maps of provinces and cities across the country, etc. This tool is limited to generating data maps within China.",
+      "param_names": [
+        "data",
+        "height",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "eric or enumeration type Data label, such as \"GDP\" Data value, nu"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:6c32e7e42db7084f37747ea8968df731d2a69b986f280a16d0a2dae3310e0ad5"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_dual_axes_chart",
+      "description": "Generate a dual axes chart which is a combination chart that integrates two different chart types, typically combining a bar chart with a line chart to display both the trend and comparison of data, such as, the trend of sales and profit over time.",
+      "param_names": [
+        "axisXTitle",
+        "categories",
+        "height",
+        "series",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2ff986794d599fc0dd09aa70db0e7a64f181656cdbba641d1c815b5a2ebdc280"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_fishbone_diagram",
+      "description": "Generate a fishbone diagram chart to uses a fish skeleton, like structure to display the causes or effects of a core problem, with the problem as the fish head and the causes/effects as the fish bones. It suits problems that can be split into multiple related factors.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f735867d4a00be143706e5083193909abe5cad2992ffd48d78a208b2378215a5"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_flow_diagram",
+      "description": "Generate a flow diagram chart to show the steps and decision points of a process or system, such as, scenarios requiring linear process presentation.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5aef2ec1b836c1c1533b8cf029a7d503ffc3cd05a39a6f5bf1b3164a8cb7af8a"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_funnel_chart",
+      "description": "Generate a funnel chart to visualize the progressive reduction of data as it passes through stages, such as, the conversion rates of users from visiting a website to completing a purchase.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:90a8af71c0210c985e4aa9c61199e55eef7630f7ddcee721a2b68b7ada45e5be"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_histogram_chart",
+      "description": "Generate a histogram chart to show the frequency of data points within a certain range. It can observe data distribution, such as, normal and skewed distributions, and identify data concentration areas and extreme points.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "binNumber",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:fdfeb743d65f7b236ccc41890db43591072e042bab50a9c51fa7928435bbd10d"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_line_chart",
+      "description": "Generate a line chart to show trends over time, such as, the ratio of Apple computer sales to Apple's profits changed from 2000 to 2016.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cf6e29a081b4c22992463432f7c3ce3b6ddb9e0a80a0d9091144fb614c1a8e6a"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_liquid_chart",
+      "description": "Generate a liquid chart to visualize a single value as a percentage, such as, the current occupancy rate of a reservoir or the completion percentage of a project.",
+      "param_names": [
+        "height",
+        "percent",
+        "shape",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "he completion percentage of a project. The percentage value to disp"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:7069089518eb8515d66837132994b80d89d7a6eb0a5a1d09caea7a5f1ada260b"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_mind_map",
+      "description": "Generate a mind map chart to organizes and presents information in a hierarchical structure with branches radiating from a central topic, such as, a diagram showing the relationship between a main topic and its subtopics.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a98e8ac84d5729ef676990b04f4c8214a883112009af28e962f0439dfede1245"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_network_graph",
+      "description": "Generate a network graph chart to show relationships (edges) between entities (nodes), such as, relationships between people in social networks.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3b855bdd68c350c7de32fe65b64d11149ef2666086c04f35fb3a7791ff1cccaf"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_organization_chart",
+      "description": "Generate an organization chart to visualize the hierarchical structure of an organization, such as, a diagram showing the relationship between a CEO and their direct reports.",
+      "param_names": [
+        "data",
+        "height",
+        "orient",
+        "style",
+        "theme",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "e_organization_chart generate organization chart"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:8119d71fe5b933e47e7c9472a60c443ab15a1daac8e316aebec4fa27614be2c4"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_path_map",
+      "description": "Generate a route map to display the user's planned route, such as travel guide routes.",
+      "param_names": [
+        "data",
+        "height",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": ", if you can determine that a location may appear in multiple areas,"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:5cf94ee294ed8cce473db97aa436033354ef0e180a93844fb924fc08efe86887"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_pie_chart",
+      "description": "Generate a pie chart to show the proportion of parts, such as, market share and budget allocation.",
+      "param_names": [
+        "data",
+        "height",
+        "innerRadius",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6e28fc5097e723eed05ce8040b2d04ed05c09da65e449f5293202b05cc15dd99"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_pin_map",
+      "description": "Generate a point map to display the location and distribution of point data on the map, such as the location distribution of attractions, hospitals, supermarkets, etc.",
+      "param_names": [
+        "data",
+        "height",
+        "markerPopup",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "te a point map to display the location and distribution of point dat"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:574b23eebb44a9cd658347cb282e52ab9c39bc91db1432f0e40955049168a8ba"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_radar_chart",
+      "description": "Generate a radar chart to display multidimensional data (four dimensions or more), such as, evaluate Huawei and Apple phones in terms of five dimensions: ease of use, functionality, camera, benchmark scores, and battery life.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:01b15ada5f052d45c0d6126923d715008ffc3358322d0a92b89edf4d76a38b1c"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_sankey_chart",
+      "description": "Generate a sankey chart to visualize the flow of data between different stages or categories, such as, the user journey from landing on a page to completing a purchase.",
+      "param_names": [
+        "data",
+        "height",
+        "nodeAlign",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "source: 'Checkout', target: 'Payment', value: 15000 }, { source: '"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:5f2a90b8fbf1e473ecfd7afc84ecc401f2447cae277a94ca9a3a79b625690245"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_scatter_chart",
+      "description": "Generate a scatter chart to show the relationship between two variables, helps discover their relationship or trends, such as, the strength of correlation, data distribution patterns.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:31a6ffe67989d02a91a2d3fe70c01927f6369f7ad50a2c7467d1d2c395acc53b"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_treemap_chart",
+      "description": "Generate a treemap chart to display hierarchical data and can intuitively show comparisons between items at the same level, such as, show disk space usage with treemap.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:fc3c532eeb11034939654ead7dd5182714d723a1b268b7b586500219ee2d4e05"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_venn_chart",
+      "description": "Generate a Venn diagram to visualize the relationships between different sets, showing how they intersect and overlap, such as the commonalities and differences between various groups.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data label value sets style backgroundCo"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:ac705c8fb605c6d8aa66db0b743f7d472395b607c76e146cd5ba83da3c7ff007"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_violin_chart",
+      "description": "Generate a violin chart to show data for statistical summaries among different categories, such as, comparing the distribution of data points across categories.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9b7ba4619da4e5203e89f5cfeae45cf0c654621620854b2db9ddf02ddbd5ce7d"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_waterfall_chart",
+      "description": "Generate a waterfall chart to visualize the cumulative effect of sequentially introduced positive or negative values, such as showing how an initial value is affected by a series of intermediate positive or negative values leading to a final result. Waterfall charts are ideal for financial analysis, budget tracking, profit and loss statements, and understanding the composition of changes over time or categories.",
+      "param_names": [
+        "axisXTitle",
+        "axisYTitle",
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "sTotal` field marks the final total. For example, [{ category: 'I"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:a0bf4cade8a937493a2ad1561fdc42477954e4ebf99cf44e20e86b14ab563f5a"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_word_cloud_chart",
+      "description": "Generate a word cloud chart to show word frequency or weight through text size variation, such as, analyzing common words in social media, reviews, or feedback.",
+      "param_names": [
+        "data",
+        "height",
+        "style",
+        "theme",
+        "title",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:71e0430547525b07c252690ee319c497abaffb4b58c2bbaa4322b769deb45bfb"
+    },
+    {
+      "server": "mcp-server-chart",
+      "name": "generate_spreadsheet",
+      "description": "Generate a spreadsheet or pivot table for displaying tabular data. When 'rows' or 'values' fields are provided, it renders as a pivot table (cross-tabulation); otherwise, it renders as a regular table. Useful for displaying structured data, comparing values across categories, and creating data summaries.",
+      "param_names": [
+        "columns",
+        "data",
+        "height",
+        "rows",
+        "theme",
+        "values",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "spreadsheet",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "generate_spreadsheet generate spreadsheet"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:b86c9fffe15a6977024df1f03fac2f51382d96200533f8e49b61cb06f0b1390d"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "financial"
+    ],
+    "note": "Rating reflects high-confidence matches; financial matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 27,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "files_documents",
+      "financial",
+      "location",
+      "org_structure",
+      "project_metadata",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

@@ -1,0 +1,1442 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-neo4j-data-modeling",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-data-modeling"
+      ],
+      "env_keys": [
+        "NEO4J_NAMESPACE"
+      ],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "mcp-neo4j-data-modeling",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:188fa9bc7d03608edb78f5825dd08065bfef12e508f111eea9744913d766d73c",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-neo4j-data-modeling' is fetched and executed at launch via 'uvx'; package spec: mcp-neo4j-data-modeling.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "mcp-neo4j-data-modeling",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-neo4j-data-modeling' package spec 'mcp-neo4j-data-modeling' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "mcp-neo4j-data-modeling",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-validate_node",
+      "description": "Validate a single node.\nReturns True if the node is valid, otherwise raises a ValueError.\nIf return_validated is True, returns the validated node.\nAccepts either a Node object or a JSON string of the Node object.",
+      "param_names": [
+        "node",
+        "return_validated"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "if known. May be a file path, URL, etc. The description of the"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Text mentions URL as a possible parameter content type ('may be a file path, URL, etc.'), not that the tool makes network calls."
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_node placeholder not"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Matched 'credential' in tool name itself, which is just a naming convention; tool validates generic data model structures, not credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_node placeholder not"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Matched on tool name containing 'credential'; tool is a generic validator with no evidence of handling actual secrets."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "source column_name table_name location description properties name t"
+          },
+          "rationale": "Physical tracking risk.",
+          "needs_source": true
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "node label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:d4cdd70670de5dfaa1d84e741b8b6199e9f2594bece07cb34bf49f8a51824eda"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-validate_relationship",
+      "description": "Validate a single relationship.\nReturns True if the relationship is valid, otherwise raises a ValueError.\nIf return_validated is True, returns the validated relationship.\nAccepts either a Relationship object or a JSON string of the Relationship object.",
+      "param_names": [
+        "relationship",
+        "return_validated"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_relationship placeho"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Matched on tool name 'credential' only; relationship validator has no secrets-handling capability."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_relationship placeho"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Matched on tool name only; generic relationship validator."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "source column_name table_name location description properties name t"
+          },
+          "rationale": "Physical tracking risk.",
+          "needs_source": true
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "relationship type start node label end node label key property n"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:0317ad5a5487b49097a0ff3dc3de1297e0c633eb4d734449f3ab89c7d94b221d"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-validate_data_model",
+      "description": "Validate the entire data model.\nReturns True if the data model is valid, otherwise raises a ValueError.\nIf return_validated is True, returns the validated data model.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model",
+        "return_validated"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_data_model placehold"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generic validator with no secrets capability."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-validate_data_model placehold"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Matched on tool name; generic validator."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:5cef670aee9f595dc2a8ef7f97a775191856c521ecc4ffe439b6c4906a4534cf"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-load_from_arrows_json",
+      "description": "Load a data model from the Arrows web application format. Returns a data model as a JSON string.",
+      "param_names": [
+        "arrows_data_model_dict"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_arrows_json placeho"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; tool loads/parses a data format, not secrets."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_arrows_json placeho"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:186263ff0cae8c4e330da6f77fb4c3cb64d28f36cb2772e893fcdd79671c63c4"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-export_to_arrows_json",
+      "description": "Export the data model to the Arrows web application format.\nReturns a JSON string. This should be presented to the user as an artifact if possible.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_arrows_json placeho"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; exports generic data model to format."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_arrows_json placeho"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:812e2a2ac5a8fb88d27d881b7d69a51de8691dc42868ad9e1f64fbddfbe01e64"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-get_mermaid_config_str",
+      "description": "Get the Mermaid configuration string for the data model.\nThis may be visualized in Claude Desktop and other applications with Mermaid support.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_mermaid_config_str placeh"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generates visualization config."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_mermaid_config_str placeh"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:ced0b6b529800e340894916fdeb3feabc4410d192749fa0b576a542b4f33b1c2"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-get_node_cypher_ingest_query",
+      "description": "Get the Cypher query to ingest a list of Node records into a Neo4j database.\nThis should be used to ingest data into a Neo4j database.\nThis is a parameterized Cypher query that takes a list of records as input to the $records parameter.",
+      "param_names": [
+        "node"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "if known. May be a file path, URL, etc. The description of the"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Description mentions URL as possible parameter content, not network egress by the tool."
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_node_cypher_ingest_query"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generates database ingestion queries."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "cypher",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ot a real credential get node cypher ingest query"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_node_cypher_ingest_query"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "source column_name table_name location description properties name t"
+          },
+          "rationale": "Physical tracking risk.",
+          "needs_source": true
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "node label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:ed1bc0d064cbf2f462f97ed4f4b0c8eabe2c3a810cc33a4e2f48629297f782e0"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-get_relationship_cypher_ingest_query",
+      "description": "Get the Cypher query to ingest a list of Relationship records into a Neo4j database.\nThis should be used to ingest data into a Neo4j database.\nThis is a parameterized Cypher query that takes a list of records as input to the $records parameter.\nThe records must contain the Relationship properties, if any, as well as the sourceId and targetId properties of the start and end nodes respectively.",
+      "param_names": [
+        "data_model",
+        "relationship_end_node_label",
+        "relationship_start_node_label",
+        "relationship_type"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_relationship_cypher_inges"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generates Cypher for relationships."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "cypher",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "l credential get relationship cypher ingest query"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_relationship_cypher_inges"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:2440c928792ccbb3311328bba4af9c49a0ef47f4167a6c5d13602fc1a958bdf5"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-get_constraints_cypher_queries",
+      "description": "Get the Cypher queries to create constraints on the data model.\nThis creates range indexes on the key properties of the nodes and relationships and enforces uniqueness and existence of the key properties.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_constraints_cypher_querie"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generates constraint queries."
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "cypher",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "al credential get constraints cypher queries"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_constraints_cypher_querie"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:d426881ca0023bf17da6e360b98fce0a0e2f0ff85010856a698632d9d1980f8e"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-get_example_data_model",
+      "description": "Get an example graph data model from the available templates. Returns a DataModel object and the Mermaid visualization configuration for the example graph data model.",
+      "param_names": [
+        "example_name"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_example_data_model placeh"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; returns example templates."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_example_data_model placeh"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:7e5aac20cf98988d6e7c80d954e482c07592e479a8979552befc382a9f6f9133"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-list_example_data_models",
+      "description": "List all available example data models with descriptions. Returns a dictionary with example names and their descriptions.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_example_data_models plac"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; lists available templates."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_example_data_models plac"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:93798b588ba49c65bcd1212bcf956c029b3dc857ea286143da310217d26eabac"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-load_from_owl_turtle",
+      "description": "Load a data model from an OWL Turtle string.\nThis process is lossy and some components of the ontology may be lost in the data model schema.\nReturns a DataModel object.",
+      "param_names": [
+        "owl_turtle_str"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_owl_turtle placehol"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; parses OWL format."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_owl_turtle placehol"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:1d5aecd527a6d0f544da403851c9856edad2645eab09ee7a8006dc1608c22fd8"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-export_to_owl_turtle",
+      "description": "Export a data model to an OWL Turtle string.\nThis process is lossy since OWL does not support properties on relationships.\nReturns a string representation of the data model in OWL Turtle format.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_owl_turtle placehol"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; exports to format."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_owl_turtle placehol"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:b2d8c7890f203e56dc7ac5ca2424d64ca261c00ef77895f0ceb4abb96c96853b"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-export_to_pydantic_models",
+      "description": "Export a data model to Pydantic models.\nReturns a string representation of the Pydantic models for the data model as a Python file.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_pydantic_models pla"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; generates type models."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_pydantic_models pla"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:39c67d8f113b71ec40435a1fdcbf48c4252e410b952b453758e6da0912a1e588"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema",
+      "description": "Export a data model to a Neo4j Graphrag Python Package schema.\nReturns a dictionary containing the Neo4j Graphrag Python Package schema.\nAccepts either a DataModel object or a JSON string of the DataModel object.",
+      "param_names": [
+        "data_model"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; exports to schema format."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "data_model nodes label key_property name type source"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:bbb6269e1fc3f7339c00efc3038cc887d519520630d6f41d58f048417c22f69c"
+    },
+    {
+      "server": "mcp-neo4j-data-modeling",
+      "name": "placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_schema",
+      "description": "Load a data model from a Neo4j Graphrag Python Package schema.\nReturns a DataModel object.\nAccepts a Neo4j Graphrag Python Package schema dictionary.",
+      "param_names": [
+        "neo4j_graphrag_python_package_schema"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name match only; loads from schema."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool name match only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:f1a3c9566ee53fca901251e9f062a20bc6bef5d1a1aec70a83d41ab0e2581dff"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 16,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 11,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "Depends on secrets_access capability which is false-positive; no genuine exfil path established."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 16,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 21,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 17,
+      "MEDIUM": 7,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "credentials_secrets",
+      "location",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 3,
+      "false_positive": 35,
+      "needs_source": 14,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::placeholder-not-a-real-credential-validate_node::network_egress",
+        "reason": "Text mentions URL as a possible parameter content type ('may be a file path, URL, etc.'), not that the tool makes network calls."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-validate_node::secrets_access",
+        "reason": "Matched 'credential' in tool name itself, which is just a naming convention; tool validates generic data model structures, not credentials."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_node::credentials_secrets",
+        "reason": "Matched on tool name containing 'credential'; tool is a generic validator with no evidence of handling actual secrets."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-validate_relationship::secrets_access",
+        "reason": "Matched on tool name 'credential' only; relationship validator has no secrets-handling capability."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_relationship::credentials_secrets",
+        "reason": "Matched on tool name only; generic relationship validator."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-validate_data_model::secrets_access",
+        "reason": "Tool name match only; generic validator with no secrets capability."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_data_model::credentials_secrets",
+        "reason": "Matched on tool name; generic validator."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-load_from_arrows_json::secrets_access",
+        "reason": "Tool name match only; tool loads/parses a data format, not secrets."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-load_from_arrows_json::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-export_to_arrows_json::secrets_access",
+        "reason": "Tool name match only; exports generic data model to format."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_arrows_json::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_mermaid_config_str::secrets_access",
+        "reason": "Tool name match only; generates visualization config."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_mermaid_config_str::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_node_cypher_ingest_query::network_egress",
+        "reason": "Description mentions URL as possible parameter content, not network egress by the tool."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_node_cypher_ingest_query::secrets_access",
+        "reason": "Tool name match only; generates database ingestion queries."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_node_cypher_ingest_query::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_relationship_cypher_ingest_query::secrets_access",
+        "reason": "Tool name match only; generates Cypher for relationships."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_relationship_cypher_ingest_query::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_constraints_cypher_queries::secrets_access",
+        "reason": "Tool name match only; generates constraint queries."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_constraints_cypher_queries::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_example_data_model::secrets_access",
+        "reason": "Tool name match only; returns example templates."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_example_data_model::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-list_example_data_models::secrets_access",
+        "reason": "Tool name match only; lists available templates."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-list_example_data_models::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-load_from_owl_turtle::secrets_access",
+        "reason": "Tool name match only; parses OWL format."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-load_from_owl_turtle::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-export_to_owl_turtle::secrets_access",
+        "reason": "Tool name match only; exports to format."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_owl_turtle::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-export_to_pydantic_models::secrets_access",
+        "reason": "Tool name match only; generates type models."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_pydantic_models::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema::secrets_access",
+        "reason": "Tool name match only; exports to schema format."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_schema::secrets_access",
+        "reason": "Tool name match only; loads from schema."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_schema::credentials_secrets",
+        "reason": "Tool name match only."
+      },
+      {
+        "id": "combo::exfil_chain",
+        "reason": "Depends on secrets_access capability which is false-positive; no genuine exfil path established."
+      }
+    ]
+  }
+}

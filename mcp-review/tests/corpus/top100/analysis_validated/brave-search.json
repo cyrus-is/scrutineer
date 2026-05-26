@@ -1,0 +1,799 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "brave-search",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@brave/brave-search-mcp-server"
+      ],
+      "env_keys": [
+        "BRAVE_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "BRAVE_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@brave/brave-search-mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:2360130c77377ba4c3d0d7c17aeda7388758af9772947a53726360b34f94e9a4",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'brave-search' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @brave/brave-search-mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@brave/brave-search-mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'brave-search' package spec '@brave/brave-search-mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@brave/brave-search-mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'brave-search' requires credential-like env keys: BRAVE_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "BRAVE_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "brave-search",
+      "name": "brave_web_search",
+      "description": "Performs web searches using the Brave Search API and returns comprehensive search results with rich metadata.\n\n    When to use:\n        - General web searches for information, facts, or current topics\n        - Location-based queries (restaurants, businesses, points of interest)\n        - News searches for recent events or breaking stories\n        - Finding videos, discussions, or FAQ content\n        - Research requiring diverse result types (web pages, images, reviews, etc.)\n\n    Returns a JSON list of web results with title, description, and URL.\n    \n    When the \"results_filter\" parameter is empty, JSON results may also contain FAQ, Discussions, News, and Video results.",
+      "param_names": [
+        "count",
+        "country",
+        "extra_snippets",
+        "freshness",
+        "goggles",
+        "offset",
+        "query",
+        "result_filter",
+        "safesearch",
+        "search_lang",
+        "spellcheck",
+        "summary",
+        "text_decorations",
+        "ui_lang",
+        "units"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "with title, description, and URL.\n    \n    When the \"results_f"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "Matched 'repository' refers only to documentation (Goggles repository docs), not to the tool handling or returning source code."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": ", or current topics\n        - Location-based queries (restaurants, b"
+          },
+          "rationale": "Physical tracking risk."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "y country search_lang ui_lang count offset safesearch freshness t"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:5478ee4df1554870f8c77c225bdd01a4b7dce9e54a459e3925711d4f4852b98b"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_local_search",
+      "description": "Brave Local Search API provides enrichments for location search results. Access to this API is available only through the Brave Search API Pro plans; confirm the user's plan before using this tool (if the user does not have a Pro plan, use the brave_web_search tool). Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc.\n    \n    Returns detailed information including:\n        - Business names and addresses\n        - Ratings and review counts\n        - Phone numbers and opening hours\n\n    Use this when the query implies 'near me', 'in my area', or mentions specific locations (e.g., 'in San Francisco'). This tool automatically falls back to brave_web_search if no local results are found.",
+      "param_names": [
+        "count",
+        "country",
+        "extra_snippets",
+        "freshness",
+        "goggles",
+        "offset",
+        "query",
+        "result_filter",
+        "safesearch",
+        "search_lang",
+        "spellcheck",
+        "summary",
+        "text_decorations",
+        "ui_lang",
+        "units"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "The parameter supports both a url where the Goggle is hosted or"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "Matched 'repository' refers to Goggles documentation only; tool does not process or return source code."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "API provides enrichments for location search results. Access to thi"
+          },
+          "rationale": "Physical tracking risk."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "y country search_lang ui_lang count offset safesearch freshness t"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:838b68aaa1d278a23a214929e9d930e2695e7cb2ece0783019be677ee4cc111a"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_video_search",
+      "description": "Searches for videos using Brave's Video Search API and returns structured video results with metadata.\n\n    When to use:\n        - When you need to find videos related to a specific topic, keyword, or query.\n        - Useful for discovering video content, getting video metadata, or finding videos from specific creators/publishers.\n\n    Returns a JSON list of video-related results with title, url, description, duration, and thumbnail_url.",
+      "param_names": [
+        "count",
+        "country",
+        "freshness",
+        "offset",
+        "query",
+        "safesearch",
+        "search_lang",
+        "spellcheck",
+        "ui_lang"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "o-related results with title, url, description, duration, and t"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "y country search_lang ui_lang count offset spellcheck safesearch"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:fd4a4338e00a4e4db8463276770b93e71d622618baa6b6053f4d1ac96f187a99"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_image_search",
+      "description": "\n    Performs an image search using the Brave Search API. Helpful for when you need pictures of people, places, things, graphic design ideas, art inspiration, and more. When relaying results in a markdown environment, it may be helpful to include images in the results (e.g., ![image.title](image.properties.url)).\n",
+      "param_names": [
+        "count",
+        "country",
+        "query",
+        "safesearch",
+        "search_lang",
+        "spellcheck"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "image.title](image.properties.url)).\n The user's search query."
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "query country search_lang count safesearch spellcheck query c"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:610d4a7b526aa146b6d756be25184244f584da0cb47fa54f6da3363ba602240e"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_news_search",
+      "description": "This tool searches for news articles using Brave's News Search API based on the user's query. Use it when you need current news information, breaking news updates, or articles about specific topics, events, or entities.\n    \n    When to use:\n        - Finding recent news articles on specific topics\n        - Getting breaking news updates\n        - Researching current events or trending stories\n        - Gathering news sources and headlines for analysis\n\n    Returns a JSON list of news-related results with title, url, and description. Some results may contain snippets of text from the article.\n    \n    When relaying results in markdown-supporting environments, always cite sources with hyperlinks.\n    \n    Examples:\n        - \"According to [Reuters](https://www.reuters.com/technology/china-bans/), China bans uncertified and recalled power banks on planes\".\n        - \"The [New York Times](https://www.nytimes.com/2025/06/27/us/technology/ev-sales.html) reports that Tesla's EV sales have increased by 20%\".\n        - \"According to [BBC News](https://www.bbc.com/news/world-europe-65910000), the UK government has announced a new policy to support renewable energy\".",
+      "param_names": [
+        "count",
+        "country",
+        "extra_snippets",
+        "freshness",
+        "goggles",
+        "offset",
+        "query",
+        "safesearch",
+        "search_lang",
+        "spellcheck",
+        "ui_lang"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "s-related results with title, url, and description. Some result"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "Matched 'repository' is documentation reference only; tool returns news articles, not source code."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "y country search_lang ui_lang count offset spellcheck safesearch"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:bcb2a408e717ddaf18ee41fb9b1d4da1d15b4b97aee2a6a7697bdeb7438bd9df"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_summarizer",
+      "description": "Retrieves AI-generated summaries of web search results using Brave's Summarizer API. This tool processes search results to create concise, coherent summaries of information gathered from multiple sources.\n\n    When to use:\n\n    - When you need a concise overview of complex topics from multiple sources\n    - For quick fact-checking or getting key points without reading full articles\n    - When providing users with summarized information that synthesizes various perspectives\n    - For research tasks requiring distilled information from web searches\n\n    Returns a text summary that consolidates information from the search results. Optional features include inline references to source URLs and additional entity information.\n\n    Requirements: Must first perform a web search using brave_web_search with summary=true parameter. Requires a Pro AI subscription to access the summarizer functionality.",
+      "param_names": [
+        "entity_info",
+        "inline_references",
+        "key"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:7d00f5589fdfca10cdd31827af53af0b834abfa0f1ef0a2f22c96d94255b9f79"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_llm_context",
+      "description": "Retrieves pre-extracted, relevance-ranked web content using Brave's LLM Context API, optimized for AI agents, LLM grounding, and RAG pipelines. Unlike a traditional web search that returns links and short descriptions, this tool returns the actual substance of matching pages \u2014 text chunks, tables, code blocks, and structured data \u2014 so the model can reason over it directly.\n\n    When to use:\n        - Grounding answers in fresh, relevant web content (RAG)\n        - Giving an AI agent ready-to-use page content from a single search call\n        - Question answering and fact-checking against current sources\n        - Gathering source material for research without manually fetching pages\n        - When you need the contents of pages, not just titles, descriptions, and URLs\n\n    When relaying results in markdown-supporting environments, cite the source URLs from the \"sources\" map.",
+      "param_names": [
+        "accept",
+        "api-version",
+        "cache-control",
+        "context_threshold_mode",
+        "count",
+        "country",
+        "enable_local",
+        "enable_source_metadata",
+        "freshness",
+        "goggles",
+        "maximum_number_of_snippets",
+        "maximum_number_of_snippets_per_url",
+        "maximum_number_of_tokens",
+        "maximum_number_of_tokens_per_url",
+        "maximum_number_of_urls",
+        "query",
+        "search_lang",
+        "spellcheck",
+        "user-agent",
+        "x-loc-city",
+        "x-loc-country",
+        "x-loc-lat",
+        "x-loc-long",
+        "x-loc-postal-code",
+        "x-loc-state",
+        "x-loc-state-name"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "maximum number of tokens per url maximum number of snippets pe"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "Matched 'repository' is documentation reference; tool retrieves general web content, not source repositories."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "ttribute of the response. The latitude of the client's geographical"
+          },
+          "rationale": "Physical tracking risk."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "query country search_lang count spellcheck maximum_number_of_"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:2029bab0caf6e523ace797df931fa77a9691b4d6f430258581e1c686bcd439fa"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_place_search",
+      "description": "Searches Brave's Place Search API. A single call may populate any combination of 'results' (POIs), 'cities', 'addresses', 'streets', and 'location' (the resolved search area), depending on the query's shape.\n\n    When to use:\n        - POIs near coordinates or a named area (e.g. \"coffee shops in Paris\") -> 'results', each with structured business data (postal address, hours, contact, ratings, photos, categories, timezone).\n        - Browsing general POIs (omit 'query'; supply 'latitude'+'longitude' or 'location').\n        - Disambiguating a bare city name (e.g. \"springfield\") -> 'cities'.\n        - Resolving a specific address (e.g. \"350 5th avenue\" with NYC coords) -> 'addresses' (often plus 'streets').\n        - Looking up a street by name (e.g. \"michigan avenue\" with Chicago coords) -> 'streets'.\n\n    Inputs:\n        - Anchor the search via 'latitude'+'longitude' or 'location' (or both). With neither, 'query' is required.\n        - 'addresses' / 'streets' only surface when the query is address-/street-shaped AND geographically anchored.\n        - 'location' format: US -- '<city> <state> <country>' (e.g. 'san francisco ca united states'); non-US -- '<city> <country>' (e.g. 'tokyo japan'). Capitalization and commas don't matter.\n        - 'count' caps results (max 50, default 20). 'radius' (meters) biases toward closer results; it does NOT hard-limit the search area.",
+      "param_names": [
+        "accept",
+        "api-version",
+        "cache-control",
+        "count",
+        "country",
+        "geoloc",
+        "latitude",
+        "location",
+        "longitude",
+        "query",
+        "radius",
+        "safesearch",
+        "search_lang",
+        "spellcheck",
+        "ui_lang",
+        "units",
+        "user-agent"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "to true. Optional geolocation token used to refine results. The A"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Matched 'token' is an optional user-provided input parameter for geolocation refinement, not system credential/secret access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "contact",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "data (postal address, hours, contact, ratings, photos, categories,"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "query radius count latitude longitude location country se"
+          },
+          "rationale": "Physical tracking risk."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "query radius count latitude longitude location c"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:25f3f24ddafa4312e0b32d1115739050c4973aac8be9756888d0166de0c7d66f"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "low"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 4,
+        "confidence": "high"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 7,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "Chain depends on false-positive secrets_access claim; brave_place_search does not access credentials, only uses optional user-provided geolocation token."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 8,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 7,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 8,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "location",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 18,
+      "false_positive": 6,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::brave_web_search::source_code",
+        "reason": "Matched 'repository' refers only to documentation (Goggles repository docs), not to the tool handling or returning source code."
+      },
+      {
+        "id": "data::brave_local_search::source_code",
+        "reason": "Matched 'repository' refers to Goggles documentation only; tool does not process or return source code."
+      },
+      {
+        "id": "data::brave_news_search::source_code",
+        "reason": "Matched 'repository' is documentation reference only; tool returns news articles, not source code."
+      },
+      {
+        "id": "data::brave_llm_context::source_code",
+        "reason": "Matched 'repository' is documentation reference; tool retrieves general web content, not source repositories."
+      },
+      {
+        "id": "cap::brave_place_search::secrets_access",
+        "reason": "Matched 'token' is an optional user-provided input parameter for geolocation refinement, not system credential/secret access."
+      },
+      {
+        "id": "combo::exfil_chain",
+        "reason": "Chain depends on false-positive secrets_access claim; brave_place_search does not access credentials, only uses optional user-provided geolocation token."
+      }
+    ]
+  }
+}

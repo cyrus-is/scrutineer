@@ -1,0 +1,5 @@
+{
+  "server": "mcp-neo4j-cypher",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

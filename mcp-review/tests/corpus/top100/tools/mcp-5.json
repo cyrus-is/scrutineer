@@ -1,0 +1,230 @@
+{
+  "server": "mcp-5",
+  "captured_at": "2026-05-26T22:24:29Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "RsdoctorAnalyticsMCPServer",
+    "version": "1.0.0"
+  },
+  "tools": [
+    {
+      "name": "get_chunks",
+      "description": "get all chunks",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_chunk_by_id",
+      "description": "get chunk by id",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "chunkId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "chunkId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_module_by_id",
+      "description": "\n    get module detail by id (Rspack or Webpack module id)\uff1a\n    - id: the id of the module (corresponds to Rspack or Webpack's internal module id)\n    - issuerPath: the referrer chain (array of module ids, from entry to this module)\n    - dependencies: direct dependencies (array of module ids this module imports/requires)\n    - allDependencies: all transitive dependencies (if user asks for detail)\n    - chunks: array of chunk ids this module belongs to\n    - imported: array of module ids that import this module\n    - isEntry: whether this module is an entry point\n    - size: { sourceSize, transformedSize, parsedSize }\n    - layer, modules, rootModule, webpackId: advanced info\n    - bailoutReason: if present, the reason why this module is not tree-shaken or optimized away (e.g. \"side effects\", \"dynamic import\", \"unknown exports\", etc.)\n    - Please use Rspack or Webpack's terminology for all fields.\n    - If user asks for \"why not tree-shaken\", always return bailoutReason and explain in plain language.\n    - If user asks for \"who imported this module\", return issuerPath as a dependency chain.\n    - If user asks for \"all dependencies\", return allDependencies.\n  ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "moduleId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_module_by_path",
+      "description": "\n    get module detail by module name or path (absolute or relative, as in Rspack or Webpack stats)\n    - If multiple modules match, return all matched module paths and stop, let user select.\n    - Otherwise, return the same fields as getModuleById.\n    - Always include bailoutReason if present.\n    - If user asks for \"why is this module in the bundle\", show the full issuerPath chain.\n    - If user asks for \"why not tree-shaken\", show bailoutReason and explain.\n  ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "modulePath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "modulePath"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_module_issuer_path",
+      "description": "\n    get module issuer path (who imported this module, recursively)\n    - Return as a dependency chain (array of module ids from entry to this module)\n    - If possible, render as a tree or graph for clarity.\n    - For each module in the chain, show its path and (if present) bailoutReason.\n  ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "moduleId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_package_info",
+      "description": "get package info",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_package_dependency",
+      "description": "get package dependency",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_rule_info",
+      "description": "get rules info, the rules info is a Record<{id: number, name: string, description: string, severity: string, category: string, module: string, path: string, line: number, column: number, message: string, fix: string}>, where:\n  - id: an incremental sequence mark\n  - name: the name of the rule\n  - description: the description of the rule\n  - severity: the severity of the rule\n  - category: the category of the rule\n  - E1001 Duplicate Packages:\n      #### Description\n\n      there is a same name package which bundled more than one version in your application.\n\n      it is not good to the bundle size of your application.\n\n      #### General Solution\n\n      add an entry in `resolve.alias` which will configure Webpack to route any package references to a single specified path.\n\n      For example, if `lodash` is duplicated in your bundle, the following configuration would render all Lodash imports to always refer to the `lodash` instance found at `./node_modules/lodash`:\n\n      ```js\n      {\n        alias: {\n          lodash: path.resolve(__dirname, 'node_modules/lodash')\n        }\n      }\n      ```\n      ,\n  - E1002 Cross Chunks Packages:  #### Description\n    There is a package with the same version that is duplicated across different chunks in your application. This redundancy increases the overall bundle size, which is not optimal for performance.\n\n    #### General Solution\n\n    To address this issue, you can use Rspack's **SplitChunksPlugin** to extract common dependencies into a separate chunk. This ensures that the same package is not duplicated across multiple chunks, thereby reducing the bundle size.\n\n    For example, if **lodash** is being duplicated across different chunks, you can configure the **optimization.splitChunks** option in your Webpack configuration to extract **lodash** into a separate chunk:\n\n    ```\n    module.exports = {\n      optimization: {\n        splitChunks: {\n          cacheGroups: {\n            commons: {\n              test: /[\\/]node_modules[\\/]lodash[\\/]/,\n              name: 'lodash',\n              chunks: 'all',\n            },\n          },\n        },\n      },\n    };\n    ```\n\n    This configuration will automatically split out common dependencies (including those from `node_modules`) into separate chunks, ensuring that no package is duplicated across different chunks.\n\n  - E1004 ECMA Version Check:\n      #### Description\n      This rule is used to detect incompatible advanced syntax. When scanning the rule, the configuration of browserslist is prioritized.\n  ",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_similar_packages",
+      "description": "get similar packages. Similar packages are categorized as follows, with each line representing a category of similar packages. The presence of packages below does not necessarily mean there are similar packages - replacement should only be considered when packages from the same category exist:\n    1. cannot exist simultaneously: lodash\u3001lodash-es\u3001string_decode\uff1aConsider migrating to lodash-es for better Tree Shaking support. /n\n    2. cannot exist simultaneously: dayjs, moment, date-fns, js-joda. Consider using dayjs to replace moment for smaller bundle size. /n\n    3. cannot exist simultaneously: antd, material-ui, semantic-ui-react, material-ui, arco-design /n\n    4. cannot exist simultaneously: axios, node-fetch\n    5. cannot exist simultaneously: redux, mobx, Zustand, Recoil, Jotai\n    6. cannot exist simultaneously: chalk, colors, picocolors, kleur\n    7. cannot exist simultaneously: fs-extra, graceful-fs\n\n    It's fine to have any of the above packages in your project, but packages from the same category (i.e. same line) should not coexist.\n    If there are no similar packages, just return that there are no similar packages, without listing which packages exist.\n    Please provide a simple response without listing all packages.\n  ",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_packages_by_package_name",
+      "description": "get similar packages. Similar packages are categorized as follows, with each line representing a category of similar packages. The presence of packages below does not necessarily mean there are similar packages - replacement should only be considered when packages from the same category exist:\n    1. cannot exist simultaneously: lodash\u3001lodash-es\u3001string_decode\uff1aConsider migrating to lodash-es for better Tree Shaking support. /n\n    2. cannot exist simultaneously: dayjs, moment, date-fns, js-joda. Consider using dayjs to replace moment for smaller bundle size. /n\n    3. cannot exist simultaneously: antd, material-ui, semantic-ui-react, material-ui, arco-design /n\n    4. cannot exist simultaneously: axios, node-fetch\n    5. cannot exist simultaneously: redux, mobx, Zustand, Recoil, Jotai\n    6. cannot exist simultaneously: chalk, colors, picocolors, kleur\n    7. cannot exist simultaneously: fs-extra, graceful-fs\n\n    It's fine to have any of the above packages in your project, but packages from the same category (i.e. same line) should not coexist.\n    If there are no similar packages, just return that there are no similar packages, without listing which packages exist.\n    Please provide a simple response without listing all packages.\n  ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "packageName"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_duplicate_packages",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_bundle_optimize",
+      "description": "\n    getBundleOptimize calls multiple functions to provide conclusions to users:\n      - getRuleInfo for duplicate packages\n      - GetSimilarPackages to check if there are similar packages that need optimization\n      - getMediaAssetPrompt to check if media assets need optimization\n      - GetAllChunks to check if there are oversized resources and provide splitChunk suggestions\n  ",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_loader_time_all_files",
+      "description": "Get compilation time spent by each loader on individual files",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_loader_times",
+      "description": "Get compiled directories loader times",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_port",
+      "description": "Get the port of the MCP server",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

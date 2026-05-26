@@ -1,0 +1,298 @@
+{
+  "server": "webcomponents-react",
+  "captured_at": "2026-05-26T22:23:23Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "ui5-webcomponents-react",
+    "version": "2.22.1"
+  },
+  "tools": [
+    {
+      "name": "create_app",
+      "title": "Create App",
+      "description": "Get scaffolding instructions for a new UI5 Web Components for React application from an official template.\n\nWHEN TO USE: The user wants to create a new app, project, or starter using UI5 Web Components for React.\nWORKFLOW: Call this tool to get the template setup instructions, then execute them.\n\nAvailable templates:\n- `nextjs-app` \u2014 Next.js (App Router)\n- `nextjs-pages` \u2014 Next.js (Pages Router)\n- `vite-ts` \u2014 Vite.js\n\nEXAMPLE INPUT: { \"template\": \"vite-ts\", \"appName\": \"my-app\" }\nEXAMPLE INPUT: { \"template\": \"nextjs-app\", \"appName\": \"my-dashboard\" }",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string",
+            "enum": [
+              "nextjs-app",
+              "nextjs-pages",
+              "vite-ts"
+            ],
+            "description": "Template to use. Available: nextjs-app, nextjs-pages, vite-ts"
+          },
+          "appName": {
+            "type": "string",
+            "description": "Name for the new application directory"
+          }
+        },
+        "required": [
+          "template",
+          "appName"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_component_api",
+      "title": "Component API Reference",
+      "description": "Get comprehensive API documentation for a UI5 Web Components React component including props, ref methods, types, event detail parameters, and CSS parts for shadow DOM styling.\n\nWHEN TO USE: You need exact prop names, types, default values, method signatures, event detail fields, or CSS part selectors for a specific component.\nDO NOT USE FOR: General guidance on styling, events, or architecture \u2014 use get_documentation instead. To discover component names \u2014 use list_components first.\nWORKFLOW: Use list_components to find the correct component name, then this tool for full API details.\nLIMITS: Returns data for one component per call. Returns all props and methods for that component.\n\nEXAMPLE INPUT: { \"componentName\": \"Dialog\" }\n\n**Output Format (JSON):**\n```typescript\n{\n  package: string,                    // NPM package name\n  description: string,                 // Full JSDoc description with @tags, examples, notes\n  props: {\n    [propName: string]: {\n      type: {\n        name: string,                  // Type category (e.g., \"string\", \"boolean\", \"enum\")\n        raw?: string,                  // Full TypeScript type string\n        value?: Array<{                // For enums: possible values with descriptions\n          value: string,\n          description?: string\n        }>\n      },\n      required: boolean,               // Whether prop is required\n      defaultValue: any,               // Default value if specified\n      description: string,             // Full prop description with notes\n      eventDetail?: {                  // Present on event handler props (web components only)\n        params: Array<{                // Fields available on e.detail\n          name: string,                // e.g., \"targetRef\", \"escPressed\", \"item\"\n          type: string,                // e.g., \"HTMLElement\", \"boolean\"\n          description: string          // What this detail field contains\n        }>,\n        cancelable: boolean,           // true = e.preventDefault() prevents the action\n        bubbles: boolean               // true = event bubbles through DOM\n      }\n    }\n  },\n  methods: Array<{                     // Imperative handle methods (access via ref.current.methodName())\n    name: string,\n    description: string,\n    params: Array<{\n      name: string,\n      description: string,\n      type: any\n    }>,\n    returns: any\n  }>,\n  cssParts?: Array<{                   // CSS ::part() selectors for shadow DOM styling (web components only)\n    name: string,                      // Use as: componentSelector::part(name) { ... }\n    description: string\n  }>,\n  subTypeDocs?: string                 // Markdown docs for complex prop types (e.g. column definition properties)\n  docUrl?: string                      // Upstream docs link for complex behavioral concepts\n}\n```\n\n**Note:** Generic HTML attributes (className, style, onClick, etc.) are filtered out but available via CommonProps. Ref methods are accessed via `componentRef.current.methodName()`. Event detail fields (eventDetail.params) tell you what's on `e.detail` \u2014 access via `e.detail.paramName`.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "componentName": {
+            "type": "string",
+            "description": "Component name (e.g., \"Button\", \"AnalyticalTable\"). Case-insensitive. Must match a component from @ui5/webcomponents-react, @ui5/webcomponents-react-charts, or @ui5/webcomponents-ai-react."
+          }
+        },
+        "required": [
+          "componentName"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "package": {
+            "description": "NPM package name",
+            "type": "string"
+          },
+          "description": {
+            "description": "Full component description",
+            "type": "string"
+          },
+          "props": {
+            "description": "Component props with types, descriptions, and eventDetail",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "methods": {
+            "description": "Imperative methods accessible via ref",
+            "type": "array",
+            "items": {}
+          },
+          "cssParts": {
+            "description": "CSS ::part() selectors for shadow DOM styling",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "description"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "subTypeDocs": {
+            "description": "Additional documentation for complex prop types (e.g. AnalyticalTable column definition)",
+            "type": "string"
+          },
+          "docUrl": {
+            "description": "Link to upstream documentation for complex behavioral concepts (e.g. layout algorithms)",
+            "type": "string"
+          },
+          "_meta": {
+            "type": "object",
+            "properties": {
+              "apiVersion": {
+                "type": "string"
+              },
+              "extractedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "apiVersion"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "description": "Error message if component not found",
+            "type": "string"
+          },
+          "errorType": {
+            "description": "Semantic error type for programmatic handling",
+            "type": "string",
+            "enum": [
+              "not_found",
+              "invalid_input"
+            ]
+          },
+          "availableComponents": {
+            "description": "List of all valid component names (only present on not_found errors)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_documentation",
+      "title": "Documentation & Guides",
+      "description": "Retrieve UI5 Web Components for React documentation, guides, and knowledge base articles. Documentation is bundled locally for instant offline access.\n\nWHEN TO USE: You need guidance on how to use the library \u2014 setup, styling, event handling, SSR, slots, i18n.\nDO NOT USE FOR: Looking up specific component props or methods \u2014 use get_component_api instead. For public utilities/hooks from @ui5/webcomponents-react-base \u2014 use get_public_utils.\nWORKFLOW: Call without parameters to see all available sections. Use section parameter for direct access, query for search.\nLIMITS: When fetchContent is true, full content is returned for at most 3 matching sections to control output size.\n\nEXAMPLE INPUT: { \"section\": \"Knowledge Base > Styling\", \"fetchContent\": true }\nEXAMPLE INPUT: { \"query\": \"i18n\", \"fetchContent\": true }\nEXAMPLE INPUT: {} (returns catalog of all documentation sections)",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "section": {
+            "description": "Specific documentation section to retrieve by exact name. Use this for direct access when you know which section you need. Examples: \"Getting Started\", \"Migration Guide\", \"Knowledge Base > Styling\", \"Knowledge Base > Internationalization\". Mutually exclusive with query parameter.",
+            "type": "string",
+            "enum": [
+              "Getting Started",
+              "Project Templates & Examples",
+              "Knowledge Base > Bring Your Own Web Components",
+              "Knowledge Base > Common CSS",
+              "Knowledge Base > FAQ",
+              "Knowledge Base > Handling Slots",
+              "Knowledge Base > IDs via dataset",
+              "Knowledge Base > Internationalization",
+              "Knowledge Base > Public Utils",
+              "Knowledge Base > Server Side Rendering",
+              "Knowledge Base > Styling",
+              "Knowledge Base > Accessibility"
+            ]
+          },
+          "query": {
+            "description": "Free-form search query to find relevant documentation. Searches across section names, descriptions, tags, and content topics. Examples: \"styling\", \"migration\", \"i18n\", \"ssr\", \"slots\", \"forms\". Use this for exploratory search when you're not sure which section you need. Mutually exclusive with section parameter.",
+            "type": "string"
+          },
+          "fetchContent": {
+            "default": false,
+            "description": "Whether to include the full documentation markdown content. Set to true to retrieve full documentation text in addition to metadata. Content is read from bundled local files (no network required). Useful when you need detailed information beyond the summary.",
+            "type": "boolean"
+          },
+          "startLine": {
+            "description": "Start line number (1-based, inclusive) for reading a portion of the documentation. Requires fetchContent: true. Useful for large documents like the Change Log or Migration Guide.",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "endLine": {
+            "description": "End line number (1-based, inclusive) for reading a portion of the documentation. Requires fetchContent: true. If omitted with startLine, reads to end of file.",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_public_utils",
+      "title": "Public Utilities & Hooks",
+      "description": "Get documentation for public utilities and hooks from @ui5/webcomponents-react-base. Covers Device API, ThemingParameters, useI18nBundle, useViewportRange, and withWebComponent.\n\nWHEN TO USE: You need to use device detection, theme-aware CSS variables in JS, internationalization hooks, responsive breakpoints, or wrap your own custom web components.\nDO NOT USE FOR: Looking up component props \u2014 use get_component_api. For general styling guidance \u2014 use get_documentation with section \"Knowledge Base > Styling\".\nLIMITS: Returns documentation for one utility per call, or an overview of all 5 utilities.\n\nEXAMPLE INPUT: { \"name\": \"ThemingParameters\" }\nEXAMPLE INPUT: { \"name\": \"withWebComponent\" }\nEXAMPLE INPUT: {} (returns overview of all utilities)",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Specific utility/hook name. Omit to see all available utilities.",
+            "type": "string",
+            "enum": [
+              "Device",
+              "ThemingParameters",
+              "useI18nBundle",
+              "useViewportRange",
+              "withWebComponent"
+            ]
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_components",
+      "title": "Browse Components",
+      "description": "Browse all 207 available UI5 Web Components for React components across 4 packages with descriptions, categories, and import statements.\n\nWHEN TO USE: You need to discover which components exist, find the right component for a use case, or verify a component name before calling get_component_api.\nDO NOT USE FOR: Getting detailed props or methods \u2014 use get_component_api after finding the component name here.\nLIMITS: Returns all matching components at once (up to 207). Filter by category or package to reduce output size.\n\nEXAMPLE INPUT: { \"category\": \"Inputs\" }\nEXAMPLE INPUT: { \"package\": \"@ui5/webcomponents-react-charts\" }\nEXAMPLE INPUT: {} (returns all components)",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "category": {
+            "description": "Filter components by category. Omit to show all categories.",
+            "type": "string",
+            "enum": [
+              "Data Display",
+              "Layouts & Floorplans",
+              "Inputs",
+              "Modals & Popovers",
+              "User Feedback",
+              "Charts",
+              "AI Components",
+              "Web Components (Wrapped)"
+            ]
+          },
+          "package": {
+            "description": "Filter components by npm package name. Omit to show all packages.",
+            "type": "string",
+            "enum": [
+              "@ui5/webcomponents-react",
+              "@ui5/webcomponents-react-charts",
+              "@ui5/webcomponents-ai-react"
+            ]
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

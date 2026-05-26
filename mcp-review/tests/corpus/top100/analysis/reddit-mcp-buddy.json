@@ -1,0 +1,294 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "reddit-mcp-buddy",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "reddit-mcp-buddy"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "reddit-mcp-buddy",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:d4e6e30a1f8c7c20556024b328143de5dcdb07c2f20778d02d0a74fd87b3383e",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'reddit-mcp-buddy' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: reddit-mcp-buddy.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "reddit-mcp-buddy",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'reddit-mcp-buddy' package spec 'reddit-mcp-buddy' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "reddit-mcp-buddy",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "reddit-mcp-buddy",
+      "name": "browse_subreddit",
+      "description": "Fetch posts from a subreddit sorted by your choice (hot/new/top/rising). Returns post list with content, scores, and metadata.",
+      "param_names": [
+        "include_nsfw",
+        "include_subreddit_info",
+        "limit",
+        "sort",
+        "subreddit",
+        "time"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "Fetch posts from a subreddit sorted"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "ddit metadata like subscriber count and description"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:29642d7569127ce7b213dd36a744daaeaa64b3e14b78b535ec0859460f9405fe"
+    },
+    {
+      "server": "reddit-mcp-buddy",
+      "name": "search_reddit",
+      "description": "Search for posts across Reddit or specific subreddits. Returns matching posts with content and metadata.",
+      "param_names": [
+        "author",
+        "flair",
+        "limit",
+        "query",
+        "sort",
+        "subreddits",
+        "time"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cb60e2947bcbaec4b05a07abcc811cfdaf1bee769f7b29051403499298c31592"
+    },
+    {
+      "server": "reddit-mcp-buddy",
+      "name": "get_post_details",
+      "description": "Fetch a Reddit post with its comments. Requires EITHER url OR post_id. IMPORTANT: When using post_id alone, an extra API call is made to fetch the subreddit first (2 calls total). For better efficiency, always provide the subreddit parameter when known (1 call total).",
+      "param_names": [
+        "comment_depth",
+        "comment_limit",
+        "comment_sort",
+        "extract_links",
+        "max_top_comments",
+        "post_id",
+        "subreddit",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "post_id subreddit url comment_limit comment_sort co"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "the subreddit first (2 calls total). For better efficiency, alwa"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:724fa627577b2d111fba5579b47a66edd67ae0e28aeb8f4cf5999fd79fd8b834"
+    },
+    {
+      "server": "reddit-mcp-buddy",
+      "name": "user_analysis",
+      "description": "Analyze a Reddit user's posting history, karma, and activity patterns. Returns posts, comments, and statistics.",
+      "param_names": [
+        "comments_limit",
+        "posts_limit",
+        "time_range",
+        "top_subreddits_limit",
+        "username"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:66a23cc09f463c0a875b337e2cafde2a246d61c1b8f70e7f1db507e269621fa5"
+    },
+    {
+      "server": "reddit-mcp-buddy",
+      "name": "reddit_explain",
+      "description": "Get explanations of Reddit terms, slang, and culture. Returns definition, origin, usage, and examples.",
+      "param_names": [
+        "term"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ab071633a0be37dbec39c7188857c54f9a030b56a810dcfd082b0a95eb009c5e"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 5,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

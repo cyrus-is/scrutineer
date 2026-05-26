@@ -1,0 +1,399 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "tavily",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "tavily-mcp"
+      ],
+      "env_keys": [
+        "DEFAULT_PARAMETERS",
+        "TAVILY_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "TAVILY_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "tavily-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:13fb9ede412d44b1d39e6532a7e65612b3ad651a0415df89eab9dc276001b0a2",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'tavily' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: tavily-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "tavily-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'tavily' package spec 'tavily-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "tavily-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'tavily' requires credential-like env keys: TAVILY_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "TAVILY_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "tavily",
+      "name": "tavily_search",
+      "description": "Search the web for current information on any topic. Use for news, facts, or data beyond your knowledge cutoff. Returns snippets and source URLs.",
+      "param_names": [
+        "country",
+        "end_date",
+        "exact_match",
+        "exclude_domains",
+        "include_domains",
+        "include_favicon",
+        "include_image_descriptions",
+        "include_images",
+        "include_raw_content",
+        "max_results",
+        "query",
+        "search_depth",
+        "start_date",
+        "time_range",
+        "topic"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "hether to include the favicon URL for each result Only return r"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:786d0494a1cb9e25e35fab9ce30dbecb07a28ab14b13ecf8556b08f32537abb5"
+    },
+    {
+      "server": "tavily",
+      "name": "tavily_extract",
+      "description": "Extract content from URLs. Returns raw page content in markdown or text format.",
+      "param_names": [
+        "extract_depth",
+        "format",
+        "include_favicon",
+        "include_images",
+        "query",
+        "urls"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8f19381f36747254bd2336fc650f44bbe8622fea53f7b8918f7462b9665e1169"
+    },
+    {
+      "server": "tavily",
+      "name": "tavily_crawl",
+      "description": "Crawl a website starting from a URL. Extracts content from pages with configurable depth and breadth.",
+      "param_names": [
+        "allow_external",
+        "extract_depth",
+        "format",
+        "include_favicon",
+        "instructions",
+        "limit",
+        "max_breadth",
+        "max_depth",
+        "select_domains",
+        "select_paths",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url max_depth max_breadth limit i"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:a6822791659c3b3088638a00c68091bc5f0a6093da997912c94576833d0b5011"
+    },
+    {
+      "server": "tavily",
+      "name": "tavily_map",
+      "description": "Map a website's structure. Returns a list of URLs found starting from the base URL.",
+      "param_names": [
+        "allow_external",
+        "instructions",
+        "limit",
+        "max_breadth",
+        "max_depth",
+        "select_domains",
+        "select_paths",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url max_depth max_breadth limit i"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:f307a14f42a7749901f07481581069156f9b84b4b64bf48e91ed94a369caa065"
+    },
+    {
+      "server": "tavily",
+      "name": "tavily_research",
+      "description": "Perform comprehensive research on a given topic or question. Use this tool when you need to gather information from multiple sources to answer a question or complete a task. Returns a detailed response based on the research findings. Rate limit: 20 requests per minute.",
+      "param_names": [
+        "input",
+        "model"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "swer a question or complete a task. Returns a detailed response"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "The matched word 'task' means a user request ('answer a question or complete a task'), not a project management artifact; tavily_research is a general research tool with no evident access to project management systems."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:d1fe3b64ea8cba6e8ff14fc9197d79acb7e04e0b88be5c36339e47cf9b2128d1"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
+      "contributing": [
+        "sensitive_env_required",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 5,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 3,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 5,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "project_metadata",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 3,
+      "false_positive": 1,
+      "needs_source": 3,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::tavily_research::project_metadata",
+        "reason": "The matched word 'task' means a user request ('answer a question or complete a task'), not a project management artifact; tavily_research is a general research tool with no evident access to project management systems."
+      }
+    ]
+  }
+}

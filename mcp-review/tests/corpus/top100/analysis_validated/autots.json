@@ -1,0 +1,840 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "autots",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "autots-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "autots-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:59af762c4e68f00bda189747afd33038efbf7eac484187b0da2370e7b5cb4f99",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'autots' is fetched and executed at launch via 'uvx'; package spec: autots-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "autots-mcp",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'autots' package spec 'autots-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "autots-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "autots",
+      "name": "list_cache",
+      "description": "List all cached objects across all cache types (predictions, autots_models, event_risk, feature_detectors, data). Call this to discover existing IDs before calling any get_*, plot_*, or apply_* tools.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ff0d6ccf93f5b26681ae9d65e8fceb9865ff9e5d4b6234c16fe82e989cbddfcb"
+    },
+    {
+      "server": "autots",
+      "name": "clear_cache",
+      "description": "Clear cache: specific object by ID+type, an entire cache type, or all caches. Destructive \u2014 freed objects cannot be recovered.",
+      "param_names": [
+        "cache_type",
+        "object_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:06608469b804a523b1fa8ee4645f247a419beb013ce94a34ababb57ba48b278d"
+    },
+    {
+      "server": "autots",
+      "name": "load_sample_data",
+      "description": "Load a built-in sample time series dataset. Returns data_id for use as the data_id parameter in forecast_*, detect_features, forecast_event_risk, clean_data, and get_data.",
+      "param_names": [
+        "dataset",
+        "long"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:03c3ae04732899c022ae8ecdeebbb6b7fc4b6b89bdf0d7609c0bca981e608807"
+    },
+    {
+      "server": "autots",
+      "name": "load_live_data",
+      "description": "Load live data from external sources (FRED economic data, stock tickers). Returns data_id. Requires network access.",
+      "param_names": [
+        "fred_key",
+        "fred_series",
+        "long",
+        "tickers"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "API key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "Requires network access. FRED API key FRED series codes Stock ticke"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "API key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "Requires network access. FRED API key FRED series codes Stock ticke"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:be2546f5326d926a535fd310f7b5fbfcbf1a75328fac6f73aadfabd528006a1d"
+    },
+    {
+      "server": "autots",
+      "name": "generate_synthetic_data",
+      "description": "Generate synthetic time series data with labeled components for testing. Returns data_id.",
+      "param_names": [
+        "n_series"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2b968b30fe4a6a58d7d11f8c4907b9076e30dbb2ce8cfb06da1ddd67bb5728f3"
+    },
+    {
+      "server": "autots",
+      "name": "load_data_from_file",
+      "description": "Load a CSV from a local file path or URL. Returns data_id. CSV must have a datetime column as the first column (index).",
+      "param_names": [
+        "filepath"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "CSV from a local file path or URL. Returns data_id. CSV must ha"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:d289ea6ee877ce57443d6bd389e79e886304e5fcd6b1c144b9225519baba97ee"
+    },
+    {
+      "server": "autots",
+      "name": "get_data",
+      "description": "Retrieve cached data as JSON (wide or long) or save as CSV. Requires data_id from load_sample_data, load_live_data, load_data_from_file, generate_synthetic_data, convert_long_to_wide, or clean_data.",
+      "param_names": [
+        "data_id",
+        "output_format"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5d752154a8ed3ce2f0d88116c3ab2c72dfd71af442f32e17b2f926a0690e5ca5"
+    },
+    {
+      "server": "autots",
+      "name": "convert_long_to_wide",
+      "description": "Convert long-format data (datetime, series_id, value columns) to wide format. Provide either data (inline dict) or data_id. Returns new data_id.",
+      "param_names": [
+        "data",
+        "data_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:67b64244aff0ddfed85a2a55a15b169e69c106dcd3f670569fca9d266b3574bf"
+    },
+    {
+      "server": "autots",
+      "name": "clean_data",
+      "description": "Clean time series data: fill missing values and handle outliers. Provide either data (inline dict) or data_id. Returns new data_id with cleaned data.",
+      "param_names": [
+        "data",
+        "data_id",
+        "fillna"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3dc99eecbf1537b33bb5993709e6b4b43bbd84dcf8cdd1baf98310519eea09ad"
+    },
+    {
+      "server": "autots",
+      "name": "forecast_fast",
+      "description": "FAST: Pre-configured mosaic ensemble forecast using fit_data (no model search). Use for quick results. Provide data or data_id. Returns prediction_id for use in get_forecast, plot_forecast, apply_constraints, apply_adjustments, get_model_params.",
+      "param_names": [
+        "data",
+        "data_id",
+        "forecast_length",
+        "profile_template"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "data data id forecast length profile template"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
+          "validated_out": true,
+          "validation_reason": "Matched token 'profile' in 'profile_template' refers to a forecasting model configuration template (e.g., preset hyperparameters), not a collection of personal identifier data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:83dd3b1b0ebf8662e02f2605941830abd3ebf124f1f305557d78ec45a22e21b9"
+    },
+    {
+      "server": "autots",
+      "name": "forecast_explainable",
+      "description": "MODERATE: AutoTS model search restricted to EXPLAINABLE models (Cassandra, TVVAR, BasicLinearModel). Use when interpretability matters. Provide data or data_id. Returns prediction_id and autots_id. Use get_forecast_components on prediction_id for component decomposition.",
+      "param_names": [
+        "data",
+        "data_id",
+        "forecast_length"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:d3e171e102c09299c7abb4ce1713c8ecc20b112c8da2baabd3471434efdbf02d"
+    },
+    {
+      "server": "autots",
+      "name": "forecast_custom",
+      "description": "CUSTOM: AutoTS with user-specified parameters or template. Use when forecast_fast results are insufficient. Read the autots://docs/forecast_custom_params resource for available parameters. Defaults to 'scalable' model_list. Provide data or data_id. Returns prediction_id and autots_id.",
+      "param_names": [
+        "autots_params",
+        "data",
+        "data_id",
+        "forecast_length",
+        "future_regressor_forecast",
+        "future_regressor_train",
+        "model_template"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9c3f6848c08a1e9e907bda043348006d83168c2dc58a890a2406a8dfd9de9700"
+    },
+    {
+      "server": "autots",
+      "name": "get_forecast",
+      "description": "Retrieve forecast values from a cached prediction as JSON or CSV. Requires prediction_id from forecast_fast, forecast_explainable, forecast_custom, or forecast_from_features. Use output='all' to get point, upper, and lower forecasts combined with a forecast_type column.",
+      "param_names": [
+        "format",
+        "output",
+        "prediction_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a8f35bc5a5ea3b19e7ad9ae447ed79f2b9d3f8cfd5c1d1df1b3bf2a66db06313"
+    },
+    {
+      "server": "autots",
+      "name": "plot_forecast",
+      "description": "Plot forecast with optional history and prediction intervals. Requires prediction_id from forecast_fast, forecast_explainable, forecast_custom, or forecast_from_features. Returns base64-encoded PNG image. Defaults to first series only.",
+      "param_names": [
+        "include_history",
+        "plot_all",
+        "prediction_id",
+        "series"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1c2e3475b4b543279437a8880a9f742babf9eff1d2e4cef0effdd2e23813de61"
+    },
+    {
+      "server": "autots",
+      "name": "apply_constraints",
+      "description": "Apply constraints to a forecast (dampen growth, enforce upper/lower bounds, or quantile clipping). Requires prediction_id from a forecast tool. Returns a new prediction_id with constrained values.",
+      "param_names": [
+        "constraint_direction",
+        "constraint_method",
+        "constraint_value",
+        "prediction_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:18527357ae5efd33d175b4f1eac3dc24a82c70bae382714687e3b81d8705a714"
+    },
+    {
+      "server": "autots",
+      "name": "apply_adjustments",
+      "description": "Apply post-hoc adjustments to a forecast. Requires prediction_id from a forecast tool. Three types: 1) 'basic'/'linear'/'ramp' \u2014 linear ramp between start/end dates with start/end values (additive or multiplicative); 2) 'align_last_value'/'alignlastvalue' \u2014 align forecast to recent history (also requires data_id); 3) 'smoothing'/'ewma' \u2014 exponential smoothing with span parameter. Optionally restrict to specific series_ids. Returns new prediction_id.",
+      "param_names": [
+        "adjustment_method",
+        "adjustment_params",
+        "data_id",
+        "prediction_id",
+        "series_ids"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2b51cbb1d3c91062a5331ec8ada6725eaae87ef8fb7a3a04eb64baa56a66b1c2"
+    },
+    {
+      "server": "autots",
+      "name": "get_model_params",
+      "description": "Get model name, parameters, and transformation parameters from a cached prediction. Requires prediction_id from any forecast tool.",
+      "param_names": [
+        "prediction_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:74de5e2b57798efce72debfbd06dfeea66e1a41b31ac3780f35a25931c7c5fbf"
+    },
+    {
+      "server": "autots",
+      "name": "get_forecast_components",
+      "description": "Get decomposed forecast components (trend, seasonality, etc.) if available. Only works for Cassandra and TVVAR models \u2014 use forecast_explainable to guarantee these model types. Requires prediction_id.",
+      "param_names": [
+        "prediction_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b15ff945f4369d67dde983023f2449ffba735bd6e133e7164f3c1545a5265fef"
+    },
+    {
+      "server": "autots",
+      "name": "get_validation_results",
+      "description": "Get cross-validation results and top model rankings from an AutoTS model search. Requires autots_id from forecast_explainable or forecast_custom.",
+      "param_names": [
+        "autots_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1060e0d0db69f635872dce55a9ebcb40ca4d20502cf5643a61e47fed53808e2a"
+    },
+    {
+      "server": "autots",
+      "name": "plot_validation",
+      "description": "Plot cross-validation forecasts from an AutoTS model search. Requires autots_id from forecast_explainable or forecast_custom. Returns base64-encoded PNG.",
+      "param_names": [
+        "autots_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:dc53f0cfa80ed9ec3f599f06f00ecd2e21be788c04536e1df12641073bcfb40a"
+    },
+    {
+      "server": "autots",
+      "name": "forecast_event_risk",
+      "description": "Forecast the probability of crossing a threshold over future periods (e.g., stockout risk, capacity breach). Threshold in [0,1] is treated as a historical quantile; values outside [0,1] are absolute. Provide data or data_id. Returns event_risk_id for use in get_event_risk_results and plot_event_risk.",
+      "param_names": [
+        "data",
+        "data_id",
+        "direction",
+        "forecast_length",
+        "threshold",
+        "tune"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "forecast_event_risk forecast event risk"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "validated_out": true,
+          "validation_reason": "Matched token 'event' in 'forecast_event_risk' refers to statistical threshold-crossing events (e.g., stockout, capacity breach), not calendar/meeting events."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:a73ae8de1f49e487e3ce6bf981451fc47fe27a0343f3c959b99521b99ebbc0f8"
+    },
+    {
+      "server": "autots",
+      "name": "get_event_risk_results",
+      "description": "Get event risk probability values from a cached EventRiskForecast. Requires event_risk_id from forecast_event_risk. Returns probabilities per period per series.",
+      "param_names": [
+        "event_risk_id",
+        "format"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "get_event_risk_results get event risk results"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "validated_out": true,
+          "validation_reason": "Matched token 'event' refers to statistical risk events returned by the forecasting tool, not calendar or scheduling data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:549599ec24081c9d07d07072111bf20a9e595a2cb3ea0eddf947fbc949f37e9f"
+    },
+    {
+      "server": "autots",
+      "name": "plot_event_risk",
+      "description": "Plot event risk probabilities over the forecast horizon. Requires event_risk_id from forecast_event_risk. Returns base64-encoded PNG.",
+      "param_names": [
+        "event_risk_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "plot_event_risk plot event risk"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "validated_out": true,
+          "validation_reason": "Matched token 'event' refers to statistical event risk probabilities being visualized, not calendar/scheduling data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:ce88c836d86e66825b952fed2b6185afb8d19c13b6cb681e8d0345ac1daaf339"
+    },
+    {
+      "server": "autots",
+      "name": "detect_features",
+      "description": "Detect anomalies, changepoints, level shifts, holidays, and seasonality patterns across all series. Provide data or data_id. Returns detector_id for use in get_detected_features, plot_features, and forecast_from_features.",
+      "param_names": [
+        "data",
+        "data_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:fc68ef2ccde15476136c409bbdfaef2deaa67f2f66a4b5f44e78c842ca814e64"
+    },
+    {
+      "server": "autots",
+      "name": "get_detected_features",
+      "description": "Query detected features (anomalies, changepoints, level shifts, holidays, seasonality) from a cached detector. Requires detector_id from detect_features. Supports filtering by date range, specific date, or series name. Use include_components=true for time-series component values. Examples: 'was there an anomaly on 2024-12-25?', 'when was the first level shift?'",
+      "param_names": [
+        "date_end",
+        "date_start",
+        "detector_id",
+        "include_components",
+        "include_metadata",
+        "series_name",
+        "specific_date"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:877843a56f7741d2b47f5734394b7ec7cf2abd23f7352ac6dfc5f3b704306af8"
+    },
+    {
+      "server": "autots",
+      "name": "plot_features",
+      "description": "Plot detected features overlaid on the time series. Requires detector_id from detect_features. Returns base64-encoded PNG.",
+      "param_names": [
+        "detector_id",
+        "series"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5894e10f84d90cee4880a2ad01b8bb04ef231b3905db58905374b5bd9f67744c"
+    },
+    {
+      "server": "autots",
+      "name": "forecast_from_features",
+      "description": "EXPERIMENTAL: Create a forecast using the decomposed components from a feature detector. Only use after detect_features, not as a standalone forecasting method. Requires detector_id from detect_features. Returns prediction_id for use in get_forecast, plot_forecast.",
+      "param_names": [
+        "detector_id",
+        "forecast_length"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:73667ce56953f67eb01583ada52638fccad331bab6cd4696be6e15d70b116db2"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "personal_identifiers": {
+        "label": "Personal identifiers (PII)",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "credentials_secrets"
+    ],
+    "note": "Rating reflects high-confidence matches; credentials_secrets matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 27,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "calendar",
+      "credentials_secrets",
+      "personal_identifiers"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 3,
+      "false_positive": 4,
+      "needs_source": 1,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::forecast_fast::personal_identifiers",
+        "reason": "Matched token 'profile' in 'profile_template' refers to a forecasting model configuration template (e.g., preset hyperparameters), not a collection of personal identifier data."
+      },
+      {
+        "id": "data::forecast_event_risk::calendar",
+        "reason": "Matched token 'event' in 'forecast_event_risk' refers to statistical threshold-crossing events (e.g., stockout, capacity breach), not calendar/meeting events."
+      },
+      {
+        "id": "data::get_event_risk_results::calendar",
+        "reason": "Matched token 'event' refers to statistical risk events returned by the forecasting tool, not calendar or scheduling data."
+      },
+      {
+        "id": "data::plot_event_risk::calendar",
+        "reason": "Matched token 'event' refers to statistical event risk probabilities being visualized, not calendar/scheduling data."
+      }
+    ]
+  }
+}

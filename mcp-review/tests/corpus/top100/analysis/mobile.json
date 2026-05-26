@@ -1,0 +1,690 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mobile",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mobilenext/mobile-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@mobilenext/mobile-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:18eb09792ac473ef37e485aba1c5eca0efe2614a4464d153dfb8ca7e1f1bae28",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mobile' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @mobilenext/mobile-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@mobilenext/mobile-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mobile' package spec '@mobilenext/mobile-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@mobilenext/mobile-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mobile",
+      "name": "mobile_list_available_devices",
+      "description": "List all available devices. This includes both physical mobile devices and mobile simulators and emulators. It returns both Android and iOS devices.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:026c1aa021075a6ecf5655f0f6ac6e2d013490f3a92c4c2369332e012db08e67"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_list_apps",
+      "description": "List all the installed apps on the device",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:181f16b3c1759356a42899406e8531d0a5203a8ccdbfe28ae0a0bea6fe520cd4"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_launch_app",
+      "description": "Launch an app on mobile device. Use this to open a specific app. You can find the package name of the app by calling list_apps_on_device.",
+      "param_names": [
+        "device",
+        "locale",
+        "packageName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:74b7a768a580848551f9f68c479cf2ffa86f005e3c7fa8b5597d0e8b21436ac5"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_terminate_app",
+      "description": "Stop and terminate an app on mobile device",
+      "param_names": [
+        "device",
+        "packageName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:273971b33df2247d9c7296a7f4c29f3b187248c2ad7f159cb8310e9c4cc7c82d"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_install_app",
+      "description": "Install an app on mobile device",
+      "param_names": [
+        "device",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "provide a .zip file or a .app directory. For Android provide an .apk"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:34ac53b9f78143913961512eb3b5e6e0cabf38f3007beb27281361fe4b845d3e"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_uninstall_app",
+      "description": "Uninstall an app from mobile device",
+      "param_names": [
+        "bundle_id",
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4c358bf17417749c3e3b93529d7c9609505cb6fa0f6384c155e4b6fa9cb94438"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_get_screen_size",
+      "description": "Get the screen size of the mobile device in pixels",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e81bb21c57de25c7e40707eb7ae4f76af3657a6b77b038348a34cf53f0a8611f"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_click_on_screen_at_coordinates",
+      "description": "Click on the screen at given x,y coordinates. If clicking on an element, use the list_elements_on_screen tool to find the coordinates.",
+      "param_names": [
+        "device",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "tes mobile click on screen at coordinates"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:06e1f541d21eb0bd357908e6ba0b95c5b057bb843e2764c1d52bb664e4df1a40"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_double_tap_on_screen",
+      "description": "Double-tap on the screen at given x,y coordinates.",
+      "param_names": [
+        "device",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "ap on the screen at given x,y coordinates. The device identifier to use"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:bff13da90045a7a4bc3f99909b73b7142d9ede81e20f7fb4bc78edac4bb9cdd8"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_long_press_on_screen_at_coordinates",
+      "description": "Long press on the screen at given x,y coordinates. If long pressing on an element, use the list_elements_on_screen tool to find the coordinates.",
+      "param_names": [
+        "device",
+        "duration",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "obile long press on screen at coordinates"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:2b33eabbf267a3199ea2afde25f7a252c8bfbbdbad9c5fd91755d0f601061f85"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_list_elements_on_screen",
+      "description": "List elements on screen and their coordinates, with display text or accessibility label. Do not cache this result.",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "elements on screen and their coordinates, with display text or accessi"
+          },
+          "rationale": "Physical tracking risk."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "display text or accessibility label. Do not cache this result. Th"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:b1ad3cd740707b8c33b81a6ae9561c6592aee48f60a4e8238b1f7bfaa5af6d19"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_press_button",
+      "description": "Press a button on device",
+      "param_names": [
+        "button",
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cbfe83d8b247576fe9416d73f50318138f372e686246f1724b80cab18a52b1da"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_open_url",
+      "description": "Open a URL in browser on device",
+      "param_names": [
+        "device",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "mobile_open_url mobile open url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:ecc180b352588152e6ebed1f35de5e8ba2aefee342e05ac6826d606308f87428"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_swipe_on_screen",
+      "description": "Swipe on the screen",
+      "param_names": [
+        "device",
+        "direction",
+        "distance",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5fb88c315b7fd816d676eb26b02ec52c9a6114fd18afeb491d72468d15cb5f71"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_type_keys",
+      "description": "Type text into the focused element",
+      "param_names": [
+        "device",
+        "submit",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4f842b45fe2cae8d0cd9f1afd747119fae4ed2e1680efdbb4aee0da2b16643ec"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_save_screenshot",
+      "description": "Save a screenshot of the mobile device to a file",
+      "param_names": [
+        "device",
+        "saveTo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:60b6f7efc4341c84d831270dcce018e1b9980b899cf317e01fa9876b45002a2f"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_take_screenshot",
+      "description": "Take a screenshot of the mobile device. Use this to understand what's on screen, if you need to press an element that is available through view hierarchy then you must list elements on screen instead. Do not cache this result.",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:43d333def963bf2542b9bbbb9a60dff6301e6d24f84a806f8b6f50f6646d442f"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_set_orientation",
+      "description": "Change the screen orientation of the device",
+      "param_names": [
+        "device",
+        "orientation"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:67a9137a23690fac24f8814e4a82f646a260823f3220fd79a9f9cf4e07cab084"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_get_orientation",
+      "description": "Get the current screen orientation of the device",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c487b5922e4e468b788851f6d5c5cf86850c8b4a9f23cb0423d3df1913c02127"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_start_screen_recording",
+      "description": "Start recording the screen of a mobile device. The recording runs in the background until stopped with mobile_stop_screen_recording. Returns the path where the recording will be saved.",
+      "param_names": [
+        "device",
+        "output",
+        "timeLimit"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8b3173d4f7cb4eeefeeadb280f90e3e5d2e0218953b656888ee7a7d53cc547ce"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_stop_screen_recording",
+      "description": "Stop an active screen recording on a mobile device. Returns the file path, size, and approximate duration of the recording.",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:204ba9de871f902e98c14a633a1f2a13c26a0a08b7bba28469ecaff58f2c4fda"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_list_crashes",
+      "description": "List crash reports available on the device",
+      "param_names": [
+        "device"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:60b80885f3b151985d4910af938ccaa935d79d7ad8bd7bb638ba032075bb6324"
+    },
+    {
+      "server": "mobile",
+      "name": "mobile_get_crash",
+      "description": "Get the full content of a crash report by its ID. Use mobile_list_crashes to find available crash IDs.",
+      "param_names": [
+        "device",
+        "id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:76228dbc55430be8e28a2bb575111ddc7c09806fcf91c7e364848f2c69f5aec9"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 4,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 23,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "location",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

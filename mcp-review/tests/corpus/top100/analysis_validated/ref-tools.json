@@ -1,0 +1,304 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "ref-tools",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "ref-tools-mcp"
+      ],
+      "env_keys": [
+        "REF_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "REF_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "ref-tools-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:634f9675a18a2cd596de72c01e42716d11df3aad90c9c60b99125c51dba34000",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'ref-tools' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: ref-tools-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "ref-tools-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'ref-tools' package spec 'ref-tools-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "ref-tools-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'ref-tools' requires credential-like env keys: REF_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "REF_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "ref-tools",
+      "name": "ref_search_documentation",
+      "description": "Search for documentation on the web or github as well from private resources like repos and pdfs. Use Ref 'ref_read_url' to read the content of a url.",
+      "param_names": [
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "read the content",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "fs. Use Ref 'ref_read_url' to read the content of a url. Query for documenta"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The matched phrase 'read the content of a url' is instructional text describing the downstream tool (ref_read_url), not a capability of ref_search_documentation itself, which only searches."
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url' to read the content of a url. Query for documentation. Sho"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "rk or library names. Searches public only docs by default, include"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:3cde3b81e221260e3fb578d51f11b195b2c8352c0bb2977aca4392b6335e5fb4"
+    },
+    {
+      "server": "ref-tools",
+      "name": "ref_read_url",
+      "description": "Read the content of a url as markdown. The EXACT url from a 'ref_search_documentation' result should be passed to this tool.",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read the content",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "Read the content of a url as markdown. The EXA"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The tool reads URL content as markdown (web content), not files from a filesystem; the pattern matches 'content' but in the wrong semantic category (URL \u2260 file)."
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "ref_read_url ref read url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:74d44355ba8ec2c66ebfbab6754fb2d63abb818a7ccc5201bf15afc90b62a58e"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
+      "contributing": [
+        "sensitive_env_required",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "The 'file_read' component is not actually present (these tools read URLs, not files); without real file-system read capability, the exfil path doesn't materialize."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 4,
+    "toxic_combination_count": 2,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 7,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 3,
+      "false_positive": 3,
+      "needs_source": 1,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::ref_search_documentation::file_read",
+        "reason": "The matched phrase 'read the content of a url' is instructional text describing the downstream tool (ref_read_url), not a capability of ref_search_documentation itself, which only searches."
+      },
+      {
+        "id": "cap::ref_read_url::file_read",
+        "reason": "The tool reads URL content as markdown (web content), not files from a filesystem; the pattern matches 'content' but in the wrong semantic category (URL \u2260 file)."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "The 'file_read' component is not actually present (these tools read URLs, not files); without real file-system read capability, the exfil path doesn't materialize."
+      }
+    ]
+  }
+}

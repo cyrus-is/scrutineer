@@ -1,0 +1,27 @@
+{
+  "server": "openbrand",
+  "captured_at": "2026-05-26T22:23:25Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "openbrand-mcp",
+    "version": "0.1.0"
+  },
+  "tools": [
+    {
+      "name": "extract_brand_assets",
+      "description": "Extract brand assets (logos, colors, backdrop images, brand name) from a website URL. Returns structured data with logo URLs, hex colors with usage hints, backdrop/OG images, and the detected brand name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The website URL to extract brand assets from (e.g. https://stripe.com)"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "server": "ref-tools",
+  "captured_at": "2026-05-26T22:23:12Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Ref",
+    "version": "3.0.3"
+  },
+  "tools": [
+    {
+      "name": "ref_search_documentation",
+      "description": "Search for documentation on the web or github as well from private resources like repos and pdfs. Use Ref 'ref_read_url' to read the content of a url.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Query for documentation. Should include programming language and framework or library names. Searches public only docs by default, include ref_src=private to search a user's private docs."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "ref_read_url",
+      "description": "Read the content of a url as markdown. The EXACT url from a 'ref_search_documentation' result should be passed to this tool.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the webpage to read."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    }
+  ]
+}

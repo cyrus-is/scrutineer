@@ -1,0 +1,1698 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "hex-ssh",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-ssh-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@levnikolaevich/hex-ssh-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:90a252a01865c6c574ec13ab4a5d44a785366052701ca885e40e1568166a807a",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'hex-ssh' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @levnikolaevich/hex-ssh-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@levnikolaevich/hex-ssh-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'hex-ssh' package spec '@levnikolaevich/hex-ssh-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@levnikolaevich/hex-ssh-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "hex-ssh",
+      "name": "ssh-capabilities",
+      "description": "Inspect POSIX remote session support, tmux availability, package managers, and basic shell tools.",
+      "param_names": [
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "shell",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": ", package managers, and basic shell tools. SSH host - alias from"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "availability",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "remote session support, tmux availability, package managers, and basic"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:28e30b9b474569c04dea7b4e90d5adf88356d6ce227cd7ce45e6c4af73ecf7a7"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-session-open",
+      "description": "Open a trusted persistent remote tmux session. Preserves cwd and environment across ssh-session-exec calls.",
+      "param_names": [
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "name",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "ttlSeconds",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "exec",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "nvironment across ssh-session-exec calls. SSH host - alias from"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "file tools. Optional session label. Default: empty Session TTL i"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:25d5833cbeb657d36b2699f83deb027862169df807a4e1dc5bff3d184386f365"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-session-exec",
+      "description": "Run a command inside a persistent tmux session. Returns metadata first; read output with ssh-session-read.",
+      "param_names": [
+        "command",
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "sid",
+        "user",
+        "waitSeconds"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "exec",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ssh-session-exec ssh session exec"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "command"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:6289160e86661d506579b3d3c1386043f3e763a71a741f37dcadacf2747a1662"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-session-read",
+      "description": "Read a paginated stdout/stderr window from a persistent session command.",
+      "param_names": [
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "limit",
+        "offset",
+        "port",
+        "privateKeyPath",
+        "raw",
+        "remotePlatform",
+        "seq",
+        "sid",
+        "stream",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "raw"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:091ccbae0a1bd23ecedf318a3f8f32905b02a1f336d34341924d6f31a5249ad4"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-session-close",
+      "description": "Close a trusted persistent tmux session and remove its remote session directory.",
+      "param_names": [
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "sid",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "and remove its remote session directory. SSH host - alias from ~/.ssh"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:c684be0347c95e40ceb3c9c077d6a089d02e99f29855a0b2743365884dd2d477"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-session-gc",
+      "description": "Remove expired trusted hex-ssh tmux sessions. Only sessions with valid hex-ssh metadata are touched.",
+      "param_names": [
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "olderThanSeconds",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:9e20ab22cd1e465ef92c4ec010b7e20ce009228d7b90eb6582ad19f80a9bb071"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "remote-ssh",
+      "description": "Execute shell commands on remote servers. Disabled by default. Set REMOTE_SSH_MODE=safe or REMOTE_SSH_MODE=open to enable.",
+      "param_names": [
+        "command",
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Execute shell commands on remote serv"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "command"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:509affc9a9bdb6529216b4a880119121e8f8e78f357aa55ba8fbb30740f41691"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-read-lines",
+      "description": "Read remote file with hash-annotated lines. Use startLine/maxLines for large files. Returns range checksums for edit verification.",
+      "param_names": [
+        "connectTimeoutMs",
+        "endLine",
+        "execTimeoutMs",
+        "filePath",
+        "host",
+        "keepaliveIntervalMs",
+        "maxLines",
+        "plain",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "startLine",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read remote file",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "Read remote file with hash-annotated lines. Us"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:66a7c49ac4e194a83322531951ca7c15d9978660effeec5cf01198fbae700508"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-edit-block",
+      "description": "Edit remote files using hash-verified anchors. Use ssh-read-lines first to get hash anchors and checksums.",
+      "param_names": [
+        "anchor",
+        "checksum",
+        "connectTimeoutMs",
+        "endAnchor",
+        "execTimeoutMs",
+        "filePath",
+        "host",
+        "insertAfter",
+        "keepaliveIntervalMs",
+        "newText",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "startAnchor",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:b784bd01326122d5fc7aa15718dd402ac1db20f333b226a5aa321427617e585c"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-search-code",
+      "description": "Search remote files with grep. Returns hash-annotated matches with deduplication. Use for finding code before ssh-edit-block.",
+      "param_names": [
+        "connectTimeoutMs",
+        "contextLines",
+        "execTimeoutMs",
+        "filePattern",
+        "host",
+        "ignoreCase",
+        "keepaliveIntervalMs",
+        "maxResults",
+        "path",
+        "pattern",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:7b12952610aaa206b42fa257a738c332be8cfab890eb0e6acb01c7322b29d0a5"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-write-chunk",
+      "description": "Write or append to remote files. Rewrite mode is atomic (temp file + rename). Append mode is non-atomic (direct >>). Auto-creates parent directories.",
+      "param_names": [
+        "connectTimeoutMs",
+        "content",
+        "execTimeoutMs",
+        "filePath",
+        "host",
+        "keepaliveIntervalMs",
+        "mode",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:fd6982218086ec2eabfb9c019192d5dc065a38070bda3c726e97cb6d82ed5ca8"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-upload",
+      "description": "Upload a local file to a remote server over SFTP. Supports text and binary files, rejects existing destinations by default, validates path boundaries, and stages via the strongest available remote finalize path.",
+      "param_names": [
+        "connectTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "localPath",
+        "overwrite",
+        "permissions",
+        "port",
+        "privateKeyPath",
+        "remotePath",
+        "remotePlatform",
+        "transferTimeoutMs",
+        "user",
+        "verify"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "upload",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "ssh-upload ssh upload"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "download",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "ault). Used by ssh-upload/ssh-download. Absolute local file path or"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "overwrite"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:385122ed11d14b8477c27351d8ba6c2762466a05d97c87189025675505eb37ce"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-download",
+      "description": "Download a remote file to the local machine over SFTP. Supports text and binary files, rejects existing destinations by default, validates path boundaries, and stages to a verified local finalize path.",
+      "param_names": [
+        "connectTimeoutMs",
+        "host",
+        "keepaliveIntervalMs",
+        "localPath",
+        "overwrite",
+        "port",
+        "privateKeyPath",
+        "remotePath",
+        "remotePlatform",
+        "transferTimeoutMs",
+        "user",
+        "verify"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "download",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "ssh-download ssh download"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "download",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "ssh-download ssh download"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "overwrite"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:9ce2e8832c1f160c3f8b12568add5eaf3c19f428bb4e14b541d02af6b698ca06"
+    },
+    {
+      "server": "hex-ssh",
+      "name": "ssh-verify",
+      "description": "Check if range checksums still match remote file. Single-line response avoids full re-read. Use before editing after a pause.",
+      "param_names": [
+        "checksums",
+        "connectTimeoutMs",
+        "execTimeoutMs",
+        "filePath",
+        "host",
+        "keepaliveIntervalMs",
+        "port",
+        "privateKeyPath",
+        "remotePlatform",
+        "user"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "spawn",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "ll override. Different values spawn separate pooled connections."
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "private key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "connections",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "values spawn separate pooled connections. SSH keepalive interval in ms"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "hostname",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:c034e920b00746ce01726d069569acc5abe6ad107c4c53e5bd42fc4a6c6af212"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 14,
+        "confidence": "medium"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 14,
+        "confidence": "medium"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 14,
+        "confidence": "medium"
+      },
+      "system_state": {
+        "label": "System / process / environment state",
+        "tier": "high",
+        "tool_count": 14,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "credentials_secrets",
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; credentials_secrets, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "HIGH",
+      "title": "Arbitrary file read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. The read accepts an arbitrary path (or the server is scoped to a broad directory), so it can reach secrets/configs far beyond the task.",
+      "contributing": [
+        "file_read (arbitrary path)",
+        "network_egress"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 14,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 17,
+    "toxic_combination_count": 3,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 16,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "calendar",
+      "contacts",
+      "credentials_secrets",
+      "files_documents",
+      "project_metadata",
+      "source_code",
+      "system_state"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

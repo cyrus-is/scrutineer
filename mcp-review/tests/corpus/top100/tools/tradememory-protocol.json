@@ -1,0 +1,907 @@
+{
+  "server": "tradememory-protocol",
+  "captured_at": "2026-05-26T22:24:58Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "tradememory-protocol",
+    "version": "3.3.1"
+  },
+  "tools": [
+    {
+      "name": "store_trade_memory",
+      "description": "Store a trade decision with full context into memory.\n\nCall this after executing a trade to build your memory bank.\nInclude market_context and reflection for better recall later.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading instrument (e.g. \"XAUUSD\")"
+          },
+          "direction": {
+            "type": "string",
+            "description": "\"long\" or \"short\""
+          },
+          "entry_price": {
+            "type": "number",
+            "description": "Entry price of the trade"
+          },
+          "strategy_name": {
+            "type": "string",
+            "description": "Name of the strategy used (e.g. \"VolBreakout\")"
+          },
+          "market_context": {
+            "type": "string",
+            "description": "Description of market conditions when trade was taken"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Exit price (if trade is closed)"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Profit/loss in account currency (if trade is closed)"
+          },
+          "reflection": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "What you learned from this trade"
+          },
+          "trade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional custom ID. Auto-generated if omitted."
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ISO format timestamp. Defaults to now (UTC)."
+          }
+        },
+        "required": [
+          "symbol",
+          "direction",
+          "entry_price",
+          "strategy_name",
+          "market_context"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "recall_similar_trades",
+      "description": "Find past trades with similar market context.\n\nUse this before making a trade to learn from past experience.\nReturns trades with their reflections and outcomes.\nUses OWM scoring when episodic memories exist, falls back to keyword matching.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading instrument to filter by (e.g. \"XAUUSD\")"
+          },
+          "market_context": {
+            "type": "string",
+            "description": "Current market conditions to match against"
+          },
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional strategy filter"
+          },
+          "limit": {
+            "default": 5,
+            "type": "integer",
+            "description": "Max number of results (default 5)"
+          }
+        },
+        "required": [
+          "symbol",
+          "market_context"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "get_strategy_performance",
+      "description": "Get aggregate performance stats per strategy.\n\nUse this to evaluate which strategies are working and which need adjustment.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by strategy name. Returns all strategies if omitted."
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by symbol. Returns all symbols if omitted."
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "get_trade_reflection",
+      "description": "Get the full context and reflection for a specific trade.\n\nUse this to deep-dive into a particular trade's reasoning and lessons.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "trade_id": {
+            "type": "string",
+            "description": "The trade ID to look up"
+          }
+        },
+        "required": [
+          "trade_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "remember_trade",
+      "description": "Store a trade into OWM multi-layer memory with automatic updates.\n\nWrites to episodic memory and automatically updates semantic (Bayesian),\nprocedural (running averages), and affective (EWMA confidence/streaks).\nAlso writes to trade_records for backward compatibility.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading instrument (e.g. \"XAUUSD\")"
+          },
+          "direction": {
+            "type": "string",
+            "description": "\"long\" or \"short\""
+          },
+          "entry_price": {
+            "type": "number",
+            "description": "Entry price of the trade"
+          },
+          "exit_price": {
+            "type": "number",
+            "description": "Exit price of the trade"
+          },
+          "pnl": {
+            "type": "number",
+            "description": "Profit/loss in account currency"
+          },
+          "strategy_name": {
+            "type": "string",
+            "description": "Strategy used (e.g. \"VolBreakout\")"
+          },
+          "market_context": {
+            "type": "string",
+            "description": "Description of market conditions"
+          },
+          "pnl_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "P&L as R-multiple (risk units). Improves OWM scoring quality."
+          },
+          "context_regime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Market regime (trending_up/trending_down/ranging/volatile)"
+          },
+          "context_atr_d1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ATR(14) on D1 in dollars"
+          },
+          "confidence": {
+            "default": 0.5,
+            "type": "number",
+            "description": "Agent confidence level 0-1 (default 0.5)"
+          },
+          "reflection": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Lessons learned from this trade"
+          },
+          "max_adverse_excursion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Maximum adverse excursion during the trade"
+          },
+          "trade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional custom ID. Auto-generated if omitted."
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ISO format timestamp. Defaults to now (UTC)."
+          }
+        },
+        "required": [
+          "symbol",
+          "direction",
+          "entry_price",
+          "exit_price",
+          "pnl",
+          "strategy_name",
+          "market_context"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "recall_memories",
+      "description": "Recall memories using OWM outcome-weighted scoring.\n\nQueries episodic and semantic memories, scores them by outcome quality,\ncontext similarity, recency, confidence, and affective modulation.\nReturns ranked memories with score breakdown.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading instrument (e.g. \"XAUUSD\")"
+          },
+          "market_context": {
+            "type": "string",
+            "description": "Current market conditions to match against"
+          },
+          "context_regime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Current market regime (trending_up/trending_down/ranging/volatile)"
+          },
+          "context_atr_d1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Current ATR(14) on D1 in dollars"
+          },
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional strategy filter"
+          },
+          "memory_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Types to query (default: [\"episodic\", \"semantic\"])"
+          },
+          "limit": {
+            "default": 10,
+            "type": "integer",
+            "description": "Max results (default 10)"
+          }
+        },
+        "required": [
+          "symbol",
+          "market_context"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "get_behavioral_analysis",
+      "description": "Get behavioral analysis from procedural memory.\n\nReturns aggregate trading behavior stats: hold times, disposition ratio,\nlot sizing variance, and Kelly criterion comparison.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by strategy name. Returns all if omitted."
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by symbol. Returns all if omitted."
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "get_agent_state",
+      "description": "Get the current agent affective state (confidence, risk, drawdown).\n\nReturns confidence level, risk appetite, drawdown percentage,\nwin/loss streaks, equity tracking, and a recommended action\nbased on current drawdown severity.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "create_trading_plan",
+      "description": "Create a prospective trading plan that activates when conditions are met.\n\nStores a rule-based plan in prospective memory. The plan stays active\nuntil triggered, expired, or manually cancelled.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "trigger_type": {
+            "type": "string",
+            "description": "Type of trigger (e.g. \"market_condition\", \"drawdown\", \"time_based\")"
+          },
+          "trigger_condition": {
+            "type": "string",
+            "description": "JSON string describing when to trigger (e.g. '{\"regime\": \"ranging\"}')"
+          },
+          "planned_action": {
+            "type": "string",
+            "description": "JSON string describing what to do (e.g. '{\"type\": \"skip_trade\"}')"
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "Why this plan was created"
+          },
+          "expiry_days": {
+            "default": 30,
+            "type": "integer",
+            "description": "Days until plan expires (default 30)"
+          },
+          "priority": {
+            "default": 0.5,
+            "type": "number",
+            "description": "Priority 0-1, higher = checked first (default 0.5)"
+          }
+        },
+        "required": [
+          "trigger_type",
+          "trigger_condition",
+          "planned_action",
+          "reasoning"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "check_active_plans",
+      "description": "Check active trading plans against current market context.\n\nQueries all active prospective plans, expires any past their expiry date,\nand matches remaining plans against the provided context.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "context_regime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Current market regime (trending_up/trending_down/ranging/volatile)"
+          },
+          "context_atr_d1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Current ATR(14) on D1 in dollars"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "evolution_fetch_market_data",
+      "description": "Fetch OHLCV market data from Binance for evolution analysis.\n\nDownloads historical price bars for backtesting and pattern discovery.\nUse this before discover_patterns or run_backtest to get data.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair (e.g. \"BTCUSDT\", \"ETHUSDT\")"
+          },
+          "timeframe": {
+            "default": "1h",
+            "type": "string",
+            "description": "Bar timeframe \u2014 \"5m\", \"15m\", \"1h\", \"4h\", \"1d\""
+          },
+          "days": {
+            "default": 90,
+            "type": "integer",
+            "description": "Number of days of history to fetch (default 90)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "evolution_discover_patterns",
+      "description": "Discover trading patterns from market data using LLM analysis.\n\nUses Claude to analyze OHLCV data and generate candidate trading patterns\nwith entry/exit conditions. Each pattern can be backtested afterward.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair (e.g. \"BTCUSDT\")"
+          },
+          "timeframe": {
+            "default": "1h",
+            "type": "string",
+            "description": "Bar timeframe \u2014 \"5m\", \"15m\", \"1h\", \"4h\", \"1d\""
+          },
+          "count": {
+            "default": 5,
+            "type": "integer",
+            "description": "Number of patterns to generate (default 5)"
+          },
+          "temperature": {
+            "default": 0.7,
+            "type": "number",
+            "description": "LLM creativity 0-1 (default 0.7, higher = more diverse)"
+          },
+          "days": {
+            "default": 90,
+            "type": "integer",
+            "description": "Days of history to analyze (default 90)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "evolution_run_backtest",
+      "description": "Backtest a candidate pattern against historical OHLCV data.\n\nTakes a pattern dict (from discover_patterns) and runs a vectorized\nbacktest. Returns fitness metrics: Sharpe ratio, win rate, trade count,\nmax drawdown, total PnL.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "pattern_dict": {
+            "additionalProperties": true,
+            "type": "object",
+            "description": "CandidatePattern as dict (from discover_patterns output)"
+          },
+          "symbol": {
+            "default": "BTCUSDT",
+            "type": "string",
+            "description": "Trading pair (e.g. \"BTCUSDT\")"
+          },
+          "timeframe": {
+            "default": "1h",
+            "type": "string",
+            "description": "Bar timeframe \u2014 \"5m\", \"15m\", \"1h\", \"4h\", \"1d\""
+          },
+          "days": {
+            "default": 90,
+            "type": "integer",
+            "description": "Days of history to backtest against (default 90)"
+          }
+        },
+        "required": [
+          "pattern_dict"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "evolution_evolve_strategy",
+      "description": "Run full evolution loop \u2014 generate, backtest, select, eliminate.\n\nMulti-generation strategy evolution: generates candidate patterns via LLM,\nbacktests on in-sample data, validates survivors on out-of-sample data,\neliminates weak hypotheses. Returns graduated strategies and graveyard.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair (e.g. \"BTCUSDT\")"
+          },
+          "timeframe": {
+            "default": "1h",
+            "type": "string",
+            "description": "Bar timeframe \u2014 \"5m\", \"15m\", \"1h\", \"4h\", \"1d\""
+          },
+          "generations": {
+            "default": 3,
+            "type": "integer",
+            "description": "Number of evolution generations (default 3)"
+          },
+          "population_size": {
+            "default": 10,
+            "type": "integer",
+            "description": "Hypotheses per generation (default 10)"
+          },
+          "days": {
+            "default": 90,
+            "type": "integer",
+            "description": "Days of history to use (default 90)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "evolution_get_log",
+      "description": "Get the log of past evolution runs from this session.\n\nReturns a list of all evolution runs with their results, including\ngraduated strategies, graveyard, token usage, and backtest counts.\nData is in-memory (resets on server restart).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "export_audit_trail",
+      "description": "Export Trading Decision Records for audit and compliance review.\n\nProvides a complete, tamper-evident record of trading decisions including\nthe memory context (similar trades, beliefs) that informed each decision.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "trade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Get a single TDR by trade ID (e.g., \"MT5-7047640363\").\nIf provided, other filters are ignored."
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by strategy name (e.g., \"VolBreakout\")."
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Start date (ISO format, inclusive). E.g., \"2026-03-01\"."
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "End date (ISO format, exclusive). E.g., \"2026-04-01\"."
+          },
+          "limit": {
+            "default": 50,
+            "type": "integer",
+            "description": "Maximum records to return (default 50)."
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "verify_audit_hash",
+      "description": "Verify the integrity of a Trading Decision Record.\n\nRecomputes the SHA256 data_hash from stored inputs and compares with\nthe hash computed at decision time. A mismatch indicates tampering.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "trade_id": {
+            "type": "string",
+            "description": "Trade ID to verify (e.g., \"MT5-7047640363\")."
+          }
+        },
+        "required": [
+          "trade_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      }
+    }
+  ]
+}

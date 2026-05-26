@@ -1,0 +1,10 @@
+{
+  "server": "mcp-server-spec-driven-development",
+  "captured_at": "2026-05-26T22:25:25Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Spec-Driven Development MCP Server",
+    "version": "0.1.0"
+  },
+  "tools": []
+}

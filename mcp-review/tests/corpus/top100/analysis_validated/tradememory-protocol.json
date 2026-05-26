@@ -1,0 +1,640 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "tradememory-protocol",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "tradememory-protocol"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "tradememory-protocol",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:253789762d009119fb70468d8facba79620acf49572d6ee9f540240905aa7029",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'tradememory-protocol' is fetched and executed at launch via 'uvx'; package spec: tradememory-protocol.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "tradememory-protocol",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'tradememory-protocol' package spec 'tradememory-protocol' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "tradememory-protocol",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "tradememory-protocol",
+      "name": "store_trade_memory",
+      "description": "Store a trade decision with full context into memory.\n\nCall this after executing a trade to build your memory bank.\nInclude market_context and reflection for better recall later.",
+      "param_names": [
+        "direction",
+        "entry_price",
+        "exit_price",
+        "market_context",
+        "pnl",
+        "reflection",
+        "strategy_name",
+        "symbol",
+        "timestamp",
+        "trade_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "bank",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "a trade to build your memory bank.\nInclude market_context and r"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:843ed46e771e118e719d147ea9bf7e40d145cdab28f54add26ec982d78d9dc68"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "recall_similar_trades",
+      "description": "Find past trades with similar market context.\n\nUse this before making a trade to learn from past experience.\nReturns trades with their reflections and outcomes.\nUses OWM scoring when episodic memories exist, falls back to keyword matching.",
+      "param_names": [
+        "limit",
+        "market_context",
+        "strategy_name",
+        "symbol"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0f9c628131d8ccb458378ee22d4af2bbf8737a32ef284d08bf3079b428ff792c"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "get_strategy_performance",
+      "description": "Get aggregate performance stats per strategy.\n\nUse this to evaluate which strategies are working and which need adjustment.",
+      "param_names": [
+        "strategy_name",
+        "symbol"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "Get aggregate performance stats per strateg"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:8e02590672b7fcd1c16d52cba8d392ef79e92d1a9bb99fb4ff8a30535e2c2c31"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "get_trade_reflection",
+      "description": "Get the full context and reflection for a specific trade.\n\nUse this to deep-dive into a particular trade's reasoning and lessons.",
+      "param_names": [
+        "trade_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a4475548f41036657d9c4a5cbe3a670024fc322514bddbbbb6541eb3b4e3c1ab"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "remember_trade",
+      "description": "Store a trade into OWM multi-layer memory with automatic updates.\n\nWrites to episodic memory and automatically updates semantic (Bayesian),\nprocedural (running averages), and affective (EWMA confidence/streaks).\nAlso writes to trade_records for backward compatibility.",
+      "param_names": [
+        "confidence",
+        "context_atr_d1",
+        "context_regime",
+        "direction",
+        "entry_price",
+        "exit_price",
+        "market_context",
+        "max_adverse_excursion",
+        "pnl",
+        "pnl_r",
+        "reflection",
+        "strategy_name",
+        "symbol",
+        "timestamp",
+        "trade_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8da22e05f5f96787c6efb7fa30e733cf7e117b34742213629b736d2ad99d5127"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "recall_memories",
+      "description": "Recall memories using OWM outcome-weighted scoring.\n\nQueries episodic and semantic memories, scores them by outcome quality,\ncontext similarity, recency, confidence, and affective modulation.\nReturns ranked memories with score breakdown.",
+      "param_names": [
+        "context_atr_d1",
+        "context_regime",
+        "limit",
+        "market_context",
+        "memory_types",
+        "strategy_name",
+        "symbol"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:23fe751d0b959c5068a3768305b31bf36daa905d3b1bd4f8fefe0890724aed6c"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "get_behavioral_analysis",
+      "description": "Get behavioral analysis from procedural memory.\n\nReturns aggregate trading behavior stats: hold times, disposition ratio,\nlot sizing variance, and Kelly criterion comparison.",
+      "param_names": [
+        "strategy_name",
+        "symbol"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "m procedural memory.\n\nReturns aggregate trading behavior stats: hold"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:bd383da5c0075ff9dc5a7ac396709124349350bb546975c9e1b345cdc9f0fa0a"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "get_agent_state",
+      "description": "Get the current agent affective state (confidence, risk, drawdown).\n\nReturns confidence level, risk appetite, drawdown percentage,\nwin/loss streaks, equity tracking, and a recommended action\nbased on current drawdown severity.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:deb18d4cfb52d99e01d0c13f52891911f830427ed29a0a47191d54489d03d3d6"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "create_trading_plan",
+      "description": "Create a prospective trading plan that activates when conditions are met.\n\nStores a rule-based plan in prospective memory. The plan stays active\nuntil triggered, expired, or manually cancelled.",
+      "param_names": [
+        "expiry_days",
+        "planned_action",
+        "priority",
+        "reasoning",
+        "trigger_condition",
+        "trigger_type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c7c82ed589079326f594eb84f5c2f6238b12a4fd2057979512438d1a47f40d55"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "check_active_plans",
+      "description": "Check active trading plans against current market context.\n\nQueries all active prospective plans, expires any past their expiry date,\nand matches remaining plans against the provided context.",
+      "param_names": [
+        "context_atr_d1",
+        "context_regime"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:926ce1c6b2811c8c14ef857fbabbb51767c87fa41ece3fa4527994ce9a5c7b80"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "evolution_fetch_market_data",
+      "description": "Fetch OHLCV market data from Binance for evolution analysis.\n\nDownloads historical price bars for backtesting and pattern discovery.\nUse this before discover_patterns or run_backtest to get data.",
+      "param_names": [
+        "days",
+        "symbol",
+        "timeframe"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "n_fetch_market_data evolution fetch market data"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:6a674fdc9297a19370a146ca2a62b6af38b01e757561a32277ce878305fae85b"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "evolution_discover_patterns",
+      "description": "Discover trading patterns from market data using LLM analysis.\n\nUses Claude to analyze OHLCV data and generate candidate trading patterns\nwith entry/exit conditions. Each pattern can be backtested afterward.",
+      "param_names": [
+        "count",
+        "days",
+        "symbol",
+        "temperature",
+        "timeframe"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "symbol timeframe count temperature days"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:01f828f2c9143862ffdce465a5202515e3f5e0ff3d713145de7b8ef59717e396"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "evolution_run_backtest",
+      "description": "Backtest a candidate pattern against historical OHLCV data.\n\nTakes a pattern dict (from discover_patterns) and runs a vectorized\nbacktest. Returns fitness metrics: Sharpe ratio, win rate, trade count,\nmax drawdown, total PnL.",
+      "param_names": [
+        "days",
+        "pattern_dict",
+        "symbol",
+        "timeframe"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "Sharpe ratio, win rate, trade count,\nmax drawdown, total PnL. Can"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:94a857f91b6e1dfefd2ed3a6bb6c4316c5647e4eb5311f8778bba064f5057657"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "evolution_evolve_strategy",
+      "description": "Run full evolution loop \u2014 generate, backtest, select, eliminate.\n\nMulti-generation strategy evolution: generates candidate patterns via LLM,\nbacktests on in-sample data, validates survivors on out-of-sample data,\neliminates weak hypotheses. Returns graduated strategies and graveyard.",
+      "param_names": [
+        "days",
+        "generations",
+        "population_size",
+        "symbol",
+        "timeframe"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a5ba4f29ffb99b2a7247cab4a1fe7fd76daeb45229646f8031d18714111456bd"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "evolution_get_log",
+      "description": "Get the log of past evolution runs from this session.\n\nReturns a list of all evolution runs with their results, including\ngraduated strategies, graveyard, token usage, and backtest counts.\nData is in-memory (resets on server restart).",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "duated strategies, graveyard, token usage, and backtest counts.\nD"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Token usage' in context refers to LLM API token consumption metrics, not credential or secrets access."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:5ed6bf6e4b2fcd22c02a171a4db245122931af9f47d48256efd0f027f284cefd"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "export_audit_trail",
+      "description": "Export Trading Decision Records for audit and compliance review.\n\nProvides a complete, tamper-evident record of trading decisions including\nthe memory context (similar trades, beliefs) that informed each decision.",
+      "param_names": [
+        "end",
+        "limit",
+        "start",
+        "strategy",
+        "trade_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:96ca16a472b05395e4227039b7b5f5971d0a1d48d1b148791b71faa255708d32"
+    },
+    {
+      "server": "tradememory-protocol",
+      "name": "verify_audit_hash",
+      "description": "Verify the integrity of a Trading Decision Record.\n\nRecomputes the SHA256 data_hash from stored inputs and compares with\nthe hash computed at decision time. A mismatch indicates tampering.",
+      "param_names": [
+        "trade_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a235cd14c8a58dcc47bea907aa2896b367f1cc6938b58275820f18baf6125ed3"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "low"
+    ],
+    "categories": {
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 4,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "financial"
+    ],
+    "note": "Rating reflects high-confidence matches; financial matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "Exfil risk requires both secrets_access and network_egress; secrets_access claim is false positive, eliminating the attack path."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 17,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "financial",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 4,
+      "false_positive": 2,
+      "needs_source": 2,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::evolution_get_log::secrets_access",
+        "reason": "'Token usage' in context refers to LLM API token consumption metrics, not credential or secrets access."
+      },
+      {
+        "id": "combo::exfil_chain",
+        "reason": "Exfil risk requires both secrets_access and network_egress; secrets_access claim is false positive, eliminating the attack path."
+      }
+    ]
+  }
+}

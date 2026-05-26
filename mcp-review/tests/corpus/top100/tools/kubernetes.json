@@ -1,0 +1,5 @@
+{
+  "server": "kubernetes",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

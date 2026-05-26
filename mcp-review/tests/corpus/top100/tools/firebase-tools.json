@@ -1,0 +1,5 @@
+{
+  "server": "firebase-tools",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

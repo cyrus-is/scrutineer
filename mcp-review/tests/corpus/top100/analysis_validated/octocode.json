@@ -1,0 +1,1292 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "octocode",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "octocode-mcp"
+      ],
+      "env_keys": [
+        "GITHUB_TOKEN"
+      ],
+      "sensitive_env_keys": [
+        "GITHUB_TOKEN"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "octocode-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:e4350a8c1a77f67533a9b81319f40fbe23db96be00986454d80557c73725e10a",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'octocode' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: octocode-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "octocode-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'octocode' package spec 'octocode-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "octocode-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'octocode' requires credential-like env keys: GITHUB_TOKEN.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "GITHUB_TOKEN"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "octocode",
+      "name": "githubSearchCode",
+      "description": "## Search GitHub code [EXTERNAL: GitHub API]\n  <when>\n  - Find code patterns | Locate files by path\n  - match=\"file\" -> content | match=\"path\" -> file names\n  - External research | Cross-repo patterns\n  </when>\n  <fromTool>\n  - githubSearchRepositories: After finding repo\n  - githubViewRepoStructure: After understanding layout\n  - packageSearch: After finding package\n  - self: Refine query | Switch match=file<->path\n  </fromTool>\n  <toTool>\n  - githubGetFileContent: Read matched files (text_matches for matchString)\n  - githubViewRepoStructure: Explore around matches\n  - githubSearchPullRequests: Find history\n  </toTool>\n  <gotchas>\n  - 1-2 filters safe. NEVER combine extension+filename+path\n  - path is strict prefix: \"pkg\" finds pkg/file, NOT parent/pkg/file\n  - Start lean: single filter -> verify -> add filters\n  - Prefer owner+repo for precision\n  - For packages: packageSearch first\n  </gotchas>\n  <examples>\n  - owner=\"facebook\", repo=\"react\", match=\"path\", keywordsToSearch=[\"utils\"]\n  - keywordsToSearch=[\"useState\"], match=\"file\"\n  - path=\"src/api\", extension=\"ts\", keywordsToSearch=[\"export\"]\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read matched files",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "ol>\n  - githubGetFileContent: Read matched files (text_matches for matchString"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "soning keywordsToSearch owner repo extension filename path match"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "me pattern (case-insensitive) Directory path (strict prefix match) \"f"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' refers to filesystem directory path for matching, not a contacts/address-book directory."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:e0c313f95739c2dde7c7d3d39e8afe66382310700cd2a6ef6cecf91a6f8660e1"
+    },
+    {
+      "server": "octocode",
+      "name": "githubGetFileContent",
+      "description": "## Read GitHub file or download directory [EXTERNAL: GitHub API]\n  <when>\n  - Read file from known path (after discovery/search)\n  - External library implementation research\n  - Read configs, docs, or source from GitHub repos\n  - Download entire directory for local analysis (type=\"directory\")\n  </when>\n  <fromTool>\n  - githubSearchCode: Read from results (use text_matches for matchString)\n  - githubViewRepoStructure: Read discovered paths\n  - packageSearch: Read package source\n  - self: Expand context\n  </fromTool>\n  <toTool>\n  - githubSearchCode: Search imports/patterns\n  - githubSearchPullRequests: Find file history\n  - packageSearch: Look up imports\n  - localSearchCode/localViewStructure: After type=\"directory\" download\n  </toTool>\n  <modes>\n  - type=\"file\" (default): Returns content inline. Use matchString/startLine/fullContent\n  - type=\"directory\": Downloads all files to disk, returns localPath for local tools\n  </modes>\n  <gotchas>\n  - Choose ONE: matchString OR startLine+endLine OR fullContent (file mode only)\n  - Large files: Use matchString for token efficiency\n  - 300KB max (FILE_TOO_LARGE error)\n  - Branch: Use NAME (e.g., \"main\"), not SHA\n  - type=\"directory\" ignores content params (startLine, matchString, etc.)\n  </gotchas>\n  <examples>\n  - matchString=\"export function\", matchStringContextLines=20\n  - startLine=1, endLine=50\n  - fullContent=true (small configs only)\n  - type=\"directory\", path=\"src/utils\" (downloads dir for local analysis)\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read file",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "NAL: GitHub API]\n  <when>\n  - Read file from known path (after discov"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "download",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "## Read GitHub file or download directory [EXTERNAL: GitHub A"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ge files: Use matchString for token efficiency\n  - 300KB max (FIL"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Token' appears in 'token efficiency' context referring to API quota costs, not credential access in files."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "researchGoal reasoning owner repo path branch type fullContent"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "download",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "## Read GitHub file or download directory [EXTERNAL: GitHub A"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Read GitHub file or download directory [EXTERNAL: GitHub API]\n  <whe"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' refers to filesystem directory type parameter, not contacts directory."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:ff13a8d71c0371159a0c97443a4f5e78732759ac7d0800979ed45038b6ea7eb5"
+    },
+    {
+      "server": "octocode",
+      "name": "githubViewRepoStructure",
+      "description": "## Display GitHub repo structure [EXTERNAL: GitHub API]\n  <when>\n  - Understand layout | Discover paths | Entry point\n  - Workflow: Root (depth=1) -> Drill (path+depth=2) -> Search/Read\n  </when>\n  <fromTool>\n  - githubSearchRepositories: After finding repo\n  - packageSearch: After finding package\n  - self: Drill into subdirectory\n  </fromTool>\n  <toTool>\n  - githubSearchCode: Search in discovered dirs\n  - githubGetFileContent: Read discovered files\n  - githubSearchPullRequests: Find changes\n  </toTool>\n  <gotchas>\n  - Start at root (path=\"\", depth=1) first\n  - depth=2 slow on large dirs - use on subdirs\n  - Monorepos: Check packages/, apps/, libs/\n  - Auto-filters noisy dirs (.git, node_modules, dist)\n  - Max 200 items - check summary.truncated\n  </gotchas>\n  <examples>\n  - path=\"\", depth=1 (root)\n  - path=\"src\", depth=2 (drill into source)\n  - path=\"packages/core\", depth=1 (monorepo)\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read discovered files",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "irs\n  - githubGetFileContent: Read discovered files\n  - githubSearchPullRequests:"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "researchGoal reasoning owner repo branch path depth entriesPerP"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "from githubSearchRepositories Directory path (empty for root) 1 (curr"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' is the file path parameter for repo structure, not contacts data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:95e1c9045f5d83a9a9edc19d28b9fa6fd48c60a8f4e79979454b6fa49466df76"
+    },
+    {
+      "server": "octocode",
+      "name": "githubSearchRepositories",
+      "description": "## Search GitHub repositories [EXTERNAL: GitHub API]\n  <when>\n  - External research | Finding repos | Discovering projects\n  - Keywords for org repos, topics for open-source\n  - Known packages: use packageSearch first (faster)\n  </when>\n  <fromTool>\n  - packageSearch: After finding package, explore repo\n  - githubSearchCode: Found code? Find origin repo\n  - self: Refine query | Switch topics<->keywords\n  </fromTool>\n  <toTool>\n  - githubViewRepoStructure: Explore structure\n  - githubSearchCode: Search code\n  - githubGetFileContent: Read files\n  - githubSearchPullRequests: Find changes\n  </toTool>\n  <gotchas>\n  - Check pushedAt (code change) > updatedAt (meta change)\n  - stars >1000 filters noise (may hide new projects)\n  - Try synonyms: auth<->authentication, plugin<->extension\n  - Archived repos auto-excluded\n  </gotchas>\n  <examples>\n  - topicsToSearch=[\"typescript\", \"cli\"], stars=\">1000\"\n  - owner=\"bgauryy\", keywordsToSearch=[\"auth-service\"]\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read files",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "ode\n  - githubGetFileContent: Read files\n  - githubSearchPullRequests:"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Evidence shows 'Read files' but references githubGetFileContent as downstream tool; search tool itself returns repository metadata only."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "fter finding package, explore repo\n  - githubSearchCode: Found c"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:60ef89d63bcf9059d7979e239fc5bdd333f82cbd407c0168405580f30f06d049"
+    },
+    {
+      "server": "octocode",
+      "name": "githubSearchPullRequests",
+      "description": "## Search GitHub Pull Requests [EXTERNAL: GitHub API]\n  <when>\n  - Code archaeology: WHY was code written this way?\n  - Implementation history | Review changes | Find introducing PR\n  - Workflow: type=metadata first -> type=partialContent for files\n  </when>\n  <fromTool>\n  - githubSearchCode: Found code? Find PRs that changed it\n  - githubGetFileContent: Found file? Find change history\n  - self: Refine query | Widen date range\n  </fromTool>\n  <toTool>\n  - githubGetFileContent: Read current state\n  - githubSearchCode: Search patterns from patches\n  - self: Deep dive with prNumber + type=partialContent\n  </toTool>\n  <gotchas>\n  - prNumber ignores ALL other filters\n  - type=metadata first (fast), then partialContent\n  - Avoid fullContent on large PRs (token expensive)\n  - withComments=true for understanding WHY\n  </gotchas>\n  <examples>\n  - prNumber=123, type=\"metadata\"\n  - owner=\"org\", repo=\"repo\", state=\"closed\", merged=true\n  - prNumber=123, type=\"partialContent\", partialContentMetadata=[{\"file\": \"src/app.ts\"}]\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "le path within the PR diff to fetch partial content for Specific"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "oid fullContent on large PRs (token expensive)\n  - withComments=t"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Token' in 'token expensive' refers to API token cost accounting, not accessing secrets in PR content."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "rchGoal reasoning query owner repo prNumber state assignee autho"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "review-requested reviewed-by label no-label no-milestone no-proj"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "date: \">=YYYY-MM-DD\" Comment count: \">5\", \"10..20\" Reaction coun"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:5744bb7abc5b32a22a1b313d9e0da13c7c9ea34e7dd6b78b60db146b6eb47c0b"
+    },
+    {
+      "server": "octocode",
+      "name": "localSearchCode",
+      "description": "## Search code patterns [LOCAL: ripgrep] - START HERE for code questions\n  <when>\n  - Code questions, symbol lookups, pattern finding\n  - Find functions, classes, variables, imports, constants\n  - Get lineHint for LSP tools (if available)\n  </when>\n  <fromTool>\n  - localViewStructure: After understanding layout\n  - localFindFiles: After narrowing by metadata\n  - self: Refine pattern | Try variants\n  </fromTool>\n  <toTool>\n  If LSP available:\n  1. This tool gives file + lineHint\n  2. lspGotoDefinition(lineHint) -> locate definition\n  3. lspFindReferences -> all usages\n  4. lspCallHierarchy -> trace call flow\n  5. localGetFileContent -> read impl (last)\n  \n  Without LSP:\n  - localGetFileContent(matchString) for context\n  </toTool>\n  <gotchas>\n  - lineHint is 1-indexed (first line = 1)\n  - filesOnly=true for fast discovery\n  - type filter (ts, js, py) faster than globs\n  </gotchas>\n  <examples>\n  - path=\"/workspace/src\", pattern=\"function handleAuth\", type=\"ts\"\n  - path=\"/workspace\", pattern=\"export.*UserService\", perlRegex=true\n  - path=\"/workspace\", pattern=\"TODO\", filesOnly=true\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQL",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "d code, JSON blobs, generated SQL). Total output size is still"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'SQL' appears in context of searching for generated SQL code patterns, not accessing databases."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Thread",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "Binary handling Search stats Thread count Memory mapping Disable"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "'Thread' refers to ripgrep thread-count performance parameter, not message threads or communications."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "gex to search (required) Root directory (required) discovery | pagina"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' is the root directory parameter for file search scope, not contacts data."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "chas>\n  <examples>\n  - path=\"/workspace/src\", pattern=\"function handl"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "'Workspace' in examples is a generic directory path name, not organizational structure metadata."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "s filesOnly filesWithoutMatch count countMatches contextLines bef"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:8a3a1dff2a88010b61e7e4e8eca1eba11ef2856c4b251dc03bc7f09968f2aafa"
+    },
+    {
+      "server": "octocode",
+      "name": "localViewStructure",
+      "description": "## View directory structure [LOCAL: filesystem]\n  <when>\n  - Understand layout | Discover paths | Entry point\n  - Unfamiliar codebase: Start depth=1\n  - Workflow: Root (depth=1) -> Drill (depth=2) -> Search\n  </when>\n  <fromTool>\n  - self: Drill into subdirs\n  - localFindFiles: Filter by metadata\n  - localSearchCode: Search content\n  </fromTool>\n  <toTool>\n  Source dirs found:\n  1. localSearchCode(pattern) -> lineHint\n  2. lspGotoDefinition (if LSP available)\n  3. lspCallHierarchy/lspFindReferences\n  4. localGetFileContent (last)\n  </toTool>\n  <gotchas>\n  - depth=2 slow on large dirs - use on subdirs\n  - Auto-excludes: node_modules, .git, dist\n  - Monorepos: Check packages/, apps/, libs/\n  </gotchas>\n  <examples>\n  - path=\"/workspace\", depth=1 (root)\n  - path=\"/workspace/src\", depth=2 (drill)\n  - pattern=\"*.ts\", filesOnly=true\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "| Entry point\n  - Unfamiliar codebase: Start depth=1\n  - Workflow:"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "## View directory structure [LOCAL: filesystem]"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' is filesystem directory structure display, not contacts/roster data."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "chas>\n  <examples>\n  - path=\"/workspace\", depth=1 (root)\n  - path=\"/w"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "'Workspace' in examples is a literal directory path, not organizational hierarchy."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "recursive"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:1913d0e999a3c4b1ddd9b0a7597211a5461435d5313d6ec14d0e7b64f2230067"
+    },
+    {
+      "server": "octocode",
+      "name": "localFindFiles",
+      "description": "## Find files by metadata [LOCAL: filesystem]\n  <when>\n  - Find by name, time, size, permissions\n  - Scope narrowing before content search\n  - Recent changes: modifiedWithin='7d'\n  - NOT for content - use localSearchCode\n  </when>\n  <fromTool>\n  - localViewStructure: After structure discovery\n  - localSearchCode: Next step for content\n  - self: Refine filters\n  </fromTool>\n  <toTool>\n  Source files found:\n  1. localSearchCode(pattern) -> lineHint\n  2. lspGotoDefinition (if LSP available)\n  3. lspCallHierarchy/lspFindReferences\n  4. localGetFileContent (last)\n  \n  Config/docs: localGetFileContent directly\n  </toTool>\n  <gotchas>\n  - Faster than content search (metadata indexing)\n  - excludeDir for noise (node_modules, dist, .git)\n  - Time: '7d', '2h', '30m'\n  </gotchas>\n  <examples>\n  - path=\"/workspace/src\", name=\"*.ts\", modifiedWithin=\"7d\"\n  - path=\"/workspace\", iname=\"readme\", type=\"f\"\n  - path=\"/workspace\", sizeGreater=\"10M\", excludeDir=[\"node_modules\"]\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "r noise (node_modules, dist, .git)\n  - Time: '7d', '2h', '30m'"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "needs_source": true
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "lps achieve the goal Starting directory (required) Max depth (1-10) M"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "'Directory' is the file search scope parameter, not contacts directory."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "chas>\n  <examples>\n  - path=\"/workspace/src\", name=\"*.ts\", modifiedWi"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "'Workspace' in example is a directory path name, not org structure metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:4530bee58c2ea602e1526fada2d07d4084a198279111f0569cf944d3c46e6587"
+    },
+    {
+      "server": "octocode",
+      "name": "localGetFileContent",
+      "description": "## Read file content [LOCAL: filesystem]\n  <when>\n  - Read implementation after locating with search/LSP\n  - Read config/docs/non-code files directly\n  - Get context around specific patterns with matchString\n  </when>\n  <fromTool>\n  - localSearchCode: Found file location\n  - lspGotoDefinition: Located definition (if LSP available)\n  - lspFindReferences/lspCallHierarchy: After analysis\n  - Direct read OK for: configs, docs, .json, .md, .yaml\n  </fromTool>\n  <flow_questions>\n  If LSP available, prefer LSP tools for:\n  - \"Who calls this?\" -> lspCallHierarchy(incoming)\n  - \"Where is X used?\" -> lspFindReferences\n  - \"Trace flow\" -> lspCallHierarchy chain\n  </flow_questions>\n  <gotchas>\n  - Source code: Use localSearchCode first, LSP if available\n  - Large files: Use matchString for token efficiency\n  - Known ranges: Use startLine/endLine\n  - Small configs: fullContent=true is OK\n  </gotchas>\n  <examples>\n  - path=\"/workspace/src/services/user.ts\", matchString=\"class UserService\", matchStringContextLines=10\n  - path=\"/workspace/src/utils.ts\", startLine=50, endLine=100 (known range)\n  - path=\"/workspace/config.json\", fullContent=true (small configs only)\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read file",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "## Read file content [LOCAL: filesystem]"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ge files: Use matchString for token efficiency\n  - Known ranges:"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Token' in 'token efficiency' refers to API quota optimization, not credential access capability."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Source code",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "ow_questions>\n  <gotchas>\n  - Source code: Use localSearchCode first, L"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read file",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "## Read file content [LOCAL: filesystem]"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "- localSearchCode: Found file location\n  - lspGotoDefinition: Locate"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "'Location' refers to source code location (file path/line number), not geographic or personal location data."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "chas>\n  <examples>\n  - path=\"/workspace/src/services/user.ts\", matchS"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "'Workspace' in example path is a directory name, not organizational structure data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:65c52629f46c131854c47d17853882fbf51dd03dfe3c0ab8356c1f8eef2c1f0e"
+    },
+    {
+      "server": "octocode",
+      "name": "lspGotoDefinition",
+      "description": "## Navigate to symbol definition [LOCAL: LSP]\n  REQUIRES lineHint - call localSearchCode FIRST to get line number\n  \n  <when>\n  - Find where function/class/variable/type is DEFINED\n  - Jump from usage to declaration | Trace import to source\n  - Flow: SEARCH -> LOCATE (this) -> ANALYZE -> READ\n  </when>\n  <prerequisite>\n  - Need lineHint from localSearchCode (1-indexed)\n  - symbolName must be EXACT (case-sensitive)\n  </prerequisite>\n  <fromTool>\n  - localSearchCode: Provides lineHint (required)\n  - self: Chain definitions (follow imports)\n  - lspFindReferences/lspCallHierarchy: Jump to locations\n  </fromTool>\n  <toTool>\n  - lspFindReferences: Find ALL usages\n  - lspCallHierarchy(incoming): Find callers\n  - lspCallHierarchy(outgoing): Find callees\n  - localGetFileContent: Read impl (last step)\n  </toTool>\n  <gotchas>\n  - lineHint required (1-indexed from localSearchCode)\n  - symbolName must be EXACT (no parentheses)\n  - Tool searches +/-2 lines if not exact match\n  - External package? packageSearch -> githubGetFileContent\n  </gotchas>\n  <examples>\n  - uri=\"src/services/auth.ts\", symbolName=\"handleLogin\", lineHint=42\n  - uri=\"src/utils/index.ts\", symbolName=\"formatDate\", lineHint=15\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "uri",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "ies id researchGoal reasoning uri symbolName lineHint orderHint"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Uri' parameter is a local file identifier (LSP), not network egress\u2014LSP operates locally."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "nt plus top path:line:column; location content is empty; use first f"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "'Location' in output refers to source code location (file:line:column), not geographic data."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "line hints. ultra: definition count plus top path:line:column; lo"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:d202ebb9902e0d5e8a2d0f17cb2b30964d5dc212d06a020a13086525876adbcb"
+    },
+    {
+      "server": "octocode",
+      "name": "lspFindReferences",
+      "description": "## Find all usages of a symbol [LOCAL: LSP]\n  REQUIRES lineHint - call localSearchCode FIRST to get line number\n  \n  <when>\n  - \"Where is X used?\" - ALL usages of function/class/variable/type\n  - Impact analysis - what breaks if I change this?\n  - Semantic search (better than text matching)\n  </when>\n  <fromTool>\n  - localSearchCode: Get lineHint first (required)\n  - lspGotoDefinition: After locating, find usages\n  - self: Paginate (page=2,3...)\n  </fromTool>\n  <toTool>\n  - lspCallHierarchy: For call relationships (functions)\n  - lspGotoDefinition: Jump to reference location\n  - localGetFileContent: Read context (last step)\n  </toTool>\n  <vs_lspCallHierarchy>\n  - lspFindReferences: ALL usages (calls, assignments, type refs)\n  - lspCallHierarchy: CALL relationships only (functions)\n  </vs_lspCallHierarchy>\n  <gotchas>\n  - lineHint required (1-indexed from localSearchCode)\n  - symbolName must be EXACT (case-sensitive)\n  - includeDeclaration=false for usages only\n  - Finds dynamic usages text search misses\n  </gotchas>\n  <examples>\n  - uri=\"src/types.ts\", symbolName=\"UserConfig\", lineHint=15\n  - uri=\"src/utils.ts\", symbolName=\"formatDate\", lineHint=42, includeDeclaration=false\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "uri",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "ies id researchGoal reasoning uri symbolName lineHint orderHint"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Uri' is local LSP file identifier parameter; no network access occurs."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "Definition: Jump to reference location\n  - localGetFileContent: Read"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "'Location' refers to source code location references, not geographic/personal location data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:2136224b168af04ba811895f8cc40631c224b0f1b43c79e63cc9a5a720e00c21"
+    },
+    {
+      "server": "octocode",
+      "name": "lspCallHierarchy",
+      "description": "## Trace function call relationships [LOCAL: LSP]\n  REQUIRES lineHint - call localSearchCode FIRST to get line number\n  \n  <when>\n  - \"Who calls this?\" -> direction=\"incoming\"\n  - \"What does this call?\" -> direction=\"outgoing\"\n  - Trace code/data flow | Impact analysis\n  </when>\n  <prerequisite>\n  - Need lineHint from localSearchCode (1-indexed)\n  - Symbol must be function/method (for types/variables use lspFindReferences)\n  </prerequisite>\n  <fromTool>\n  - localSearchCode: Provides lineHint (required)\n  - lspGotoDefinition: Locate definition first\n  - self: Chain to trace deeper\n  </fromTool>\n  <toTool>\n  - self: Chain on callers/callees for full flow\n  - lspGotoDefinition: Jump to call site\n  - localGetFileContent: Read impl (last step)\n  </toTool>\n  <flow_pattern>\n  Flow tracing: localSearchCode -> lspGotoDefinition -> lspCallHierarchy(outgoing) -> chain until target\n  INCOMING: A <- [callers] | OUTGOING: A -> [callees]\n  </flow_pattern>\n  <vs_lspFindReferences>\n  - lspCallHierarchy: CALL relationships (function calls)\n  - lspFindReferences: ALL usages (calls, assignments, type refs)\n  </vs_lspFindReferences>\n  <gotchas>\n  - lineHint required (1-indexed from localSearchCode)\n  - depth=1 recommended (chain manually for deeper)\n  - Works cross-file, traces imports automatically\n  - Semantic: actual calls, not string matches\n  </gotchas>\n  <examples>\n  - direction=\"incoming\", uri=\"src/api.ts\", symbolName=\"handleRequest\", lineHint=50\n  - direction=\"outgoing\", uri=\"src/service.ts\", symbolName=\"processData\", lineHint=25\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "uri",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "ies id researchGoal reasoning uri symbolName lineHint orderHint"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'Uri' parameter is local file identifier for LSP; tool operates entirely locally."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:c11bc06bbfa5d608ba2466d2dabff08994cef7f799474eb8ffc51b0c792a931a"
+    },
+    {
+      "server": "octocode",
+      "name": "packageSearch",
+      "description": "## Find NPM/Python packages [EXTERNAL: npm/PyPI]\n  <when>\n  - Look up package by name (prevents research loops)\n  - Get repository URL (owner/repo) for source exploration\n  - Compare alternatives | Check deprecation\n  </when>\n  <fromTool>\n  - localSearchCode: Found import? Look up package\n  - localGetFileContent: Found package.json? Look up dependencies\n  - self: Compare alternatives\n  </fromTool>\n  <toTool>\n  - githubViewRepoStructure: Explore package source\n  - githubSearchCode: Search implementation\n  - githubGetFileContent: Read source files\n  </toTool>\n  <vsGitHub>\n  - packageSearch: Fast lookup by name -> repo URL\n  - githubSearchRepositories: Broad discovery by keywords\n  Use packageSearch first for known package names\n  </vsGitHub>\n  <gotchas>\n  - searchLimit=1 for known name | 5 for alternatives\n  - Python: Always returns 1 result (PyPI limitation)\n  - NPM uses dashes, Python uses underscores\n  - Check DEPRECATED warnings first\n  </gotchas>\n  <examples>\n  - ecosystem=\"npm\", name=\"express\"\n  - ecosystem=\"python\", name=\"requests\"\n  - ecosystem=\"npm\", name=\"lodash\", searchLimit=5\n  </examples>",
+      "param_names": [
+        "queries",
+        "responseCharLength",
+        "responseCharOffset"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Read source files",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "ion\n  - githubGetFileContent: Read source files\n  </toTool>\n  <vsGitHub>\n  -"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Evidence 'Read source files' references githubGetFileContent as downstream tool; packageSearch returns package metadata only."
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "pagination. \"npm\" or \"python\" Fetch detailed NPM metadata (slower"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "vents research loops)\n  - Get repository URL (owner/repo) for source e"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:4b1ba7b13d46945f3aa9d604651ba003ab55228dcabb09d17dbcbafed19c2aea"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 9,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 6,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 13,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 16,
+    "toxic_combination_count": 2,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 4,
+      "MEDIUM": 16,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "contacts",
+      "files_documents",
+      "location",
+      "org_structure",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 21,
+      "false_positive": 23,
+      "needs_source": 3,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::githubSearchCode::contacts",
+        "reason": "'Directory' refers to filesystem directory path for matching, not a contacts/address-book directory."
+      },
+      {
+        "id": "cap::githubGetFileContent::secrets_access",
+        "reason": "'Token' appears in 'token efficiency' context referring to API quota costs, not credential access in files."
+      },
+      {
+        "id": "data::githubGetFileContent::contacts",
+        "reason": "'Directory' refers to filesystem directory type parameter, not contacts directory."
+      },
+      {
+        "id": "data::githubViewRepoStructure::contacts",
+        "reason": "'Directory' is the file path parameter for repo structure, not contacts data."
+      },
+      {
+        "id": "cap::githubSearchRepositories::file_read",
+        "reason": "Evidence shows 'Read files' but references githubGetFileContent as downstream tool; search tool itself returns repository metadata only."
+      },
+      {
+        "id": "cap::githubSearchPullRequests::secrets_access",
+        "reason": "'Token' in 'token expensive' refers to API token cost accounting, not accessing secrets in PR content."
+      },
+      {
+        "id": "cap::localSearchCode::database_access",
+        "reason": "'SQL' appears in context of searching for generated SQL code patterns, not accessing databases."
+      },
+      {
+        "id": "data::localSearchCode::communications_content",
+        "reason": "'Thread' refers to ripgrep thread-count performance parameter, not message threads or communications."
+      },
+      {
+        "id": "data::localSearchCode::contacts",
+        "reason": "'Directory' is the root directory parameter for file search scope, not contacts data."
+      },
+      {
+        "id": "data::localSearchCode::org_structure",
+        "reason": "'Workspace' in examples is a generic directory path name, not organizational structure metadata."
+      },
+      {
+        "id": "data::localViewStructure::contacts",
+        "reason": "'Directory' is filesystem directory structure display, not contacts/roster data."
+      },
+      {
+        "id": "data::localViewStructure::org_structure",
+        "reason": "'Workspace' in examples is a literal directory path, not organizational hierarchy."
+      },
+      {
+        "id": "data::localFindFiles::contacts",
+        "reason": "'Directory' is the file search scope parameter, not contacts directory."
+      },
+      {
+        "id": "data::localFindFiles::org_structure",
+        "reason": "'Workspace' in example is a directory path name, not org structure metadata."
+      },
+      {
+        "id": "cap::localGetFileContent::secrets_access",
+        "reason": "'Token' in 'token efficiency' refers to API quota optimization, not credential access capability."
+      },
+      {
+        "id": "data::localGetFileContent::location",
+        "reason": "'Location' refers to source code location (file path/line number), not geographic or personal location data."
+      },
+      {
+        "id": "data::localGetFileContent::org_structure",
+        "reason": "'Workspace' in example path is a directory name, not organizational structure data."
+      },
+      {
+        "id": "cap::lspGotoDefinition::network_egress",
+        "reason": "'Uri' parameter is a local file identifier (LSP), not network egress\u2014LSP operates locally."
+      },
+      {
+        "id": "data::lspGotoDefinition::location",
+        "reason": "'Location' in output refers to source code location (file:line:column), not geographic data."
+      },
+      {
+        "id": "cap::lspFindReferences::network_egress",
+        "reason": "'Uri' is local LSP file identifier parameter; no network access occurs."
+      },
+      {
+        "id": "data::lspFindReferences::location",
+        "reason": "'Location' refers to source code location references, not geographic/personal location data."
+      },
+      {
+        "id": "cap::lspCallHierarchy::network_egress",
+        "reason": "'Uri' parameter is local file identifier for LSP; tool operates entirely locally."
+      },
+      {
+        "id": "cap::packageSearch::file_read",
+        "reason": "Evidence 'Read source files' references githubGetFileContent as downstream tool; packageSearch returns package metadata only."
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "server": "xcodebuildmcp",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

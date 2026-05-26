@@ -1,0 +1,1174 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "chrome-devtools",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "chrome-devtools-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:98ed901ddeb15cc2b373399a43f7009787dee71461afff6a5ca0869ca27281f7",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'chrome-devtools' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: chrome-devtools-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "chrome-devtools-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'chrome-devtools' package spec 'chrome-devtools-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "chrome-devtools-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "chrome-devtools",
+      "name": "click",
+      "description": "Clicks on the provided element",
+      "param_names": [
+        "dblClick",
+        "includeSnapshot",
+        "uid"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4b14a576ed6af5f8c818b46271792b538b133c46360a2f6b5edebcfd67d901f3"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "close_page",
+      "description": "Closes the page by its index. The last open page cannot be closed.",
+      "param_names": [
+        "pageId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:57aa6d235ddb7d0f76dcaf9f7526792d854ddd85293671596f37076dc7b453ce"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "drag",
+      "description": "Drag an element onto another element",
+      "param_names": [
+        "from_uid",
+        "includeSnapshot",
+        "to_uid"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a99a62c39c00e6a87578a4c9ed2e4a90fe708248ad2fe45ccf60f327850329a0"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "emulate",
+      "description": "Emulates various features on the selected page.",
+      "param_names": [
+        "colorScheme",
+        "cpuThrottlingRate",
+        "extraHttpHeaders",
+        "geolocation",
+        "networkConditions",
+        "userAgent",
+        "viewport"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "HTTP request",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "aders are included into every HTTP request originating from the page and"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ue\", \"Authorization\": \"Bearer token\"}. Headers are included into"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Bearer token",
+            "pattern": "\\b(auth|access|bearer|refresh|api|session|oauth|jwt|csrf|sso|personal[\\s_-]?access)[\\s_-]?tokens?\\b",
+            "snippet": "\": \"value\", \"Authorization\": \"Bearer token\"}. Headers are included into"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "geolocation",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "kConditions cpuThrottlingRate geolocation userAgent colorScheme viewpor"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:efd3c4c2e6e94b9073aa182b3bb249edf8a165639ce790dae6a92813b920a5dc"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "evaluate_script",
+      "description": "Evaluate a JavaScript function inside the currently selected page. Returns the response as JSON,\nso returned values have to be JSON-serializable.",
+      "param_names": [
+        "args",
+        "dialogAction",
+        "filePath",
+        "function"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "`async () => {\n  return await fetch(\"example.com\")\n}`.\nExample wi"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "arguments: `() => {\n  return document.title\n}` or `async () => {"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "args"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:b8c44c71afcd75358234773ecce80dcbdba245ceb920ee3092e9d83b7e3c905a"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "fill",
+      "description": "Type text into an input, text area or select an option from a <select> element.",
+      "param_names": [
+        "includeSnapshot",
+        "uid",
+        "value"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "select an option from",
+            "pattern": "\\bselect\\b.{0,40}\\bfrom\\b",
+            "snippet": "t into an input, text area or select an option from a <select> element. The uid o"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:c67c5c7704e7ffde28f11bdc89c8fb7228c35c2bc4bbd69974bc1392259103b5"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "fill_form",
+      "description": "Fill out multiple form elements (inputs, selects, checkboxes, radios) at once. ALWAYS prefer this tool over multiple individual 'fill' or 'click' calls when interacting with forms. It is significantly faster, more reliable, and reduces turn count. Example: Fill username, password, and check \"Remember Me\" in one call.",
+      "param_names": [
+        "elements",
+        "includeSnapshot"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "password",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "ount. Example: Fill username, password, and check \"Remember Me\" in o"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "password",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "ount. Example: Fill username, password, and check \"Remember Me\" in o"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "re reliable, and reduces turn count. Example: Fill username, pass"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:3a5b9e7491c2425c769a096cd4d4762fddee83f9e2a2d470f9ffabac9ec74607"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "get_console_message",
+      "description": "Gets a console message by its ID. You can get all messages by calling list_console_messages.",
+      "param_names": [
+        "msgid"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "t_console_message get console message"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:2083939ec32ad0a994080012c4b1f79205516ba188c863fc731abc27dfa0ab2f"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "get_network_request",
+      "description": "Gets a network request by an optional reqid, if omitted returns the currently selected request in the DevTools Network panel.",
+      "param_names": [
+        "reqid",
+        "requestFilePath",
+        "responseFilePath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b8b0e0854a440d972a3cf0f2525410bf9b72584bf5790bcb5768db65b5332bc2"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "handle_dialog",
+      "description": "If a browser dialog was opened, use this command to handle it",
+      "param_names": [
+        "action",
+        "promptText"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1a14856dd97cc658a46d3e8b22c5a6ab5e61fd0a8f62974b2e38b92b970e7690"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "hover",
+      "description": "Hover over the provided element",
+      "param_names": [
+        "includeSnapshot",
+        "uid"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ce8a77480e399bdd8ceae15724eb66887d07dc747ab72bed46725bfaabff29bb"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "lighthouse_audit",
+      "description": "Get Lighthouse score and reports for accessibility, SEO, best practices, and agentic browsing. This excludes performance. For performance audits, run performance_start_trace",
+      "param_names": [
+        "device",
+        "mode",
+        "outputDirPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "ent state. Device to emulate. Directory for reports. If omitted, uses"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:22cfcc9b65a22449e87b1e874cc67551eb1334fb84e9d0858ca081301b10525d"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "list_console_messages",
+      "description": "List all console messages for the currently selected page since the last navigation.",
+      "param_names": [
+        "includePreservedMessages",
+        "pageIdx",
+        "pageSize",
+        "types"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e154d01a97f8a13658cf87bce483e0c62e66eaba9924bc8e17d8499da09146a0"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "list_network_requests",
+      "description": "List all requests for the currently selected page since the last navigation.",
+      "param_names": [
+        "includePreservedRequests",
+        "pageIdx",
+        "pageSize",
+        "resourceTypes"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f2af2c50af50c492e06143a711f3d7414c9e0bd39e076f9c359c2beebe7d61d4"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "list_pages",
+      "description": "Get a list of pages open in the browser.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1a4d618cf825bea9bd45fe8ccdbd06b9f44d358d4d8a4205e5f3421d8c7eeddb"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "navigate_page",
+      "description": "Go to a URL, or back, forward, or reload. Use project URL if not specified otherwise.",
+      "param_names": [
+        "handleBeforeUnload",
+        "ignoreCache",
+        "initScript",
+        "timeout",
+        "type",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "type url ignoreCache handleBeforeUnloa"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "pt to be executed on each new document before any other scripts for"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "back, forward, or reload. Use project URL if not specified otherwis"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:935b23a68f8cf7d0814e08fdf9d033bedb3f224732bdaff20efacef29c0bd32d"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "new_page",
+      "description": "Open a new tab and load a URL. Use project URL if not specified otherwise.",
+      "param_names": [
+        "background",
+        "isolatedContext",
+        "timeout",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url background isolatedContext ti"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "a new tab and load a URL. Use project URL if not specified otherwis"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:24a0480353c4e953c72db4be1c6596d2e603519ad6bf22ba51d74eab50241294"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "performance_analyze_insight",
+      "description": "Provides more detailed information on a specific Performance Insight of an insight set that was highlighted in the results of a trace recording.",
+      "param_names": [
+        "insightName",
+        "insightSetId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:fc534d69d2f1f5c129106a393639a2d7835874f8c23046a5470f9f4ac0bc2d5b"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "performance_start_trace",
+      "description": "Start a performance trace on the selected webpage. Use to find frontend performance issues, Core Web Vitals (LCP, INP, CLS), and improve page load speed.",
+      "param_names": [
+        "autoStop",
+        "filePath",
+        "reload"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "avigate the page to the right URL using the navigate_page tool"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "lative to the current working directory, to save the raw trace data."
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:9ab04064088c3335c311ffbdad0e9145f76c252251804b93e4e63b1981bca178"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "performance_stop_trace",
+      "description": "Stop the active performance trace recording on the selected webpage.",
+      "param_names": [
+        "filePath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "lative to the current working directory, to save the raw trace data."
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:3abd6d09ebdd941bf4a26b20d5c85d35fb529ee9a0c4ed93a207a2941e75868a"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "press_key",
+      "description": "Press a key or key combination. Use this when other input methods like fill() cannot be used (e.g., keyboard shortcuts, navigation keys, or special key combinations).",
+      "param_names": [
+        "includeSnapshot",
+        "key"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:644999210f111b05d9417e16daf8b9caf9f045f733df44aaf9e077f46e7a61ac"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "resize_page",
+      "description": "Resizes the selected page's window so that the page has specified dimension",
+      "param_names": [
+        "height",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8fe9a3cbda4ca7cfccfd6116d22864350cd0c86d24fb4b97fe00c23673aa85e1"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "select_page",
+      "description": "Select a page as a context for future tool calls.",
+      "param_names": [
+        "bringToFront",
+        "pageId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e2ce29013e72ad6d39bdb564656d4b08f453a6d89edc9fbed7cad83932eda50c"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "take_heapsnapshot",
+      "description": "Capture a heap snapshot of the currently selected page. Use to analyze the memory distribution of JavaScript objects and debug memory leaks.",
+      "param_names": [
+        "filePath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:89363347bccdb9b7c4ee2923258b1ee3afe7836aa4fbccabd543baf759411ca3"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "take_screenshot",
+      "description": "Take a screenshot of the page or element.",
+      "param_names": [
+        "filePath",
+        "format",
+        "fullPage",
+        "quality",
+        "uid"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "lative to the current working directory, to save the screenshot to in"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:f7eabff00ccf08fd85818321ce9b85c68a5abcad524d6bedead056cebbfb1e89"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "take_snapshot",
+      "description": "Take a text snapshot of the currently selected page based on the a11y tree. The snapshot lists page elements along with a unique\nidentifier (uid). Always use the latest snapshot. Prefer taking a snapshot over taking a screenshot. The snapshot indicates the element selected\nin the DevTools Elements panel (if any).",
+      "param_names": [
+        "filePath",
+        "verbose"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "lative to the current working directory, to save the snapshot to inst"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:f4301cd8f1dc1aa0187ab3ca783c7b7a99450cde074c6e12b8e2eba11c0be74a"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "type_text",
+      "description": "Type text using keyboard into a previously focused input",
+      "param_names": [
+        "submitKey",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:da88b0738afb17473de03219cefdf98530de83edab3be9b57c4cf7961c697964"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "upload_file",
+      "description": "Upload a file through a provided element.",
+      "param_names": [
+        "filePath",
+        "includeSnapshot",
+        "uid"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_write",
+          "title": "Filesystem write / modify",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "upload_file",
+            "pattern": "\\b(write|create|save|put|upload|append|modify|edit|patch)[\\s_-]?file\\b",
+            "snippet": "upload_file upload file"
+          },
+          "rationale": "Write access lets a server plant files, overwrite configs, or stage a later code-execution path.",
+          "suppressed": false
+        },
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "open file",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "ement or an element that will open file chooser on the page from the"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "upload",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "upload_file upload file"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:2306f0b52f957953c83b0e74bb96e4cb79be399f79eb176485bdd741943a5c01"
+    },
+    {
+      "server": "chrome-devtools",
+      "name": "wait_for",
+      "description": "Wait for the specified text to appear on the selected page.",
+      "param_names": [
+        "text",
+        "timeout"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": true
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b989b4be777068ef5822365a269fd14e299bf72495d5df3a0de20bd545094cfc"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 5,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "remote_controlled_fs_mutation",
+      "severity": "HIGH",
+      "title": "Filesystem mutation driven by network input",
+      "detail": "The server can write/delete files and make network calls \u2014 remote input can drive destructive or persistence-establishing writes.",
+      "contributing": [
+        "file_write/file_delete",
+        "network_egress"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "HIGH",
+      "title": "Arbitrary file read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. The read accepts an arbitrary path (or the server is scoped to a broad directory), so it can reach secrets/configs far beyond the task.",
+      "contributing": [
+        "file_read (arbitrary path)",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 29,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 11,
+    "toxic_combination_count": 3,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 5,
+      "MEDIUM": 11,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "contacts",
+      "credentials_secrets",
+      "files_documents",
+      "location",
+      "project_metadata",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

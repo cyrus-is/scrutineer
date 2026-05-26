@@ -1,0 +1,235 @@
+{
+  "server": "pg-aiguide",
+  "captured_at": "2026-05-26T22:24:44Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "pg-aiguide",
+    "version": "1.0.0"
+  },
+  "tools": [
+    {
+      "name": "search_docs",
+      "title": "Search Documentation",
+      "description": "Search documentation with hybrid semantic (vector) and keyword (BM25) search. Use semanticWeight to choose keyword-only (0), semantic-only (1), or a blend; mid values fuse rankings with RRF. Supports Tiger Cloud (TimescaleDB), PostgreSQL, and PostGIS.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "tiger",
+              "postgres_14",
+              "postgres_15",
+              "postgres_16",
+              "postgres_17",
+              "postgres_18",
+              "postgis_3.3",
+              "postgis_3.4",
+              "postgis_3.5",
+              "postgis_3.6"
+            ],
+            "description": "The documentation source to search. \"tiger\" for Tiger Cloud and TimescaleDB, \"postgres\" for PostgreSQL, \"postgis\" for PostGIS spatial extension. Specific versions provided with _X.X suffixes."
+          },
+          "query": {
+            "type": "string",
+            "description": "The search query. Used for BM25 when keyword or hybrid search applies, and for the embedding when semantic or hybrid search applies."
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The maximum number of matches to return. Defaults to 20."
+          },
+          "semanticWeight": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Controls the balance between semantic and keyword search. 0 = keyword only, 0.5 = equal mix, 1 = semantic only. Default is 0.7 (favor semantic search)."
+          }
+        },
+        "required": [
+          "source",
+          "query",
+          "limit",
+          "semanticWeight"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "title": "Search Documentation"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The unique identifier of the documentation entry."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "The content of the documentation entry."
+                    },
+                    "metadata": {
+                      "type": "string",
+                      "description": "Additional metadata about the documentation entry, as a JSON encoded string."
+                    },
+                    "distance": {
+                      "type": "number",
+                      "description": "The distance score indicating the relevance of the entry to the query. Lower values indicate higher relevance."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "content",
+                    "metadata",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The unique identifier of the documentation entry."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "The content of the documentation entry."
+                    },
+                    "metadata": {
+                      "type": "string",
+                      "description": "Additional metadata about the documentation entry, as a JSON encoded string."
+                    },
+                    "score": {
+                      "type": "number",
+                      "description": "The score indicating the relevance of the entry to the keywords. Higher values indicate higher relevance."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "content",
+                    "metadata",
+                    "score"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The unique identifier of the documentation entry."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "The content of the documentation entry."
+                    },
+                    "metadata": {
+                      "type": "string",
+                      "description": "Additional metadata about the documentation entry, as a JSON encoded string."
+                    },
+                    "rrf_score": {
+                      "type": "number",
+                      "description": "Hybrid search: fused RRF score from combining semantic and keyword result rankings."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "content",
+                    "metadata",
+                    "rrf_score"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "view_skill",
+      "title": "View Skill",
+      "description": "Retrieve detailed skills for TimescaleDB operations and best practices.\n\n## Available Skills\n\n<available_skills>\n[]\n</available_skills>",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "skill_name": {
+            "type": "string",
+            "description": "The name of the skill to browse, or `.` to list all available skills."
+          },
+          "path": {
+            "type": "string",
+            "description": "A relative path to a file or directory within the skill to view.\nIf empty, will view the `SKILL.md` file by default.\nUse `.` to list the root directory of the skill."
+          }
+        },
+        "required": [
+          "skill_name",
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "title": "View Skill"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The content of the file or directory listing."
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

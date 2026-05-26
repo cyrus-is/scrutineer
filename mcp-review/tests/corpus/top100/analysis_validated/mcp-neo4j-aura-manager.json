@@ -1,0 +1,939 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-neo4j-aura-manager",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-aura-manager"
+      ],
+      "env_keys": [
+        "NEO4J_AURA_CLIENT_ID",
+        "NEO4J_AURA_CLIENT_SECRET",
+        "NEO4J_NAMESPACE"
+      ],
+      "sensitive_env_keys": [
+        "NEO4J_AURA_CLIENT_SECRET"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "mcp-neo4j-aura-manager",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:4a5dcdf7e4f557589bbbef632f560e19e0127d3023020d917995fa0627ff8a80",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-neo4j-aura-manager' is fetched and executed at launch via 'uvx'; package spec: mcp-neo4j-aura-manager.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "mcp-neo4j-aura-manager",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-neo4j-aura-manager' package spec 'mcp-neo4j-aura-manager' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "mcp-neo4j-aura-manager",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'mcp-neo4j-aura-manager' requires credential-like env keys: NEO4J_AURA_CLIENT_SECRET.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "NEO4J_AURA_CLIENT_SECRET"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-list_instances",
+      "description": "List all Neo4j Aura database instances.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_instances placeholder no"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool name is explicitly prefixed 'placeholder-not-a-real-'; 'credential' is part of the placeholder, not evidence of actual secrets access functionality."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_instances placeholder no"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool name; description (listing instances) contains no credential exposure\u2014matched term is in name, not in actual tool behavior."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:38d68371de5ebf3377b3ceae9143593d38214f329ffad5268da83eb52b49fceb"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-get_instance_details",
+      "description": "Get details for one or more Neo4j Aura instances by ID.",
+      "param_names": [
+        "instance_ids"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_instance_details placehol"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; actual function retrieves database instance metadata, not credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_instance_details placehol"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; instance detail retrieval does not expose credentials/secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:aa2c5ffab22e9e9de045748ba5003d0e955253037ccc2489875148d06c914a66"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-get_instance_by_name",
+      "description": "Find a Neo4j Aura instance by name and returns the details including the id.",
+      "param_names": [
+        "name"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_instance_by_name placehol"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; lookup by name returns instance details, not credential material."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_instance_by_name placehol"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; name-based lookup is metadata retrieval, not secrets access."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:4a847888515e2c6adcc2e6bb4c71cbb5014b9bc1b2ae7aaea169a7b3ca4aa454"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-create_instance",
+      "description": "Create a new Neo4j Aura database instance.",
+      "param_names": [
+        "cloud_provider",
+        "graph_analytics_plugin",
+        "memory",
+        "name",
+        "region",
+        "source_instance_id",
+        "tenant_id",
+        "type",
+        "vector_optimized"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-create_instance placeholder n"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; creates database instances, does not manage or expose credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-create_instance placeholder n"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; instance creation parameters are configuration only, no credential generation/exposure."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "se instance. ID of the tenant/project where the instance will be cr"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match on 'project' in 'tenant/project' is terminology for organizational container, not project management data exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:d841c7ce675bae0d36d1fbf416abe04f17c9ee6c02ed4686f32bf9c015f7ea17"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-update_instance_name",
+      "description": "Update the name of a Neo4j Aura instance.",
+      "param_names": [
+        "instance_id",
+        "name"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_name placehol"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; renaming is metadata update, not secrets access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_name placehol"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; name update does not involve credentials."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:4fcc48cbc6c1d9c8241f30c448c411b0960a48f54970bbdbc5e0efab6e1cc6a3"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-update_instance_memory",
+      "description": "Update the memory allocation of a Neo4j Aura instance.",
+      "param_names": [
+        "instance_id",
+        "memory"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_memory placeh"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; memory allocation change is configuration, not credential-related."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_memory placeh"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; memory config adjustment has no credential exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:e6ad2ff38b4a1456dfa490402c6c786d2af8de217b598eeca4df327a239cdf7d"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-update_instance_vector_optimization",
+      "description": "Update the vector optimization setting of a Neo4j Aura instance.",
+      "param_names": [
+        "instance_id",
+        "vector_optimized"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_vector_optimi"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; feature flag toggle does not access secrets."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-update_instance_vector_optimi"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; optimization setting change is configuration-only."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:f088769b5d2e5f6caa2af7d2b2f5d05f108789f4fa311ff9936551b326243b1b"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-pause_instance",
+      "description": "Pause a Neo4j Aura database instance.",
+      "param_names": [
+        "instance_id"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-pause_instance placeholder no"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; pause is lifecycle control, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-pause_instance placeholder no"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; pause operation does not involve credentials."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:9f8662556d6a194ef1f2a3f62c0168f68156715200cdc77a097b997565a7e99c"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-resume_instance",
+      "description": "Resume a paused Neo4j Aura database instance.",
+      "param_names": [
+        "instance_id"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-resume_instance placeholder n"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; resume is lifecycle control, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-resume_instance placeholder n"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; resume operation does not expose credentials."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:f6dd11359279bed00db30d443f3fb1318bee3eb2f81d96670faa6f391a65a3e7"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-list_tenants",
+      "description": "List all Neo4j Aura tenants/projects.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_tenants placeholder not"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; listing organizational tenants is metadata enumeration, not secrets access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-list_tenants placeholder not"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; tenant list contains no credential material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:7e6b3ee6e7764a6a0ea197351c89cb4c38f8c67d5143a69d2fe1835ce74ba3c4"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-get_tenant_details",
+      "description": "Get details for a specific Neo4j Aura tenant/project.",
+      "param_names": [
+        "tenant_id"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_tenant_details placeholde"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; tenant metadata retrieval does not access credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-get_tenant_details placeholde"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; tenant detail lookup is metadata-only."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "a specific Neo4j Aura tenant/project."
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Match on 'project' is organizational terminology; tenant/project container does not expose sensitive project management data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:b8bd7879cd2d855b22c9f022284da1f38ea6f66c4976b1236bffb2628d9f7747"
+    },
+    {
+      "server": "mcp-neo4j-aura-manager",
+      "name": "placeholder-not-a-real-credential-delete_instance",
+      "description": "Delete a Neo4j Aura database instance.",
+      "param_names": [
+        "instance_id"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "placeholder-not-a-real-credential-delete_instance placeholder n"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; deletion is lifecycle management, not credential access."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "credential",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "placeholder-not-a-real-credential-delete_instance placeholder n"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Placeholder tool; instance deletion does not involve credential exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:1b5c1c3d0390ed91b1916a71a0e70137d2f78bf1e043c7be2e063bffecd15e6b"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "medium"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 12,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 12,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 12,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 13,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "credentials_secrets",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 0,
+      "false_positive": 26,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::placeholder-not-a-real-credential-list_instances::secrets_access",
+        "reason": "Tool name is explicitly prefixed 'placeholder-not-a-real-'; 'credential' is part of the placeholder, not evidence of actual secrets access functionality."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-list_instances::credentials_secrets",
+        "reason": "Placeholder tool name; description (listing instances) contains no credential exposure\u2014matched term is in name, not in actual tool behavior."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_instance_details::secrets_access",
+        "reason": "Placeholder tool; actual function retrieves database instance metadata, not credentials."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_instance_details::credentials_secrets",
+        "reason": "Placeholder tool; instance detail retrieval does not expose credentials/secrets."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_instance_by_name::secrets_access",
+        "reason": "Placeholder tool; lookup by name returns instance details, not credential material."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_instance_by_name::credentials_secrets",
+        "reason": "Placeholder tool; name-based lookup is metadata retrieval, not secrets access."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-create_instance::secrets_access",
+        "reason": "Placeholder tool; creates database instances, does not manage or expose credentials."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-create_instance::credentials_secrets",
+        "reason": "Placeholder tool; instance creation parameters are configuration only, no credential generation/exposure."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-create_instance::project_metadata",
+        "reason": "Match on 'project' in 'tenant/project' is terminology for organizational container, not project management data exposure."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-update_instance_name::secrets_access",
+        "reason": "Placeholder tool; renaming is metadata update, not secrets access."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-update_instance_name::credentials_secrets",
+        "reason": "Placeholder tool; name update does not involve credentials."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-update_instance_memory::secrets_access",
+        "reason": "Placeholder tool; memory allocation change is configuration, not credential-related."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-update_instance_memory::credentials_secrets",
+        "reason": "Placeholder tool; memory config adjustment has no credential exposure."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-update_instance_vector_optimization::secrets_access",
+        "reason": "Placeholder tool; feature flag toggle does not access secrets."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-update_instance_vector_optimization::credentials_secrets",
+        "reason": "Placeholder tool; optimization setting change is configuration-only."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-pause_instance::secrets_access",
+        "reason": "Placeholder tool; pause is lifecycle control, not credential access."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-pause_instance::credentials_secrets",
+        "reason": "Placeholder tool; pause operation does not involve credentials."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-resume_instance::secrets_access",
+        "reason": "Placeholder tool; resume is lifecycle control, not credential access."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-resume_instance::credentials_secrets",
+        "reason": "Placeholder tool; resume operation does not expose credentials."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-list_tenants::secrets_access",
+        "reason": "Placeholder tool; listing organizational tenants is metadata enumeration, not secrets access."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-list_tenants::credentials_secrets",
+        "reason": "Placeholder tool; tenant list contains no credential material."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-get_tenant_details::secrets_access",
+        "reason": "Placeholder tool; tenant metadata retrieval does not access credentials."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_tenant_details::credentials_secrets",
+        "reason": "Placeholder tool; tenant detail lookup is metadata-only."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_tenant_details::project_metadata",
+        "reason": "Match on 'project' is organizational terminology; tenant/project container does not expose sensitive project management data."
+      },
+      {
+        "id": "cap::placeholder-not-a-real-credential-delete_instance::secrets_access",
+        "reason": "Placeholder tool; deletion is lifecycle management, not credential access."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-delete_instance::credentials_secrets",
+        "reason": "Placeholder tool; instance deletion does not involve credential exposure."
+      }
+    ]
+  }
+}

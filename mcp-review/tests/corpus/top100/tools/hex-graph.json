@@ -1,0 +1,1029 @@
+{
+  "server": "hex-graph",
+  "captured_at": "2026-05-26T22:24:24Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "hex-graph-mcp",
+    "version": "0.20.1"
+  },
+  "tools": [
+    {
+      "name": "index_project",
+      "title": "Index Project",
+      "description": "Scan and index a project into the graph kernel, honoring Git excludes by default and including precise/framework overlays when available.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "languages": {
+            "description": "Filter indexed languages",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "install_graph_providers",
+      "title": "Install Graph Providers",
+      "description": "Detect graph-specific providers and optional SCIP exporters for the current project, then return exact remediation steps or install them on demand. This never installs runtimes or project dependencies.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Project root used for language detection and provider planning"
+          },
+          "mode": {
+            "default": "check",
+            "description": "`check` reports the plan and remediation steps only. `install` runs the provider install commands when they are available for the current platform.",
+            "type": "string",
+            "enum": [
+              "check",
+              "install"
+            ]
+          },
+          "include_optional_scip": {
+            "default": true,
+            "description": "Include optional SCIP exporter checks alongside precise providers.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "export_scip",
+      "title": "Export SCIP",
+      "description": "Export indexed symbol facts to a binary SCIP artifact. TypeScript/JavaScript uses the native compiler lane; Python, PHP, and C# use their upstream SCIP indexers.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "output_path": {
+            "type": "string",
+            "description": "Destination `.scip` path. Relative paths resolve from the project root."
+          },
+          "language": {
+            "default": "typescript",
+            "description": "SCIP export backend. `typescript` uses the native compiler lane; `python`, `php`, and `csharp` orchestrate official SCIP indexers.",
+            "type": "string",
+            "enum": [
+              "typescript",
+              "python",
+              "php",
+              "csharp"
+            ]
+          },
+          "include_external_symbols": {
+            "default": true,
+            "description": "Include lightweight metadata for declaration-file symbols when available.",
+            "type": "boolean"
+          },
+          "project_name": {
+            "description": "Python only: explicit SCIP project name. Defaults to pyproject/setup metadata or the project folder name.",
+            "type": "string"
+          },
+          "project_namespace": {
+            "description": "Python only: optional namespace prefix for generated symbols.",
+            "type": "string"
+          },
+          "target_only": {
+            "description": "Python only: optional subdirectory to index instead of the full project.",
+            "type": "string"
+          },
+          "environment_path": {
+            "description": "Python only: optional path to a scip-python environment JSON file.",
+            "type": "string"
+          },
+          "working_directory": {
+            "description": "C# only: optional working directory passed through to scip-dotnet.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "output_path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "import_scip_overlay",
+      "title": "Import SCIP Overlay",
+      "description": "Import a binary SCIP artifact into provenance-tagged overlay facts without replacing the native graph. The import lane is derived from the artifact documents.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "artifact_path": {
+            "type": "string",
+            "description": "Path to a `.scip` artifact. Relative paths resolve from the project root."
+          },
+          "replace_existing": {
+            "default": true,
+            "description": "Clear prior `scip_import` overlay edges before importing this artifact.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "artifact_path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "find_symbols",
+      "title": "Find Symbols",
+      "description": "Find candidate symbols by name or partial name before selecting a canonical identity for deeper graph analysis.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Symbol name or partial name"
+          },
+          "kind": {
+            "description": "Optional kind filter",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Max detailed candidate symbols to return (default: 8)",
+            "type": "number"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "query",
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "inspect_symbol",
+      "title": "Inspect Symbol",
+      "description": "Return a symbol-centric briefing: canonical resolution, local context, incoming and outgoing relations, reference summary, and implementation summary.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Canonical symbol id",
+            "type": "number"
+          },
+          "workspace_qualified_name": {
+            "description": "Canonical workspace-qualified symbol name",
+            "type": "string"
+          },
+          "qualified_name": {
+            "description": "Canonical qualified symbol name",
+            "type": "string"
+          },
+          "name": {
+            "description": "Symbol name (must be paired with file)",
+            "type": "string"
+          },
+          "file": {
+            "description": "File path used with name to disambiguate symbol",
+            "type": "string"
+          },
+          "min_confidence": {
+            "description": "Filter out facts below this confidence tier",
+            "type": "string",
+            "enum": [
+              "low",
+              "inferred",
+              "exact",
+              "precise"
+            ]
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "expand": {
+            "description": "Optional bounded expansion sections to materialize. Heavy tools return counts/previews by default and expand only the requested sections.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expand_limit": {
+            "description": "Max rows to materialize for expanded sections (default: 10, capped at 25)",
+            "type": "number"
+          },
+          "include_evidence": {
+            "description": "Include supporting evidence in expanded rows. Defaults to false to keep payloads compact.",
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "trace_paths",
+      "title": "Trace Paths",
+      "description": "Trace graph paths from a canonical symbol through calls, references, imports, type, flow, or mixed edges. Mixed traces can include framework overlay hops.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Canonical symbol id",
+            "type": "number"
+          },
+          "workspace_qualified_name": {
+            "description": "Canonical workspace-qualified symbol name",
+            "type": "string"
+          },
+          "qualified_name": {
+            "description": "Canonical qualified symbol name",
+            "type": "string"
+          },
+          "name": {
+            "description": "Symbol name (must be paired with file)",
+            "type": "string"
+          },
+          "file": {
+            "description": "File path used with name to disambiguate symbol",
+            "type": "string"
+          },
+          "to_symbol_id": {
+            "description": "Optional target symbol id",
+            "type": "number"
+          },
+          "to_workspace_qualified_name": {
+            "description": "Optional target workspace-qualified symbol name",
+            "type": "string"
+          },
+          "to_qualified_name": {
+            "description": "Optional target qualified symbol name",
+            "type": "string"
+          },
+          "to_name": {
+            "description": "Optional target symbol name (must be paired with to_file)",
+            "type": "string"
+          },
+          "to_file": {
+            "description": "Optional target file used with to_name",
+            "type": "string"
+          },
+          "path_kind": {
+            "default": "calls",
+            "description": "Traversal edge set. `mixed` includes framework overlay hops when present.",
+            "type": "string",
+            "enum": [
+              "calls",
+              "references",
+              "imports",
+              "type",
+              "flow",
+              "mixed"
+            ]
+          },
+          "direction": {
+            "default": "reverse",
+            "type": "string",
+            "enum": [
+              "forward",
+              "reverse",
+              "both"
+            ]
+          },
+          "depth": {
+            "description": "Max traversal depth (default: 3)",
+            "type": "number"
+          },
+          "limit": {
+            "description": "Max paths (default: 10)",
+            "type": "number"
+          },
+          "min_confidence": {
+            "description": "Filter out facts below this confidence tier",
+            "type": "string",
+            "enum": [
+              "low",
+              "inferred",
+              "exact",
+              "precise"
+            ]
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "expand": {
+            "description": "Optional bounded expansion sections to materialize. Heavy tools return counts/previews by default and expand only the requested sections.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expand_limit": {
+            "description": "Max rows to materialize for expanded sections (default: 10, capped at 25)",
+            "type": "number"
+          },
+          "include_evidence": {
+            "description": "Include supporting evidence in expanded rows. Defaults to false to keep payloads compact.",
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "find_references",
+      "title": "Find References",
+      "description": "Find semantic usages of a canonical symbol identity, including framework overlay wiring when present.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Canonical symbol id",
+            "type": "number"
+          },
+          "workspace_qualified_name": {
+            "description": "Canonical workspace-qualified symbol name",
+            "type": "string"
+          },
+          "qualified_name": {
+            "description": "Canonical qualified symbol name",
+            "type": "string"
+          },
+          "name": {
+            "description": "Symbol name (must be paired with file)",
+            "type": "string"
+          },
+          "file": {
+            "description": "File path used with name to disambiguate symbol",
+            "type": "string"
+          },
+          "kind": {
+            "default": "all",
+            "description": "Optional edge-kind filter. Includes semantic and framework kinds such as `route_to_handler`, `injects`, `registers`, `renders`, and `middleware_for`.",
+            "type": "string",
+            "enum": [
+              "ref_read",
+              "ref_type",
+              "calls",
+              "reexports",
+              "imports",
+              "route_to_handler",
+              "injects",
+              "registers",
+              "renders",
+              "middleware_for",
+              "all"
+            ]
+          },
+          "limit": {
+            "description": "Max references (default: 10)",
+            "type": "number"
+          },
+          "min_confidence": {
+            "description": "Filter out facts below this confidence tier",
+            "type": "string",
+            "enum": [
+              "low",
+              "inferred",
+              "exact",
+              "precise"
+            ]
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "expand": {
+            "description": "Optional bounded expansion sections to materialize. Heavy tools return counts/previews by default and expand only the requested sections.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expand_limit": {
+            "description": "Max rows to materialize for expanded sections (default: 10, capped at 25)",
+            "type": "number"
+          },
+          "include_evidence": {
+            "description": "Include supporting evidence in expanded rows. Defaults to false to keep payloads compact.",
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "find_implementations",
+      "title": "Find Implementations",
+      "description": "Find implementations and overrides for a canonical symbol identity.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Canonical symbol id",
+            "type": "number"
+          },
+          "workspace_qualified_name": {
+            "description": "Canonical workspace-qualified symbol name",
+            "type": "string"
+          },
+          "qualified_name": {
+            "description": "Canonical qualified symbol name",
+            "type": "string"
+          },
+          "name": {
+            "description": "Symbol name (must be paired with file)",
+            "type": "string"
+          },
+          "file": {
+            "description": "File path used with name to disambiguate symbol",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Max implementation rows to return (default: 10)",
+            "type": "number"
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "expand": {
+            "description": "Optional bounded expansion sections to materialize. Heavy tools return counts/previews by default and expand only the requested sections.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expand_limit": {
+            "description": "Max rows to materialize for expanded sections (default: 10, capped at 25)",
+            "type": "number"
+          },
+          "include_evidence": {
+            "description": "Include supporting evidence in expanded rows. Defaults to false to keep payloads compact.",
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "trace_dataflow",
+      "title": "Trace Dataflow",
+      "description": "Find deterministic source-to-sink dataflow paths between anchored flow points.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "object",
+                "properties": {
+                  "symbol_id": {
+                    "description": "Canonical symbol id",
+                    "type": "number"
+                  },
+                  "workspace_qualified_name": {
+                    "description": "Canonical workspace-qualified symbol name",
+                    "type": "string"
+                  },
+                  "qualified_name": {
+                    "description": "Canonical qualified symbol name",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Symbol name (must be paired with file)",
+                    "type": "string"
+                  },
+                  "file": {
+                    "description": "File path used with name to disambiguate symbol",
+                    "type": "string"
+                  }
+                },
+                "description": "Canonical selector for the symbol that owns this flow point"
+              },
+              "anchor": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "param",
+                      "local",
+                      "return",
+                      "property"
+                    ]
+                  },
+                  "name": {
+                    "description": "Anchor name for param/local/property",
+                    "type": "string"
+                  },
+                  "access_path": {
+                    "description": "Bounded property path segments for property anchors",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "description": "Anchor within the selected symbol"
+              }
+            },
+            "required": [
+              "symbol",
+              "anchor"
+            ]
+          },
+          "sink": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "object",
+                "properties": {
+                  "symbol_id": {
+                    "description": "Canonical symbol id",
+                    "type": "number"
+                  },
+                  "workspace_qualified_name": {
+                    "description": "Canonical workspace-qualified symbol name",
+                    "type": "string"
+                  },
+                  "qualified_name": {
+                    "description": "Canonical qualified symbol name",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Symbol name (must be paired with file)",
+                    "type": "string"
+                  },
+                  "file": {
+                    "description": "File path used with name to disambiguate symbol",
+                    "type": "string"
+                  }
+                },
+                "description": "Canonical selector for the symbol that owns this flow point"
+              },
+              "anchor": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "param",
+                      "local",
+                      "return",
+                      "property"
+                    ]
+                  },
+                  "name": {
+                    "description": "Anchor name for param/local/property",
+                    "type": "string"
+                  },
+                  "access_path": {
+                    "description": "Bounded property path segments for property anchors",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "description": "Anchor within the selected symbol"
+              }
+            },
+            "required": [
+              "symbol",
+              "anchor"
+            ]
+          },
+          "flow_kind": {
+            "default": "value",
+            "type": "string",
+            "enum": [
+              "value",
+              "taint"
+            ]
+          },
+          "max_hops": {
+            "description": "Max flow propagation hops (default: 4)",
+            "type": "number"
+          },
+          "limit": {
+            "description": "Max flow paths (default: 10)",
+            "type": "number"
+          },
+          "min_confidence": {
+            "description": "Filter out facts below this confidence tier",
+            "type": "string",
+            "enum": [
+              "low",
+              "inferred",
+              "exact",
+              "precise"
+            ]
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "expand": {
+            "description": "Optional bounded expansion sections to materialize. Heavy tools return counts/previews by default and expand only the requested sections.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expand_limit": {
+            "description": "Max rows to materialize for expanded sections (default: 10, capped at 25)",
+            "type": "number"
+          },
+          "include_evidence": {
+            "description": "Include supporting evidence in expanded rows. Defaults to false to keep payloads compact.",
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Indexed project root or a file/directory inside the indexed project"
+          }
+        },
+        "required": [
+          "source",
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "analyze_changes",
+      "title": "Analyze Changes",
+      "description": "Review a git diff, commit range, or worktree change set and return a compact semantic risk snapshot with changed symbols, deleted API warnings, and optional supporting paths.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "base_ref": {
+            "type": "string",
+            "description": "Git baseline ref used to compute the changed-symbol set"
+          },
+          "head_ref": {
+            "description": "Optional git head ref. If omitted, the current checkout/worktree is compared to `base_ref`.",
+            "type": "string"
+          },
+          "include_paths": {
+            "default": false,
+            "description": "Include reverse mixed graph paths for the returned symbols. Default is false to keep the snapshot compact.",
+            "type": "boolean"
+          },
+          "max_symbols": {
+            "description": "Maximum changed symbols to return after risk ranking (default: 10)",
+            "type": "number"
+          },
+          "max_paths": {
+            "description": "Maximum supporting paths per symbol when `include_paths` is true (default: 3)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "path",
+          "base_ref"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "analyze_edit_region",
+      "title": "Analyze Edit Region",
+      "description": "Inspect the semantic impact of editing a concrete file range: edited symbols, external callers, downstream flow, framework wiring, and duplicate/code-clone risk.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "file": {
+            "type": "string",
+            "description": "File path inside the indexed project. Absolute paths are accepted when they stay inside the project root."
+          },
+          "line_start": {
+            "description": "1-based starting line of the edited region",
+            "type": "number"
+          },
+          "line_end": {
+            "description": "1-based ending line of the edited region",
+            "type": "number"
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "file"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "analyze_architecture",
+      "title": "Analyze Architecture",
+      "description": "Return a high-level architecture view with modules, dependency boundaries, cycles, coupling, framework surfaces, and top risks.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "scope": {
+            "description": "Optional file path prefix filter",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Max module, cycle, coupling, and hotspot rows to surface (default: 5)",
+            "type": "number"
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "audit_workspace",
+      "title": "Audit Workspace",
+      "description": "Audit the indexed workspace for cleanup and maintainability issues: unused exports, hotspots, and clone groups with a single review-oriented result.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Indexed project root"
+          },
+          "scope": {
+            "description": "Optional file path prefix filter",
+            "type": "string"
+          },
+          "verbosity": {
+            "default": "compact",
+            "description": "Response budget. `minimal` returns the shortest actionable answer, `compact` keeps key reasoning visible, and `full` includes supporting detail.",
+            "type": "string",
+            "enum": [
+              "minimal",
+              "compact",
+              "full"
+            ]
+          },
+          "limit": {
+            "description": "Max unused, hotspot, and clone group rows to surface (default: 5, capped at 25)",
+            "type": "number"
+          },
+          "clone_member_limit": {
+            "description": "Max clone members per group to surface (default: 3, or 10 with verbosity=full, capped at 25)",
+            "type": "number"
+          },
+          "show_suppressed": {
+            "description": "Include suppressed unused exports in the visible result",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

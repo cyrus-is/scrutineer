@@ -1,0 +1,61 @@
+{
+  "server": "mcp-server-commands",
+  "captured_at": "2026-05-26T22:22:31Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Run Commands",
+    "version": "1.2.29"
+  },
+  "tools": [
+    {
+      "name": "run_command",
+      "description": "Run a command on this linux machine",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command with args"
+          },
+          "cwd": {
+            "type": "string",
+            "default": "",
+            "description": "Current working directory, leave empty in most cases"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "run_script",
+      "description": "Run a script on this linux machine",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "interpreter": {
+            "type": "string",
+            "description": "Command with arguments. Script will be piped to stdin. Examples: bash, fish, zsh, python, or: bash --norc"
+          },
+          "script": {
+            "type": "string",
+            "description": "Script to run"
+          },
+          "cwd": {
+            "type": "string",
+            "default": "",
+            "description": "Current working directory, leave empty in most cases"
+          }
+        },
+        "required": [
+          "script"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    }
+  ]
+}

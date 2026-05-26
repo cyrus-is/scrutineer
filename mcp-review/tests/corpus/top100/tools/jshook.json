@@ -1,0 +1,219 @@
+{
+  "server": "jshook",
+  "captured_at": "2026-05-26T22:24:27Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "jshookmcp",
+    "version": "0.1.8"
+  },
+  "tools": [
+    {
+      "name": "search_tools",
+      "description": "Search 0 tools across 0 capability domains. This includes built-in tools plus any loaded plugin/workflow tools (0 currently loaded). In search-tier sessions, call this before assuming a capability is unavailable. Use activate_tools for exact matches, activate_domain for an entire domain. Domains: . Query tip: before searching, distill your intent into key concepts (action verb + target + domain). Pass distilled keywords, not full sentences \u2014 the search engine works on token matching, not semantic understanding.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Before calling, distill your intent into 2-5 key concepts: what action, on what target, in which domain. Pass only those distilled keywords \u2014 not the original user request."
+          },
+          "top_k": {
+            "description": "Max results to return (default: 10, max: 30)",
+            "type": "number"
+          },
+          "auto_activate": {
+            "description": "Auto-activate found tools so they are immediately callable. Set false to only search without activating (default: true)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "route_tool",
+      "description": "One-stop tool router: accepts a natural language task description, returns recommended tools and next actions. Automatically detects workflow patterns, recommends activation order, and provides example arguments. Use this instead of search_tools when you want guided tool discovery with actionable next steps.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Natural language description of the task you want to accomplish"
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "preferredDomain": {
+                "type": "string",
+                "description": "Domain preference (e.g., \"browser\", \"network\")"
+              },
+              "autoActivate": {
+                "description": "Whether to auto-activate recommended tools (default: false)",
+                "type": "boolean"
+              },
+              "maxRecommendations": {
+                "description": "Maximum number of recommendations (default: 5)",
+                "type": "number"
+              }
+            },
+            "description": "Optional context hints for routing"
+          }
+        },
+        "required": [
+          "task"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "describe_tool",
+      "description": "Get detailed information about a specific tool, including its input schema. Use this to see the exact parameters a tool expects before calling it.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name to describe"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "activate_tools",
+      "description": "Dynamically register specific tools by name, regardless of current base tier. Use after search_tools to enable exactly the tools you need. In search-tier sessions this is usually enough; you do not need boost_profile just to use a few exact tools. Activated tools appear in the tool list immediately. If tools do not appear after activation, use call_tool to invoke them directly.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "names": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string",
+                "description": "JSON stringified array for MCP clients that serialize arrays as strings"
+              }
+            ],
+            "description": "Array of tool names to activate (from search_tools results). Also accepts a JSON stringified array for clients that serialize arrays as strings."
+          }
+        },
+        "required": [
+          "names"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "deactivate_tools",
+      "description": "Remove previously activated tools to free context. Only affects tools added via activate_tools, not base profile tools.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "names": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string",
+                "description": "JSON stringified array"
+              }
+            ],
+            "description": "Array of tool names to deactivate"
+          }
+        },
+        "required": [
+          "names"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "activate_domain",
+      "description": "Activate all tools in a domain at once. Domains: . Use reload_extensions first to include external plugin/workflow domains.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Domain name to activate (e.g. \"debugger\", \"network\")"
+          },
+          "ttlMinutes": {
+            "description": "Auto-deactivate after N minutes (default: 30, set 0 for no expiry)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "call_tool",
+      "description": "Execute an already-active tool by name. Use this when activate_tools/activate_domain registered a tool but your client did not refresh its tool list. Does not auto-activate inactive tools.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The tool name to execute (from search_tools or describe_tool results)"
+          },
+          "args": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {},
+            "description": "Arguments object to pass to the tool"
+          },
+          "parameters": {
+            "type": "string",
+            "description": "Alternative: JSON-serialized arguments string. Some MCP clients serialize the nested arguments as a single stringified-JSON field."
+          },
+          "arguments": {
+            "type": "string",
+            "description": "Another alternative: MCP clients that stringify the entire arguments wrapper. Carries the same nested {name, args/parameters} payload as a JSON string."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

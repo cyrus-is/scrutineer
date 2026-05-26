@@ -1,0 +1,480 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-server-browserbase",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@browserbasehq/mcp-server-browserbase"
+      ],
+      "env_keys": [
+        "BROWSERBASE_API_KEY",
+        "BROWSERBASE_PROJECT_ID",
+        "GEMINI_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "BROWSERBASE_API_KEY",
+        "GEMINI_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@browserbasehq/mcp-server-browserbase",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:c71b76fa9fa2fb97dd8d16d8c4ed7b18188504681889eedb7e9afb49893ed7d9",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-server-browserbase' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @browserbasehq/mcp-server-browserbase.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@browserbasehq/mcp-server-browserbase",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-server-browserbase' package spec '@browserbasehq/mcp-server-browserbase' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@browserbasehq/mcp-server-browserbase",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'mcp-server-browserbase' requires credential-like env keys: BROWSERBASE_API_KEY, GEMINI_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "BROWSERBASE_API_KEY",
+              "GEMINI_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_session_create",
+      "description": "Create or reuse a Browserbase browser session and set it as active.",
+      "param_names": [
+        "sessionId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4893327336ece791d8d5d1d5a347582ec454801bb362975d9f9e0e1cf34c101e"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_session_close",
+      "description": "Close the current Browserbase session and reset the active context.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5c2ebe6a6766e44e68b3c731066cf24a9486af5b6dfd9c83558ca4481f42c473"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_navigate",
+      "description": "Navigate to a URL in the browser. Only use this tool with URLs you're confident will work and be up to date. \n    Otherwise, use https://google.com as the starting point",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:17941032e85351bedcd316e279eb20092c6d4c8fc39bbed775b126130fcb9a7b"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_act",
+      "description": "Perform a single action on the page (e.g., click, type).",
+      "param_names": [
+        "action",
+        "variables"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "password",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": ". ie: {\"action\": \"Fill in the password\", \"variables\": {\"password\": \""
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "password",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": ". ie: {\"action\": \"Fill in the password\", \"variables\": {\"password\": \""
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:ad72cf03adc4a1ac981a5f7a72c3f10296edc07ea4085f6d4f0d4127408c836f"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_extract",
+      "description": "Extract structured data or text from the current page using an instruction.",
+      "param_names": [
+        "instruction"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:be146a2572183c50a4233a0610870cc028dc3908cf0b358cc9de9d0390f35af1"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_observe",
+      "description": "Find interactive elements on the page from an instruction; optionally return an action.",
+      "param_names": [
+        "instruction"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "e the visual characteristics, location, text content, or functionali"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "The matched 'location' refers to screen position/coordinates of page elements, not geographic location data; different semantic domain."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:bf6efe848182172d073eab10227861667159475c703ef1a8a87c835151ec38e8"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_screenshot",
+      "description": "Capture a full-page screenshot and return it (and save as a resource).",
+      "param_names": [
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e8d7765863c66773110a0db65f350913632804986709b19d89871e1361c829ba"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_get_url",
+      "description": "Return the current page URL (full URL with query/fragment).",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url browserbase stagehand get url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:35b1d22af7d86db0a7d4a53992f65d45afb328640718681cf87c043e32214cec"
+    },
+    {
+      "server": "mcp-server-browserbase",
+      "name": "browserbase_stagehand_agent",
+      "description": "Execute a task autonomously using Gemini Computer Use agent. The agent will navigate and interact with web pages to complete the given task.",
+      "param_names": [
+        "prompt"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Execute a task autonomously using Gem"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false,
+          "needs_source": true
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Execute a task autonomously using Gemini Com"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "The matched 'task' refers to the work task/goal the tool completes, not project management metadata (issues, sprints, boards)."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "medium",
+      "digest": "sha256:dd6fe6c6d45cab67a8cd4ec28aeb1a0b7869ff2a530b2b9b25a16c24b18d6351"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    },
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 9,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 4,
+    "toxic_combination_count": 2,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 3,
+      "MEDIUM": 5,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "credentials_secrets",
+      "location",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 4,
+      "false_positive": 2,
+      "needs_source": 3,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::browserbase_stagehand_observe::location",
+        "reason": "The matched 'location' refers to screen position/coordinates of page elements, not geographic location data; different semantic domain."
+      },
+      {
+        "id": "data::browserbase_stagehand_agent::project_metadata",
+        "reason": "The matched 'task' refers to the work task/goal the tool completes, not project management metadata (issues, sprints, boards)."
+      }
+    ]
+  }
+}

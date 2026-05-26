@@ -1,0 +1,33 @@
+{
+  "server": "nx-2",
+  "captured_at": "2026-05-26T22:23:01Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Nx MCP",
+    "version": "0.0.1"
+  },
+  "tools": [
+    {
+      "name": "nx_docs",
+      "description": "Returns a list of documentation sections that could be relevant to the user query. IMPORTANT: ALWAYS USE THIS IF YOU ARE ANSWERING QUESTIONS ABOUT NX. NEVER ASSUME KNOWLEDGE ABOUT NX BECAUSE IT WILL PROBABLY BE OUTDATED. Use it to learn about nx, its configuration and options instead of assuming knowledge about it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userQuery": {
+            "description": "The user query to get docs for. You can pass the original user query verbatim or summarize it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userQuery"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

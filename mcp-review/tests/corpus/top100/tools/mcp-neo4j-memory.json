@@ -1,0 +1,5 @@
+{
+  "server": "mcp-neo4j-memory",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

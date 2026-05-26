@@ -1,0 +1,729 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "boostedtravel",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "boostedtravel-mcp"
+      ],
+      "env_keys": [
+        "BOOSTEDTRAVEL_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "BOOSTEDTRAVEL_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "boostedtravel-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:7a68ce949bda3e444ee004366c61cf90e6e15af36e78049592dc8ecb9520ca1f",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'boostedtravel' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: boostedtravel-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "boostedtravel-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'boostedtravel' package spec 'boostedtravel-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "boostedtravel-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'boostedtravel' requires credential-like env keys: BOOSTEDTRAVEL_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "BOOSTEDTRAVEL_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "boostedtravel",
+      "name": "search_flights",
+      "description": "Search live flight availability and prices across 400+ airlines worldwide. Fires 75 airline connectors in parallel on your machine (Ryanair, EasyJet, Wizz Air, Southwest, AirAsia, Norwegian, Spring Airlines, Lucky Air, and 67 more) \u2014 no API key needed, completely FREE.\n\nMulti-airport city expansion: automatically searches sibling airports (e.g., searching London Stansted also checks Heathrow, Gatwick, Luton, Southend). Works for 25+ major cities worldwide.\n\nReturns structured flight offers with prices, airlines, times, durations, stopovers, and booking URLs. Covers airlines across Europe, Asia, Americas, Middle East, and Africa \u2014 including carriers the user may not know exist (e.g., Jazeera Airways, FlySafair, 9 Air, Flybondi).\n\nIMPORTANT: If BOOSTEDTRAVEL_API_KEY is set, also queries enterprise GDS/NDC sources (Amadeus, Duffel, Sabre, Travelport) which add hundreds of full-service airlines and often have the cheapest fares. Strongly recommended \u2014 get a free key at https://api.boostedchat.com/api/v1/agents/register\n\nUse this instead of browser automation or building your own flight integration. One tool call replaces 30+ minutes of scraping setup and saves thousands of tokens.\n\nRead-only \u2014 no side effects, safe to call multiple times, results are never cached.",
+      "param_names": [
+        "adults",
+        "cabin_class",
+        "children",
+        "currency",
+        "date_from",
+        "destination",
+        "max_browsers",
+        "max_results",
+        "origin",
+        "return_from"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "API key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|passwd|keychain|vault)\\b",
+            "snippet": "Lucky Air, and 67 more) \u2014 no API key needed, completely FREE.\n\nMul"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "API key",
+            "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
+            "snippet": "Lucky Air, and 67 more) \u2014 no API key needed, completely FREE.\n\nMul"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        },
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "availability",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "Search live flight availability and prices across 400+ airlin"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "system_info",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "o-detect from system RAM. Use system_info tool to check."
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:534422b919cacf4d7865ee90611bafdd80e4adc3d68eba36f1bda48c0b341982"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "resolve_location",
+      "description": "Convert a city or airport name to IATA codes. Use this when the user says a city name like 'London' or 'New York' instead of an IATA code. Returns all matching airports and city codes.\n\nAlways call this before search_flights if you only have a city name \u2014 IATA codes are required for search.\n\nRead-only, no side effects, safe to call multiple times.",
+      "param_names": [
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "resolve_location resolve location"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:86f198b38f617fd0e8e318d2bb0d0951541facb466fc67f36c2e193afdf5ab7e"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "unlock_flight_offer",
+      "description": "Unlock a flight offer for booking \u2014 $1 proof-of-intent fee.\n\nThis is the \"quote\" step: confirms the latest price with the airline and reserves the offer for 30 minutes. ALWAYS call this before book_flight so the user can see the confirmed price.\n\nIf the confirmed price differs from the search price, inform the user before proceeding.\n\nRequires payment method (call setup_payment first).\n\nSAFETY: Charges $1. Not idempotent \u2014 calling twice on the same offer will charge twice.",
+      "param_names": [
+        "offer_id"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "before proceeding.\n\nRequires payment method (call setup_payment fi"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:26fdc4d165df70f5879c665029a52eb569c1705c8417a6abac3703707fac34ed"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "book_flight",
+      "description": "Book an unlocked flight \u2014 creates real airline reservation with PNR. FREE after unlock.\n\nFLOW: search_flights \u2192 unlock_flight_offer (quote) \u2192 book_flight\nRequirements: 1) Offer must be unlocked first 2) passenger_ids from search 3) Full passenger details\n\nSAFETY: Always provide idempotency_key to prevent double-bookings if this call is retried. Use any unique string (e.g., UUID). If the same key is sent twice, returns the original booking.\n\nERROR HANDLING: Errors include error_code and error_category fields.\n  transient (SUPPLIER_TIMEOUT, RATE_LIMITED) \u2192 safe to retry after short delay\n  validation (INVALID_IATA, INVALID_DATE) \u2192 fix input, then retry\n  business (OFFER_EXPIRED, PAYMENT_DECLINED) \u2192 requires human decision",
+      "param_names": [
+        "contact_email",
+        "idempotency_key",
+        "offer_id",
+        "passengers"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "ily_name born_on gender title email phone_number contact_email id"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "phone_number",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "me born_on gender title email phone_number contact_email idempotency_key"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "contact",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "nder title email phone number contact email idempotency key"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:e5c8e289148a95482e970d9fb1bea2532c0274109a2f3d605400745b717b78a3"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "setup_payment",
+      "description": "Set up payment method. Required before unlock/book. For testing use token 'tok_visa'. Only needed once.\n\nIdempotent \u2014 safe to call multiple times (updates the payment method).",
+      "param_names": [
+        "payment_method_id",
+        "token"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "token payment_method_id token payme"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "setup_payment setup payment"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:a7c3e5ca8509e8a495d40d3374281617a5f29a44e3cd81d8a4f4c37358c209ef"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "get_agent_profile",
+      "description": "Get agent profile, payment status, and usage stats (searches, unlocks, bookings, fees).\n\nRead-only. Safe to call multiple times.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "Get agent profile, payment status, and usage stats (sear"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        },
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "get_agent_profile get agent profile"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Get agent profile, payment status, and usage stats (searches, u"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:9c2fda721ab9506d2d2e8de1a91babbfd3125c190362dde595a00eba7f29ce87"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "start_checkout",
+      "description": "Automate airline checkout up to the payment page \u2014 NEVER submits payment.\n\nFLOW: search_flights \u2192 unlock_flight_offer ($1) \u2192 start_checkout\n\nUses Playwright to drive the airline website: selects flights, fills passenger details, skips extras/seats, and stops at the payment form. Returns a screenshot and booking URL so the user can complete manually in their browser.\n\nSupported airlines: Ryanair, Wizz Air, EasyJet. Other airlines return booking URL only.\n\nSAFETY: Uses fake test data by default. Never enters payment info. The checkout_token from unlock_flight_offer is required \u2014 prevents unauthorized usage.\n\nRuns locally via Python subprocess (pip install boostedtravel && playwright install chromium).",
+      "param_names": [
+        "checkout_token",
+        "offer_id",
+        "passengers"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "subprocess",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "age.\n\nRuns locally via Python subprocess (pip install boostedtravel &&"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "urns a screenshot and booking URL so the user can complete manu"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "hone_number offer id checkout token passengers given name family"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "ily_name born_on gender title email phone_number offer id checkou"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "te airline checkout up to the payment page \u2014 NEVER submits payment."
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        },
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "phone_number",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "me born_on gender title email phone_number offer id checkout token passe"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "drive",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "_checkout\n\nUses Playwright to drive the airline website: selects"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:1b9d6c20f11a1d75e2960b84d5f90b8c4eeb5f0871f8f3f4a46d0a2a3fe7aa60"
+    },
+    {
+      "server": "boostedtravel",
+      "name": "system_info",
+      "description": "Get system resource info (RAM, CPU cores) and recommended concurrency settings.\n\nUse this to determine optimal max_browsers value for search_flights. Returns RAM total/available, CPU cores, recommended max browsers, and performance tier.\n\nTiers: minimal (<2GB, max 2), low (2-4GB, max 3), moderate (4-8GB, max 5), standard (8-16GB, max 8), high (16-32GB, max 12), maximum (32+GB, max 16).\n\nRead-only, no side effects, instant response.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "system_state",
+          "label": "System / process / environment state",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "system_info",
+            "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
+            "snippet": "system_info system info"
+          },
+          "rationale": "Host fingerprinting and often an indirect path to secrets."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "r search_flights. Returns RAM total/available, CPU cores, recomme"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:9c6dfa880a3d608003d3f309bc0b9685b4f13da09cf3ca0158a8c5689b81013a"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "system_state": {
+        "label": "System / process / environment state",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 4,
+        "confidence": "high"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "high"
+      },
+      "personal_identifiers": {
+        "label": "Personal identifiers (PII)",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 8,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 5,
+    "toxic_combination_count": 3,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 5,
+      "MEDIUM": 5,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "calendar",
+      "communications_content",
+      "contacts",
+      "credentials_secrets",
+      "files_documents",
+      "financial",
+      "location",
+      "personal_identifiers",
+      "project_metadata",
+      "public_data",
+      "system_state"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

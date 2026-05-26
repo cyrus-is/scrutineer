@@ -1,0 +1,4630 @@
+{
+  "server": "token-optimizer",
+  "captured_at": "2026-05-26T22:25:27Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "token-optimizer-mcp",
+    "version": "0.2.0"
+  },
+  "tools": [
+    {
+      "name": "optimize_text",
+      "description": "Compress and cache text to reduce token usage. Returns compressed version and saves to cache for future use.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to optimize"
+          },
+          "key": {
+            "type": "string",
+            "description": "Cache key for storing the optimized text"
+          },
+          "quality": {
+            "type": "number",
+            "description": "Compression quality (0-11, default 11)",
+            "minimum": 0,
+            "maximum": 11
+          }
+        },
+        "required": [
+          "text",
+          "key"
+        ]
+      }
+    },
+    {
+      "name": "get_cached",
+      "description": "Retrieve previously cached and optimized text. Returns the original text if found in cache.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Cache key to retrieve"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      }
+    },
+    {
+      "name": "count_tokens",
+      "description": "Count tokens in text using tiktoken. Useful for understanding token usage before and after optimization.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to count tokens for"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "compress_text",
+      "description": "Compress text using Brotli compression. Returns compressed text as base64 string.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to compress"
+          },
+          "quality": {
+            "type": "number",
+            "description": "Compression quality (0-11, default 11)",
+            "minimum": 0,
+            "maximum": 11
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "decompress_text",
+      "description": "Decompress base64-encoded Brotli-compressed text.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "compressed": {
+            "type": "string",
+            "description": "Base64-encoded compressed text"
+          }
+        },
+        "required": [
+          "compressed"
+        ]
+      }
+    },
+    {
+      "name": "get_cache_stats",
+      "description": "Get cache statistics including hit rate, compression ratio, and token savings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "clear_cache",
+      "description": "Clear all cached data. Use with caution.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true to confirm cache clearing"
+          }
+        },
+        "required": [
+          "confirm"
+        ]
+      }
+    },
+    {
+      "name": "analyze_optimization",
+      "description": "Analyze text and provide recommendations for optimization including compression benefits and token savings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to analyze"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "get_session_stats",
+      "description": "Get comprehensive statistics from the PowerShell wrapper session tracker including system reminders, tool operations, and total tokens with accurate tiktoken-based counting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Optional session ID to query. If not provided, uses current session."
+          }
+        }
+      }
+    },
+    {
+      "name": "optimize_session",
+      "description": "Analyzes operations in the current session from the operations CSV, identifies large text blocks from file-based tools (Read, Write, Edit), compresses them, and stores them in the cache to reduce future token usage. Returns a summary of the optimization.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Optional session ID to optimize. If not provided, uses the current active session."
+          },
+          "min_token_threshold": {
+            "type": "number",
+            "description": "Minimum token count for a file operation to be considered for compression. Defaults to 30."
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_project_tokens",
+      "description": "Analyze token usage and estimate costs across multiple sessions within a project. Aggregates data from all operations-*.csv files, provides project-level statistics, identifies top contributing sessions and tools, and estimates monetary costs based on token usage.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Path to the project directory. If not provided, uses the hooks data directory."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "Optional start date filter (YYYY-MM-DD format)."
+          },
+          "endDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "Optional end date filter (YYYY-MM-DD format)."
+          },
+          "costPerMillionTokens": {
+            "type": "number",
+            "description": "Cost per million tokens in USD. Defaults to 30 (GPT-4 Turbo pricing).",
+            "default": 30,
+            "minimum": 0,
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "predictive_cache",
+      "description": "ML-based predictive caching with 91%+ token reduction using ARIMA, exponential smoothing, LSTM, and collaborative filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "train",
+              "predict",
+              "auto-warm",
+              "evaluate",
+              "retrain",
+              "export-model",
+              "import-model",
+              "record-access",
+              "get-patterns"
+            ],
+            "description": "The predictive cache operation to perform"
+          },
+          "trainData": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "hitCount": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": "Training data (for train operation)"
+          },
+          "epochs": {
+            "type": "number",
+            "description": "Number of training epochs (default: 10)"
+          },
+          "learningRate": {
+            "type": "number",
+            "description": "Learning rate for training (default: 0.01)"
+          },
+          "modelType": {
+            "type": "string",
+            "enum": [
+              "arima",
+              "exponential",
+              "lstm",
+              "hybrid"
+            ],
+            "description": "Model type (default: hybrid)"
+          },
+          "horizon": {
+            "type": "number",
+            "description": "Prediction horizon in seconds (default: 60)"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Minimum confidence threshold (default: 0.7)"
+          },
+          "maxPredictions": {
+            "type": "number",
+            "description": "Maximum predictions to return (default: 100)"
+          },
+          "warmStrategy": {
+            "type": "string",
+            "enum": [
+              "aggressive",
+              "conservative",
+              "adaptive"
+            ],
+            "description": "Cache warming strategy (default: adaptive)"
+          },
+          "warmBatchSize": {
+            "type": "number",
+            "description": "Number of keys to warm (default: 50)"
+          },
+          "modelPath": {
+            "type": "string",
+            "description": "Path to model file (for export/import)"
+          },
+          "modelFormat": {
+            "type": "string",
+            "enum": [
+              "json",
+              "binary"
+            ],
+            "description": "Model export format (default: json)"
+          },
+          "compress": {
+            "type": "boolean",
+            "description": "Compress model export (default: true)"
+          },
+          "key": {
+            "type": "string",
+            "description": "Cache key (for record-access and get-patterns)"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Access timestamp (for record-access)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_warmup",
+      "description": "Intelligent cache pre-warming with 87%+ token reduction, featuring schedule-based warming, pattern analysis, dependency resolution, and progressive warming strategies",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "immediate",
+              "pattern-based",
+              "dependency-based",
+              "selective",
+              "status",
+              "cancel",
+              "pause",
+              "resume",
+              "configure"
+            ],
+            "description": "The warmup operation to perform"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Keys to warm (for immediate/selective operations)"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Categories to warm (for selective operation)"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Regex pattern for key matching"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "normal",
+              "low"
+            ],
+            "description": "Warmup priority (default: normal)"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "immediate",
+              "progressive",
+              "dependency",
+              "pattern"
+            ],
+            "description": "Warmup strategy (default: progressive)"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Cron expression for scheduled warmup (e.g., '0 * * * *' for hourly)"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "Schedule ID for cancel operation"
+          },
+          "dependencies": {
+            "type": "object",
+            "description": "Dependency graph for dependency-based warmup"
+          },
+          "accessHistory": {
+            "type": "array",
+            "description": "Access history for pattern-based warmup"
+          },
+          "minAccessCount": {
+            "type": "number",
+            "description": "Minimum access count for hot keys (default: 5)"
+          },
+          "timeWindow": {
+            "type": "number",
+            "description": "Time window for pattern analysis in ms (default: 3600000)"
+          },
+          "maxConcurrency": {
+            "type": "number",
+            "description": "Max concurrent warmup operations (default: 10)"
+          },
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for warmup (default: 50)"
+          },
+          "delayBetweenBatches": {
+            "type": "number",
+            "description": "Delay between batches in ms"
+          },
+          "hotKeyThreshold": {
+            "type": "number",
+            "description": "Minimum access count for hot keys"
+          },
+          "warmupPercentage": {
+            "type": "number",
+            "description": "Percentage of cache to warm (default: 80)"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "Simulate warmup without executing (default: false)"
+          },
+          "enableRollback": {
+            "type": "boolean",
+            "description": "Enable rollback on failures (default: true)"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout for warmup operations in ms (default: 30000)"
+          },
+          "maxRetries": {
+            "type": "number",
+            "description": "Maximum retry attempts (default: 3)"
+          },
+          "retryDelay": {
+            "type": "number",
+            "description": "Delay between retries in ms"
+          },
+          "reportProgress": {
+            "type": "boolean",
+            "description": "Enable progress reporting (default: true)"
+          },
+          "progressInterval": {
+            "type": "number",
+            "description": "Progress report interval in ms"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_ast_grep",
+      "description": "Perform structural code search with 83% token reduction through AST indexing and caching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "AST pattern to search for (e.g., \"function $NAME($ARGS) { $BODY }\")"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Root directory of the project to search"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "ts",
+              "tsx",
+              "js",
+              "jsx",
+              "py",
+              "go",
+              "rs",
+              "java",
+              "c",
+              "cpp"
+            ],
+            "description": "Programming language (auto-detected if not provided)"
+          },
+          "filePattern": {
+            "type": "string",
+            "description": "Specific directory or file pattern to search (e.g., \"src/**/*.ts\")"
+          },
+          "excludePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Patterns to exclude from search"
+          },
+          "contextLines": {
+            "type": "number",
+            "default": 3,
+            "description": "Number of context lines around matches"
+          },
+          "maxMatches": {
+            "type": "number",
+            "default": 100,
+            "description": "Maximum number of matches to return"
+          },
+          "enableCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable AST index and pattern caching"
+          }
+        },
+        "required": [
+          "pattern",
+          "projectPath"
+        ]
+      }
+    },
+    {
+      "name": "cache_analytics",
+      "description": "Comprehensive cache analytics with 88%+ token reduction. Real-time dashboards, trend analysis, alerting, heatmaps, bottleneck detection, and cost optimization.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "dashboard",
+              "metrics",
+              "trends",
+              "alerts",
+              "heatmap",
+              "bottlenecks",
+              "cost-analysis",
+              "export-data"
+            ],
+            "description": "Analytics operation to perform"
+          },
+          "timeRange": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "number",
+                "description": "Start timestamp in milliseconds"
+              },
+              "end": {
+                "type": "number",
+                "description": "End timestamp in milliseconds"
+              }
+            },
+            "description": "Time range for analysis"
+          },
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "second",
+              "minute",
+              "hour",
+              "day"
+            ],
+            "description": "Time granularity for aggregation"
+          },
+          "metricTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "performance",
+                "usage",
+                "efficiency",
+                "cost",
+                "health"
+              ]
+            },
+            "description": "Types of metrics to collect"
+          },
+          "aggregation": {
+            "type": "string",
+            "enum": [
+              "sum",
+              "avg",
+              "min",
+              "max",
+              "p95",
+              "p99"
+            ],
+            "description": "Aggregation method for metrics"
+          },
+          "compareWith": {
+            "type": "string",
+            "enum": [
+              "previous-period",
+              "last-week",
+              "last-month"
+            ],
+            "description": "Period to compare trends with"
+          },
+          "trendType": {
+            "type": "string",
+            "enum": [
+              "absolute",
+              "percentage",
+              "rate"
+            ],
+            "description": "Type of trend analysis"
+          },
+          "alertType": {
+            "type": "string",
+            "enum": [
+              "threshold",
+              "anomaly",
+              "trend"
+            ],
+            "description": "Type of alert to check"
+          },
+          "threshold": {
+            "type": "number",
+            "description": "Threshold value for alerts"
+          },
+          "alertConfig": {
+            "type": "object",
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "string",
+                "enum": [
+                  "gt",
+                  "lt",
+                  "eq",
+                  "ne"
+                ]
+              },
+              "threshold": {
+                "type": "number"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "info",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "description": "Alert configuration"
+          },
+          "heatmapType": {
+            "type": "string",
+            "enum": [
+              "temporal",
+              "key-correlation",
+              "memory"
+            ],
+            "description": "Type of heatmap to generate"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Heatmap resolution"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "csv",
+              "prometheus"
+            ],
+            "description": "Export data format"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "File path for data export"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching of analytics results (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 30)",
+            "default": 30
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache-benchmark",
+      "description": "Cache Performance Benchmarking with 89% token reduction through comprehensive testing and analysis.\n\nFeatures:\n- Strategy comparison (LRU vs LFU vs FIFO vs TTL vs size vs hybrid)\n- Load testing with configurable concurrency and ramp-up\n- Latency profiling with percentiles (p50, p90, p95, p99, p99.9)\n- Throughput testing (operations per second)\n- Comprehensive reports in markdown, HTML, JSON, PDF\n- Workload simulation (read-heavy, write-heavy, mixed, realistic)\n\nOperations:\n- run-benchmark: Execute complete benchmark suite\n- compare: Compare multiple cache configurations\n- load-test: Stress test cache under load\n- latency-test: Measure latency distribution with percentiles\n- throughput-test: Measure throughput limits\n- report: Generate comprehensive benchmark report\n\nToken Reduction:\n- Benchmark results: ~89% (summary only)\n- Comparison: ~91% (rankings + winner)\n- Load test: ~88% (summary + breaking point)\n- Latency test: ~87% (percentiles only)\n- Throughput test: ~90% (key metrics only)\n- Report: ~85% (formatted summary)\n- Average: 89% reduction",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "run-benchmark",
+              "compare",
+              "load-test",
+              "latency-test",
+              "throughput-test",
+              "report"
+            ],
+            "description": "Benchmark operation to perform"
+          },
+          "config": {
+            "type": "object",
+            "description": "Cache configuration for single benchmark",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "LRU",
+                  "LFU",
+                  "FIFO",
+                  "TTL",
+                  "size",
+                  "hybrid"
+                ]
+              },
+              "maxSize": {
+                "type": "number"
+              },
+              "maxEntries": {
+                "type": "number"
+              },
+              "ttl": {
+                "type": "number"
+              }
+            }
+          },
+          "configs": {
+            "type": "array",
+            "description": "Multiple cache configurations for comparison",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "strategy": {
+                  "type": "string",
+                  "enum": [
+                    "LRU",
+                    "LFU",
+                    "FIFO",
+                    "TTL",
+                    "size",
+                    "hybrid"
+                  ]
+                }
+              }
+            }
+          },
+          "duration": {
+            "type": "number",
+            "description": "Benchmark duration in seconds (default: 60)"
+          },
+          "warmupDuration": {
+            "type": "number",
+            "description": "Warmup duration in seconds (default: 10)"
+          },
+          "workloadType": {
+            "type": "string",
+            "enum": [
+              "read-heavy",
+              "write-heavy",
+              "mixed",
+              "custom",
+              "realistic"
+            ],
+            "description": "Type of workload to simulate"
+          },
+          "workloadRatio": {
+            "type": "object",
+            "description": "Custom read/write ratio",
+            "properties": {
+              "read": {
+                "type": "number"
+              },
+              "write": {
+                "type": "number"
+              }
+            }
+          },
+          "concurrency": {
+            "type": "number",
+            "description": "Number of concurrent workers (default: 10)"
+          },
+          "rampUp": {
+            "type": "number",
+            "description": "Ramp-up time in seconds (for load-test)"
+          },
+          "targetTPS": {
+            "type": "number",
+            "description": "Target transactions per second"
+          },
+          "maxConcurrency": {
+            "type": "number",
+            "description": "Maximum concurrency for load test (default: 100)"
+          },
+          "stepSize": {
+            "type": "number",
+            "description": "Concurrency step size for load test (default: 10)"
+          },
+          "percentiles": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Percentiles to measure (default: [50, 90, 95, 99])"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "markdown",
+              "html",
+              "json",
+              "pdf"
+            ],
+            "description": "Report format (default: markdown)"
+          },
+          "includeCharts": {
+            "type": "boolean",
+            "description": "Include charts in report"
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "Path to save report"
+          },
+          "benchmarkId": {
+            "type": "string",
+            "description": "ID of benchmark results to generate report for"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Cache benchmark results (default: true)"
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 604800 - 7 days)"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_compression",
+      "description": "Advanced compression strategies for cache optimization with 89%+ token reduction. Supports 6 algorithms (gzip, brotli, lz4, zstd, snappy, custom), adaptive selection, dictionary-based compression, and delta compression for time-series data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "compress",
+              "decompress",
+              "analyze",
+              "optimize",
+              "benchmark",
+              "configure"
+            ],
+            "description": "Compression operation to perform"
+          },
+          "data": {
+            "description": "Data to compress/decompress/analyze"
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "gzip",
+              "brotli",
+              "lz4",
+              "zstd",
+              "snappy",
+              "custom"
+            ],
+            "description": "Compression algorithm (auto-selected if not specified)"
+          },
+          "level": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "Compression level (0-9, higher = better compression)"
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "json",
+              "text",
+              "binary",
+              "time-series",
+              "structured",
+              "auto"
+            ],
+            "description": "Data type hint for adaptive compression"
+          },
+          "targetRatio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Target compression ratio for optimize operation (0-1)"
+          },
+          "maxLatency": {
+            "type": "number",
+            "description": "Maximum acceptable latency in milliseconds"
+          },
+          "workloadType": {
+            "type": "string",
+            "enum": [
+              "read-heavy",
+              "write-heavy",
+              "balanced"
+            ],
+            "description": "Workload type for optimization"
+          },
+          "algorithms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "gzip",
+                "brotli",
+                "lz4",
+                "zstd",
+                "snappy"
+              ]
+            },
+            "description": "Algorithms to benchmark"
+          },
+          "iterations": {
+            "type": "number",
+            "description": "Number of benchmark iterations"
+          },
+          "defaultAlgorithm": {
+            "type": "string",
+            "enum": [
+              "gzip",
+              "brotli",
+              "lz4",
+              "zstd",
+              "snappy",
+              "custom"
+            ],
+            "description": "Default algorithm for configure operation"
+          },
+          "autoSelect": {
+            "type": "boolean",
+            "description": "Enable auto-selection of algorithm based on data type"
+          },
+          "enableDelta": {
+            "type": "boolean",
+            "description": "Enable delta compression for time-series data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching of analysis/benchmark results",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds",
+            "default": 3600
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_invalidation",
+      "description": "Comprehensive cache invalidation with 88%+ token reduction, dependency tracking, pattern matching, scheduled invalidation, and distributed coordination",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "invalidate",
+              "invalidate-pattern",
+              "invalidate-tag",
+              "invalidate-dependency",
+              "schedule-invalidation",
+              "cancel-scheduled",
+              "audit-log",
+              "set-dependency",
+              "remove-dependency",
+              "validate",
+              "configure",
+              "stats",
+              "clear-audit"
+            ],
+            "description": "The cache invalidation operation to perform"
+          },
+          "key": {
+            "type": "string",
+            "description": "Cache key to invalidate"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of cache keys to invalidate"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Pattern for matching keys (wildcards: * for any chars, ? for single char)"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Tag to invalidate all associated keys"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of tags to invalidate"
+          },
+          "parentKey": {
+            "type": "string",
+            "description": "Parent key for dependency relationship"
+          },
+          "childKey": {
+            "type": "string",
+            "description": "Child key for dependency relationship"
+          },
+          "childKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of child keys for dependency relationship"
+          },
+          "cascadeDepth": {
+            "type": "number",
+            "description": "Maximum depth for dependency cascade (default: 10)"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "ID of scheduled invalidation"
+          },
+          "cronExpression": {
+            "type": "string",
+            "description": "Cron expression for scheduled invalidation"
+          },
+          "executeAt": {
+            "type": "number",
+            "description": "Timestamp when to execute invalidation"
+          },
+          "repeatInterval": {
+            "type": "number",
+            "description": "Interval in ms for repeating scheduled invalidation"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "immediate",
+              "lazy",
+              "write-through",
+              "ttl-based",
+              "event-driven",
+              "dependency-cascade"
+            ],
+            "description": "Invalidation strategy"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "eager",
+              "lazy",
+              "scheduled"
+            ],
+            "description": "Invalidation mode"
+          },
+          "enableAudit": {
+            "type": "boolean",
+            "description": "Enable audit logging (default: true)"
+          },
+          "maxAuditEntries": {
+            "type": "number",
+            "description": "Maximum audit log entries to keep (default: 10000)"
+          },
+          "revalidateOnInvalidate": {
+            "type": "boolean",
+            "description": "Trigger revalidation after invalidation"
+          },
+          "skipExpired": {
+            "type": "boolean",
+            "description": "Skip expired entries during validation (default: true)"
+          },
+          "broadcastToNodes": {
+            "type": "boolean",
+            "description": "Broadcast invalidation to distributed nodes"
+          },
+          "nodeId": {
+            "type": "string",
+            "description": "Node ID for distributed coordination"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_optimizer",
+      "description": "Advanced cache optimization with 89%+ token reduction. Analyzes performance, benchmarks strategies, provides ML-based recommendations, detects bottlenecks, and performs cost-benefit analysis.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "analyze",
+              "benchmark",
+              "optimize",
+              "recommend",
+              "simulate",
+              "tune",
+              "detect-bottlenecks",
+              "cost-benefit",
+              "configure",
+              "report"
+            ],
+            "description": "The optimization operation to perform"
+          },
+          "analysisWindow": {
+            "type": "number",
+            "description": "Time window in milliseconds for analysis (default: 3600000)"
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "LRU",
+                "LFU",
+                "FIFO",
+                "TTL",
+                "SIZE",
+                "HYBRID"
+              ]
+            },
+            "description": "Eviction strategies to benchmark"
+          },
+          "objective": {
+            "type": "string",
+            "enum": [
+              "hit-rate",
+              "latency",
+              "memory",
+              "throughput",
+              "balanced"
+            ],
+            "description": "Optimization objective (default: balanced)"
+          },
+          "workloadPattern": {
+            "type": "string",
+            "enum": [
+              "uniform",
+              "skewed",
+              "temporal",
+              "burst",
+              "predictable",
+              "unknown"
+            ],
+            "description": "Workload pattern for benchmarking"
+          },
+          "tuningMethod": {
+            "type": "string",
+            "enum": [
+              "grid-search",
+              "gradient-descent",
+              "bayesian",
+              "evolutionary"
+            ],
+            "description": "ML tuning method (default: bayesian)"
+          },
+          "epochs": {
+            "type": "number",
+            "description": "Number of training epochs for tuning (default: 50)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_partition",
+      "description": "Advanced cache partitioning and sharding with 87%+ token reduction through consistent hashing, automatic rebalancing, and partition isolation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create-partition",
+              "delete-partition",
+              "list-partitions",
+              "migrate",
+              "rebalance",
+              "configure-sharding",
+              "stats"
+            ],
+            "description": "The partition operation to perform"
+          },
+          "partitionId": {
+            "type": "string",
+            "description": "Partition identifier (required for create/delete operations)"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "hash",
+              "range",
+              "category",
+              "geographic",
+              "custom"
+            ],
+            "description": "Partitioning strategy (default: hash)"
+          },
+          "sourcePartition": {
+            "type": "string",
+            "description": "Source partition for migration"
+          },
+          "targetPartition": {
+            "type": "string",
+            "description": "Target partition for migration"
+          },
+          "keyPattern": {
+            "type": "string",
+            "description": "Regex pattern for keys to migrate"
+          },
+          "targetDistribution": {
+            "type": "string",
+            "enum": [
+              "even",
+              "weighted",
+              "capacity-based"
+            ],
+            "description": "Target distribution strategy for rebalancing (default: even)"
+          },
+          "maxMigrations": {
+            "type": "number",
+            "description": "Maximum number of migrations during rebalance (default: 1000)"
+          },
+          "shardingStrategy": {
+            "type": "string",
+            "enum": [
+              "consistent-hash",
+              "range",
+              "custom"
+            ],
+            "description": "Sharding strategy configuration"
+          },
+          "virtualNodes": {
+            "type": "number",
+            "description": "Number of virtual nodes per partition (default: 150)"
+          },
+          "partitionFunction": {
+            "type": "string",
+            "description": "Custom partition function (JavaScript code)"
+          },
+          "includeKeyDistribution": {
+            "type": "boolean",
+            "description": "Include key distribution in statistics (default: true)"
+          },
+          "includeMemoryUsage": {
+            "type": "boolean",
+            "description": "Include memory usage in statistics (default: true)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "cache_replication",
+      "description": "Distributed cache replication with 88%+ token reduction. Supports primary-replica and multi-primary modes, strong/eventual consistency, automatic conflict resolution, failover, incremental sync, and health monitoring.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "configure",
+              "add-replica",
+              "remove-replica",
+              "promote-replica",
+              "sync",
+              "status",
+              "health-check",
+              "resolve-conflicts",
+              "snapshot",
+              "restore",
+              "rebalance"
+            ],
+            "description": "Replication operation to perform"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "primary-replica",
+              "multi-primary",
+              "master-slave",
+              "peer-to-peer"
+            ],
+            "description": "Replication mode (for configure operation)"
+          },
+          "consistency": {
+            "type": "string",
+            "enum": [
+              "eventual",
+              "strong",
+              "causal"
+            ],
+            "description": "Consistency model (for configure operation)"
+          },
+          "conflictResolution": {
+            "type": "string",
+            "enum": [
+              "last-write-wins",
+              "first-write-wins",
+              "merge",
+              "custom",
+              "vector-clock"
+            ],
+            "description": "Conflict resolution strategy (for configure operation)"
+          },
+          "syncInterval": {
+            "type": "number",
+            "description": "Sync interval in milliseconds (for configure operation)"
+          },
+          "heartbeatInterval": {
+            "type": "number",
+            "description": "Heartbeat interval in milliseconds (for configure operation)"
+          },
+          "writeQuorum": {
+            "type": "number",
+            "description": "Number of replicas required for writes (for configure operation)"
+          },
+          "readQuorum": {
+            "type": "number",
+            "description": "Number of replicas required for reads (for configure operation)"
+          },
+          "nodeId": {
+            "type": "string",
+            "description": "Node ID (for add-replica/remove-replica operations)"
+          },
+          "region": {
+            "type": "string",
+            "description": "Region name (for add-replica operation)"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Node endpoint URL (for add-replica operation)"
+          },
+          "weight": {
+            "type": "number",
+            "description": "Node weight for load balancing (for add-replica operation)"
+          },
+          "targetNodeId": {
+            "type": "string",
+            "description": "Target node ID (for promote-replica operation)"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force sync even if up-to-date (for sync operation)"
+          },
+          "deltaOnly": {
+            "type": "boolean",
+            "description": "Sync only delta changes (for sync operation)"
+          },
+          "snapshotId": {
+            "type": "string",
+            "description": "Snapshot ID (for restore operation)"
+          },
+          "includeMetadata": {
+            "type": "boolean",
+            "description": "Include snapshot data in response (for snapshot operation)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_cache",
+      "description": "Advanced multi-tier cache with 90%+ token reduction, 6 eviction strategies, stampede prevention, and automatic tier management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "get",
+              "set",
+              "delete",
+              "clear",
+              "stats",
+              "configure",
+              "promote",
+              "demote",
+              "batch-get",
+              "batch-set",
+              "export",
+              "import"
+            ],
+            "description": "The cache operation to perform"
+          },
+          "key": {
+            "type": "string",
+            "description": "Cache key (for get/set/delete/promote/demote operations)"
+          },
+          "value": {
+            "type": "string",
+            "description": "Value to store (for set operation)"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of keys (for batch-get operation)"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "ttl": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ]
+            },
+            "description": "Array of key-value pairs (for batch-set operation)"
+          },
+          "evictionStrategy": {
+            "type": "string",
+            "enum": [
+              "LRU",
+              "LFU",
+              "FIFO",
+              "TTL",
+              "SIZE",
+              "HYBRID"
+            ],
+            "description": "Eviction strategy (for configure operation)"
+          },
+          "writeMode": {
+            "type": "string",
+            "enum": [
+              "write-through",
+              "write-back"
+            ],
+            "description": "Write mode (for configure operation)"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "L1",
+              "L2",
+              "L3"
+            ],
+            "description": "Cache tier (for set operation, default: L1)"
+          },
+          "targetTier": {
+            "type": "string",
+            "enum": [
+              "L1",
+              "L2",
+              "L3"
+            ],
+            "description": "Target tier (for promote/demote operations)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Time-to-live in milliseconds"
+          },
+          "l1MaxSize": {
+            "type": "number",
+            "description": "Maximum L1 cache size (for configure operation)"
+          },
+          "l2MaxSize": {
+            "type": "number",
+            "description": "Maximum L2 cache size (for configure operation)"
+          },
+          "defaultTTL": {
+            "type": "number",
+            "description": "Default TTL in milliseconds (for configure operation)"
+          },
+          "exportDelta": {
+            "type": "boolean",
+            "description": "Export only changes since last snapshot (for export operation)"
+          },
+          "importData": {
+            "type": "string",
+            "description": "JSON data to import (for import operation)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable result caching (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_sql",
+      "description": "SQL query analyzer with optimization suggestions and execution plan analysis (83% token reduction)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "SQL query to analyze"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "analyze",
+              "explain",
+              "validate",
+              "optimize",
+              "history"
+            ],
+            "description": "Action to perform (default: analyze)"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "postgresql",
+              "mysql",
+              "sqlite",
+              "sqlserver"
+            ],
+            "description": "Database type for syntax-specific validation"
+          },
+          "schema": {
+            "type": "string",
+            "description": "Schema name (optional)"
+          },
+          "includeExecutionPlan": {
+            "type": "boolean",
+            "description": "Include execution plan analysis (default: false)"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis (bypass cache)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_schema",
+      "description": "Database schema analyzer with intelligent caching and 83% token reduction. Supports PostgreSQL, MySQL, and SQLite. Provides schema introspection, relationship analysis, index recommendations, and schema diff.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "connectionString": {
+            "type": "string",
+            "description": "Database connection string (e.g., postgresql://user:pass@host:port/db, mysql://user:pass@host/db, /path/to/database.sqlite)"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "full",
+              "summary",
+              "analysis",
+              "diff"
+            ],
+            "description": "Output mode: full (complete schema), summary (statistics only, 95% reduction), analysis (issues only, 85% reduction), diff (compare schemas, 90% reduction)",
+            "default": "full"
+          },
+          "compareWith": {
+            "type": "string",
+            "description": "Second connection string for diff mode (compare two databases)"
+          },
+          "forceRefresh": {
+            "type": "boolean",
+            "description": "Force refresh schema analysis, bypassing cache",
+            "default": false
+          },
+          "includeData": {
+            "type": "boolean",
+            "description": "Include row counts and table sizes in analysis",
+            "default": false
+          },
+          "analyzeTables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific tables to analyze (all if not specified)"
+          },
+          "detectUnusedIndexes": {
+            "type": "boolean",
+            "description": "Detect potentially unused indexes (requires database statistics)",
+            "default": false
+          }
+        },
+        "required": [
+          "connectionString"
+        ]
+      }
+    },
+    {
+      "name": "smart_api_fetch",
+      "description": "Execute HTTP requests with intelligent caching and retry logic.\n\nFeatures:\n- Automatic retry with exponential backoff (1s, 2s, 4s, 8s)\n- Response caching with TTL-based invalidation (default: 5 minutes)\n- Request deduplication for in-flight requests\n- Circuit breaker pattern (opens after 5 consecutive failures)\n- ETag/Cache-Control header support\n- 83% average token reduction through intelligent output formatting\n\nToken Reduction Strategy:\n- Cached responses: 95% reduction (summary only)\n- Error responses: 90% reduction (error details only)\n- Retried requests: 85% reduction (success summary with retry info)\n- First requests: 80% reduction (compact summary)\n\nPerfect for:\n- API integration and testing\n- Webhook handling\n- External service communication\n- Data fetching with resilience",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE",
+              "PATCH"
+            ],
+            "description": "HTTP method"
+          },
+          "url": {
+            "type": "string",
+            "description": "Request URL"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Request headers (optional)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "description": "Request body for POST/PUT/PATCH (optional)",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)"
+          },
+          "maxRetries": {
+            "type": "number",
+            "description": "Maximum retry attempts (default: 3)"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Request timeout in milliseconds (default: 30000)"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh request, ignore cache (default: false)"
+          },
+          "followRedirects": {
+            "type": "boolean",
+            "description": "Follow HTTP redirects (default: true)"
+          },
+          "parseJson": {
+            "type": "boolean",
+            "description": "Parse response as JSON (default: true)"
+          }
+        },
+        "required": [
+          "method",
+          "url"
+        ]
+      }
+    },
+    {
+      "name": "smart-cache-api",
+      "description": "API Response Caching with 83% token reduction through intelligent cache management.\n\nFeatures:\n- Multiple caching strategies (TTL, ETag, Event-based, LRU, Size-based)\n- Intelligent cache key generation with query normalization\n- Pattern-based and tag-based invalidation\n- Stale-while-revalidate support\n- Cache hit rate analysis and recommendations\n- Cache warming and preloading\n\nActions:\n- get: Retrieve cached API response\n- set: Cache an API response\n- invalidate: Remove cached entries (pattern/tag/manual)\n- analyze: Get cache performance metrics\n- warm: Pre-cache specific endpoints\n\nToken Reduction:\n- Cache hit: ~95% (summary only)\n- Cache miss: 0% (full response)\n- Stale cache: ~95% (stale summary)\n- Invalidation: ~98% (count only)\n- Analysis: ~90% (statistics only)\n- Average: 83% reduction",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "get",
+              "set",
+              "invalidate",
+              "analyze",
+              "warm"
+            ],
+            "description": "Cache operation to perform"
+          },
+          "request": {
+            "type": "object",
+            "description": "API request data (for get/set)",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string"
+              },
+              "headers": {
+                "type": "object"
+              },
+              "body": {
+                "type": "object"
+              },
+              "params": {
+                "type": "object"
+              }
+            }
+          },
+          "response": {
+            "description": "API response data (for set)"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "ttl",
+              "etag",
+              "event",
+              "lru",
+              "size-based",
+              "hybrid"
+            ],
+            "description": "Caching strategy to use"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Time-to-live in seconds (default: 3600)"
+          },
+          "invalidationPattern": {
+            "type": "string",
+            "enum": [
+              "time",
+              "pattern",
+              "tag",
+              "manual",
+              "event"
+            ],
+            "description": "Invalidation pattern to use"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "URL pattern for invalidation (e.g., /api/users/*)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags for grouping cached entries"
+          },
+          "staleWhileRevalidate": {
+            "type": "boolean",
+            "description": "Enable stale-while-revalidate"
+          },
+          "staleTime": {
+            "type": "number",
+            "description": "Time before considering cache stale (seconds)"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Endpoints to warm (for warm action)"
+          },
+          "maxCacheSize": {
+            "type": "number",
+            "description": "Maximum cache size in bytes"
+          },
+          "maxEntries": {
+            "type": "number",
+            "description": "Maximum number of cache entries"
+          },
+          "normalizeQuery": {
+            "type": "boolean",
+            "description": "Normalize query parameters (default: true)"
+          },
+          "ignoreHeaders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Headers to exclude from cache key"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "smart_database",
+      "description": "Database query optimizer with connection pooling, circuit breaking, and 83% token reduction. Supports query execution, EXPLAIN analysis, performance optimization, health monitoring, slow query detection, and batch operations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "query",
+              "explain",
+              "analyze",
+              "optimize",
+              "health",
+              "pool",
+              "slow",
+              "batch"
+            ],
+            "description": "Action to perform (default: query)",
+            "default": "query"
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "postgresql",
+              "mysql",
+              "sqlite",
+              "mongodb",
+              "redis",
+              "generic"
+            ],
+            "description": "Database engine (default: generic)",
+            "default": "generic"
+          },
+          "query": {
+            "type": "string",
+            "description": "SQL query to execute (required for query/explain/analyze/optimize)"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of queries for batch execution"
+          },
+          "params": {
+            "type": "array",
+            "description": "Query parameters for prepared statements"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Query timeout in milliseconds (default: 30000)",
+            "default": 30000
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum rows to return (default: 10)",
+            "default": 10
+          },
+          "poolSize": {
+            "type": "number",
+            "description": "Connection pool size (default: 10)",
+            "default": 10
+          },
+          "maxPoolSize": {
+            "type": "number",
+            "description": "Maximum pool size (default: 20)",
+            "default": 20
+          },
+          "enableCache": {
+            "type": "boolean",
+            "description": "Enable query result caching (default: true)",
+            "default": true
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)",
+            "default": 300
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh query, bypassing cache (default: false)",
+            "default": false
+          },
+          "enableRetry": {
+            "type": "boolean",
+            "description": "Enable automatic retry on failure (default: true)",
+            "default": true
+          },
+          "maxRetries": {
+            "type": "number",
+            "description": "Maximum retry attempts (default: 3)",
+            "default": 3
+          },
+          "slowQueryThreshold": {
+            "type": "number",
+            "description": "Slow query threshold in milliseconds (default: 1000)",
+            "default": 1000
+          },
+          "enableCircuitBreaker": {
+            "type": "boolean",
+            "description": "Enable circuit breaker pattern (default: true)",
+            "default": true
+          },
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for batch operations (default: 100)",
+            "default": 100
+          },
+          "parallelBatches": {
+            "type": "number",
+            "description": "Number of parallel batch operations (default: 4)",
+            "default": 4
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_graphql",
+      "description": "GraphQL query optimizer with complexity analysis and caching (83% token reduction)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "GraphQL query to analyze"
+          },
+          "variables": {
+            "type": "object",
+            "description": "Query variables (optional)"
+          },
+          "operationName": {
+            "type": "string",
+            "description": "Operation name (optional)"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "GraphQL endpoint for schema introspection (optional)"
+          },
+          "analyzeComplexity": {
+            "type": "boolean",
+            "description": "Enable complexity analysis (default: true)"
+          },
+          "detectN1": {
+            "type": "boolean",
+            "description": "Detect N+1 query problems (default: true)"
+          },
+          "suggestOptimizations": {
+            "type": "boolean",
+            "description": "Suggest query optimizations (default: true)"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis (bypass cache)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 300)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "smart_migration",
+      "description": "Database migration tracker with status monitoring and 83% token reduction. Supports listing migrations, checking status, viewing history, rollback operations, and migration generation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "list",
+              "status",
+              "pending",
+              "history",
+              "rollback",
+              "generate"
+            ],
+            "description": "Action to perform (default: list)",
+            "default": "list"
+          },
+          "migrationId": {
+            "type": "string",
+            "description": "Migration ID (required for rollback and generate actions)"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "description": "Migration direction for rollback (default: down)",
+            "default": "down"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of results (default: 20 for list/pending, 50 for history)",
+            "default": 20
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis, bypassing cache",
+            "default": false
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 3600)",
+            "default": 3600
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_orm",
+      "description": "ORM query optimizer with N+1 detection (83% token reduction)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ormCode": {
+            "type": "string",
+            "description": "ORM query code to analyze (Prisma, TypeORM, Sequelize, Mongoose)"
+          },
+          "ormType": {
+            "type": "string",
+            "enum": [
+              "prisma",
+              "sequelize",
+              "typeorm",
+              "mongoose",
+              "generic"
+            ],
+            "description": "ORM framework type"
+          },
+          "detectN1": {
+            "type": "boolean",
+            "description": "Detect N+1 query problems (default: true)"
+          },
+          "suggestEagerLoading": {
+            "type": "boolean",
+            "description": "Suggest eager loading optimizations (default: true)"
+          },
+          "analyzeRelationships": {
+            "type": "boolean",
+            "description": "Analyze relationship patterns (default: false)"
+          },
+          "estimateQueries": {
+            "type": "boolean",
+            "description": "Estimate generated SQL queries (default: false)"
+          },
+          "modelDefinitions": {
+            "type": "string",
+            "description": "Optional schema/model definitions for enhanced analysis"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis, bypass cache (default: false)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 3600)"
+          }
+        },
+        "required": [
+          "ormCode",
+          "ormType"
+        ]
+      }
+    },
+    {
+      "name": "smart_rest",
+      "description": "REST API analyzer with endpoint discovery and health scoring (83% token reduction)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "specUrl": {
+            "type": "string",
+            "description": "OpenAPI/Swagger spec URL (not yet supported, use specContent)"
+          },
+          "specContent": {
+            "type": "string",
+            "description": "OpenAPI/Swagger spec content (JSON string)"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "Base API URL (optional, extracted from spec if not provided)"
+          },
+          "analyzeEndpoints": {
+            "type": "boolean",
+            "description": "Analyze all endpoints (default: true)"
+          },
+          "checkHealth": {
+            "type": "boolean",
+            "description": "Check API health and generate score (default: false)"
+          },
+          "generateDocs": {
+            "type": "boolean",
+            "description": "Generate documentation (default: false)"
+          },
+          "detectPatterns": {
+            "type": "boolean",
+            "description": "Detect API patterns (auth, versioning, etc.) (default: false)"
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH"
+              ]
+            },
+            "description": "Filter by HTTP methods"
+          },
+          "resourceFilter": {
+            "type": "string",
+            "description": "Filter by resource path (e.g., \"users\")"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis, bypass cache (default: false)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 3600)"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_websocket",
+      "description": "WebSocket connection manager with message tracking (83% token reduction)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "WebSocket URL (ws:// or wss://)"
+          },
+          "protocols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "WebSocket sub-protocols"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "connect",
+              "disconnect",
+              "send",
+              "history",
+              "analyze"
+            ],
+            "description": "Action to perform"
+          },
+          "message": {
+            "description": "Message to send (for send action)"
+          },
+          "trackMessages": {
+            "type": "boolean",
+            "description": "Track message history (default: true)"
+          },
+          "detectPatterns": {
+            "type": "boolean",
+            "description": "Detect message patterns (default: true)"
+          },
+          "analyzeHealth": {
+            "type": "boolean",
+            "description": "Analyze connection health (default: true)"
+          },
+          "maxHistory": {
+            "type": "number",
+            "description": "Maximum messages to keep (default: 100)"
+          },
+          "maxReconnectAttempts": {
+            "type": "number",
+            "description": "Maximum reconnection attempts (default: 5)"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force fresh analysis (bypass cache)"
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 60)"
+          }
+        },
+        "required": [
+          "url",
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "alert_manager",
+      "description": "Comprehensive alerting system with multi-channel notifications, intelligent routing, and 89% token reduction through aggressive caching and history aggregation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create-alert",
+              "update-alert",
+              "delete-alert",
+              "list-alerts",
+              "trigger",
+              "get-history",
+              "configure-channels",
+              "silence"
+            ],
+            "description": "The alert management operation to perform"
+          },
+          "alertId": {
+            "type": "string",
+            "description": "Alert identifier (required for update, delete, trigger, silence operations)"
+          },
+          "alertName": {
+            "type": "string",
+            "description": "Alert name (required for create operation, optional for others)"
+          },
+          "condition": {
+            "type": "object",
+            "description": "Alert condition configuration (required for create operation)",
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "aggregation": {
+                "type": "string",
+                "enum": [
+                  "avg",
+                  "sum",
+                  "min",
+                  "max",
+                  "count",
+                  "percentile"
+                ]
+              },
+              "percentile": {
+                "type": "number"
+              },
+              "groupBy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "filters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "type": "string"
+                    },
+                    "value": {}
+                  }
+                }
+              }
+            }
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error",
+              "critical"
+            ],
+            "description": "Alert severity level"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "slack",
+                "webhook",
+                "sms",
+                "pagerduty",
+                "custom"
+              ]
+            },
+            "description": "Notification channels for the alert"
+          },
+          "threshold": {
+            "type": "object",
+            "description": "Threshold configuration (required for create operation)",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "above",
+                  "below",
+                  "equals",
+                  "not-equals",
+                  "change",
+                  "anomaly"
+                ]
+              },
+              "value": {
+                "type": "number"
+              },
+              "changePercent": {
+                "type": "number"
+              },
+              "timeWindow": {
+                "type": "number"
+              }
+            }
+          },
+          "channelConfig": {
+            "type": "object",
+            "description": "Notification channel configuration",
+            "properties": {
+              "email": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "template": {
+                    "type": "string"
+                  }
+                }
+              },
+              "slack": {
+                "type": "object",
+                "properties": {
+                  "webhook": {
+                    "type": "string"
+                  },
+                  "channel": {
+                    "type": "string"
+                  },
+                  "mentionUsers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "webhook": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "headers": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "silenceDuration": {
+            "type": "number",
+            "description": "Silence duration in seconds (required for silence operation)"
+          },
+          "silenceReason": {
+            "type": "string",
+            "description": "Reason for silencing alerts"
+          },
+          "timeRange": {
+            "type": "object",
+            "description": "Time range filter for history operation",
+            "properties": {
+              "start": {
+                "type": "number"
+              },
+              "end": {
+                "type": "number"
+              }
+            }
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of history events to return"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching for this operation (default: true)",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds (optional, uses defaults if not specified)"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "metric_collector",
+      "description": "Comprehensive metrics collection and aggregation with multi-source support, time-series compression, and 88% token reduction through delta encoding and intelligent caching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "collect",
+              "query",
+              "aggregate",
+              "export",
+              "list-sources",
+              "configure-source",
+              "get-stats",
+              "purge"
+            ],
+            "description": "The metric collector operation to perform"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "Source identifier"
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "Source name"
+          },
+          "source": {
+            "type": "object",
+            "description": "Source configuration for configure-source operation"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific metrics to collect"
+          },
+          "tags": {
+            "type": "object",
+            "description": "Tag filters"
+          },
+          "query": {
+            "type": "object",
+            "description": "Query configuration",
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "object"
+              },
+              "timeRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "number"
+                  },
+                  "end": {
+                    "type": "number"
+                  }
+                }
+              },
+              "limit": {
+                "type": "number"
+              },
+              "downsample": {
+                "type": "number"
+              }
+            }
+          },
+          "aggregation": {
+            "type": "object",
+            "description": "Aggregation configuration",
+            "properties": {
+              "function": {
+                "type": "string",
+                "enum": [
+                  "avg",
+                  "sum",
+                  "min",
+                  "max",
+                  "count",
+                  "rate",
+                  "percentile"
+                ]
+              },
+              "percentile": {
+                "type": "number"
+              },
+              "window": {
+                "type": "number"
+              },
+              "groupBy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "csv",
+              "prometheus",
+              "influxdb",
+              "graphite"
+            ],
+            "description": "Export format"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Export destination (URL or file path)"
+          },
+          "compress": {
+            "type": "boolean",
+            "description": "Compress exported data"
+          },
+          "retentionPeriod": {
+            "type": "number",
+            "description": "Data retention period in seconds"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching (default: true)",
+            "default": true
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "monitoring_integration",
+      "description": "External monitoring platform integration with 87% token reduction through data compression and intelligent caching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "connect",
+              "disconnect",
+              "list-connections",
+              "sync-metrics",
+              "sync-alerts",
+              "push-data",
+              "get-status",
+              "configure-mapping"
+            ],
+            "description": "The monitoring integration operation to perform"
+          },
+          "connectionId": {
+            "type": "string",
+            "description": "Connection identifier"
+          },
+          "connectionName": {
+            "type": "string",
+            "description": "Connection name"
+          },
+          "connection": {
+            "type": "object",
+            "description": "Connection configuration",
+            "properties": {
+              "platform": {
+                "type": "string",
+                "enum": [
+                  "prometheus",
+                  "grafana",
+                  "datadog",
+                  "newrelic",
+                  "splunk",
+                  "elastic"
+                ]
+              },
+              "url": {
+                "type": "string"
+              },
+              "apiKey": {
+                "type": "string"
+              }
+            }
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "custom_widget",
+      "description": "Create and manage custom dashboard widgets with 88% token reduction through template caching and configuration compression",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update",
+              "delete",
+              "list",
+              "render",
+              "create-template",
+              "validate",
+              "get-schema"
+            ],
+            "description": "Widget operation to perform"
+          },
+          "widgetId": {
+            "type": "string",
+            "description": "Widget ID (required for update, delete, render)"
+          },
+          "widgetName": {
+            "type": "string",
+            "description": "Widget name (required for create)"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "chart",
+              "metric",
+              "table",
+              "gauge",
+              "status",
+              "timeline",
+              "heatmap",
+              "custom"
+            ],
+            "description": "Widget type"
+          },
+          "config": {
+            "type": "object",
+            "description": "Widget configuration"
+          },
+          "dataSource": {
+            "type": "object",
+            "description": "Data source configuration"
+          },
+          "templateName": {
+            "type": "string",
+            "description": "Template name (for create-template)"
+          },
+          "templateDescription": {
+            "type": "string",
+            "description": "Template description (for create-template)"
+          },
+          "templateConfig": {
+            "type": "object",
+            "description": "Template configuration (for create-template)"
+          },
+          "renderFormat": {
+            "type": "string",
+            "enum": [
+              "html",
+              "json",
+              "react"
+            ],
+            "description": "Render format (default: html)",
+            "default": "html"
+          },
+          "includeData": {
+            "type": "boolean",
+            "description": "Include data source in render output",
+            "default": false
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "data_visualizer",
+      "description": "Create and manage interactive data visualizations with 92% token reduction through SVG/Canvas optimization and configuration caching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create-chart",
+              "update-chart",
+              "delete-chart",
+              "list-charts",
+              "render",
+              "export",
+              "create-heatmap",
+              "create-timeline",
+              "create-network",
+              "create-sankey",
+              "create-animation"
+            ],
+            "description": "Visualization operation to perform"
+          },
+          "chartId": {
+            "type": "string",
+            "description": "Chart ID (required for update, delete, render)"
+          },
+          "chartType": {
+            "type": "string",
+            "enum": [
+              "line",
+              "bar",
+              "pie",
+              "scatter",
+              "area",
+              "radar",
+              "bubble"
+            ],
+            "description": "Chart type"
+          },
+          "data": {
+            "type": "object",
+            "description": "Chart data with labels and datasets"
+          },
+          "chartConfig": {
+            "type": "object",
+            "description": "Chart configuration"
+          },
+          "heatmapConfig": {
+            "type": "object",
+            "description": "Heatmap configuration"
+          },
+          "timelineConfig": {
+            "type": "object",
+            "description": "Timeline configuration"
+          },
+          "networkConfig": {
+            "type": "object",
+            "description": "Network graph configuration"
+          },
+          "sankeyConfig": {
+            "type": "object",
+            "description": "Sankey diagram configuration"
+          },
+          "animationConfig": {
+            "type": "object",
+            "description": "Animation configuration"
+          },
+          "renderFormat": {
+            "type": "string",
+            "enum": [
+              "svg",
+              "canvas",
+              "html",
+              "json"
+            ],
+            "description": "Rendering format (default: svg)",
+            "default": "svg"
+          },
+          "exportFormat": {
+            "type": "string",
+            "enum": [
+              "svg",
+              "png",
+              "pdf",
+              "json"
+            ],
+            "description": "Export format (default: svg)",
+            "default": "svg"
+          },
+          "exportWidth": {
+            "type": "number",
+            "description": "Export width in pixels"
+          },
+          "exportHeight": {
+            "type": "number",
+            "description": "Export height in pixels"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "health_monitor",
+      "description": "Monitor system and application health with 91% token reduction through health state compression and metric aggregation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "register-endpoint",
+              "unregister-endpoint",
+              "check-health",
+              "list-endpoints",
+              "get-history",
+              "set-threshold",
+              "get-summary",
+              "run-diagnostic"
+            ],
+            "description": "Health monitoring operation"
+          },
+          "endpointId": {
+            "type": "string",
+            "description": "Endpoint ID"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "Endpoint name"
+          },
+          "endpointType": {
+            "type": "string",
+            "enum": [
+              "http",
+              "tcp",
+              "database",
+              "service",
+              "custom"
+            ],
+            "description": "Type of endpoint to monitor"
+          },
+          "config": {
+            "type": "object",
+            "description": "Endpoint configuration"
+          },
+          "interval": {
+            "type": "number",
+            "description": "Check interval in seconds"
+          },
+          "thresholds": {
+            "type": "object",
+            "description": "Health thresholds"
+          },
+          "timeRange": {
+            "type": "object",
+            "description": "Time range for history"
+          },
+          "diagnosticType": {
+            "type": "string",
+            "enum": [
+              "network",
+              "disk",
+              "memory",
+              "cpu",
+              "process"
+            ],
+            "description": "Type of diagnostic to run"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "description": "Cache TTL in seconds"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "log_dashboard",
+      "description": "Interactive log analysis dashboard with filtering, searching, pattern detection, and 90% token reduction through intelligent caching and compression",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update",
+              "query",
+              "aggregate",
+              "detect-anomalies",
+              "create-filter",
+              "export",
+              "tail"
+            ],
+            "description": "The log dashboard operation to perform"
+          },
+          "dashboardId": {
+            "type": "string",
+            "description": "Dashboard identifier"
+          },
+          "dashboardName": {
+            "type": "string",
+            "description": "Dashboard name (required for create)"
+          },
+          "logFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Paths to log files to analyze"
+          },
+          "query": {
+            "type": "object",
+            "description": "Log query configuration",
+            "properties": {
+              "pattern": {
+                "type": "string"
+              },
+              "level": {
+                "type": [
+                  "string",
+                  "array"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "timeRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "number"
+                  },
+                  "end": {
+                    "type": "number"
+                  }
+                }
+              },
+              "limit": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              }
+            }
+          },
+          "aggregation": {
+            "type": "object",
+            "description": "Aggregation configuration",
+            "properties": {
+              "groupBy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "timeWindow": {
+                "type": "number"
+              },
+              "metrics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "anomaly": {
+            "type": "object",
+            "description": "Anomaly detection configuration",
+            "properties": {
+              "sensitivity": {
+                "type": "number"
+              },
+              "method": {
+                "type": "string"
+              },
+              "baselinePeriod": {
+                "type": "number"
+              }
+            }
+          },
+          "filterName": {
+            "type": "string",
+            "description": "Name for saved filter"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "csv",
+              "txt"
+            ],
+            "description": "Export format"
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "Path for exported file"
+          },
+          "follow": {
+            "type": "boolean",
+            "description": "Follow mode for tail operation"
+          },
+          "lines": {
+            "type": "number",
+            "description": "Number of lines to tail"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Enable caching (default: true)",
+            "default": true
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "intelligent-assistant",
+      "description": "Provides intelligent assistance including contextual help, suggestions, explanations, and troubleshooting",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "ask",
+              "suggest",
+              "explain",
+              "troubleshoot",
+              "learn",
+              "get-context",
+              "search-knowledge",
+              "generate-example"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "natural-language-query",
+      "description": "Natural language query translation and optimization",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "parse",
+              "translate-sql",
+              "translate-mongodb",
+              "translate-graphql",
+              "optimize",
+              "validate",
+              "suggest-query",
+              "explain-results"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "pattern-recognition",
+      "description": "Pattern detection and analysis in logs, metrics, and events",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "detect-patterns",
+              "cluster-events",
+              "find-correlations",
+              "mine-sequences",
+              "identify-trends",
+              "compare-patterns",
+              "visualize",
+              "export"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "predictive-analytics",
+      "description": "Predictive modeling and forecasting for system metrics",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "predict",
+              "train-model",
+              "detect-anomalies",
+              "forecast-capacity",
+              "predict-failures",
+              "analyze-trends",
+              "evaluate",
+              "export-model"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "recommendation-engine",
+      "description": "Intelligent recommendations for optimization and resource allocation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "recommend",
+              "train",
+              "find-similar",
+              "personalize",
+              "optimize-workflow",
+              "allocate-resources",
+              "tune-config",
+              "explain-recommendation"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart-summarization",
+      "description": "Intelligent content summarization and digest generation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "summarize",
+              "create-digest",
+              "compare-periods",
+              "extract-insights",
+              "highlight-changes",
+              "categorize",
+              "schedule",
+              "export"
+            ],
+            "description": "Operation to perform"
+          },
+          "query": {
+            "type": "string",
+            "description": "Query or input data"
+          },
+          "data": {
+            "type": "object",
+            "description": "Additional data"
+          },
+          "useCache": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable caching"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_processes",
+      "description": "Monitor and analyze system processes with anomaly detection and resource tracking",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Filter processes by name pattern"
+          },
+          "cpuThreshold": {
+            "type": "number",
+            "description": "Show only high CPU usage processes (> threshold %)"
+          },
+          "memoryThreshold": {
+            "type": "number",
+            "description": "Show only high memory usage processes (> threshold MB)"
+          },
+          "includeSystem": {
+            "type": "boolean",
+            "description": "Include system processes",
+            "default": false
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of processes to show",
+            "default": 20
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "compareWithPrevious": {
+            "type": "boolean",
+            "description": "Compare with previous snapshot",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_network",
+      "description": "Network diagnostics and monitoring with connectivity testing, port scanning, DNS resolution, and anomaly detection",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "ping",
+              "port-scan",
+              "dns",
+              "traceroute",
+              "all"
+            ],
+            "description": "Network operation to perform"
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Hosts to test (for ping/port-scan operations)"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Ports to scan (for port-scan operation)"
+          },
+          "hostnames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Hostnames for DNS resolution"
+          },
+          "pingCount": {
+            "type": "number",
+            "description": "Number of ping attempts per host",
+            "default": 4
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout in milliseconds",
+            "default": 5000
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 300)",
+            "default": 300
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_logs",
+      "description": "System log aggregation and analysis with multi-source support, pattern filtering, error detection, and insights",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Log sources to aggregate (file paths or system logs)"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warn",
+              "info",
+              "debug",
+              "all"
+            ],
+            "description": "Filter by log level",
+            "default": "all"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Filter by pattern (regex)"
+          },
+          "tail": {
+            "type": "number",
+            "description": "Number of lines to tail",
+            "default": 100
+          },
+          "follow": {
+            "type": "boolean",
+            "description": "Follow mode (watch for new entries)",
+            "default": false
+          },
+          "since": {
+            "type": "string",
+            "description": "Time range filter (e.g., '1h', '24h', '7d')"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 300)",
+            "default": 300
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_lint",
+      "description": "Run ESLint with intelligent caching, incremental analysis, and auto-fix suggestions",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "Files or pattern to lint",
+            "items": {
+              "type": "string"
+            }
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force full lint (ignore cache)",
+            "default": false
+          },
+          "fix": {
+            "type": "boolean",
+            "description": "Auto-fix issues",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "onlyNew": {
+            "type": "boolean",
+            "description": "Show only new issues since last run",
+            "default": false
+          },
+          "includeIgnored": {
+            "type": "boolean",
+            "description": "Include previously ignored issues",
+            "default": false
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 3600)",
+            "default": 3600
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_install",
+      "description": "Package installation with dependency analysis, conflict detection, and smart caching for npm/yarn/pnpm",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Force reinstall (ignore cache)",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "yarn",
+              "pnpm"
+            ],
+            "description": "Package manager to use (auto-detect if not specified)"
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Packages to install (if empty, installs all from package.json)"
+          },
+          "dev": {
+            "type": "boolean",
+            "description": "Install as dev dependency",
+            "default": false
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 3600)",
+            "default": 3600
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_docker",
+      "description": "Docker operations with build/run/stop/logs support, image layer analysis, and optimization suggestions",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "build",
+              "run",
+              "stop",
+              "logs",
+              "ps"
+            ],
+            "description": "Docker operation to perform"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force operation (ignore cache)",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "dockerfile": {
+            "type": "string",
+            "description": "Dockerfile path"
+          },
+          "imageName": {
+            "type": "string",
+            "description": "Image name for build/run"
+          },
+          "containerName": {
+            "type": "string",
+            "description": "Container name for run/stop/logs"
+          },
+          "context": {
+            "type": "string",
+            "description": "Build context directory"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Port mappings for run (e.g., ['8080:80', '443:443'])"
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables for run"
+          },
+          "follow": {
+            "type": "boolean",
+            "description": "Follow logs (tail mode)",
+            "default": false
+          },
+          "tail": {
+            "type": "number",
+            "description": "Number of log lines to show"
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 3600)",
+            "default": 3600
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_build",
+      "description": "Run TypeScript build with intelligent caching, diff-based change detection, and token-optimized output",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Force full rebuild (ignore cache)",
+            "default": false
+          },
+          "watch": {
+            "type": "boolean",
+            "description": "Watch mode for continuous builds",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "tsconfig": {
+            "type": "string",
+            "description": "TypeScript config file path"
+          },
+          "includeWarnings": {
+            "type": "boolean",
+            "description": "Include warnings in output",
+            "default": true
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 3600)",
+            "default": 3600
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_system_metrics",
+      "description": "System resource monitoring with CPU, memory, disk usage tracking, anomaly detection, and performance recommendations",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Force operation (ignore cache)",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "includeDisk": {
+            "type": "boolean",
+            "description": "Include disk metrics",
+            "default": true
+          },
+          "diskPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Disk paths to monitor (default: root partition)"
+          },
+          "detectAnomalies": {
+            "type": "boolean",
+            "description": "Detect anomalies by comparing with previous snapshot",
+            "default": true
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 60)",
+            "default": 60
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_test",
+      "description": "Run tests with intelligent caching, coverage tracking, and incremental test execution",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Pattern to match test files"
+          },
+          "onlyChanged": {
+            "type": "boolean",
+            "description": "Run only tests that changed since last run",
+            "default": false
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force full test run (ignore cache)",
+            "default": false
+          },
+          "coverage": {
+            "type": "boolean",
+            "description": "Collect coverage information",
+            "default": false
+          },
+          "watch": {
+            "type": "boolean",
+            "description": "Watch mode for continuous testing",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 300)",
+            "default": 300
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_typecheck",
+      "description": "Run TypeScript type checking with intelligent caching and categorized error reporting",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Force full type check (ignore cache)",
+            "default": false
+          },
+          "watch": {
+            "type": "boolean",
+            "description": "Watch mode for continuous type checking",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Project root directory"
+          },
+          "tsconfig": {
+            "type": "string",
+            "description": "TypeScript config file path"
+          },
+          "maxCacheAge": {
+            "type": "number",
+            "description": "Maximum cache age in seconds (default: 3600)",
+            "default": 3600
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_cron",
+      "description": "Intelligent scheduled task management with smart caching (85%+ token reduction). Manage cron jobs (Linux/macOS) and Windows Task Scheduler with validation, history tracking, and next run predictions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "list",
+              "add",
+              "remove",
+              "enable",
+              "disable",
+              "history",
+              "predict-next",
+              "validate"
+            ],
+            "description": "Cron operation to perform"
+          },
+          "schedulerType": {
+            "type": "string",
+            "enum": [
+              "cron",
+              "windows-task",
+              "auto"
+            ],
+            "description": "Scheduler type (auto-detected if not specified)"
+          },
+          "taskName": {
+            "type": "string",
+            "description": "Name of the scheduled task"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Cron expression (e.g., \"0 2 * * *\" for daily at 2am) or Windows schedule"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command to execute"
+          },
+          "user": {
+            "type": "string",
+            "description": "User to run the task as"
+          },
+          "workingDirectory": {
+            "type": "string",
+            "description": "Working directory for the command"
+          },
+          "description": {
+            "type": "string",
+            "description": "Task description"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the task is enabled"
+          },
+          "historyLimit": {
+            "type": "number",
+            "description": "Number of history entries to retrieve (default: 50)"
+          },
+          "predictCount": {
+            "type": "number",
+            "description": "Number of future runs to predict (default: 5)"
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Use cached results when available (default: true)",
+            "default": true
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: 60 for list, 30 for history, 300 for predictions)"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_user",
+      "description": "Intelligent user and permission management with smart caching (86%+ token reduction). Manage users, groups, permissions, ACLs, and perform security audits across Windows, Linux, and macOS.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "list-users",
+              "list-groups",
+              "check-permissions",
+              "audit-security",
+              "get-acl",
+              "get-user-info",
+              "get-group-info",
+              "check-sudo"
+            ],
+            "description": "User/permission operation to perform"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username for user-specific operations"
+          },
+          "groupname": {
+            "type": "string",
+            "description": "Group name for group-specific operations"
+          },
+          "path": {
+            "type": "string",
+            "description": "File/directory path for permission checks and ACL operations"
+          },
+          "includeSystemUsers": {
+            "type": "boolean",
+            "description": "Include system users in user listings (default: false)",
+            "default": false
+          },
+          "includeSystemGroups": {
+            "type": "boolean",
+            "description": "Include system groups in group listings (default: false)",
+            "default": false
+          },
+          "useCache": {
+            "type": "boolean",
+            "description": "Use cached results when available (default: true)",
+            "default": true
+          },
+          "ttl": {
+            "type": "number",
+            "description": "Cache TTL in seconds (default: varies by operation)"
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
+      "name": "smart_diff",
+      "description": "Get git diffs with 85% token reduction through diff-only output and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for git operations"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source commit/branch to compare from (default: HEAD)",
+            "default": "HEAD"
+          },
+          "target": {
+            "type": "string",
+            "description": "Target commit/branch to compare to (default: working directory)"
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "Diff staged changes only",
+            "default": false
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific files to diff"
+          },
+          "filePattern": {
+            "type": "string",
+            "description": "Pattern to filter files (e.g., \"*.ts\")"
+          },
+          "summaryOnly": {
+            "type": "boolean",
+            "description": "Only return statistics, not diff content",
+            "default": false
+          },
+          "contextLines": {
+            "type": "number",
+            "description": "Lines of context around changes",
+            "default": 3
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of files to diff"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_branch",
+      "description": "List and manage git branches with 60% token reduction through structured JSON output and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for git operations"
+          },
+          "all": {
+            "type": "boolean",
+            "description": "Include both local and remote branches",
+            "default": false
+          },
+          "remote": {
+            "type": "boolean",
+            "description": "Include remote branches",
+            "default": false
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Filter branches by pattern (e.g., \"feature/*\")"
+          },
+          "merged": {
+            "type": "boolean",
+            "description": "Only show merged branches",
+            "default": false
+          },
+          "unmerged": {
+            "type": "boolean",
+            "description": "Only show unmerged branches",
+            "default": false
+          },
+          "namesOnly": {
+            "type": "boolean",
+            "description": "Only return branch names without metadata",
+            "default": false
+          },
+          "includeCommit": {
+            "type": "boolean",
+            "description": "Include last commit information",
+            "default": false
+          },
+          "includeTracking": {
+            "type": "boolean",
+            "description": "Include ahead/behind tracking information",
+            "default": false
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum branches to return"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "name",
+              "date",
+              "author"
+            ],
+            "description": "Field to sort by",
+            "default": "name"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_merge",
+      "description": "Manage git merges with 80% token reduction through structured status and conflict management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for git operations"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "status",
+              "merge",
+              "abort",
+              "continue"
+            ],
+            "description": "Operation to perform",
+            "default": "status"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Branch to merge from (for merge mode)"
+          },
+          "commit": {
+            "type": "string",
+            "description": "Specific commit to merge (for merge mode)"
+          },
+          "noCommit": {
+            "type": "boolean",
+            "description": "Do not create merge commit",
+            "default": false
+          },
+          "noFf": {
+            "type": "boolean",
+            "description": "No fast-forward merge",
+            "default": false
+          },
+          "ffOnly": {
+            "type": "boolean",
+            "description": "Fast-forward only",
+            "default": false
+          },
+          "squash": {
+            "type": "boolean",
+            "description": "Squash commits",
+            "default": false
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "recursive",
+              "ours",
+              "theirs",
+              "octopus",
+              "subtree"
+            ],
+            "description": "Merge strategy",
+            "default": "recursive"
+          },
+          "conflictsOnly": {
+            "type": "boolean",
+            "description": "Only return conflict information",
+            "default": false
+          },
+          "includeContent": {
+            "type": "boolean",
+            "description": "Include file content for conflicts",
+            "default": false
+          },
+          "summaryOnly": {
+            "type": "boolean",
+            "description": "Only return counts and status",
+            "default": false
+          },
+          "maxConflicts": {
+            "type": "number",
+            "description": "Maximum conflicts to return"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_status",
+      "description": "Get git status with 70% token reduction through status-only output and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Repository directory"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "modified",
+                "added",
+                "deleted",
+                "renamed",
+                "copied",
+                "untracked",
+                "ignored",
+                "unmerged"
+              ]
+            },
+            "description": "Filter by specific file statuses"
+          },
+          "filePattern": {
+            "type": "string",
+            "description": "Filter files by regex pattern"
+          },
+          "summaryOnly": {
+            "type": "boolean",
+            "description": "Return counts only, not file lists",
+            "default": false
+          },
+          "includeDetail": {
+            "type": "boolean",
+            "description": "Include diff output for specific files",
+            "default": false
+          },
+          "detailFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files to include diff for (requires includeDetail)"
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "Only staged files"
+          },
+          "unstaged": {
+            "type": "boolean",
+            "description": "Only unstaged files"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum files to return"
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_log",
+      "description": "Get git commit history with 75% token reduction through structured JSON output and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for git operations"
+          },
+          "since": {
+            "type": "string",
+            "description": "Show commits since ref/date (e.g., \"HEAD~10\", \"2024-01-01\")"
+          },
+          "until": {
+            "type": "string",
+            "description": "Show commits until ref/date"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Specific branch to query (default: current branch)"
+          },
+          "author": {
+            "type": "string",
+            "description": "Filter by author name or email"
+          },
+          "grep": {
+            "type": "string",
+            "description": "Filter by commit message pattern"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Only show commits affecting this file/directory"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "oneline",
+              "short",
+              "full"
+            ],
+            "description": "Output detail level",
+            "default": "short"
+          },
+          "includeFiles": {
+            "type": "boolean",
+            "description": "Include list of changed files",
+            "default": false
+          },
+          "includeStats": {
+            "type": "boolean",
+            "description": "Include addition/deletion statistics",
+            "default": false
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum commits to return",
+            "default": 50
+          },
+          "offset": {
+            "type": "number",
+            "description": "Skip first N commits",
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "smart_read",
+      "description": "Read files with 80% token reduction through intelligent caching, diff-based updates, and syntax-aware optimization",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to read"
+          },
+          "diffMode": {
+            "type": "boolean",
+            "description": "Return only diff if file was previously read (default: true)",
+            "default": true
+          },
+          "maxSize": {
+            "type": "number",
+            "description": "Maximum content size to return in bytes (default: 100000)",
+            "default": 100000
+          },
+          "chunkSize": {
+            "type": "number",
+            "description": "Size of chunks for large files (default: 4000)",
+            "default": 4000
+          },
+          "chunkIndex": {
+            "type": "number",
+            "description": "For chunked files, the chunk index to retrieve"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "smart_write",
+      "description": "Write files with 85% token reduction through verification, atomic operations, and change tracking",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to write"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to write to the file"
+          },
+          "verifyBeforeWrite": {
+            "type": "boolean",
+            "description": "Skip write if content is identical",
+            "default": true
+          },
+          "atomic": {
+            "type": "boolean",
+            "description": "Use atomic write with temporary file",
+            "default": true
+          },
+          "autoFormat": {
+            "type": "boolean",
+            "description": "Automatically format code before writing",
+            "default": true
+          },
+          "returnDiff": {
+            "type": "boolean",
+            "description": "Return diff instead of full content",
+            "default": true
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ]
+      }
+    },
+    {
+      "name": "smart_edit",
+      "description": "Edit files with 90% token reduction through line-based operations and diff-only output",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to edit"
+          },
+          "operations": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "insert",
+                      "delete"
+                    ],
+                    "description": "Type of edit operation"
+                  },
+                  "startLine": {
+                    "type": "number",
+                    "description": "Starting line number (1-based)"
+                  },
+                  "endLine": {
+                    "type": "number",
+                    "description": "Ending line number for replace/delete (inclusive)"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Content for replace/insert operations"
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "description": "Regex pattern for pattern-based replacement"
+                  },
+                  "replacement": {
+                    "type": "string",
+                    "description": "Replacement text for pattern-based replacement"
+                  }
+                },
+                "required": [
+                  "type",
+                  "startLine"
+                ]
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "replace",
+                        "insert",
+                        "delete"
+                      ]
+                    },
+                    "startLine": {
+                      "type": "number"
+                    },
+                    "endLine": {
+                      "type": "number"
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "type": "string"
+                    },
+                    "replacement": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "startLine"
+                  ]
+                }
+              }
+            ],
+            "description": "Edit operation(s) to apply"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "Preview changes without applying",
+            "default": false
+          },
+          "returnDiff": {
+            "type": "boolean",
+            "description": "Return diff instead of full content",
+            "default": true
+          },
+          "createBackup": {
+            "type": "boolean",
+            "description": "Create backup before editing",
+            "default": true
+          }
+        },
+        "required": [
+          "path",
+          "operations"
+        ]
+      }
+    },
+    {
+      "name": "smart_glob",
+      "description": "Search files with glob patterns and 75% token reduction through path-only results and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Glob pattern to match files (e.g., \"src/**/*.ts\", \"*.json\")"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for glob search"
+          },
+          "includeMetadata": {
+            "type": "boolean",
+            "description": "Include file metadata (size, modified date, etc.)",
+            "default": false
+          },
+          "includeContent": {
+            "type": "boolean",
+            "description": "Include file content for small files",
+            "default": false
+          },
+          "extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by file extensions (e.g., [\".ts\", \".js\"])"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of results to return"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "name",
+              "size",
+              "modified",
+              "path"
+            ],
+            "description": "Field to sort results by",
+            "default": "path"
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    },
+    {
+      "name": "smart_grep",
+      "description": "Search file contents with 80% token reduction through match-only output and smart filtering",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Search pattern (string or regex)"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for search"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "File patterns to search (glob patterns)"
+          },
+          "caseSensitive": {
+            "type": "boolean",
+            "description": "Case-sensitive search",
+            "default": false
+          },
+          "regex": {
+            "type": "boolean",
+            "description": "Treat pattern as regex",
+            "default": false
+          },
+          "extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Search only these file extensions"
+          },
+          "includeContext": {
+            "type": "boolean",
+            "description": "Include context lines around matches",
+            "default": false
+          },
+          "contextBefore": {
+            "type": "number",
+            "description": "Lines of context before match",
+            "default": 0
+          },
+          "contextAfter": {
+            "type": "number",
+            "description": "Lines of context after match",
+            "default": 0
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum matches to return"
+          },
+          "filesWithMatches": {
+            "type": "boolean",
+            "description": "Only return filenames, not matches",
+            "default": false
+          },
+          "count": {
+            "type": "boolean",
+            "description": "Only return match counts per file",
+            "default": false
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    }
+  ]
+}

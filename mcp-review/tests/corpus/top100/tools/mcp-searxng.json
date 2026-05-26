@@ -1,0 +1,102 @@
+{
+  "server": "mcp-searxng",
+  "captured_at": "2026-05-26T22:23:18Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "ihor-sokoliuk/mcp-searxng",
+    "version": "1.0.5"
+  },
+  "tools": [
+    {
+      "name": "searxng_web_search",
+      "description": "Searches the web using SearXNG. CRITICAL: The parameter name MUST be exactly `query` (not `prompt`, `q`, or any other name). Pass your search terms as the value of the `query` parameter.",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query string. This is the required parameter name \u2014 use exactly `query`, not `prompt` or `q`."
+          },
+          "pageno": {
+            "type": "number",
+            "description": "Search page number (starts at 1)",
+            "default": 1
+          },
+          "time_range": {
+            "type": "string",
+            "description": "Time range of search (day, month, year)",
+            "enum": [
+              "day",
+              "month",
+              "year"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "description": "Language code for search results (e.g., 'en', 'fr', 'de'). Default is instance-dependent.",
+            "default": "all"
+          },
+          "safesearch": {
+            "type": "number",
+            "description": "Safe search filter level (0: None, 1: Moderate, 2: Strict)",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "default": 0
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "web_url_read",
+      "description": "Read the content from an URL. Use this for further information retrieving to understand the content of each URL.",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL"
+          },
+          "startChar": {
+            "type": "number",
+            "description": "Starting character position for content extraction (default: 0)",
+            "minimum": 0
+          },
+          "maxLength": {
+            "type": "number",
+            "description": "Maximum number of characters to return",
+            "minimum": 1
+          },
+          "section": {
+            "type": "string",
+            "description": "Extract content under a specific heading (searches for heading text)"
+          },
+          "paragraphRange": {
+            "type": "string",
+            "description": "Return specific paragraph ranges (e.g., '1-5', '3', '10-')"
+          },
+          "readHeadings": {
+            "type": "boolean",
+            "description": "Return only a list of headings instead of full content"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "snapshot": "2026-05-26",
+  "n": 100,
+  "captured": 54,
+  "unpinned": 100,
+  "with_credentials": 35,
+  "block": 35,
+  "caution": 65,
+  "safe": 0,
+  "data_distribution": {
+    "MINIMAL": 26,
+    "HIGHLY_SENSITIVE": 7,
+    "UNKNOWN": 46,
+    "SENSITIVE": 14,
+    "LIMITED": 7
+  },
+  "sensitive_or_higher": 21,
+  "behavioral_flagged": 6,
+  "behavioral_flag_distribution": {
+    "read_and_exfil": 5,
+    "remote_controlled_fs_mutation": 1,
+    "exfil_chain": 3
+  },
+  "behavioral_flagged_servers": {
+    "chrome-devtools": [
+      "read_and_exfil",
+      "remote_controlled_fs_mutation"
+    ],
+    "mcp-gitlab": [
+      "exfil_chain",
+      "read_and_exfil"
+    ],
+    "hex-ssh": [
+      "read_and_exfil"
+    ],
+    "mcp-8": [
+      "exfil_chain"
+    ],
+    "airtable": [
+      "read_and_exfil"
+    ],
+    "token-optimizer": [
+      "exfil_chain",
+      "read_and_exfil"
+    ]
+  },
+  "validated_servers": 54,
+  "fp_suppressed_total": 698
+}

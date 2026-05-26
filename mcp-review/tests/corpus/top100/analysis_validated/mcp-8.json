@@ -1,0 +1,1269 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-8",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@blockrun/mcp"
+      ],
+      "env_keys": [
+        "BLOCKRUN_WALLET_KEY"
+      ],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@blockrun/mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:5862df1a44608bb3edc11d17396b7907b7043dd62bd0c8cb568f4798c35b891f",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-8' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @blockrun/mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@blockrun/mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-8' package spec '@blockrun/mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@blockrun/mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-8",
+      "name": "blockrun_wallet",
+      "description": "Call this tool to manage the BlockRun payment wallet and control agent spending budgets.\n\nCall this FIRST if any other blockrun_* tool returns a payment/balance error.\nCall this to check your current USDC balance before expensive operations.\nCall this to set spending limits before spawning child agents.\n\nActions:\n- status (default): Current wallet address, USDC balance, total session spending\n- setup: Get funding instructions + QR code (call this when balance is 0)\n- qr: Open QR code in system viewer\n\nBudget controls:\n- budget + budget_action:\"set\" + budget_amount:1.00 \u2192 Set global spend cap\n- budget + budget_action:\"clear\" \u2192 Remove global spend cap\n\nMulti-agent orchestration:\n- delegate + agent_id:\"research\" + agent_limit:2.00 \u2192 Allocate $2 to a child agent\n- revoke + agent_id:\"research\" \u2192 Remove a child agent's budget\n- report \u2192 See per-agent spending breakdown\n\nUsage pattern for multi-agent systems:\n  1. blockrun_wallet action:\"delegate\" agent_id:\"worker-1\" agent_limit:1.00\n  2. Pass agent_id:\"worker-1\" to all blockrun_chat/search/etc calls for that agent\n  3. blockrun_wallet action:\"report\" to audit spending\n\nDo NOT call this for actual AI queries \u2014 use blockrun_chat for that.",
+      "param_names": [
+        "action",
+        "agent_id",
+        "agent_limit",
+        "budget_action",
+        "budget_amount"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "s tool to manage the BlockRun payment wallet and control agent spen"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ing child agents.\n\nActions:\n- status (default): Current wallet add"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"status\" refers to wallet/action status (price, history, list), not project/task tracking metadata."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "wallet address, USDC balance, total session spending\n- setup: Get"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "\"total session spending\" is the user's own spending data, not aggregated public statistics."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:8f690cd42427b05f2a7c13c360a692162d33747e19edaa4b2b29973191201a20"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_chat",
+      "description": "Get a second opinion from another AI model, or use a specialized model for a specific task.\n\nNotable modes:\n- mode:\"glm\" \u2192 Zhipu GLM-5 / GLM-5-Turbo ($0.001/call, excellent for coding tasks, pays via USDC on BlockRun)\n- mode:\"coding\" \u2192 GLM-5 first, then code-specialized models\n- mode:\"cheap\" \u2192 GLM-5, NVIDIA free, DeepSeek\n- mode:\"reasoning\" \u2192 o3, o1, DeepSeek-R1\n- mode:\"free\" \u2192 NVIDIA models (no cost)\n- routing:\"smart\" \u2192 auto-select via ClawRouter\n\nPick directly: model:\"zai/glm-5\", model:\"openai/o3\", model:\"nvidia/deepseek-v3.2\" (free).\n\nRun blockrun_models to see all 41+ models with pricing.",
+      "param_names": [
+        "agent_id",
+        "max_tokens",
+        "message",
+        "messages",
+        "mode",
+        "model",
+        "routing",
+        "routing_profile",
+        "system",
+        "temperature"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "chat",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "blockrun_chat blockrun chat"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "Tool is an AI model-calling interface, not a communications platform; matched on tool name, not actual message/email access."
+        },
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "ge model mode routing routing profile system max tokens temperature"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
+          "validated_out": true,
+          "validation_reason": "\"routing_profile\" is a model routing configuration parameter, not a user profile containing PII."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "cialized model for a specific task.\n\nNotable modes:\n- mode:\"glm\""
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"task\" refers to task types the model handles (e.g., coding tasks), not project/sprint metadata."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "role",
+            "pattern": "\\b(team|organization|org[\\s_-]?chart|workspace|department|role|reporting[\\s_-]?line)\\b",
+            "snippet": "temperature agent_id messages role content message model mode ro"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
+          "validated_out": true,
+          "validation_reason": "\"role\" parameter is for LLM system-prompt roles, not organizational charts or reporting lines."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:accbac58035e14ef1fabc981293839c8f68e58ecd52bb85a53221568b7406fc7"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_models",
+      "description": "List available AI models with pricing. Use to discover models and compare costs.",
+      "param_names": [
+        "category",
+        "provider"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:be85eb58bf28c26d6281f9a5933ec0e11521847d75672d8eb4fd2fae33eaf415"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_image",
+      "description": "Generate or edit images via BlockRun. Pays with USDC \u2014 no separate API keys needed.\n\nActions:\n- generate (default): Create image from text prompt\n- edit: Transform an existing image using img2img\n\nGeneration models:\n- zai/cogview-4 ($0.015) \u2014 Zhipu CogView-4, photorealistic, great for detailed scenes\n- xai/grok-imagine-image ($0.02) \u2014 xAI Grok Imagine, stylized, fast\n- xai/grok-imagine-image-pro ($0.07) \u2014 xAI Grok Imagine Pro, higher quality\n- openai/gpt-image-1 ($0.02-0.04) \u2014 GPT native image generation\n- openai/gpt-image-2 ($0.06-0.12) \u2014 ChatGPT Images 2.0, reasoning-driven, multilingual text rendering + character consistency\n- openai/dall-e-3 ($0.04-0.08) \u2014 High quality, prompt adherence\n- google/nano-banana ($0.05) \u2014 Google image model\nEdit models: openai/gpt-image-1, openai/gpt-image-2 (default for edits)",
+      "param_names": [
+        "action",
+        "agent_id",
+        "image",
+        "model",
+        "prompt",
+        "quality",
+        "size"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "tion: base64-encoded image or URL Agent identifier for budget t"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:744a515721a9783adf3f1977f2112301b687583a40eda5517ac5f0b354af5f10"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_music",
+      "description": "Generate music tracks via BlockRun x402.\n\nGenerates a full-length ~3 minute MP3 track. Takes 1-3 minutes to complete.\n\nModels: minimax/music-2.5+ ($0.1575), minimax/music-2.5 ($0.1575)\n\nReturns a time-limited CDN URL \u2014 download immediately if you need to keep the file.",
+      "param_names": [
+        "agent_id",
+        "instrumental",
+        "lyrics",
+        "model",
+        "prompt"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "download",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "urns a time-limited CDN URL \u2014 download immediately if you need to ke"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool returns a CDN URL for download by the user; this is output delivery, not the tool making outbound egress requests."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "download",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "urns a time-limited CDN URL \u2014 download immediately if you need to ke"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "Tool generates music output; \"download\" is user downloading generated content, not tool accessing/reading documents."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "epic",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "pads', 'chill lo-fi beats', 'epic orchestral film score' Genera"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"epic\" appears in example prompt text (\"epic orchestral film score\"), not actual project metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:6b0a9d166f5a054dad6de50b9d33d71fe532aaad0837a2486a29851e73576741"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_video",
+      "description": "Generate short AI videos via BlockRun x402 (async, client-polled).\n\nTurns a text prompt (and optional seed image) into a short MP4 clip. The tool submits the job, then polls until the video is ready (typical total wall-time 60-180s; 5 min hard cap). Payment is settled only when upstream returns a finished video \u2014 if the job fails or we give up, you are not charged.\n\nModels (Seedance defaults bumped to 720p + synced audio on the gateway):\n- azure/sora-2 ($0.10/sec, 720p + synced audio, text-to-video) \u2014 OpenAI Sora 2 via Azure AI Foundry. duration_seconds must be 4, 8, or 12 (4s default -> ~$0.42/clip). No image_url / RealFace.\n- xai/grok-imagine-video ($0.05/sec, 8s default -> $0.42/clip) \u2014 stylized, fast\n- bytedance/seedance-1.5-pro (~$0.092/sec, 720p + audio t2v, 5s default up to 10s) \u2014 cheapest Seedance, token-priced upstream\n- bytedance/seedance-2.0-fast (~$0.238/sec text \u00b7 ~$0.140/sec image-to-video, 720p + audio, ~60-80s gen) \u2014 sweet-spot price/quality; supports BytePlus RealFace assets\n- bytedance/seedance-2.0 (~$0.298/sec text \u00b7 ~$0.183/sec image-to-video, 720p + audio Pro) \u2014 highest quality; supports BytePlus RealFace assets\n\nRealFace: to generate video of a SPECIFIC real person, first enroll them with blockrun_realface (returns a ta_xxxx asset id), then pass real_face_asset_id here with a Seedance 2.0 model. Mutually exclusive with image_url.\n\nReturns a permanent blockrun-hosted MP4 URL (the gateway mirrors the asset to GCS so URLs don't expire).",
+      "param_names": [
+        "agent_id",
+        "duration_seconds",
+        "image_url",
+        "model",
+        "prompt",
+        "real_face_asset_id"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "s model agent_id prompt image url real face asset id duration s"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "to 10s) \u2014 cheapest Seedance, token-priced upstream\n- bytedance/s"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "\"token-priced upstream\" refers to pricing mechanism (token credits), not access to secret credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "ime 60-180s; 5 min hard cap). Payment is settled only when upstream"
+          },
+          "rationale": "Direct financial exposure and a regulated data class."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "l the video is ready (typical total wall-time 60-180s; 5 min hard"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "\"total wall-time\" is a time metric, not aggregated public data or summary statistics."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:91aa8b9937b866cdde434eb2cb957b87cd624f090f341678d2dc96cee5749756"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_realface",
+      "description": "Enroll a real person's face as a BytePlus RealFace asset, then drive Seedance 2.0 video with it (blockrun_video real_face_asset_id).\n\nA RealFace asset (ta_xxxx) lets Seedance 2.0 / 2.0-fast generate video of a SPECIFIC real person \u2014 not a generic seed image. Enrollment is a multi-step flow because BytePlus requires a live phone liveness check (the real person nods + blinks on camera) before a face photo can be uploaded.\n\nActions:\n- init: FREE. Create an asset group + a phone H5 link. The tool renders the link as a QR code and opens it; the real person scans it on their phone and completes the ~1 min liveness check. Pass group_id to refresh an expired link.\n- status: FREE. Poll a group until status:\"active\" (ready_to_finalize:true). The H5 link is valid ~120s \u2014 re-init if it expires.\n- enroll: PAID ($0.01 USDC, Base only). After the group is active, upload a clear front-facing photo (image_url) of the SAME person. Returns the ta_xxxx asset id.\n- list: FREE. List the RealFace assets enrolled by this wallet (their ta_xxxx ids + names) so you can pick one for blockrun_video.\n\nTypical flow:\n  1. blockrun_realface action:\"init\" name:\"Alice\"          \u2192 scan QR on phone, do liveness\n  2. blockrun_realface action:\"status\" group_id:\"legacy_rf_\u2026\"  \u2192 repeat until ready_to_finalize:true\n  3. blockrun_realface action:\"enroll\" name:\"Alice\" group_id:\"legacy_rf_\u2026\" image_url:\"https://\u2026/alice.jpg\"  \u2192 ta_xxxx\n  4. blockrun_video model:\"bytedance/seedance-2.0\" real_face_asset_id:\"ta_xxxx\" prompt:\"\u2026\"\n\nPrivacy: BlockRun does not store face/liveness data \u2014 only the asset id, name, and the photo URL you supply.",
+      "param_names": [
+        "action",
+        "agent_id",
+        "group_id",
+        "image_url",
+        "name"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "id action name group id image url agent id"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "drive",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "BytePlus RealFace asset, then drive Seedance 2.0 video with it (b"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "\"drive\" is a verb meaning \"control/operate\" (drive Seedance video), not access to file systems or documents."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "to refresh an expired link.\n- status: FREE. Poll a group until sta"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"status\" refers to enrollment operation status, not project issues/tickets/milestones."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "refresh an expired H5 link). Public HTTPS URL to a clear front-fa"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "\"Public HTTPS URL\" describes a requirement for the input image, not public aggregate data handling."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:b46e24cfeab308388a62b79e6005f99375d9364e973b2409ec97f69cbc5655cc"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_search",
+      "description": "Grok Live Search \u2014 real-time web + X/Twitter + news with AI-summarized results and citations. $0.025 per returned source (max_results \u00d7 $0.025; default max_results=10 \u2192 $0.25).\n\nCommon shape:\n- body: { query: \"...\", sources: [\"web\",\"x\",\"news\"], max_results: 10, from_date: \"YYYY-MM-DD\", to_date: \"YYYY-MM-DD\" }\n\n`sources` accepts any subset of [\"web\",\"x\",\"news\"] (defaults to all three). For tweet-only searches, use [\"x\"]. `max_results` is 1\u201350 (default 10) and drives the price \u2014 pass a smaller value if you want to cap spend.\n\nFull request shape + worked examples in the `search` skill (`skills/search/SKILL.md`).",
+      "param_names": [
+        "agent_id",
+        "body",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "l (`skills/search/SKILL.md`). Endpoint sub-path under /v1/search/ (d"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:ff3dae03b6995fdcffad029fd14ee64dcd3477acc4cdc4e80ecce6edfabfb6c8"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_exa",
+      "description": "Neural web search via Exa \u2014 understands meaning, not just keywords. Great for research.\n\nCommon paths (all POST, body shapes documented in the exa-research skill):\n- search       \u2014 body: { query, numResults?, category?, includeDomains?, excludeDomains? }   ($0.01/call)\n- answer       \u2014 body: { query }                                                              ($0.01/call)\n- contents     \u2014 body: { urls: [...] }                                                        ($0.002/URL, up to 100)\n- find-similar \u2014 body: { url, numResults? }                                                   ($0.01/call)\n\nCategories for search: \"news\", \"research paper\", \"company\", \"tweet\", \"github\", \"pdf\".\n\nFull request/response shapes + worked research workflows in the `exa-research` skill.",
+      "param_names": [
+        "agent_id",
+        "body",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "($0.002/URL, up to 100)\n- find-similar \u2014"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "pdf",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "company\", \"tweet\", \"github\", \"pdf\".\n\nFull request/response shap"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:741be1b1c1dd541d3ad96fd3de76cae820d6f566a5bfd7dbbb56ad58a6282d91"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_markets",
+      "description": "Prediction market + derivatives data via Predexon aggregator. Tier 1 = $0.001/call, Tier 2 = $0.005/call.\n\nCANONICAL CROSS-VENUE (Tier 1) \u2014 Predexon v2 unified data layer:\n- markets \u2014 list canonical market/question containers with cross-venue Predexon IDs\n- markets/listings \u2014 venue-native executable listings flattened across canonical markets\n- outcomes/:predexon_id \u2014 resolve a canonical outcome ID to its market context + venue listings\n  Filter with ?venue=polymarket|kalshi|limitless|opinion|predictfun, ?status=, ?category=, ?league=, ?event_id=, ?pagination_key=\n\nPOLYMARKET (Tier 1):\n- polymarket/events, polymarket/markets \u2014 list events/markets (filter, sort, paginate)\n- polymarket/markets/keyset, polymarket/events/keyset \u2014 same data, cursor-based keyset pagination (use ?pagination_key=)\n- polymarket/crypto-updown \u2014 crypto up/down markets\n- polymarket/market-price/:token_id \u2014 current/historical price\n- polymarket/candlesticks/:condition_id \u2014 OHLCV by market\n- polymarket/candlesticks/token/:token_id \u2014 OHLCV by single outcome token\n- polymarket/volume-chart/:condition_id \u2014 volume w/ YES/NO split\n- polymarket/orderbooks, polymarket/trades, polymarket/activity\n- polymarket/markets/:token_id/volume, polymarket/markets/:condition_id/open_interest\n- polymarket/positions \u2014 user positions\n- polymarket/leaderboard, polymarket/leaderboard/market/:condition_id\n- polymarket/cohorts/stats, polymarket/market/:condition_id/top-holders\n- polymarket/uma/markets, polymarket/uma/market/:condition_id \u2014 UMA oracle questions/timeline\n\nPOLYMARKET (Tier 2 \u2014 wallet/smart-money analytics):\n- polymarket/wallet/:wallet \u2014 full smart-wallet profile\n- polymarket/wallet/:wallet/markets, .../similar\n- polymarket/wallet/pnl/:wallet, .../positions/:wallet, .../volume-chart/:wallet\n- polymarket/wallets/profiles, polymarket/wallets/filter \u2014 batch + AND/OR filter\n- polymarket/market/:condition_id/smart-money, polymarket/markets/smart-activity\n\nWALLET IDENTITY & CLUSTERING (Tier 2) \u2014 cross-context labels + on-chain relationship graph:\n- polymarket/wallet/identity/:wallet \u2014 fetch identity + profile metadata for one wallet\n- polymarket/wallet/identities \u2014 POST { addresses: [...] } for bulk lookup (up to 200 wallets)\n- polymarket/wallet/:address/cluster \u2014 discover wallets connected via on-chain transfers + identity proofs\n\nSPORTS (Tier 1):\n- sports/categories \u2014 list available sports categories\n- sports/markets \u2014 list sports markets grouped by game (filter ?league=, ?sport_type=, ?status=, ?venue=)\n- sports/markets/:game_id \u2014 single sports game with all venue outcomes\n- sports/outcomes/:predexon_id \u2014 equivalent sports outcomes across venues for a Predexon ID\n\nKALSHI (Tier 1): kalshi/markets, kalshi/trades, kalshi/orderbooks\nLIMITLESS / OPINION / PREDICT.FUN (Tier 1): {platform}/markets, {platform}/orderbooks\nDFLOW: dflow/trades (T1), dflow/wallet/positions/:wallet (T2), dflow/wallet/pnl/:wallet (T2)\nBINANCE FUTURES (Tier 2): binance/candles/:symbol, binance/ticks/:symbol\n\nCROSS-PLATFORM:\n- matching-markets, matching-markets/pairs \u2014 equivalent markets across Polymarket+Kalshi (T2)\n- markets/search \u2014 search across all platforms in one call (T2)\n\nPass query params via 'params' (GET). Use 'body' only for POST endpoints (e.g. polymarket/wallet/identities).",
+      "param_names": [
+        "agent_id",
+        "body",
+        "params",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "ket/wallet/identity/:wallet \u2014 fetch identity + profile metadata f"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ket\n- polymarket/candlesticks/token/:token_id \u2014 OHLCV by single o"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "\"token\" refers to blockchain tokens/assets (e.g., token_id for DEX pairs), not secret credentials."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "t/:wallet \u2014 full smart-wallet profile\n- polymarket/wallet/:wallet/m"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "imitless|opinion|predictfun, ?status=, ?category=, ?league=, ?even"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"status\" is a query filter parameter for market status, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:0db002f2378ae03b081f9813ccd6837fd38079b743e3d640843a5a800a9670a7"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_price",
+      "description": "Realtime quotes and OHLC history for crypto, FX, commodities and 12 global stock markets (Pyth-backed).\n\n- action=\"price\" \u2014 realtime quote for a symbol\n- action=\"history\" \u2014 OHLC bars between from/to (unix seconds)\n- action=\"list\" \u2014 discovery: list available symbols (free)\n\nPricing:\n- crypto / fx / commodity: FREE across price, history and list\n- stocks / usstock: $0.001 per price or history call (list free)\n\nStocks markets: us, hk, jp, kr, gb, de, fr, nl, ie, lu, cn, ca (required when category=\"stocks\").\n\nExamples:\n- { action: \"price\", category: \"crypto\", symbol: \"BTC-USD\" }\n- { action: \"price\", category: \"stocks\", symbol: \"AAPL\", market: \"us\" }\n- { action: \"history\", category: \"crypto\", symbol: \"ETH-USD\", resolution: \"D\", from: 1700000000, to: 1710000000 }\n- { action: \"list\", category: \"crypto\", query: \"sol\" }",
+      "param_names": [
+        "action",
+        "agent_id",
+        "category",
+        "from",
+        "limit",
+        "market",
+        "query",
+        "resolution",
+        "session",
+        "symbol",
+        "to"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "crypto\", query: \"sol\" } Which endpoint to hit: price, history, or li"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:232b53f11a36f94afe6ee4a8ebc98d9d8eee9e1d702d5358aa47b2f3a3a10011"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_dex",
+      "description": "Get real-time DEX data from DexScreener. FREE - no payment required.\n\nUse for:\n- Token prices and liquidity across chains\n- Trading volume and price changes\n- Finding token pairs and contracts\n\nExamples:\n  blockrun_dex({ query: \"SOL\" })           -> Search for SOL pairs\n  blockrun_dex({ token: \"So11...xxx\" })    -> Get specific token data\n  blockrun_dex({ symbol: \"PEPE\" })         -> Search by symbol",
+      "param_names": [
+        "chain",
+        "query",
+        "symbol",
+        "token"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "query token symbol chain"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "\"token\" refers to cryptocurrency tokens/assets, not access to secret credentials or API keys."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "financial",
+          "label": "Financial / payment data",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "payment",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
+            "snippet": "a from DexScreener. FREE - no payment required.\n\nUse for:\n- Token p"
+          },
+          "rationale": "Direct financial exposure and a regulated data class.",
+          "validated_out": true,
+          "validation_reason": "\"payment\" appears in \"FREE - no payment required\"; indicates no payment, not financial data handling."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:d55af49b055a20eefe0ff80d329b451aa28066dc1967264d86f65696c0134300"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_modal",
+      "description": "Run isolated code in a BlockRun-hosted Modal sandbox \u2014 disposable remote container, optional GPU.\n\nUse when you need: a clean ephemeral environment, GPU access (T4/L4/A10G/A100/A100-80GB/H100), or a safer place for untrusted code. Prefer local tools for normal repo work.\n\nCommon paths (all POST):\n- sandbox/create     \u2014 body: { image?, timeout?, cpu?, memory?, gpu?, setup_commands? }    ($0.01)\n- sandbox/exec       \u2014 body: { sandbox_id, command: [\"python\",\"-c\",\"...\"], timeout? }      ($0.001)\n- sandbox/status     \u2014 body: { sandbox_id }                                                ($0.001)\n- sandbox/terminate  \u2014 body: { sandbox_id }                                                ($0.001)\n\nFull action shapes + GPU type details in the `modal` skill.",
+      "param_names": [
+        "agent_id",
+        "body",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "exec",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "mands? }    ($0.01)\n- sandbox/exec       \u2014 body: { sandbox_id, c"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        },
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "details in the `modal` skill. Endpoint under /v1/modal/, e.g. 'sandb"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repo",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Prefer local tools for normal repo work.\n\nCommon paths (all POST"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
+          "validated_out": true,
+          "validation_reason": "\"Prefer local tools for normal repo work\" is a usage recommendation, not evidence that the tool accesses source code."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ut? }      ($0.001)\n- sandbox/status     \u2014 body: { sandbox_id }"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"status\" refers to sandbox execution status, not project issues/tickets/milestones."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:2f5556e1b85f49f94d498ccfb7d4ec04a239248b4b958bc47fa8ca3d14516292"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_phone",
+      "description": "Phone-number intelligence, US/CA number provisioning, and outbound AI voice calls.\n\nCommon paths (path = everything after /v1/):\n- phone/lookup               POST body: { phoneNumber }                                          ($0.01)\n- phone/lookup/fraud         POST body: { phoneNumber } \u2014 SIM-swap + call-forwarding signals    ($0.05)\n- phone/numbers/buy          POST body: { country?: \"US\"|\"CA\", areaCode? } \u2014 30-day lease       ($5.00)\n- phone/numbers/renew        POST body: { phoneNumber } \u2014 extend 30 days                        ($5.00)\n- phone/numbers/list         POST body: {} \u2014 your wallet-owned numbers                          ($0.001)\n- phone/numbers/release      POST body: { phoneNumber } \u2014 release back to pool                  (free)\n- voice/call                 POST body: { to, task, from, voice?, max_duration?, ... }          ($0.54 flat)\n- voice/call/{call_id}       GET (no body) \u2014 poll status + transcript                           (free)\n\nREQUIRED for voice/call: `from` must be a number your wallet owns. Provision one with `phone/numbers/buy` first ($5, 30-day lease).\n\nVoice presets: nat, josh, maya, june, paige, derek, florian. Phone numbers use E.164 format (e.g. +1 followed by 10 US digits, or +<country-code><number>).\n\nVoice call flow + voice preset details + full body shapes in the `phone` skill.",
+      "param_names": [
+        "agent_id",
+        "body",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "shapes in the `phone` skill. Endpoint after /v1/. Use 'phone/...' f"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Phone-number",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "Phone-number intelligence, US/CA number pr"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "POST body: { to, task, from, voice?, max_duration?,"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "\"task\" parameter is the voice call instruction/prompt, not project metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:4cf3b7b6df52e04c33a4fb7201931de039f3db6d8eed174baefbcf486fed422a"
+    },
+    {
+      "server": "mcp-8",
+      "name": "blockrun_surf",
+      "description": "Unified crypto data via Surf (asksurf.ai) \u2014 84 endpoints, one API.\n\nCoverage: CEX market data (16 exchanges), on-chain SQL across 13 chains, 100M+ labeled wallets, prediction markets (Polymarket + Kalshi), social mindshare / CT intelligence, news, unified search, and Surf-1.5 chat with citations.\n\nPricing (settled in USDC to Surf's Base treasury):\n- Tier 1 $0.001 \u2014 prices, rankings, lists, news, profiles, simple reads\n- Tier 2 $0.005 \u2014 order books, candles, search, wallet detail, social aggregates\n- Tier 3 $0.020 \u2014 raw on-chain SQL, structured queries, surf-1.5 chat\n\nCommon paths (full 84-endpoint catalog in the surf skill):\n- market/price?symbol=BTC                     (T1)\n- exchange/price?pair=BTC-USDT                (T1)\n- prediction-market/polymarket/ranking         (T1)\n- search/web?q=ethereum+pectra+upgrade        (T2)\n- wallet/detail?address=0x...                 (T2)\n- social/mindshare?q=ethereum&interval=1d     (T2)\n- onchain/sql        + body:{ sql: \"SELECT ...\" }                  (T3)\n- chat/completions   + body:{ model:\"surf/surf-1.5\", messages:[]}  (T3, $0.02 flat)\n\nMethod is auto-routed: pass 'body' for POST endpoints; otherwise GET with 'params'.\nEach Surf endpoint pre-validates required params before settling \u2014 you get a 400 (not a charge) if a required field is missing. Browse the full catalog: https://blockrun.ai/marketplace/surf",
+      "param_names": [
+        "agent_id",
+        "body",
+        "params",
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "5 chat\n\nCommon paths (full 84-endpoint catalog in the surf skill):\n-"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQL",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "data (16 exchanges), on-chain SQL across 13 chains, 100M+ label"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "chat",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "unified search, and Surf-1.5 chat with citations.\n\nPricing (set"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "needs_source": true
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:3a64a6dc8ceff9c3fcfe980499f81bbc9e5db5ee21d175f81bce1a7878710e27"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 7,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "high"
+      },
+      "personal_identifiers": {
+        "label": "Personal identifiers (PII)",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "HIGH",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "high",
+      "needs_source": true
+    },
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "needs_source": true
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 15,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 16,
+    "toxic_combination_count": 3,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 6,
+      "MEDIUM": 15,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "files_documents",
+      "financial",
+      "org_structure",
+      "personal_identifiers",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 16,
+      "false_positive": 21,
+      "needs_source": 5,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::blockrun_wallet::project_metadata",
+        "reason": "\"status\" refers to wallet/action status (price, history, list), not project/task tracking metadata."
+      },
+      {
+        "id": "data::blockrun_wallet::public_data",
+        "reason": "\"total session spending\" is the user's own spending data, not aggregated public statistics."
+      },
+      {
+        "id": "data::blockrun_chat::communications_content",
+        "reason": "Tool is an AI model-calling interface, not a communications platform; matched on tool name, not actual message/email access."
+      },
+      {
+        "id": "data::blockrun_chat::personal_identifiers",
+        "reason": "\"routing_profile\" is a model routing configuration parameter, not a user profile containing PII."
+      },
+      {
+        "id": "data::blockrun_chat::project_metadata",
+        "reason": "\"task\" refers to task types the model handles (e.g., coding tasks), not project/sprint metadata."
+      },
+      {
+        "id": "data::blockrun_chat::org_structure",
+        "reason": "\"role\" parameter is for LLM system-prompt roles, not organizational charts or reporting lines."
+      },
+      {
+        "id": "cap::blockrun_music::network_egress",
+        "reason": "Tool returns a CDN URL for download by the user; this is output delivery, not the tool making outbound egress requests."
+      },
+      {
+        "id": "data::blockrun_music::files_documents",
+        "reason": "Tool generates music output; \"download\" is user downloading generated content, not tool accessing/reading documents."
+      },
+      {
+        "id": "data::blockrun_music::project_metadata",
+        "reason": "\"epic\" appears in example prompt text (\"epic orchestral film score\"), not actual project metadata."
+      },
+      {
+        "id": "cap::blockrun_video::secrets_access",
+        "reason": "\"token-priced upstream\" refers to pricing mechanism (token credits), not access to secret credentials."
+      },
+      {
+        "id": "data::blockrun_video::public_data",
+        "reason": "\"total wall-time\" is a time metric, not aggregated public data or summary statistics."
+      },
+      {
+        "id": "data::blockrun_realface::files_documents",
+        "reason": "\"drive\" is a verb meaning \"control/operate\" (drive Seedance video), not access to file systems or documents."
+      },
+      {
+        "id": "data::blockrun_realface::project_metadata",
+        "reason": "\"status\" refers to enrollment operation status, not project issues/tickets/milestones."
+      },
+      {
+        "id": "data::blockrun_realface::public_data",
+        "reason": "\"Public HTTPS URL\" describes a requirement for the input image, not public aggregate data handling."
+      },
+      {
+        "id": "cap::blockrun_markets::secrets_access",
+        "reason": "\"token\" refers to blockchain tokens/assets (e.g., token_id for DEX pairs), not secret credentials."
+      },
+      {
+        "id": "data::blockrun_markets::project_metadata",
+        "reason": "\"status\" is a query filter parameter for market status, not project management metadata."
+      },
+      {
+        "id": "cap::blockrun_dex::secrets_access",
+        "reason": "\"token\" refers to cryptocurrency tokens/assets, not access to secret credentials or API keys."
+      },
+      {
+        "id": "data::blockrun_dex::financial",
+        "reason": "\"payment\" appears in \"FREE - no payment required\"; indicates no payment, not financial data handling."
+      },
+      {
+        "id": "data::blockrun_modal::source_code",
+        "reason": "\"Prefer local tools for normal repo work\" is a usage recommendation, not evidence that the tool accesses source code."
+      },
+      {
+        "id": "data::blockrun_modal::project_metadata",
+        "reason": "\"status\" refers to sandbox execution status, not project issues/tickets/milestones."
+      },
+      {
+        "id": "data::blockrun_phone::project_metadata",
+        "reason": "\"task\" parameter is the voice call instruction/prompt, not project metadata."
+      }
+    ]
+  }
+}

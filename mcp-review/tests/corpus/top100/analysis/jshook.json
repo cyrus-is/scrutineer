@@ -1,0 +1,344 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "jshook",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jshookmcp/jshook"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@jshookmcp/jshook",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:896023b180c5e0a8a987acfae54140875f3ed842dc615cc3b586ec5bdd9f20e1",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'jshook' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @jshookmcp/jshook.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@jshookmcp/jshook",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'jshook' package spec '@jshookmcp/jshook' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@jshookmcp/jshook",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "jshook",
+      "name": "search_tools",
+      "description": "Search 0 tools across 0 capability domains. This includes built-in tools plus any loaded plugin/workflow tools (0 currently loaded). In search-tier sessions, call this before assuming a capability is unavailable. Use activate_tools for exact matches, activate_domain for an entire domain. Domains: . Query tip: before searching, distill your intent into key concepts (action verb + target + domain). Pass distilled keywords, not full sentences \u2014 the search engine works on token matching, not semantic understanding.",
+      "param_names": [
+        "auto_activate",
+        "query",
+        "top_k"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "\u2014 the search engine works on token matching, not semantic unders"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:3955180baf1c46a723004158068d53237d226ddd842172a2bcdab5359b6369da"
+    },
+    {
+      "server": "jshook",
+      "name": "route_tool",
+      "description": "One-stop tool router: accepts a natural language task description, returns recommended tools and next actions. Automatically detects workflow patterns, recommends activation order, and provides example arguments. Use this instead of search_tools when you want guided tool discovery with actionable next steps.",
+      "param_names": [
+        "context",
+        "task"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "task context preferredDomain autoA"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:305e0806daa402edc4fb741387caf0caf4dfe42f369df952afe46f9c5b984356"
+    },
+    {
+      "server": "jshook",
+      "name": "describe_tool",
+      "description": "Get detailed information about a specific tool, including its input schema. Use this to see the exact parameters a tool expects before calling it.",
+      "param_names": [
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:631ffd4b60ed8dc3cc077f882d84c425324cd2a1f52582ee564f77641d8615c3"
+    },
+    {
+      "server": "jshook",
+      "name": "activate_tools",
+      "description": "Dynamically register specific tools by name, regardless of current base tier. Use after search_tools to enable exactly the tools you need. In search-tier sessions this is usually enough; you do not need boost_profile just to use a few exact tools. Activated tools appear in the tool list immediately. If tools do not appear after activation, use call_tool to invoke them directly.",
+      "param_names": [
+        "names"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f1c8f4a8f5bf09ab9d2cd1fcd9d85a0b4bf2663713d6da901b8f32b03dc6a78c"
+    },
+    {
+      "server": "jshook",
+      "name": "deactivate_tools",
+      "description": "Remove previously activated tools to free context. Only affects tools added via activate_tools, not base profile tools.",
+      "param_names": [
+        "names"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "personal_identifiers",
+          "label": "Personal identifiers (PII)",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
+            "snippet": "via activate_tools, not base profile tools. Array of tool names to"
+          },
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:5702d25a217f5fa0fc1f2cab9b1a6318e764addb7bec818c624aa13877a5f255"
+    },
+    {
+      "server": "jshook",
+      "name": "activate_domain",
+      "description": "Activate all tools in a domain at once. Domains: . Use reload_extensions first to include external plugin/workflow domains.",
+      "param_names": [
+        "domain",
+        "ttlMinutes"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6759590841b88c955327bb87a2f0adf66a7f3d2112b5b31a8095b48d1970b496"
+    },
+    {
+      "server": "jshook",
+      "name": "call_tool",
+      "description": "Execute an already-active tool by name. Use this when activate_tools/activate_domain registered a tool but your client did not refresh its tool list. Does not auto-activate inactive tools.",
+      "param_names": [
+        "args",
+        "arguments",
+        "name",
+        "parameters"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "Execute an already-active tool by nam"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "args",
+          "arguments"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:9993553fdb3bea55a9fc4ca0a755486a8abe196035cd28acfa55a3591ca73574"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "personal_identifiers": {
+        "label": "Personal identifiers (PII)",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "personal_identifiers"
+    ],
+    "note": "Rating reflects high-confidence matches; personal_identifiers matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exec_with_secret_access",
+      "severity": "MEDIUM",
+      "title": "Code execution alongside secret access",
+      "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
+      "contributing": [
+        "code_execution",
+        "secrets_access"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 7,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 3,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "personal_identifiers",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

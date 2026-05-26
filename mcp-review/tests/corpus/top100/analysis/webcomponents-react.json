@@ -1,0 +1,346 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "webcomponents-react",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ui5/webcomponents-react-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@ui5/webcomponents-react-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:b3ef6e5d95361867e553030fa1d91ae9f332906e4c8e7d0061103cfb92c20328",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'webcomponents-react' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @ui5/webcomponents-react-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@ui5/webcomponents-react-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'webcomponents-react' package spec '@ui5/webcomponents-react-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@ui5/webcomponents-react-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "webcomponents-react",
+      "name": "create_app",
+      "description": "Get scaffolding instructions for a new UI5 Web Components for React application from an official template.\n\nWHEN TO USE: The user wants to create a new app, project, or starter using UI5 Web Components for React.\nWORKFLOW: Call this tool to get the template setup instructions, then execute them.\n\nAvailable templates:\n- `nextjs-app` \u2014 Next.js (App Router)\n- `nextjs-pages` \u2014 Next.js (Pages Router)\n- `vite-ts` \u2014 Vite.js\n\nEXAMPLE INPUT: { \"template\": \"vite-ts\", \"appName\": \"my-app\" }\nEXAMPLE INPUT: { \"template\": \"nextjs-app\", \"appName\": \"my-dashboard\" }",
+      "param_names": [
+        "appName",
+        "template"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "late setup instructions, then execute them.\n\nAvailable templates:\n-"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Name for the new application directory"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "er wants to create a new app, project, or starter using UI5 Web Com"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "template"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:eb58f7b4bb3ea43daabfe749a41120069544f68d9a6b5898e2bdcacdc90b8fd2"
+    },
+    {
+      "server": "webcomponents-react",
+      "name": "get_component_api",
+      "description": "Get comprehensive API documentation for a UI5 Web Components React component including props, ref methods, types, event detail parameters, and CSS parts for shadow DOM styling.\n\nWHEN TO USE: You need exact prop names, types, default values, method signatures, event detail fields, or CSS part selectors for a specific component.\nDO NOT USE FOR: General guidance on styling, events, or architecture \u2014 use get_documentation instead. To discover component names \u2014 use list_components first.\nWORKFLOW: Use list_components to find the correct component name, then this tool for full API details.\nLIMITS: Returns data for one component per call. Returns all props and methods for that component.\n\nEXAMPLE INPUT: { \"componentName\": \"Dialog\" }\n\n**Output Format (JSON):**\n```typescript\n{\n  package: string,                    // NPM package name\n  description: string,                 // Full JSDoc description with @tags, examples, notes\n  props: {\n    [propName: string]: {\n      type: {\n        name: string,                  // Type category (e.g., \"string\", \"boolean\", \"enum\")\n        raw?: string,                  // Full TypeScript type string\n        value?: Array<{                // For enums: possible values with descriptions\n          value: string,\n          description?: string\n        }>\n      },\n      required: boolean,               // Whether prop is required\n      defaultValue: any,               // Default value if specified\n      description: string,             // Full prop description with notes\n      eventDetail?: {                  // Present on event handler props (web components only)\n        params: Array<{                // Fields available on e.detail\n          name: string,                // e.g., \"targetRef\", \"escPressed\", \"item\"\n          type: string,                // e.g., \"HTMLElement\", \"boolean\"\n          description: string          // What this detail field contains\n        }>,\n        cancelable: boolean,           // true = e.preventDefault() prevents the action\n        bubbles: boolean               // true = event bubbles through DOM\n      }\n    }\n  },\n  methods: Array<{                     // Imperative handle methods (access via ref.current.methodName())\n    name: string,\n    description: string,\n    params: Array<{\n      name: string,\n      description: string,\n      type: any\n    }>,\n    returns: any\n  }>,\n  cssParts?: Array<{                   // CSS ::part() selectors for shadow DOM styling (web components only)\n    name: string,                      // Use as: componentSelector::part(name) { ... }\n    description: string\n  }>,\n  subTypeDocs?: string                 // Markdown docs for complex prop types (e.g. column definition properties)\n  docUrl?: string                      // Upstream docs link for complex behavioral concepts\n}\n```\n\n**Note:** Generic HTML attributes (className, style, onClick, etc.) are filtered out but available via CommonProps. Ref methods are accessed via `componentRef.current.methodName()`. Event detail fields (eventDetail.params) tell you what's on `e.detail` \u2014 access via `e.detail.paramName`.",
+      "param_names": [
+        "componentName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "ng props, ref methods, types, event detail parameters, and CSS pa"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:4a67609489887a75bb92fec94b83e6e8b5804311569f8faf023331083a5460eb"
+    },
+    {
+      "server": "webcomponents-react",
+      "name": "get_documentation",
+      "description": "Retrieve UI5 Web Components for React documentation, guides, and knowledge base articles. Documentation is bundled locally for instant offline access.\n\nWHEN TO USE: You need guidance on how to use the library \u2014 setup, styling, event handling, SSR, slots, i18n.\nDO NOT USE FOR: Looking up specific component props or methods \u2014 use get_component_api instead. For public utilities/hooks from @ui5/webcomponents-react-base \u2014 use get_public_utils.\nWORKFLOW: Call without parameters to see all available sections. Use section parameter for direct access, query for search.\nLIMITS: When fetchContent is true, full content is returned for at most 3 matching sections to control output size.\n\nEXAMPLE INPUT: { \"section\": \"Knowledge Base > Styling\", \"fetchContent\": true }\nEXAMPLE INPUT: { \"query\": \"i18n\", \"fetchContent\": true }\nEXAMPLE INPUT: {} (returns catalog of all documentation sections)",
+      "param_names": [
+        "endLine",
+        "fetchContent",
+        "query",
+        "section",
+        "startLine"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "the library \u2014 setup, styling, event handling, SSR, slots, i18n.\nD"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "et_component_api instead. For public utilities/hooks from @ui5/web"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:d9643913f8e9d192c19baaca2e6e2c07469f933190b9921d105f824de2b85b36"
+    },
+    {
+      "server": "webcomponents-react",
+      "name": "get_public_utils",
+      "description": "Get documentation for public utilities and hooks from @ui5/webcomponents-react-base. Covers Device API, ThemingParameters, useI18nBundle, useViewportRange, and withWebComponent.\n\nWHEN TO USE: You need to use device detection, theme-aware CSS variables in JS, internationalization hooks, responsive breakpoints, or wrap your own custom web components.\nDO NOT USE FOR: Looking up component props \u2014 use get_component_api. For general styling guidance \u2014 use get_documentation with section \"Knowledge Base > Styling\".\nLIMITS: Returns documentation for one utility per call, or an overview of all 5 utilities.\n\nEXAMPLE INPUT: { \"name\": \"ThemingParameters\" }\nEXAMPLE INPUT: { \"name\": \"withWebComponent\" }\nEXAMPLE INPUT: {} (returns overview of all utilities)",
+      "param_names": [
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "get_public_utils get public utils"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:1c9d778ca7e8eba49d8e6fff34db9df39d076e642984bcaef1ccdffd64b4c8c4"
+    },
+    {
+      "server": "webcomponents-react",
+      "name": "list_components",
+      "description": "Browse all 207 available UI5 Web Components for React components across 4 packages with descriptions, categories, and import statements.\n\nWHEN TO USE: You need to discover which components exist, find the right component for a use case, or verify a component name before calling get_component_api.\nDO NOT USE FOR: Getting detailed props or methods \u2014 use get_component_api after finding the component name here.\nLIMITS: Returns all matching components at once (up to 207). Filter by category or package to reduce output size.\n\nEXAMPLE INPUT: { \"category\": \"Inputs\" }\nEXAMPLE INPUT: { \"package\": \"@ui5/webcomponents-react-charts\" }\nEXAMPLE INPUT: {} (returns all components)",
+      "param_names": [
+        "category",
+        "package"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:516d2189066a24e86f76d8023333d242a1aae9eb80668a033e78b2a0fe9fdd5f"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 2,
+        "confidence": "high"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "calendar",
+      "contacts",
+      "project_metadata"
+    ],
+    "note": "Rating reflects high-confidence matches; calendar, contacts, project_metadata matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 5,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "calendar",
+      "contacts",
+      "project_metadata",
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

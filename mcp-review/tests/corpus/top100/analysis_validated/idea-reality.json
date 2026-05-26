@@ -1,0 +1,183 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "idea-reality",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "idea-reality-mcp"
+      ],
+      "env_keys": [
+        "GITHUB_TOKEN",
+        "PRODUCTHUNT_TOKEN"
+      ],
+      "sensitive_env_keys": [
+        "GITHUB_TOKEN",
+        "PRODUCTHUNT_TOKEN"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "idea-reality-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:d99bb101f81da7179d95eaed38923d2c92c0e30e1105c2f536abfccabcaedc63",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'idea-reality' is fetched and executed at launch via 'uvx'; package spec: idea-reality-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "idea-reality-mcp",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'idea-reality' package spec 'idea-reality-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "idea-reality-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'idea-reality' requires credential-like env keys: GITHUB_TOKEN, PRODUCTHUNT_TOKEN.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "GITHUB_TOKEN",
+              "PRODUCTHUNT_TOKEN"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "idea-reality",
+      "name": "idea_check",
+      "description": "Check if a product idea already exists before building it.\n\nUse when users discuss new project ideas, ask about competition,\nmarket saturation, or whether something has been built before.\n\nTrigger phrases: \"has anyone built\", \"does this exist\",\n\"check competition\", \"is this idea original\",\n\"\u6709\u6c92\u6709\u4eba\u505a\u904e\", \"\u5e02\u5834\u4e0a\u6709\u985e\u4f3c\u7684\u55ce\", \"\u5e6b\u6211\u67e5\u9019\u500b\u9ede\u5b50\"",
+      "param_names": [
+        "depth",
+        "idea_text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": ".\n\nUse when users discuss new project ideas, ask about competition,"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "The word 'project' in 'new project ideas' is colloquial English (meaning potential initiatives), not an indicator that the tool processes project metadata; the tool's actual parameters (depth, idea_text) and purpose (research whether an idea exists) don't involve project management data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:77029c71705bf1c8124d00329e19070e5b5329f349d951fe955b081521245090"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "medium"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 1,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 0,
+      "false_positive": 1,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::idea_check::project_metadata",
+        "reason": "The word 'project' in 'new project ideas' is colloquial English (meaning potential initiatives), not an indicator that the tool processes project metadata; the tool's actual parameters (depth, idea_text) and purpose (research whether an idea exists) don't involve project management data."
+      }
+    ]
+  }
+}

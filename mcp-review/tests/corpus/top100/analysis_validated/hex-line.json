@@ -1,0 +1,754 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "hex-line",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-line-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@levnikolaevich/hex-line-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:9b2676d29b0099ee9e1b4a41ff49ad4757bd9ae4ba62034a31152bf7bf2c8d9a",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'hex-line' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @levnikolaevich/hex-line-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@levnikolaevich/hex-line-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'hex-line' package spec '@levnikolaevich/hex-line-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@levnikolaevich/hex-line-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "hex-line",
+      "name": "read_file",
+      "description": "Read file with progressive disclosure. Default: minimal plain partial read for discovery; enable edit-ready metadata explicitly when preparing a verified edit.",
+      "param_names": [
+        "edit_ready",
+        "file_path",
+        "file_paths",
+        "limit",
+        "offset",
+        "plain",
+        "ranges",
+        "verbosity"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read_file",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "read_file read file"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read_file",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "read_file read file"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:6bfa5e4b74d59e2e35249b7ade4b7f983d041afed8ffc1819dc5d77bb939c77e"
+    },
+    {
+      "server": "hex-line",
+      "name": "edit_file",
+      "description": "Apply hash-verified partial edits to one file. Carry base_revision on same-file follow-ups. Preserves existing line endings and trailing-newline shape; conservative conflicts return retry helpers. boundary_mode=inclusive deletes the anchor lines themselves; new_text must close any delimiter whose opening falls inside the replaced range.",
+      "param_names": [
+        "allow_external",
+        "base_revision",
+        "conflict_policy",
+        "dry_run",
+        "edits",
+        "file_path",
+        "restore_indent"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_write",
+          "title": "Filesystem write / modify",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "edit_file",
+            "pattern": "\\b(write|create|save|put|upload|append|modify|edit|patch)[\\s_-]?file\\b",
+            "snippet": "edit_file edit file"
+          },
+          "rationale": "Write access lets a server plant files, overwrite configs, or stage a later code-execution path.",
+          "suppressed": false
+        },
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "read_file",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "t: false) Prior revision from read_file/edit_file. Enables conservati"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "needs_source": true
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "read_file",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "t: false) Prior revision from read_file/edit_file. Enables conservati"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "needs_source": true
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ng a path outside the current project root. Use only when you inten"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Matched 'project' refers to 'project root' filesystem boundary, not project management metadata categories."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:30de492e4a360ace548222ddc964c8833d1cb81dcc32e455f3363a45b6604f73"
+    },
+    {
+      "server": "hex-line",
+      "name": "write_file",
+      "description": "Create a new file or overwrite existing. Creates parent dirs. For existing files prefer edit_file (shows diff, verifies hashes).",
+      "param_names": [
+        "allow_external",
+        "content",
+        "file_path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_write",
+          "title": "Filesystem write / modify",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "write_file",
+            "pattern": "\\b(write|create|save|put|upload|append|modify|edit|patch)[\\s_-]?file\\b",
+            "snippet": "write_file write file"
+          },
+          "rationale": "Write access lets a server plant files, overwrite configs, or stage a later code-execution path.",
+          "suppressed": false
+        },
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "File content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": ", verifies hashes). File path File content Allow writing a path outside"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "'File content' in snippet is an input parameter name, not evidence of reading; write_file takes content as input without reading existing files."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "files prefer edit_file (shows diff, verifies hashes). File path"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "File content",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": ", verifies hashes). File path File content Allow writing a path outside"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ng a path outside the current project root. Use only when you inten"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Matched 'project' in 'project scope' refers to filesystem boundary, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
+      "digest": "sha256:5fd78dc6406fe7a18b16c68a31b2f6dabad1495d4d9dd76ec46f6b89c7e6b773"
+    },
+    {
+      "server": "hex-line",
+      "name": "grep_search",
+      "description": "Search file contents with ripgrep. Default: summary-first discovery output; use `content` with `edit_ready=true` when you need verified edit hunks.",
+      "param_names": [
+        "allow_large_output",
+        "case_insensitive",
+        "context",
+        "context_after",
+        "context_before",
+        "edit_ready",
+        "glob",
+        "head_limit",
+        "limit",
+        "literal",
+        "multiline",
+        "output_mode",
+        "path",
+        "pattern",
+        "plain",
+        "smart_case",
+        "type"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "file contents",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?contents?|read[\\s_-]?text)\\b",
+            "snippet": "Search file contents with ripgrep. Default: summar"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "y discovery, 100 for content) Total match events across all files"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "'Total match events' is aggregate count metadata of search results, not a 'public_data' category."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:5cb423c734f71140dc5372075799a980ce01b22e2731773e22982694484a7846"
+    },
+    {
+      "server": "hex-line",
+      "name": "outline",
+      "description": "AST-based structural outline with hash anchors for direct edit_file usage. Supports JavaScript/TypeScript, Python, C#, and PHP code files plus markdown headings (.md/.mdx, fence-aware).",
+      "param_names": [
+        "file_path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_write",
+          "title": "Filesystem write / modify",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "edit_file",
+            "pattern": "\\b(write|create|save|put|upload|append|modify|edit|patch)[\\s_-]?file\\b",
+            "snippet": "with hash anchors for direct edit_file usage. Supports JavaScript/Ty"
+          },
+          "rationale": "Write access lets a server plant files, overwrite configs, or stage a later code-execution path.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool generates hash anchors for downstream edit_file usage; outline reads files to parse structure but does not itself write files."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:08dbcb1c0b622fc2ff1d23447d3975ffe766e98f6c46a6442c61c78d24fd95a0"
+    },
+    {
+      "server": "hex-line",
+      "name": "verify",
+      "description": "Check if held checksums are still valid without rereading. Use before delayed or mixed-tool follow-up edits; returns canonical status, next_action, and reread guidance.",
+      "param_names": [
+        "base_revision",
+        "checksums",
+        "file_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "w-up edits; returns canonical status, next_action, and reread guid"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "'Canonical status' refers to file revision verification status, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:c2e30eb7a98219068514b98cc9dffb901941bacfc3fc681fb95a264ef0eb68c6"
+    },
+    {
+      "server": "hex-line",
+      "name": "inspect_path",
+      "description": "Inspect a file or directory path. Files return compact metadata; directories return a gitignore-aware tree or pattern matches.",
+      "param_names": [
+        "format",
+        "gitignore",
+        "max_depth",
+        "max_entries",
+        "path",
+        "pattern",
+        "type",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "Inspect a file or directory path. Files return compact me"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' means filesystem directory, not contacts/address book directory."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:b47c65f8a7e03b11d709d5493f4a7338598f79fb3d57814120b338cb08f42179"
+    },
+    {
+      "server": "hex-line",
+      "name": "changes",
+      "description": "Semantic diff against git ref (default: HEAD). Returns canonical status, summary, next_action, changed symbols, and graph-backed risk hints when available.",
+      "param_names": [
+        "compare_against",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Semantic diff against git ref (default: HEA"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "hints when available. File or directory path Git ref to compare again"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' in 'directory path' means filesystem directory, not contacts directory."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ult: HEAD). Returns canonical status, summary, next_action, change"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "'Canonical status' means git/file status (changed/unchanged), not project management metadata status."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:cd9991cc861e2fd0d02a9f817d2e2a8fdaf06f47a20baecbc90e0a9beeebf86c"
+    },
+    {
+      "server": "hex-line",
+      "name": "bulk_replace",
+      "description": "Search-and-replace text across multiple files inside an explicit root path. Use for renames and refactors when the project scope is known.",
+      "param_names": [
+        "allow_external",
+        "dry_run",
+        "format",
+        "glob",
+        "max_files",
+        "path",
+        "replacements"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "md,mjs,json,yml,ts,js}\") Root directory for the replacement scope Pre"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' refers to filesystem directory scope, not contacts/address book directory."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "enames and refactors when the project scope is known. JSON array of"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Matched 'project scope' refers to filesystem project boundary, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:756e158b96d75642c87ef02cf878d0f078bd6d0b7b1381e03343f7861a6697fe"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 5,
+        "confidence": "medium"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 3,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 9,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 7,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 8,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "files_documents",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 8,
+      "false_positive": 11,
+      "needs_source": 2,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::edit_file::project_metadata",
+        "reason": "Matched 'project' refers to 'project root' filesystem boundary, not project management metadata categories."
+      },
+      {
+        "id": "cap::write_file::file_read",
+        "reason": "'File content' in snippet is an input parameter name, not evidence of reading; write_file takes content as input without reading existing files."
+      },
+      {
+        "id": "data::write_file::project_metadata",
+        "reason": "Matched 'project' in 'project scope' refers to filesystem boundary, not project management metadata."
+      },
+      {
+        "id": "data::grep_search::public_data",
+        "reason": "'Total match events' is aggregate count metadata of search results, not a 'public_data' category."
+      },
+      {
+        "id": "cap::outline::file_write",
+        "reason": "Tool generates hash anchors for downstream edit_file usage; outline reads files to parse structure but does not itself write files."
+      },
+      {
+        "id": "data::verify::project_metadata",
+        "reason": "'Canonical status' refers to file revision verification status, not project management metadata."
+      },
+      {
+        "id": "data::inspect_path::contacts",
+        "reason": "Matched 'directory' means filesystem directory, not contacts/address book directory."
+      },
+      {
+        "id": "data::changes::contacts",
+        "reason": "Matched 'directory' in 'directory path' means filesystem directory, not contacts directory."
+      },
+      {
+        "id": "data::changes::project_metadata",
+        "reason": "'Canonical status' means git/file status (changed/unchanged), not project management metadata status."
+      },
+      {
+        "id": "data::bulk_replace::contacts",
+        "reason": "Matched 'directory' refers to filesystem directory scope, not contacts/address book directory."
+      },
+      {
+        "id": "data::bulk_replace::project_metadata",
+        "reason": "Matched 'project scope' refers to filesystem project boundary, not project management metadata."
+      }
+    ]
+  }
+}

@@ -1,0 +1,2084 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "figma-mcp-go",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@vkhanhqui/figma-mcp-go"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@vkhanhqui/figma-mcp-go",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:27633142577cb7a05348b893b9fb269a2686f9f397488b38680d5fa846cd0651",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'figma-mcp-go' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @vkhanhqui/figma-mcp-go.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@vkhanhqui/figma-mcp-go",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'figma-mcp-go' package spec '@vkhanhqui/figma-mcp-go' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@vkhanhqui/figma-mcp-go",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "figma-mcp-go",
+      "name": "add_page",
+      "description": "Add a new page to the Figma document.",
+      "param_names": [
+        "index",
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "Add a new page to the Figma document. Position index to insert the"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:413ad604c4f12b100474041fb51b8390832ab77e06816c074d85218695b8560a"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "add_variable_mode",
+      "description": "Add a new mode to an existing variable collection (e.g. Light/Dark, Desktop/Mobile). IMPORTANT \u2014 Figma free plan only allows 1 mode per collection; calling this tool on a free-plan account will return the error 'Limited to 1 modes only'. If that error occurs, stop retrying and switch to the name-prefix workaround: keep the single default mode and create variables prefixed by mode, e.g. 'light/color-bg' and 'dark/color-bg' in the same collection. Tell the user that native multi-mode variables require a paid Figma plan (Professional or above).",
+      "param_names": [
+        "collectionId",
+        "modeName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b743ecbb20dbb710734e65d33648bbe880687ffecb9bffe4a256aa87fc8aca34"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "apply_style_to_node",
+      "description": "Apply an existing local style (paint, text, effect, or grid) to a node, linking the node to that style.",
+      "param_names": [
+        "nodeId",
+        "styleId",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0aed2ec0ab8a93d8a27dc98f443a23b432958451863ab2bdfe682aa3026fcf45"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "batch_rename_nodes",
+      "description": "Rename multiple nodes using find/replace, regex substitution, or prefix/suffix addition.",
+      "param_names": [
+        "find",
+        "nodeIds",
+        "prefix",
+        "regexFlags",
+        "replace",
+        "suffix",
+        "useRegex"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c3cfcc493300106c0109a41e31ca84ea987b150b818e93ec482a1995a39c6663"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "bind_variable_to_node",
+      "description": "Bind a local variable to a node property so the property is driven by the variable's value. COLOR variables: use fillColor or strokeColor. BOOLEAN variables: use visible. FLOAT variables: use opacity, rotation, width, height, cornerRadius, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius, strokeWeight, itemSpacing, paddingTop, paddingRight, paddingBottom, paddingLeft.",
+      "param_names": [
+        "field",
+        "nodeId",
+        "variableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9550625a163911d778a6505c390931414346c862eb8a99c4e6e1ac439568da0e"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "clone_node",
+      "description": "Clone an existing node, optionally repositioning it or placing it in a new parent.",
+      "param_names": [
+        "nodeId",
+        "parentId",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5c7f2b28079fe13a221ea19e188850b9cb2efcef4adb6a84b4d20c2c453a397b"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_component",
+      "description": "Convert an existing FRAME node into a reusable COMPONENT. The frame is replaced in place by the new component.",
+      "param_names": [
+        "name",
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e2a3a4df120d4fc0df85bf88de9ca5fd4a7b8f9fd631b63ec5bedf0c90275edb"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_effect_style",
+      "description": "Create a new local effect style (drop shadow, inner shadow, or blur).",
+      "param_names": [
+        "color",
+        "description",
+        "name",
+        "offsetX",
+        "offsetY",
+        "opacity",
+        "radius",
+        "spread",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b1d81dbebf4de21533efad02f186ae1f96714645a08aba050f5e9290b9a0f9da"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_ellipse",
+      "description": "Create a new ellipse (circle/oval) on the current page or inside a parent node.",
+      "param_names": [
+        "fillColor",
+        "height",
+        "name",
+        "parentId",
+        "width",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:27bb434a5be4ae426d88a6ec5e409a27bfdead9fb95544208eeac3a6ce65ae4e"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_frame",
+      "description": "Create a new frame on the current page or inside a parent node.",
+      "param_names": [
+        "counterAxisAlignItems",
+        "counterAxisSizingMode",
+        "counterAxisSpacing",
+        "fillColor",
+        "height",
+        "itemSpacing",
+        "layoutMode",
+        "layoutWrap",
+        "name",
+        "paddingBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "parentId",
+        "primaryAxisAlignItems",
+        "primaryAxisSizingMode",
+        "width",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f14d8ee74baf03ec1b9bfba32d216ed50d8c53291aa749839330aa9370525992"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_grid_style",
+      "description": "Create a new local layout grid style.",
+      "param_names": [
+        "alignment",
+        "color",
+        "count",
+        "description",
+        "gutterSize",
+        "name",
+        "offset",
+        "opacity",
+        "pattern",
+        "sectionSize"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "alignment color count description gutterSize name o"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:deb267a75712b7ffe82f92fc0d6e7c8eb584cbf147a0af657664f2e44833eb5d"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_paint_style",
+      "description": "Create a new local paint style with a solid fill color.",
+      "param_names": [
+        "color",
+        "description",
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a4fa0b4705c4dc5a8d8bec30959d3ef9f00958f6552cdd6dfc265707da6867eb"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_rectangle",
+      "description": "Create a new rectangle on the current page or inside a parent node.",
+      "param_names": [
+        "cornerRadius",
+        "fillColor",
+        "height",
+        "name",
+        "parentId",
+        "width",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2cdb46924ced2cbf12feaec5e993d6d464fb22fb04d896d38dfac5bec4555901"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_section",
+      "description": "Create a Figma Section node on the current page. Sections are the modern way to organize frames and groups on a page.",
+      "param_names": [
+        "height",
+        "name",
+        "width",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:362f1c55129149b8e03b918ceccbcd92a24e51d729004cc309d7775a991d3c45"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_text",
+      "description": "Create a new text node on the current page or inside a parent node. The font is loaded automatically before insertion. Returns the created node ID and bounds. Use set_text to update the content of an existing text node.",
+      "param_names": [
+        "fillColor",
+        "fontFamily",
+        "fontSize",
+        "fontStyle",
+        "name",
+        "parentId",
+        "text",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:756772ee90832ef72438ebaff794ba702cc19e7d857ccc9ce1a1d49c163666a0"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_text_style",
+      "description": "Create a new local text style (typography preset). Returns the new style's ID. Apply it to nodes with apply_style_to_node. Use get_styles to list existing text styles.",
+      "param_names": [
+        "description",
+        "fontFamily",
+        "fontSize",
+        "fontStyle",
+        "letterSpacingUnit",
+        "letterSpacingValue",
+        "lineHeightUnit",
+        "lineHeightValue",
+        "name",
+        "textDecoration"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:11ce470e0722ff812bc64d497633afad12764f0f0238870d1d74722ba6b3fb7c"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_variable",
+      "description": "Create a new variable (design token) inside an existing collection. Returns the new variable's ID. Use get_variable_defs to find collection IDs, set_variable_value to set values per mode, and bind_variable_to_node to apply the variable to a node property.",
+      "param_names": [
+        "collectionId",
+        "name",
+        "type",
+        "value"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Create a new variable (design token) inside an existing collectio"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:724fe4e92e2f3e8f2eb6de27e06627e3a39b9662b0fb8b36bc73040a31ed7708"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "create_variable_collection",
+      "description": "Create a new local variable collection with an optional initial mode name. NOTE \u2014 Figma free plan limits each collection to 1 mode. If you need Light/Dark (or any multi-mode) theming and the user is on the free plan, do NOT try to call add_variable_mode; instead use the name-prefix workaround: create all variables in a single collection and prefix each variable name with its mode, e.g. 'light/color-bg' and 'dark/color-bg'. Inform the user of this limitation.",
+      "param_names": [
+        "initialModeName",
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2238e186d93b796ba5852b6613c9127921888e7b6c543e7d8242ce8a9b0ddf74"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "delete_nodes",
+      "description": "Delete one or more nodes. This cannot be undone via MCP \u2014 use with care.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8a9ff7c6612d03a29ffdb7f520e9a502b8bb75107926cc3ba5ecf22b2c99c96c"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "delete_page",
+      "description": "Delete a page from the Figma document. Cannot delete the only remaining page.",
+      "param_names": [
+        "pageId",
+        "pageName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "Delete a page from the Figma document. Cannot delete the only remai"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:740912ad7092f8f4cc0dd3effbd98321bd04d3336c8b906bca0f1415574c30a8"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "delete_style",
+      "description": "Delete a style (paint, text, effect, or grid) by its ID.",
+      "param_names": [
+        "styleId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cc91dcb4a6541a889977f81260491748ca73600fa00efc16f03ad672731df8c2"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "delete_variable",
+      "description": "Delete a single variable (provide variableId) or an entire collection and all its variables (provide collectionId). Provide exactly one of the two \u2014 not both.",
+      "param_names": [
+        "collectionId",
+        "variableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:0b5390df5584bca75279bf97b4a26ef7e8e97bc53aff0c4f8f1d263713849aa2"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "detach_instance",
+      "description": "Detach one or more component instances, converting them to plain frames. The link to the main component is broken; all visual properties are preserved.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3dbaf0304100b9ec82e5d76e0a1ce0d7b3cdc312d202cd2ab18931d67bee8d7f"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "export_frames_to_pdf",
+      "description": "Export multiple frames as a single multi-page PDF file. Each frame becomes one page in order. Ideal for pitch decks, proposals, and slide exports.",
+      "param_names": [
+        "nodeIds",
+        "outputPath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "pdf",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "rames_to_pdf export frames to pdf"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "in .pdf (relative to working directory or absolute)"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:971d33da8ee0ed1b641c3bac0e8dad9df53352b3c57288a8a29b335603a126c9"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "export_tokens",
+      "description": "Export all design tokens (variables and paint styles) as JSON or CSS custom properties. Ideal for bridging Figma variables into your codebase.",
+      "param_names": [
+        "format"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "codebase",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "ing Figma variables into your codebase. Output format: json (default"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:10977f1faa30e59bfbbb9b095867687e7045f948de42c8281eea55c0f43abe07"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "find_replace_text",
+      "description": "Find and replace text content across all TEXT nodes in a subtree. Searches the entire current page if no nodeId is given.",
+      "param_names": [
+        "find",
+        "nodeId",
+        "regexFlags",
+        "replace",
+        "useRegex"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:42e740416cafaed981cc8b96ae4e1919ae8679fb6a82147e0f3f41e4632aa1e7"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_annotations",
+      "description": "Get dev-mode annotations in the current document or scoped to a specific node. Returns annotation objects with label text, measurement type, and the ID of the annotated node. Omit nodeId to retrieve all annotations on the current page.",
+      "param_names": [
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "de annotations in the current document or scoped to a specific node."
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "turns annotation objects with label text, measurement type, and t"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:e4e6e23dc7e69e2323999ec6e0449d8370f795445f2bf8b0b181e8ea6c663fbe"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_design_context",
+      "description": "Get a depth-limited, token-efficient tree of the current selection or page. Use this instead of get_document when exploring large files. Supports detail levels (minimal/compact/full) and dedupe_components for pages heavy with repeated component instances.",
+      "param_names": [
+        "dedupe_components",
+        "depth",
+        "detail"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "get_document",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "or page. Use this instead of get_document when exploring large files. S"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Get a depth-limited, token-efficient tree of the current"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:c91acd707daa242ac1460a309751bc26206e55503837dfefe34c4c46778f4d29"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_document",
+      "description": "Get the full node tree of the current page (not the whole file \u2014 only the active page). Returns all nodes recursively and can be very large. Prefer get_design_context for exploration or when token efficiency matters.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "get_document",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "get_document get document"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "ntext for exploration or when token efficiency matters."
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "get_document get document"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "high",
+      "digest": "sha256:740a03c1f13f00e7560a129e834569119dcd3b29999fa4f5eda1448bce40f18f"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_fonts",
+      "description": "List all fonts used in the current page, sorted by usage frequency. Useful for understanding typography without scanning all text nodes.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3e57b2f456ea2db7a28961e608817b1b1e844c61e8284d25c1a95156cf42eb53"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_local_components",
+      "description": "Get all components defined in the current Figma file.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b2207de5ab6dd195aed40043ca1c87073fa74fa59cdc1210549eeac635964bb4"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_metadata",
+      "description": "Get metadata about the current Figma document: file name, pages, current page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "adata about the current Figma document: file name, pages, current pa"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:9bc395358ca7e465b1f3ddf4243d271e45f078775777294fd505db5dab58d1af"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_node",
+      "description": "Get a single node by ID with full detail. Use get_nodes_info to fetch multiple nodes in one round-trip instead of calling this repeatedly. Node ID must be colon format e.g. '4029:12345', never hyphens.",
+      "param_names": [
+        "nodeId"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "detail. Use get_nodes_info to fetch multiple nodes in one round-t"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:d8243cb27e098411008a08f0b0f58502c33cac56ba1cf8ff9e21b27ce3488e91"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_nodes_info",
+      "description": "Get full details for multiple nodes by ID in one round-trip. Prefer this over calling get_node repeatedly when you need several nodes.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:07138cd5ab706bd7a4b0fe371067b8fc192d708fcc374960d07ab4b4c857ce55"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_pages",
+      "description": "List all pages in the document with their IDs and names. Lightweight alternative to get_document.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "get_document",
+            "pattern": "\\b(read|get|load|open|cat|slurp|retrieve)[\\s_-]?(file|files|text|contents?|document|media)\\b",
+            "snippet": "s. Lightweight alternative to get_document."
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "List all pages in the document with their IDs and names. Lig"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "high",
+      "digest": "sha256:b45698a6184c8fcd2435f7b1603533087de3c4f6e1fca466a82f10767104b813"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_reactions",
+      "description": "Get the prototype reactions defined on a node. Returns an array of reaction objects \u2014 each has a trigger (e.g. ON_CLICK, ON_HOVER, AFTER_TIMEOUT) and an actions array (navigate to node, open URL, go back, etc.). Use set_reactions to add or replace reactions, remove_reactions to delete them.",
+      "param_names": [
+        "nodeId"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "array (navigate to node, open URL, go back, etc.). Use set_reac"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:20e893f0e13d2722c168ef75d02d33c3d7869d009d7d19c45f807f0b191f4de8"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_screenshot",
+      "description": "Export a screenshot of one or more nodes as base64-encoded image data (held in memory). Use save_screenshots instead when you want to write images directly to disk without base64 in the response.",
+      "param_names": [
+        "format",
+        "nodeIds",
+        "scale"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "PDF",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": ": PNG (default), SVG, JPG, or PDF Optional node IDs to export,"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:e5acca74410256bd32800ac179e974627040d600b42d90acd1da4bc8d8c7ebd9"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_selection",
+      "description": "Get the nodes currently selected in Figma. Returns an empty array if nothing is selected. Use get_design_context or get_node to retrieve deeper detail about a specific node by ID.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:235a6cc6b09ac3f24ad9ce73571161e7874cfd73ce6746635b985a1758efad4a"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_styles",
+      "description": "Get all local styles in the document (paint, text, effect, and grid). Returns each style's ID, name, type, and properties. Use the style ID with apply_style_to_node or update_paint_style. For design tokens (variables), use get_variable_defs instead.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "Get all local styles in the document (paint, text, effect, and gri"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:ae6d3641b27295535c42c26518694b8fa828e037a9cc328c7ebaac2cf2de658c"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_variable_defs",
+      "description": "Get all local variable definitions: collections, modes, and values. Variables are Figma's design token system.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "Variables are Figma's design token system."
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:9d192ea0ef4382a3e6cac48bb583fd11e733e23eca8c7e0fc71357e8dcfb492e"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "get_viewport",
+      "description": "Get the current Figma viewport: scroll center, zoom level, and visible bounds.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8a151ae507fac0f7291457cb5495a89791670c4ce40bbe72954b9c4964d8caa9"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "group_nodes",
+      "description": "Group two or more nodes into a GROUP. All nodes must share the same parent.",
+      "param_names": [
+        "name",
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:cdb301ea02bea76f9333b23aa30812961cc2467b30e8449e659a4fac9d69bddd"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "import_image",
+      "description": "Import a base64-encoded image into Figma as a rectangle with an image fill. Use get_screenshot to capture images or provide your own base64 PNG/JPG.",
+      "param_names": [
+        "height",
+        "imageData",
+        "name",
+        "parentId",
+        "scaleMode",
+        "width",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8bca35bb3978076a11192e2f4619657bbfbfe5a8d5f2c69008244e65c0c0bfb6"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "lock_nodes",
+      "description": "Lock one or more nodes to prevent accidental edits in Figma.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:18c1b62983c0a448eeac7ab494e91560227bd0cf54dee26b49f043928c6dad24"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "move_nodes",
+      "description": "Move one or more nodes to an absolute canvas position. The same x/y is applied to every node independently (not a relative offset from current position).",
+      "param_names": [
+        "nodeIds",
+        "x",
+        "y"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:606648bc42378867198446468e66c5517dd9056f721adf11f8c147a05c5ddbaa"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "navigate_to_page",
+      "description": "Switch the active Figma page. Provide either pageId or pageName.",
+      "param_names": [
+        "pageId",
+        "pageName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1ac951334e3b09c07b4a35781497303ededb27ca51fbea2e85e951a181bc255d"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "remove_reactions",
+      "description": "Remove prototype reactions from a node. Omit indices to remove all reactions. Provide a zero-based indices array to remove specific reactions (use get_reactions first to see current indices).",
+      "param_names": [
+        "indices",
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4981901cb39353f906192f096b11706e9cb2a615c90e5d1fa5f7dc9a0d46b565"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "rename_node",
+      "description": "Rename a single node by ID. Returns the updated node with its new name. Use batch_rename_nodes to rename multiple nodes at once or to apply find/replace patterns across many nodes.",
+      "param_names": [
+        "name",
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:38af27187c6bcfae8e48b613a759abefa10019e53ebd382a22a45c6199a2e3ca"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "rename_page",
+      "description": "Rename an existing page in the Figma document.",
+      "param_names": [
+        "newName",
+        "pageId",
+        "pageName"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "an existing page in the Figma document. New name for the page Page n"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:6675f3c01b34ecbfd5ca4d01dbb5683fe17ed788308cb510e1675aca6c6e728a"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "reorder_nodes",
+      "description": "Change the z-order (layer stack position) of one or more nodes.",
+      "param_names": [
+        "nodeIds",
+        "order"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1ef62b7c7df8713f1f72438b40d8b6dafe5a8337a1b03926ae09e73037c4d933"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "reparent_nodes",
+      "description": "Move one or more nodes to a different parent frame, group, or section.",
+      "param_names": [
+        "nodeIds",
+        "parentId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:33cac410bc183d2bb1a80b79b97809d7067e902dc68593aaa55a2368dbeea03d"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "resize_nodes",
+      "description": "Resize one or more nodes. The same width/height is applied to every node in the list independently. Provide width, height, or both.",
+      "param_names": [
+        "height",
+        "nodeIds",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:64664e7ca62d8f5cf292649d2baed40789888b2f10c2d16150c90c995be4a357"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "rotate_nodes",
+      "description": "Rotate one or more nodes to an absolute angle in degrees.",
+      "param_names": [
+        "nodeIds",
+        "rotation"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e6da7e7d3a6319a9322e311026ba00954da96483b281d01432525c3ef98b5958"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "save_screenshots",
+      "description": "Export screenshots for multiple nodes and write them to the local filesystem. Returns file metadata (path, size, dimensions) \u2014 no base64 in the response. Use get_screenshot instead when you need the image data in memory.",
+      "param_names": [
+        "format",
+        "items",
+        "scale"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "PDF",
+            "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": ": PNG (default), SVG, JPG, or PDF List of {nodeId, outputPath,"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:85d1a22d867af6b8414d159683a5545e86dd050f644e0289530d315ec949d511"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "scan_nodes_by_types",
+      "description": "Find all nodes of specific types in a subtree, regardless of name. Use search_nodes instead when you need to filter by name.",
+      "param_names": [
+        "nodeId",
+        "types"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3dab08d95ee5e6b8941f212bbfcef1739d509de37706ad189c9f7db996c7fb11"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "scan_text_nodes",
+      "description": "Scan all TEXT nodes in a subtree and return their content. Shorthand for scan_nodes_by_types with ['TEXT'] \u2014 use when you only need text copy from a component or frame.",
+      "param_names": [
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:dd306ef0df12060988eb93fb3c698653263bb2b764ed89877e3017fcf8528c60"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "search_nodes",
+      "description": "Search for nodes by name substring and/or type within a subtree. Use this when you know (part of) the node name. Use scan_nodes_by_types when you want all nodes of a type regardless of name.",
+      "param_names": [
+        "limit",
+        "nodeId",
+        "query",
+        "types"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6ad17e4970b41efe9437d56b79550c15d03cb3edee2ac67315ddfbfe9ca1de58"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_auto_layout",
+      "description": "Set or update auto-layout (flex) properties on an existing frame.",
+      "param_names": [
+        "counterAxisAlignItems",
+        "counterAxisSizingMode",
+        "counterAxisSpacing",
+        "itemSpacing",
+        "layoutMode",
+        "layoutWrap",
+        "nodeId",
+        "paddingBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "primaryAxisAlignItems",
+        "primaryAxisSizingMode"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4e38c604b5591dc654143bebfbe72f2855c554e4acacf450f8e73ec30de3954b"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_blend_mode",
+      "description": "Set the blend mode of one or more nodes (e.g. MULTIPLY, SCREEN, OVERLAY).",
+      "param_names": [
+        "blendMode",
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:bbb6bd7a2633c945dc394e5ae8080db09cba1f14ebe4728339446ea09d429b34"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_constraints",
+      "description": "Set layout constraints (pinning behaviour) on one or more nodes relative to their parent.",
+      "param_names": [
+        "horizontal",
+        "nodeIds",
+        "vertical"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3f140b98f426e1b9d6da8e95a85c53dd030c9dd8541543ad470c36f846f80a83"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_corner_radius",
+      "description": "Set corner radius on one or more nodes. Provide a uniform cornerRadius or individual per-corner values.",
+      "param_names": [
+        "bottomLeftRadius",
+        "bottomRightRadius",
+        "cornerRadius",
+        "nodeIds",
+        "topLeftRadius",
+        "topRightRadius"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e31b713a17fcf15e33be4768be16efaf72f88c7715aa5bbff80e5501a4fd5d56"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_effects",
+      "description": "Apply one or more effects (drop shadow, inner shadow, layer blur, background blur) directly to a node. Replaces all existing effects. Pass an empty array to clear all effects.",
+      "param_names": [
+        "effects",
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e3d7102beee0b66d32c041f0941c010830a2f5963d4ff452c91733d6c250d14b"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_fills",
+      "description": "Set the fill color on a single node (takes one nodeId, not an array). Use mode='append' to stack a new fill on top of existing fills instead of replacing them.",
+      "param_names": [
+        "color",
+        "mode",
+        "nodeId",
+        "opacity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4869909b7fe839e3d815f7052901e9caa93135cf8c3891e201bc30914284db2c"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_opacity",
+      "description": "Set the opacity of one or more nodes (0 = fully transparent, 1 = fully opaque).",
+      "param_names": [
+        "nodeIds",
+        "opacity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:93f1f3464085df919e76f92a540b9d9010ff713a5acd28cbd92a59d8be1f687c"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_reactions",
+      "description": "Set prototype reactions on a node. Use mode \"replace\" (default) to overwrite all reactions, or \"append\" to add to existing ones.\n\nSupported triggers: ON_CLICK, ON_HOVER, ON_PRESS, ON_DRAG, AFTER_TIMEOUT, MOUSE_ENTER, MOUSE_LEAVE, MOUSE_UP, MOUSE_DOWN\nSupported action types: NODE (navigation), BACK, CLOSE, URL\n  NODE navigation values: NAVIGATE, OVERLAY, SCROLL_TO, SWAP, CHANGE_TO\nTransition types: DISSOLVE, SMART_ANIMATE, MOVE_IN, MOVE_OUT, PUSH, SLIDE_IN, SLIDE_OUT\n  DISSOLVE / SMART_ANIMATE: {\"type\":\"DISSOLVE\",\"duration\":0.3,\"easing\":{\"type\":\"EASE_OUT\"}}\n  Directional (PUSH, MOVE_IN, MOVE_OUT, SLIDE_IN, SLIDE_OUT): also require \"direction\" (LEFT|RIGHT|TOP|BOTTOM) and \"matchLayers\" (bool):\n    {\"type\":\"PUSH\",\"direction\":\"LEFT\",\"matchLayers\":false,\"duration\":0.3,\"easing\":{\"type\":\"EASE_OUT\"}}\n\nEach reaction has a \"trigger\" and an \"actions\" array (plural). Each action in the array is an Action object.\n\nExample \u2014 on-click navigate with dissolve:\n{\"nodeId\":\"1:2\",\"reactions\":[{\"trigger\":{\"type\":\"ON_CLICK\"},\"actions\":[{\"type\":\"NODE\",\"destinationId\":\"1:3\",\"navigation\":\"NAVIGATE\",\"transition\":{\"type\":\"DISSOLVE\",\"duration\":0.3,\"easing\":{\"type\":\"EASE_OUT\"}},\"preserveScrollPosition\":false}]}]}\n\nExample \u2014 on-click navigate with push (directional transition):\n{\"nodeId\":\"1:2\",\"reactions\":[{\"trigger\":{\"type\":\"ON_CLICK\"},\"actions\":[{\"type\":\"NODE\",\"destinationId\":\"1:3\",\"navigation\":\"NAVIGATE\",\"transition\":{\"type\":\"PUSH\",\"direction\":\"LEFT\",\"matchLayers\":false,\"duration\":0.3,\"easing\":{\"type\":\"EASE_OUT\"}},\"preserveScrollPosition\":false}]}]}\n\nExample \u2014 open URL on hover:\n{\"nodeId\":\"1:2\",\"reactions\":[{\"trigger\":{\"type\":\"ON_HOVER\"},\"actions\":[{\"type\":\"URL\",\"url\":\"https://example.com\"}]}]}\n\nExample \u2014 auto-advance after 3 seconds:\n{\"nodeId\":\"1:2\",\"reactions\":[{\"trigger\":{\"type\":\"AFTER_TIMEOUT\",\"timeout\":3000},\"actions\":[{\"type\":\"NODE\",\"destinationId\":\"1:4\",\"navigation\":\"NAVIGATE\",\"transition\":{\"type\":\"DISSOLVE\",\"duration\":0.3,\"easing\":{\"type\":\"EASE_OUT\"}},\"preserveScrollPosition\":false}]}]}\n\nExample \u2014 go back on click:\n{\"nodeId\":\"1:2\",\"reactions\":[{\"trigger\":{\"type\":\"ON_CLICK\"},\"actions\":[{\"type\":\"BACK\"}]}]}",
+      "param_names": [
+        "mode",
+        "nodeId",
+        "reactions"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "DE (navigation), BACK, CLOSE, URL\n  NODE navigation values: NAV"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:e60a6cd95722735a001e5347bf05c396fb76fb2015e6bd584c39f6528cebe34d"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_strokes",
+      "description": "Set the stroke color and weight on a single node (takes one nodeId, not an array). Use mode='append' to stack a new stroke on top of existing strokes instead of replacing them.",
+      "param_names": [
+        "color",
+        "mode",
+        "nodeId",
+        "strokeWeight"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:d1722f39854e3cd7a65b5790af7afe982a0b175e274a822e5c393ab080b0daf3"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_text",
+      "description": "Update the text content of an existing TEXT node.",
+      "param_names": [
+        "nodeId",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:05a82d28b234fbe41c2dbc19aede514d18a2080307d22fae18d278f6fe783383"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_variable_value",
+      "description": "Set a variable's value for a specific mode.",
+      "param_names": [
+        "modeId",
+        "value",
+        "variableId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:794d191445bb136cc96abc9401150f487121f7bac2eb615f962f9088b881edcc"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "set_visible",
+      "description": "Show or hide one or more nodes by setting their visibility.",
+      "param_names": [
+        "nodeIds",
+        "visible"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5a53183e6b9f5282810d41218c334fd72c7ed1dd9259140b7b371f2831b58632"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "swap_component",
+      "description": "Swap the main component of an existing INSTANCE node, replacing it with a different component while keeping position and size.",
+      "param_names": [
+        "componentId",
+        "nodeId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:36d75bdb92b20d0524fdaf6535a051d9c75510ffba2fbf19e9a5102902ad073b"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "ungroup_nodes",
+      "description": "Ungroup one or more GROUP nodes, moving their children to the parent and removing the group.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c1879fb44f3e650d5f553d4a996f1723dd1aeb6fe4c30fa46b46fc3fd343ee9b"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "unlock_nodes",
+      "description": "Unlock one or more nodes, allowing them to be edited again.",
+      "param_names": [
+        "nodeIds"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b6c9f495dd770a9b183feb3035a7b7c65da0c2d0c100e0eb111c6b0d39516f70"
+    },
+    {
+      "server": "figma-mcp-go",
+      "name": "update_paint_style",
+      "description": "Update an existing paint style's name, color, or description. Only paint styles support in-place updates \u2014 to modify text, effect, or grid styles, use delete_style and recreate them.",
+      "param_names": [
+        "color",
+        "description",
+        "name",
+        "styleId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b1431a9d30b963499b8825ebe51b40344d21df81938f26a923c56bc95fd93557"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 11,
+        "confidence": "high"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 73,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 10,
+    "toxic_combination_count": 2,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 5,
+      "MEDIUM": 9,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "files_documents",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

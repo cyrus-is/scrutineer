@@ -1,0 +1,3134 @@
+{
+  "server": "hex-ssh",
+  "captured_at": "2026-05-26T22:23:42Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "hex-ssh-mcp",
+    "version": "1.9.2"
+  },
+  "tools": [
+    {
+      "name": "ssh-capabilities",
+      "title": "SSH Capabilities",
+      "description": "Inspect POSIX remote session support, tmux availability, package managers, and basic shell tools.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "host"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-session-open",
+      "title": "SSH Session Open",
+      "description": "Open a trusted persistent remote tmux session. Preserves cwd and environment across ssh-session-exec calls.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "name": {
+            "description": "Optional session label. Default: empty",
+            "type": "string"
+          },
+          "ttlSeconds": {
+            "description": "Session TTL in seconds. Default: 43200 (12h)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "host"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-session-exec",
+      "title": "SSH Session Exec",
+      "description": "Run a command inside a persistent tmux session. Returns metadata first; read output with ssh-session-read.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "sid": {
+            "type": "string",
+            "description": "Session id returned by ssh-session-open"
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute in the persistent session"
+          },
+          "waitSeconds": {
+            "description": "Seconds to wait for command completion. Default: 300",
+            "type": "number"
+          }
+        },
+        "required": [
+          "host",
+          "sid",
+          "command"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-session-read",
+      "title": "SSH Session Read",
+      "description": "Read a paginated stdout/stderr window from a persistent session command.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "sid": {
+            "type": "string",
+            "description": "Session id returned by ssh-session-open"
+          },
+          "seq": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Command sequence returned by ssh-session-exec"
+          },
+          "stream": {
+            "description": "Output stream: stdout or stderr. Default: stdout",
+            "type": "string",
+            "enum": [
+              "stdout",
+              "stderr"
+            ]
+          },
+          "offset": {
+            "description": "Zero-based line offset. Default: 0",
+            "type": "number"
+          },
+          "limit": {
+            "description": "Line limit. Default: 50",
+            "type": "number"
+          },
+          "raw": {
+            "description": "When true, return only the output content field",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "host",
+          "sid",
+          "seq"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-session-close",
+      "title": "SSH Session Close",
+      "description": "Close a trusted persistent tmux session and remove its remote session directory.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "sid": {
+            "type": "string",
+            "description": "Session id returned by ssh-session-open"
+          }
+        },
+        "required": [
+          "host",
+          "sid"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-session-gc",
+      "title": "SSH Session GC",
+      "description": "Remove expired trusted hex-ssh tmux sessions. Only sessions with valid hex-ssh metadata are touched.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "olderThanSeconds": {
+            "description": "Delete trusted sessions older than this many seconds. Default: delete expired sessions only",
+            "type": "number"
+          }
+        },
+        "required": [
+          "host"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remote-ssh",
+      "title": "SSH Command",
+      "description": "Execute shell commands on remote servers. Disabled by default. Set REMOTE_SSH_MODE=safe or REMOTE_SSH_MODE=open to enable.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute"
+          }
+        },
+        "required": [
+          "host",
+          "command"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-read-lines",
+      "title": "SSH Read File",
+      "description": "Read remote file with hash-annotated lines. Use startLine/maxLines for large files. Returns range checksums for edit verification.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Path to file on remote server"
+          },
+          "startLine": {
+            "description": "Start line (1-based, default: 1)",
+            "type": "number"
+          },
+          "endLine": {
+            "description": "End line (optional, reads to limit if not set)",
+            "type": "number"
+          },
+          "maxLines": {
+            "description": "Max lines to read (default: 200)",
+            "type": "number"
+          },
+          "plain": {
+            "description": "Omit hashes (lineNum|content)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "host",
+          "filePath"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-edit-block",
+      "title": "SSH Edit File",
+      "description": "Edit remote files using hash-verified anchors. Use ssh-read-lines first to get hash anchors and checksums.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Path to file on remote server"
+          },
+          "newText": {
+            "description": "Replacement text (for anchor/range/insert edits)",
+            "type": "string"
+          },
+          "checksum": {
+            "description": "Range checksum from ssh-read-lines (e.g. '1-50:f7e2a1b0'). If provided, verifies file unchanged before edit.",
+            "type": "string"
+          },
+          "anchor": {
+            "description": "Hash anchor 'ab.42' to set single line (from ssh-read-lines)",
+            "type": "string"
+          },
+          "startAnchor": {
+            "description": "Start hash anchor 'ab.42' for range replace",
+            "type": "string"
+          },
+          "endAnchor": {
+            "description": "End hash anchor 'cd.45' for range replace",
+            "type": "string"
+          },
+          "insertAfter": {
+            "description": "Hash anchor 'ab.42' to insert after",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "filePath"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-search-code",
+      "title": "SSH Search",
+      "description": "Search remote files with grep. Returns hash-annotated matches with deduplication. Use for finding code before ssh-edit-block.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "path": {
+            "type": "string",
+            "description": "Directory to search on remote server"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Text/regex pattern to search"
+          },
+          "filePattern": {
+            "description": "Glob filter (e.g. \"*.js\", \"*.py\")",
+            "type": "string"
+          },
+          "ignoreCase": {
+            "description": "Case-insensitive search (default: false)",
+            "type": "boolean"
+          },
+          "maxResults": {
+            "description": "Max result lines (default: 50)",
+            "type": "number"
+          },
+          "contextLines": {
+            "description": "Context lines around matches (default: 0)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "host",
+          "path",
+          "pattern"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-write-chunk",
+      "title": "SSH Write File",
+      "description": "Write or append to remote files. Rewrite mode is atomic (temp file + rename). Append mode is non-atomic (direct >>). Auto-creates parent directories.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Path to file on remote server"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to write"
+          },
+          "mode": {
+            "description": "Write mode (default: rewrite)",
+            "type": "string",
+            "enum": [
+              "rewrite",
+              "append"
+            ]
+          }
+        },
+        "required": [
+          "host",
+          "filePath",
+          "content"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-upload",
+      "title": "SSH Upload File",
+      "description": "Upload a local file to a remote server over SFTP. Supports text and binary files, rejects existing destinations by default, validates path boundaries, and stages via the strongest available remote finalize path.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "transferTimeoutMs": {
+            "description": "SFTP inactivity timeout in ms (default: 120000; env TRANSFER_TIMEOUT_MS overrides default). Used by ssh-upload/ssh-download.",
+            "type": "number"
+          },
+          "localPath": {
+            "type": "string",
+            "description": "Absolute local file path or ~/path to upload"
+          },
+          "remotePath": {
+            "type": "string",
+            "description": "Absolute destination path on remote server"
+          },
+          "overwrite": {
+            "description": "Replace existing destination when true. Default: false",
+            "type": "boolean"
+          },
+          "verify": {
+            "description": "Post-transfer verification mode. Default: stat",
+            "type": "string",
+            "enum": [
+              "none",
+              "stat"
+            ]
+          },
+          "permissions": {
+            "description": "Optional octal file mode for uploaded file, e.g. 0644",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "localPath",
+          "remotePath"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-download",
+      "title": "SSH Download File",
+      "description": "Download a remote file to the local machine over SFTP. Supports text and binary files, rejects existing destinations by default, validates path boundaries, and stages to a verified local finalize path.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "transferTimeoutMs": {
+            "description": "SFTP inactivity timeout in ms (default: 120000; env TRANSFER_TIMEOUT_MS overrides default). Used by ssh-upload/ssh-download.",
+            "type": "number"
+          },
+          "remotePath": {
+            "type": "string",
+            "description": "Absolute file path on remote server"
+          },
+          "localPath": {
+            "type": "string",
+            "description": "Absolute local destination path or ~/path"
+          },
+          "overwrite": {
+            "description": "Replace existing destination when true. Default: false",
+            "type": "boolean"
+          },
+          "verify": {
+            "description": "Post-transfer verification mode. Default: stat",
+            "type": "string",
+            "enum": [
+              "none",
+              "stat"
+            ]
+          }
+        },
+        "required": [
+          "host",
+          "remotePath",
+          "localPath"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ssh-verify",
+      "title": "SSH Verify Checksums",
+      "description": "Check if range checksums still match remote file. Single-line response avoids full re-read. Use before editing after a pause.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "SSH host - alias from ~/.ssh/config or hostname/IP"
+          },
+          "user": {
+            "description": "SSH username (optional if set in ~/.ssh/config)",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "description": "Path to SSH private key (optional)",
+            "type": "string"
+          },
+          "port": {
+            "description": "SSH port (default: 22)",
+            "type": "number"
+          },
+          "remotePlatform": {
+            "description": "Remote path platform. Use \"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "posix",
+              "windows"
+            ]
+          },
+          "connectTimeoutMs": {
+            "description": "SSH handshake timeout in ms (default: 20000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "keepaliveIntervalMs": {
+            "description": "SSH keepalive interval in ms (default: 30000). Per-call override. Different values spawn separate pooled connections.",
+            "type": "number"
+          },
+          "execTimeoutMs": {
+            "description": "Per-command execution timeout in ms (default: 120000). Used by remote-ssh and hash-verified file tools.",
+            "type": "number"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Path to file on remote server"
+          },
+          "checksums": {
+            "type": "string",
+            "description": "JSON array of checksum strings, e.g. [\"1-50:f7e2a1b0\", \"51-100:abcd1234\"]"
+          }
+        },
+        "required": [
+          "host",
+          "filePath",
+          "checksums"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "recovery": {
+            "type": "string"
+          },
+          "failure_class": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "number"
+          },
+          "command": {
+            "type": "string"
+          },
+          "bytes_written": {
+            "type": "number"
+          },
+          "bytes_transferred": {
+            "type": "number"
+          },
+          "local_path": {
+            "type": "string"
+          },
+          "remote_path": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "verify": {},
+          "sid": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "tmux_name": {
+            "type": "string"
+          },
+          "next_commands": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "capabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "rc": {
+            "type": "number"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "stdout_lines": {
+            "type": "number"
+          },
+          "stderr_lines": {
+            "type": "number"
+          },
+          "stream": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total_lines": {
+            "type": "number"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "recovery"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

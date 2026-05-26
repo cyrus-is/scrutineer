@@ -1,0 +1,5 @@
+{
+  "server": "claude-code-explorer",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

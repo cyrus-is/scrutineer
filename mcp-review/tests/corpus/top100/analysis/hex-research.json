@@ -1,0 +1,742 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "hex-research",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-research-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@levnikolaevich/hex-research-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:f3137fb445cf56c2ae8bb248bfa11626f0da11096c3350ad470b2ee2e9f45c8c",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'hex-research' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @levnikolaevich/hex-research-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@levnikolaevich/hex-research-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'hex-research' package spec '@levnikolaevich/hex-research-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@levnikolaevich/hex-research-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "hex-research",
+      "name": "index_hypotheses",
+      "description": "Rebuild the local SQLite research graph from docs/hypotheses, docs/goals, and benchmark run manifests.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQLite",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Rebuild the local SQLite research graph from docs/hypo"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "and benchmark run manifests. Project root containing docs/hypothes"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:dd60554e26751814114084b5fcc475275bf014268670df24cc35c4de4bf2961b"
+    },
+    {
+      "server": "hex-research",
+      "name": "verify_index",
+      "description": "Validate research frontmatter and run manifests without rebuilding the SQLite index.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "SQLite",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ifests without rebuilding the SQLite index. Project root containin"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "rebuilding the SQLite index. Project root containing docs/hypothes"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:ec4e827b9f4363322f2ec206a13d0af432c919b0b8b3f4640f0708614c9f9b35"
+    },
+    {
+      "server": "hex-research",
+      "name": "find_hypotheses",
+      "description": "Search indexed hypotheses by status, goal, task state, source type/year, priority tier, or claim text.",
+      "param_names": [
+        "cited_source_type",
+        "cited_source_year_min",
+        "claim_substring",
+        "goal",
+        "limit",
+        "path",
+        "priority_tier",
+        "status",
+        "task_state"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "path status goal task_state cited_source_"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:1ce3f8f203e958e3843d599fc875ebbc1679dbd2593339ae4415c8818da15802"
+    },
+    {
+      "server": "hex-research",
+      "name": "inspect_hypothesis",
+      "description": "Return a bounded structured view of one hypothesis, including goals, tasks, evidence, runs, sources, and edges.",
+      "param_names": [
+        "claim_substring",
+        "id",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": ", sources, and edges. Indexed project root Canonical H## or G## id"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:5ad0298c423ecc78ccafb13c40f109c2c160ee69954e2ee6ee5aaa6bab6d4afc"
+    },
+    {
+      "server": "hex-research",
+      "name": "find_evidence",
+      "description": "Find evidence entries and cited sources, optionally scoped to one hypothesis and source/evidence type.",
+      "param_names": [
+        "id",
+        "limit",
+        "path",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "source/evidence type. Indexed project root Hypothesis id Evidence o"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:3bd8c96a6596a77ae4033cd1ffae0dde68a65ccbb9bc66ec9a4d8a897ce1a9e5"
+    },
+    {
+      "server": "hex-research",
+      "name": "find_runs",
+      "description": "Find targeted or explicit comprehensive benchmark runs by run id, hypothesis id, type, and comprehensive flag; goal metrics derive only from explicit comprehensive runs.",
+      "param_names": [
+        "comprehensive",
+        "hypothesis",
+        "id",
+        "limit",
+        "path",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "t comprehensive runs. Indexed project root Run id Hypothesis id for"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:ff88629787053a8421a04a3b25b0fe3c3915da51ed02c8c7f9f6f825f6d94737"
+    },
+    {
+      "server": "hex-research",
+      "name": "trace_lineage",
+      "description": "Trace bounded hypothesis lineage and dependency edges around a hypothesis id.",
+      "param_names": [
+        "depth",
+        "direction",
+        "id",
+        "limit",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ound a hypothesis id. Indexed project root Starting hypothesis id T"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:a2478ae84be891ddff5b76ce974a6e9fe4e55f4787cdf5862c28fc6c265a682f"
+    },
+    {
+      "server": "hex-research",
+      "name": "analyze_topology",
+      "description": "Summarize graph node/edge counts and high-degree hubs without dumping the full graph.",
+      "param_names": [
+        "limit",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "mping the full graph. Indexed project root Maximum hub rows to retu"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:1c399a2d9db5e2db574aaf98a1b424e1ec53755058a7abef70f7314f4f8b3cad"
+    },
+    {
+      "server": "hex-research",
+      "name": "audit_orphans",
+      "description": "Audit orphaned, stale, missing-evidence, missing-source, dead-branch, task, and goal-run gaps.",
+      "param_names": [
+        "limit",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "missing-source, dead-branch, task, and goal-run gaps. Indexed p"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:261759832f229185e3c8171f0a4743286f886b1a566eba777b9d6f66fc19d7a2"
+    },
+    {
+      "server": "hex-research",
+      "name": "inspect_goal",
+      "description": "Return a bounded structured view of one goal, including parent/child goals, linked hypotheses, and derived metrics_current provenance or missing-metrics reason.",
+      "param_names": [
+        "claim_substring",
+        "id",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ssing-metrics reason. Indexed project root Canonical H## or G## id"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:f954d085f088f8dc0cf34fa27597fcabf96aa9b55dd2c9370912cfcc5c737f5c"
+    },
+    {
+      "server": "hex-research",
+      "name": "trace_goal_tree",
+      "description": "Trace the bounded goal decomposition tree around one goal id.",
+      "param_names": [
+        "id",
+        "limit",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "e around one goal id. Indexed project root Starting goal id Maximum"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:bc95ec5a6ccc9151e9a18c5de57b3b536678548f458037fd0a72cd6ca2c6cf2a"
+    },
+    {
+      "server": "hex-research",
+      "name": "audit_goal_alignment",
+      "description": "Audit hypothesis-goal links, active goals without live hypotheses, goals missing explicit comprehensive-run metrics, and coverage candidates.",
+      "param_names": [
+        "limit",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "coverage candidates. Indexed project root Maximum issues to return"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:ac8db82db1638f0522a66789622db7515cf2c5fc4999a20fc786f454b1912280"
+    },
+    {
+      "server": "hex-research",
+      "name": "analyze_progress",
+      "description": "Use git diff to identify changed research graph files and field-level frontmatter deltas that should be verified or reindexed.",
+      "param_names": [
+        "compare_against",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "Use git diff to identify changed rese"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "uld be verified or reindexed. Project root Git ref to compare again"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:61f56baa5497cc6f983acfe65ce47864e93e80e63f7bd77ffc52380a2f3adc39"
+    },
+    {
+      "server": "hex-research",
+      "name": "analyze_proposed",
+      "description": "Check one indexed hypothesis for readiness gaps before promotion or implementation.",
+      "param_names": [
+        "claim_substring",
+        "id",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "on or implementation. Indexed project root Canonical H## or G## id"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:2877e0d87dfc80c0fdee0dffa8eb0850af0f5b5660b696c9ccdc0e0171af7312"
+    },
+    {
+      "server": "hex-research",
+      "name": "export_canvas",
+      "description": "Export a bounded JSON Canvas map of goals, hypotheses, runs, and their relationships.",
+      "param_names": [
+        "dry_run",
+        "mode",
+        "output_path",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "their relationships. Indexed project root Canvas path relative to"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:615e3d9066719bba6286f28adf1dc27b6f5c675aca907b56fe038da9286ac0d2"
+    },
+    {
+      "server": "hex-research",
+      "name": "export_research_map",
+      "description": "Generate docs/research-map.md from canonical split researchgraph files. Dry-run by default; refuses unmarked legacy overwrite unless force is true.",
+      "param_names": [
+        "dry_run",
+        "force",
+        "output_path",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "unless force is true. Indexed project root Markdown path relative t"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [
+          "force"
+        ],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:7b94127c393805cd5364f3f1526ed34f53f77888f78bf23cbb569c3a809c7b37"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "medium"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 16,
+        "confidence": "high"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 16,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "project_metadata",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

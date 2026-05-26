@@ -1,0 +1,983 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    },
+    "claude-flow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "claude-flow"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "CLAUDE_FLOW_MODE": "${CLAUDE_FLOW_MODE}",
+        "CLAUDE_FLOW_MEMORY_PATH": "${CLAUDE_FLOW_MEMORY_PATH}",
+        "CLAUDE_FLOW_MAX_AGENTS": "${CLAUDE_FLOW_MAX_AGENTS}",
+        "CLAUDE_FLOW_PORT": "${CLAUDE_FLOW_PORT}",
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "FLOW_NEXUS_API_KEY": "${FLOW_NEXUS_API_KEY}"
+      }
+    },
+    "scrapling": {
+      "command": "uvx",
+      "args": [
+        "scrapling"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp"
+      ]
+    },
+    "mcp-server-browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-browser"
+      ],
+      "env": {
+        "DISPLAY": "${DISPLAY}"
+      }
+    },
+    "mcp-server-commands": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-commands"
+      ]
+    },
+    "mcp-server-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-filesystem"
+      ]
+    },
+    "mcp-server-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agent-infra/mcp-server-search"
+      ]
+    },
+    "mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ]
+    },
+    "serena-agent": {
+      "command": "uvx",
+      "args": [
+        "serena-agent"
+      ]
+    },
+    "figma-developer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "figma-developer-mcp"
+      ],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}"
+      }
+    },
+    "praisonai": {
+      "command": "uvx",
+      "args": [
+        "praisonai"
+      ]
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
+    },
+    "airweave-mcp-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "airweave-mcp-search"
+      ],
+      "env": {
+        "AIRWEAVE_API_KEY": "${AIRWEAVE_API_KEY}",
+        "AIRWEAVE_COLLECTION": "${AIRWEAVE_COLLECTION}",
+        "AIRWEAVE_BASE_URL": "${AIRWEAVE_BASE_URL}"
+      }
+    },
+    "claude-code-explorer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "claude-code-explorer-mcp"
+      ]
+    },
+    "desktop-commander": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander"
+      ]
+    },
+    "xcodebuildmcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "xcodebuildmcp"
+      ],
+      "env": {
+        "INCREMENTAL_BUILDS_ENABLED": "false",
+        "XCODEBUILDMCP_ENABLED_WORKFLOWS": "${XCODEBUILDMCP_ENABLED_WORKFLOWS}",
+        "XCODEBUILDMCP_SENTRY_DISABLED": "false",
+        "XCODEBUILDMCP_DEBUG": "false"
+      }
+    },
+    "xcodebuildmcp-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "xcodebuildmcp"
+      ]
+    },
+    "windows": {
+      "command": "uvx",
+      "args": [
+        "windows-mcp"
+      ]
+    },
+    "mobile": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mobilenext/mobile-mcp"
+      ]
+    },
+    "firebase-tools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-tools"
+      ]
+    },
+    "mcp-server-chart": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@antv/mcp-server-chart"
+      ],
+      "env": {
+        "VIS_REQUEST_SERVER": "https://antv-studio.alipay.com/api/gpt-vis",
+        "SERVICE_ID": "${SERVICE_ID}",
+        "DISABLED_TOOLS": "${DISABLED_TOOLS}"
+      }
+    },
+    "mcp-server-browserbase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@browserbasehq/mcp-server-browserbase"
+      ],
+      "env": {
+        "BROWSERBASE_API_KEY": "${BROWSERBASE_API_KEY}",
+        "BROWSERBASE_PROJECT_ID": "${BROWSERBASE_PROJECT_ID}",
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}"
+      }
+    },
+    "mcp-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure/mcp"
+      ]
+    },
+    "fabric": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/fabric-mcp"
+      ]
+    },
+    "mcp-template": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure/mcp-template"
+      ]
+    },
+    "ha": {
+      "command": "uvx",
+      "args": [
+        "ha-mcp"
+      ]
+    },
+    "basic-memory": {
+      "command": "uvx",
+      "args": [
+        "basic-memory"
+      ]
+    },
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub"
+      ],
+      "env": {
+        "DSN": "${DSN}",
+        "DB_TYPE": "${DB_TYPE}",
+        "DB_HOST": "${DB_HOST}",
+        "DB_PORT": "${DB_PORT}",
+        "DB_USER": "${DB_USER}",
+        "DB_PASSWORD": "${DB_PASSWORD}",
+        "DB_NAME": "${DB_NAME}",
+        "TRANSPORT": "${TRANSPORT}",
+        "PORT": "${PORT}",
+        "ID": "${ID}",
+        "SSH_HOST": "${SSH_HOST}",
+        "SSH_PORT": "${SSH_PORT}",
+        "SSH_USER": "${SSH_USER}",
+        "SSH_PASSWORD": "${SSH_PASSWORD}",
+        "SSH_KEY": "${SSH_KEY}",
+        "SSH_PASSPHRASE": "${SSH_PASSPHRASE}"
+      }
+    },
+    "arxiv": {
+      "command": "uvx",
+      "args": [
+        "arxiv-mcp-server"
+      ],
+      "env": {
+        "ARXIV_STORAGE_PATH": "${ARXIV_STORAGE_PATH}"
+      }
+    },
+    "socraticode": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "socraticode"
+      ],
+      "env": {
+        "EMBEDDING_PROVIDER": "${EMBEDDING_PROVIDER}",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
+        "OLLAMA_URL": "${OLLAMA_URL}",
+        "EMBEDDING_MODEL": "${EMBEDDING_MODEL}",
+        "QDRANT_MODE": "${QDRANT_MODE}",
+        "QDRANT_URL": "${QDRANT_URL}",
+        "QDRANT_API_KEY": "${QDRANT_API_KEY}"
+      }
+    },
+    "codemaster": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@divyesh2000/codemaster"
+      ]
+    },
+    "mcp-server-supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "semiotic": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "semiotic"
+      ]
+    },
+    "mcp-3": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@brightdata/mcp"
+      ],
+      "env": {
+        "API_TOKEN": "${API_TOKEN}",
+        "WEB_UNLOCKER_ZONE": "${WEB_UNLOCKER_ZONE}",
+        "BROWSER_ZONE": "${BROWSER_ZONE}",
+        "PRO_MODE": "${PRO_MODE}",
+        "GROUPS": "${GROUPS}",
+        "TOOLS": "${TOOLS}",
+        "POLLING_TIMEOUT": "${POLLING_TIMEOUT}",
+        "BASE_TIMEOUT": "${BASE_TIMEOUT}",
+        "BASE_MAX_RETRIES": "${BASE_MAX_RETRIES}"
+      }
+    },
+    "agent-device": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "agent-device"
+      ]
+    },
+    "edgartools": {
+      "command": "uvx",
+      "args": [
+        "edgartools"
+      ],
+      "env": {
+        "EDGAR_IDENTITY": "${EDGAR_IDENTITY}"
+      }
+    },
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tavily-mcp"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}",
+        "DEFAULT_PARAMETERS": "${DEFAULT_PARAMETERS}"
+      }
+    },
+    "mcp-4": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dbx-app/mcp-server"
+      ]
+    },
+    "jcodemunch": {
+      "command": "uvx",
+      "args": [
+        "jcodemunch-mcp"
+      ]
+    },
+    "paperbanana": {
+      "command": "uvx",
+      "args": [
+        "paperbanana"
+      ]
+    },
+    "pg-aiguide": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@tigerdata/pg-aiguide"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "PGHOST": "${PGHOST}",
+        "PGPORT": "${PGPORT}",
+        "PGUSER": "${PGUSER}",
+        "PGPASSWORD": "${PGPASSWORD}",
+        "PGDATABASE": "${PGDATABASE}",
+        "DB_SCHEMA": "${DB_SCHEMA}"
+      }
+    },
+    "blitz": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@blitzdev/blitz-mcp"
+      ]
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "kubernetes-mcp-server"
+      ]
+    },
+    "mcp-gitlab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zereight/mcp-gitlab"
+      ],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+        "GITLAB_JOB_TOKEN": "${GITLAB_JOB_TOKEN}",
+        "GITLAB_AUTH_COOKIE_PATH": "${GITLAB_AUTH_COOKIE_PATH}",
+        "GITLAB_API_URL": "https://gitlab.com/api/v4",
+        "GITLAB_ALLOWED_PROJECT_IDS": "${GITLAB_ALLOWED_PROJECT_IDS}",
+        "GITLAB_READ_ONLY_MODE": "false",
+        "USE_GITLAB_WIKI": "false",
+        "GITLAB_TOOLSETS": "${GITLAB_TOOLSETS}",
+        "GITLAB_TOOLS": "${GITLAB_TOOLS}",
+        "GITLAB_DENIED_TOOLS_REGEX": "${GITLAB_DENIED_TOOLS_REGEX}",
+        "GITLAB_TOOL_POLICY_APPROVE": "${GITLAB_TOOL_POLICY_APPROVE}",
+        "GITLAB_TOOL_POLICY_HIDDEN": "${GITLAB_TOOL_POLICY_HIDDEN}",
+        "NODE_TLS_REJECT_UNAUTHORIZED": "${NODE_TLS_REJECT_UNAUTHORIZED}",
+        "GITLAB_CA_CERT_PATH": "${GITLAB_CA_CERT_PATH}"
+      }
+    },
+    "jshook": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jshookmcp/jshook"
+      ]
+    },
+    "autots": {
+      "command": "uvx",
+      "args": [
+        "autots-mcp"
+      ]
+    },
+    "nx": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "nx-mcp"
+      ]
+    },
+    "nx-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "nx-mcp"
+      ]
+    },
+    "tooluniverse": {
+      "command": "uvx",
+      "args": [
+        "tooluniverse"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}",
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
+        "AZURE_OPENAI_API_KEY": "${AZURE_OPENAI_API_KEY}",
+        "HF_TOKEN": "${HF_TOKEN}",
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "SEMANTIC_SCHOLAR_API_KEY": "${SEMANTIC_SCHOLAR_API_KEY}",
+        "BIOGRID_API_KEY": "${BIOGRID_API_KEY}",
+        "DISGENET_API_KEY": "${DISGENET_API_KEY}",
+        "OMIM_API_KEY": "${OMIM_API_KEY}",
+        "ONCOKB_API_TOKEN": "${ONCOKB_API_TOKEN}",
+        "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
+        "USPTO_API_KEY": "${USPTO_API_KEY}",
+        "UMLS_API_KEY": "${UMLS_API_KEY}",
+        "BRENDA_EMAIL": "${BRENDA_EMAIL}",
+        "BRENDA_PASSWORD": "${BRENDA_PASSWORD}"
+      }
+    },
+    "mcp-windbg": {
+      "command": "uvx",
+      "args": [
+        "mcp-windbg"
+      ],
+      "env": {
+        "CDB_PATH": "${CDB_PATH}",
+        "_NT_SYMBOL_PATH": "${_NT_SYMBOL_PATH}"
+      }
+    },
+    "ros": {
+      "command": "uvx",
+      "args": [
+        "ros-mcp"
+      ]
+    },
+    "sceneview": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "sceneview-mcp"
+      ]
+    },
+    "sceneview-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "sceneview-mcp"
+      ]
+    },
+    "sceneview-3": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "sceneview-mcp"
+      ]
+    },
+    "mcp-5": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@rsdoctor/mcp-server"
+      ]
+    },
+    "boostedtravel": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "boostedtravel-mcp"
+      ],
+      "env": {
+        "BOOSTEDTRAVEL_API_KEY": "${BOOSTEDTRAVEL_API_KEY}"
+      }
+    },
+    "boostedtravel-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "boostedtravel-mcp"
+      ],
+      "env": {
+        "BOOSTEDTRAVEL_API_KEY": "${BOOSTEDTRAVEL_API_KEY}"
+      }
+    },
+    "ref-tools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ref-tools-mcp"
+      ],
+      "env": {
+        "REF_API_KEY": "${REF_API_KEY}"
+      }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@brave/brave-search-mcp-server"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    },
+    "mongodb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server"
+      ],
+      "env": {
+        "MDB_MCP_ALLOW_REQUEST_OVERRIDES": "${MDB_MCP_ALLOW_REQUEST_OVERRIDES}",
+        "MDB_MCP_API_CLIENT_ID": "${MDB_MCP_API_CLIENT_ID}",
+        "MDB_MCP_API_CLIENT_SECRET": "${MDB_MCP_API_CLIENT_SECRET}",
+        "MDB_MCP_ASSISTANT_BASE_URL": "${MDB_MCP_ASSISTANT_BASE_URL}",
+        "MDB_MCP_ATLAS_TEMPORARY_DATABASE_USER_LIFETIME_MS": "${MDB_MCP_ATLAS_TEMPORARY_DATABASE_USER_LIFETIME_MS}",
+        "MDB_MCP_CONFIRMATION_REQUIRED_TOOLS": "${MDB_MCP_CONFIRMATION_REQUIRED_TOOLS}",
+        "MDB_MCP_CONNECTION_STRING": "${MDB_MCP_CONNECTION_STRING}",
+        "MDB_MCP_DISABLED_TOOLS": "${MDB_MCP_DISABLED_TOOLS}",
+        "MDB_MCP_DRY_RUN": "${MDB_MCP_DRY_RUN}",
+        "MDB_MCP_EXPORT_CLEANUP_INTERVAL_MS": "${MDB_MCP_EXPORT_CLEANUP_INTERVAL_MS}",
+        "MDB_MCP_EXPORT_TIMEOUT_MS": "${MDB_MCP_EXPORT_TIMEOUT_MS}",
+        "MDB_MCP_EXPORTS_PATH": "${MDB_MCP_EXPORTS_PATH}",
+        "MDB_MCP_EXTERNALLY_MANAGED_SESSIONS": "${MDB_MCP_EXTERNALLY_MANAGED_SESSIONS}",
+        "MDB_MCP_HEALTH_CHECK_HOST": "${MDB_MCP_HEALTH_CHECK_HOST}",
+        "MDB_MCP_HEALTH_CHECK_PORT": "${MDB_MCP_HEALTH_CHECK_PORT}",
+        "MDB_MCP_HTTP_BODY_LIMIT": "${MDB_MCP_HTTP_BODY_LIMIT}",
+        "MDB_MCP_HTTP_HEADERS": "${MDB_MCP_HTTP_HEADERS}",
+        "MDB_MCP_HTTP_HOST": "${MDB_MCP_HTTP_HOST}",
+        "MDB_MCP_HTTP_PORT": "${MDB_MCP_HTTP_PORT}",
+        "MDB_MCP_HTTP_RESPONSE_TYPE": "${MDB_MCP_HTTP_RESPONSE_TYPE}",
+        "MDB_MCP_IDLE_TIMEOUT_MS": "${MDB_MCP_IDLE_TIMEOUT_MS}",
+        "MDB_MCP_INDEX_CHECK": "${MDB_MCP_INDEX_CHECK}",
+        "MDB_MCP_LOG_PATH": "${MDB_MCP_LOG_PATH}",
+        "MDB_MCP_LOGGERS": "${MDB_MCP_LOGGERS}",
+        "MDB_MCP_MAX_BYTES_PER_QUERY": "${MDB_MCP_MAX_BYTES_PER_QUERY}",
+        "MDB_MCP_MAX_DOCUMENTS_PER_QUERY": "${MDB_MCP_MAX_DOCUMENTS_PER_QUERY}",
+        "MDB_MCP_MAX_TIME_M_S": "${MDB_MCP_MAX_TIME_M_S}",
+        "MDB_MCP_MCP_CLIENT_LOG_LEVEL": "${MDB_MCP_MCP_CLIENT_LOG_LEVEL}",
+        "MDB_MCP_MONITORING_SERVER_FEATURES": "${MDB_MCP_MONITORING_SERVER_FEATURES}",
+        "MDB_MCP_MONITORING_SERVER_HOST": "${MDB_MCP_MONITORING_SERVER_HOST}",
+        "MDB_MCP_MONITORING_SERVER_PORT": "${MDB_MCP_MONITORING_SERVER_PORT}",
+        "MDB_MCP_NOTIFICATION_TIMEOUT_MS": "${MDB_MCP_NOTIFICATION_TIMEOUT_MS}",
+        "MDB_MCP_PREVIEW_FEATURES": "${MDB_MCP_PREVIEW_FEATURES}",
+        "MDB_MCP_READ_ONLY": "${MDB_MCP_READ_ONLY}",
+        "MDB_MCP_TELEMETRY": "${MDB_MCP_TELEMETRY}",
+        "MDB_MCP_TRANSPORT": "${MDB_MCP_TRANSPORT}",
+        "MDB_MCP_VOYAGE_API_KEY": "${MDB_MCP_VOYAGE_API_KEY}"
+      }
+    },
+    "tradememory-protocol": {
+      "command": "uvx",
+      "args": [
+        "tradememory-protocol"
+      ]
+    },
+    "figma-mcp-go": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@vkhanhqui/figma-mcp-go"
+      ]
+    },
+    "mcp-neo4j-aura-manager": {
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-aura-manager"
+      ],
+      "env": {
+        "NEO4J_AURA_CLIENT_ID": "${NEO4J_AURA_CLIENT_ID}",
+        "NEO4J_AURA_CLIENT_SECRET": "${NEO4J_AURA_CLIENT_SECRET}",
+        "NEO4J_NAMESPACE": "${NEO4J_NAMESPACE}"
+      }
+    },
+    "mcp-neo4j-cypher": {
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-cypher"
+      ],
+      "env": {
+        "NEO4J_URI": "${NEO4J_URI}",
+        "NEO4J_USERNAME": "${NEO4J_USERNAME}",
+        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
+        "NEO4J_DATABASE": "${NEO4J_DATABASE}",
+        "NEO4J_NAMESPACE": "${NEO4J_NAMESPACE}",
+        "NEO4J_RESPONSE_TOKEN_LIMIT": "${NEO4J_RESPONSE_TOKEN_LIMIT}",
+        "NEO4J_READ_TIMEOUT": "${NEO4J_READ_TIMEOUT}",
+        "NEO4J_READ_ONLY": "${NEO4J_READ_ONLY}",
+        "NEO4J_SCHEMA_SAMPLE_SIZE": "${NEO4J_SCHEMA_SAMPLE_SIZE}"
+      }
+    },
+    "mcp-neo4j-data-modeling": {
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-data-modeling"
+      ],
+      "env": {
+        "NEO4J_NAMESPACE": "${NEO4J_NAMESPACE}"
+      }
+    },
+    "mcp-neo4j-memory": {
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-memory"
+      ],
+      "env": {
+        "NEO4J_URI": "${NEO4J_URI}",
+        "NEO4J_USERNAME": "${NEO4J_USERNAME}",
+        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
+        "NEO4J_DATABASE": "${NEO4J_DATABASE}",
+        "NEO4J_NAMESPACE": "${NEO4J_NAMESPACE}"
+      }
+    },
+    "token-savior": {
+      "command": "uvx",
+      "args": [
+        "token-savior"
+      ],
+      "env": {
+        "WORKSPACE_ROOTS": "${WORKSPACE_ROOTS}",
+        "TOKEN_SAVIOR_CLIENT": "${TOKEN_SAVIOR_CLIENT}"
+      }
+    },
+    "octocode": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "octocode-mcp"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "mcp-searxng": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-searxng"
+      ],
+      "env": {
+        "SEARXNG_URL": "${SEARXNG_URL}"
+      }
+    },
+    "mcp-6": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@runno/mcp"
+      ]
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp"
+      ]
+    },
+    "openbrand": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "openbrand-mcp"
+      ],
+      "env": {
+        "OPENBRAND_API_KEY": "${OPENBRAND_API_KEY}"
+      }
+    },
+    "mcp-7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sentry/mcp-server"
+      ],
+      "env": {
+        "SENTRY_ACCESS_TOKEN": "${SENTRY_ACCESS_TOKEN}"
+      }
+    },
+    "idea-reality": {
+      "command": "uvx",
+      "args": [
+        "idea-reality-mcp"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "PRODUCTHUNT_TOKEN": "${PRODUCTHUNT_TOKEN}"
+      }
+    },
+    "reddit-mcp-buddy": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "reddit-mcp-buddy"
+      ]
+    },
+    "unreal-engine": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "unreal-engine-mcp-server"
+      ],
+      "env": {
+        "LOG_LEVEL": "${LOG_LEVEL}",
+        "MCP_ROUTE_STDOUT_LOGS": "${MCP_ROUTE_STDOUT_LOGS}",
+        "UE_PROJECT_PATH": "${UE_PROJECT_PATH}",
+        "UE_EDITOR_EXE": "${UE_EDITOR_EXE}",
+        "UE_SCREENSHOT_DIR": "${UE_SCREENSHOT_DIR}",
+        "MCP_AUTOMATION_PORT": "${MCP_AUTOMATION_PORT}",
+        "MCP_AUTOMATION_HOST": "${MCP_AUTOMATION_HOST}",
+        "MCP_AUTOMATION_ALLOW_NON_LOOPBACK": "${MCP_AUTOMATION_ALLOW_NON_LOOPBACK}",
+        "MCP_AUTOMATION_CLIENT_MODE": "${MCP_AUTOMATION_CLIENT_MODE}",
+        "MCP_AUTOMATION_USE_TLS": "${MCP_AUTOMATION_USE_TLS}",
+        "MCP_CONNECTION_TIMEOUT_MS": "${MCP_CONNECTION_TIMEOUT_MS}",
+        "MCP_REQUEST_TIMEOUT_MS": "${MCP_REQUEST_TIMEOUT_MS}",
+        "MCP_AUTOMATION_MAX_MESSAGES_PER_MINUTE": "${MCP_AUTOMATION_MAX_MESSAGES_PER_MINUTE}",
+        "MCP_AUTOMATION_MAX_AUTOMATION_REQUESTS_PER_MINUTE": "${MCP_AUTOMATION_MAX_AUTOMATION_REQUESTS_PER_MINUTE}"
+      }
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp-server"
+      ],
+      "env": {
+        "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}",
+        "OBSIDIAN_BASE_URL": "http://127.0.0.1:27123",
+        "OBSIDIAN_VERIFY_SSL": "false",
+        "OBSIDIAN_REQUEST_TIMEOUT_MS": "30000",
+        "OBSIDIAN_ENABLE_COMMANDS": "false",
+        "OBSIDIAN_READ_PATHS": "${OBSIDIAN_READ_PATHS}",
+        "OBSIDIAN_WRITE_PATHS": "${OBSIDIAN_WRITE_PATHS}",
+        "OBSIDIAN_READ_ONLY": "false",
+        "MCP_LOG_LEVEL": "info"
+      }
+    },
+    "webcomponents-react": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ui5/webcomponents-react-mcp"
+      ]
+    },
+    "haiku-rag": {
+      "command": "uvx",
+      "args": [
+        "haiku-rag"
+      ]
+    },
+    "vibe-check": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pv-bhat/vibe-check-mcp"
+      ],
+      "env": {
+        "YOUR_API_KEY": "${YOUR_API_KEY}"
+      }
+    },
+    "mcp-server-motherduck": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck"
+      ],
+      "env": {
+        "motherduck_token": "${motherduck_token}",
+        "MOTHERDUCK_TOKEN": "${MOTHERDUCK_TOKEN}",
+        "HOME": "${HOME}",
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_SESSION_TOKEN": "${AWS_SESSION_TOKEN}",
+        "AWS_DEFAULT_REGION": "${AWS_DEFAULT_REGION}",
+        "AWS_ENDPOINT": "${AWS_ENDPOINT}"
+      }
+    },
+    "docfork": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "docfork"
+      ]
+    },
+    "docfork-2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "docfork"
+      ]
+    },
+    "hex-graph": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-graph-mcp"
+      ]
+    },
+    "hex-line": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-line-mcp"
+      ]
+    },
+    "hex-research": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-research-mcp"
+      ]
+    },
+    "hex-ssh": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@levnikolaevich/hex-ssh-mcp"
+      ]
+    },
+    "mcp-8": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@blockrun/mcp"
+      ],
+      "env": {
+        "BLOCKRUN_WALLET_KEY": "${BLOCKRUN_WALLET_KEY}"
+      }
+    },
+    "bernstein": {
+      "command": "uvx",
+      "args": [
+        "bernstein"
+      ]
+    },
+    "yutu": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@eat-pray-ai/yutu"
+      ],
+      "env": {
+        "YUTU_CREDENTIAL": "${YUTU_CREDENTIAL}",
+        "YUTU_CACHE_TOKEN": "${YUTU_CACHE_TOKEN}",
+        "YUTU_LOG_LEVEL": "INFO"
+      }
+    },
+    "airtable": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "airtable-mcp-server"
+      ],
+      "env": {
+        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
+      }
+    },
+    "skylos": {
+      "command": "uvx",
+      "args": [
+        "skylos"
+      ],
+      "env": {
+        "SKYLOS_API_KEY": "${SKYLOS_API_KEY}"
+      }
+    },
+    "abell-ai": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "abell-ai"
+      ]
+    },
+    "mcp-server-spec-driven-development": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-spec-driven-development"
+      ]
+    },
+    "anytype": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anyproto/anytype-mcp"
+      ],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "${OPENAPI_MCP_HEADERS}"
+      }
+    },
+    "strava": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "strava-mcp-server"
+      ],
+      "env": {
+        "STRAVA_CLIENT_ID": "${STRAVA_CLIENT_ID}",
+        "STRAVA_CLIENT_SECRET": "${STRAVA_CLIENT_SECRET}",
+        "STRAVA_ACCESS_TOKEN": "${STRAVA_ACCESS_TOKEN}"
+      }
+    },
+    "gk": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gitkraken/gk"
+      ]
+    },
+    "uniprof": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "uniprof"
+      ]
+    },
+    "token-optimizer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "token-optimizer-mcp"
+      ],
+      "env": {
+        "TOKEN_OPTIMIZER_CACHE_DIR": "${TOKEN_OPTIMIZER_CACHE_DIR}"
+      }
+    }
+  }
+}

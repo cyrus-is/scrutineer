@@ -1,0 +1,5 @@
+{
+  "server": "basic-memory",
+  "error": "initialize: server closed stdout",
+  "tools": []
+}

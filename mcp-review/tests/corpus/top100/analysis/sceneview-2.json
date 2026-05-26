@@ -1,0 +1,954 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "sceneview-2",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "sceneview-mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "sceneview-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:c820e5e0277b54410d15f06329feedd1ac42f95c0142446e766bea8f0db532d5",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'sceneview-2' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: sceneview-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "sceneview-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'sceneview-2' package spec 'sceneview-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "sceneview-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "sceneview-2",
+      "name": "get_sample",
+      "description": "Returns a complete, compilable Kotlin sample for a given SceneView scenario. Use this to get a working starting point before customising. Call `list_samples` first if you are unsure which scenario fits.",
+      "param_names": [
+        "scenario"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "cenario fits. The scenario to fetch:\n- \"model-viewer\": Full-scree"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:0f2963b369093031d4634319b13995d08482e25a0130ecf143708bd4f0dd1911"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "list_samples",
+      "description": "Lists all available SceneView code samples with their IDs, descriptions, and tags. Use this to find the right sample before calling `get_sample`, or to show the user what SceneView can do.",
+      "param_names": [
+        "tag"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5a4455706627d02973ee339b68edc5a38972f44657b62e5eefb9b7f771d9ecc1"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_setup",
+      "description": "Returns the Gradle dependency and AndroidManifest snippet required to use SceneView in an Android project.",
+      "param_names": [
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "o use SceneView in an Android project. \"3d\" for 3D-only scenes. \"ar"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:3aa703db8936a4fbc034438b96b933f16b0cf2304b1f04a54feb1054761d684c"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "validate_code",
+      "description": "Checks a Kotlin or Swift SceneView snippet for common mistakes. For Kotlin: threading violations, wrong destroy order, missing null-checks, LightNode trailing-lambda bug, deprecated 2.x APIs. For Swift: missing @MainActor, async/await patterns, missing imports, RealityKit mistakes. Language is auto-detected. Always call this before presenting generated SceneView code to the user.",
+      "param_names": [
+        "code"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "source code",
+            "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
+            "snippet": "the user. The Kotlin or Swift source code to validate (composable funct"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "code"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:76efce195d3e75612d6326abc0173c5e2415af2a6c48f4db48d0e4daf41adc53"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_migration_guide",
+      "description": "Returns the full SceneView 2.x \u2192 3.0 migration guide. Use this when a user reports code that worked in 2.x but breaks in 3.0, or when helping someone upgrade.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9257eb1b2cb8678d7be85594bcf78659362d272e280c037a9211abafdd3f6ad2"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_node_reference",
+      "description": "Returns the full API reference for a specific SceneView node type or composable \u2014 parameters, types, and a usage example \u2014 parsed directly from the official llms.txt. Use this when you need the exact signature or options for a node (e.g. ModelNode, LightNode, ARScene). If the requested type is not found, the response lists all available types.",
+      "param_names": [
+        "nodeType"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:21125d69f29338d0a520cb449dc358907e4dc463f3c93f03f2c3f2fdc9a378a6"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_platform_roadmap",
+      "description": "Returns the SceneView multi-platform roadmap \u2014 current Android support status, planned iOS/KMP/web targets, and timeline. Use this when the user asks about cross-platform support, iOS, Kotlin Multiplatform, or future plans.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "map \u2014 current Android support status, planned iOS/KMP/web targets,"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:6bd09e85750c85ffde32da91598afa63c31322f24209d025385cf59acd7347ef"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_best_practices",
+      "description": "Returns SceneView performance and architecture best practices \u2014 memory management, model optimization, threading rules, Compose integration patterns, and common anti-patterns. Use this when the user asks about performance, optimization, best practices, or architecture.",
+      "param_names": [
+        "category"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:7cbfcac1e41010539cc5c694d5048a0e4e941134948f5fcc4d0adfac5829557e"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_ar_setup",
+      "description": "Returns detailed AR setup instructions \u2014 AndroidManifest permissions and features, Gradle dependencies, ARCore session configuration options (depth, light estimation, instant placement, plane detection, image tracking, cloud anchors), and a complete working AR starter template. More detailed than `get_setup` for AR-specific configuration.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a595225e8e3cd6c502e43830a406b6d8f17a9b6ced2c523eb11923e26b949b22"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_troubleshooting",
+      "description": "Returns the SceneView troubleshooting guide \u2014 common crashes (SIGABRT, model not showing), build failures, AR issues (drift, overexposure, image detection), and performance problems. Use this when a user reports something not working, a crash, or unexpected behavior.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8ae332914d8b0e32d32c15b673b45d7d34194788f6f58fd7f430a21ccab46860"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_ios_setup",
+      "description": "Returns the complete iOS setup guide for SceneViewSwift \u2014 SPM dependency, Package.swift example, minimum platform versions, Info.plist entries for AR (camera permission), and basic SwiftUI integration code. Use this when a user wants to set up SceneView for iOS, macOS, or visionOS.",
+      "param_names": [
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:55aece6e6f75212dc3b8dbe3a5cf836f16d1d8d879b264f0a3326f713c436bdd"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_web_setup",
+      "description": "Returns the complete Web setup guide for SceneView Web \u2014 npm install, Kotlin/JS Gradle config, HTML canvas setup, and basic Filament.js integration code. SceneView Web uses the same Filament rendering engine as Android, compiled to WebAssembly. Use this when a user wants to set up SceneView for browsers.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:d6139163375538bcde6112fb8eed149979883c3918d9b412e3e38d88ae763028"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "render_3d_preview",
+      "description": "[PRO] Generates an interactive 3D preview link. Accepts a model URL, a SceneView code snippet, or both. Returns a URL to sceneview.github.io/preview that renders the model in the browser with orbit controls, AR support, and sharing. For model URLs: embeds a model-viewer link directly. For code snippets: shows the 3D preview with the code in a companion panel. Use this when you want to show a 3D model to the user \u2014 paste the link in your response and they can click to see it live.",
+      "param_names": [
+        "ar",
+        "autoRotate",
+        "codeSnippet",
+        "modelUrl",
+        "title"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "preview link. Accepts a model URL, a SceneView code snippet, or"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "hey can click to see it live. Public URL to a .glb or .gltf model"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:3ff6335ee4dea1067cd5fbf3466b2efa05d65fac4466862e31d26e5855275ee8"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "create_3d_artifact",
+      "description": "[PRO] Generates a complete, self-contained HTML page with interactive 3D content that Claude can render as an artifact. Returns valid HTML using model-viewer (Google's web component for 3D). Use this when the user asks to \"show\", \"preview\", \"visualize\" 3D models, create 3D charts/dashboards, or view products in 360\u00b0. The HTML works standalone in any browser, supports AR on mobile, and includes orbit controls. Types: \"model-viewer\" for 3D model viewing, \"chart-3d\" for 3D data visualization (bar charts with perspective), \"scene\" for rich 3D scenes with lighting, \"product-360\" for product turntables with hotspot annotations.",
+      "param_names": [
+        "data",
+        "hotspots",
+        "modelUrl",
+        "options",
+        "shapes",
+        "title",
+        "type"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "alize 3D shapes. Public HTTPS URL to a .glb or .gltf model. If"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "label",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "type modelUrl title data label value color options autoRotat"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Public",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "uild, or visualize 3D shapes. Public HTTPS URL to a .glb or .gltf"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [
+          "options"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:d1823dd66f4f32fad5adf55155e52f1c7390507b291698d830a614f2966bcf30"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_platform_setup",
+      "description": "Returns the complete setup guide for any SceneView-supported platform: Android, iOS, Web, Flutter, React Native, Desktop, or Android TV. Includes dependencies, manifest/permissions, minimum SDK, and a working starter template. Replaces `get_setup`, `get_ios_setup`, and `get_web_setup` with a single unified tool. Use this when a user wants to set up SceneView on any platform.",
+      "param_names": [
+        "platform",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5c7a8e30231f4606d4e4cdab3e739246d1cea3677f0625a85d85c87e7ecb650a"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "migrate_code",
+      "description": "Automatically migrates SceneView 2.x Kotlin code to 3.x. Applies known renames (SceneView\u2192Scene, ArSceneView\u2192ARScene), replaces deprecated APIs (loadModelAsync\u2192rememberModelInstance, Engine.create\u2192rememberEngine), fixes LightNode trailing-lambda bug, removes Sceneform imports, and more. Returns the migrated code with a detailed changelog. Use this when a user has 2.x code that needs updating, or when you detect 2.x patterns in their code.",
+      "param_names": [
+        "code"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "code"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3c7a44d6a3a0f63ee82c878870be9c26ab14bf3aa3b9d241410e72ea4f299701"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "debug_issue",
+      "description": "Returns a targeted debugging guide for a specific SceneView issue. Categories: \"model-not-showing\" (invisible models), \"ar-not-working\" (AR camera/planes), \"crash\" (SIGABRT/native), \"performance\" (low FPS/memory), \"build-error\" (Gradle/dependency), \"black-screen\" (no rendering), \"lighting\" (dark/bright/shadows), \"gestures\" (touch/drag), \"ios\" (Swift/RealityKit). You can provide a category directly, or describe the problem and it will be auto-detected. Use this when a user reports something not working.",
+      "param_names": [
+        "category",
+        "description"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "debug_issue debug issue"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:a46dda6e6bdcf3aed059932045837ae59cd2c24cfe84f40f6338025d3529af0d"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "generate_scene",
+      "description": "[PRO] Generates a complete, compilable SceneView{} or ARSceneView{} Kotlin composable from a natural language description. Parses 40+ object types (furniture, vehicles, animals, food, buildings, nature), quantities (\"two chairs\", \"3 spheres\"), environment (indoor/outdoor/dark), and mode (3D or AR). Returns working Kotlin code with proper engine setup, model loading, lighting, and ground plane. Use this when a user says \"build me a scene with...\" or describes a 3D scene they want to create.",
+      "param_names": [
+        "description"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c3648d66a708d7de5c874e7d404c5f578b44ead0b10e490100d6f70be3c9f1f5"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "list_platforms",
+      "description": "Returns all platforms supported by SceneView with their renderer, framework, status, and version. Use this to answer questions about what platforms SceneView supports, or to show cross-platform capabilities.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "th their renderer, framework, status, and version. Use this to ans"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:7d0f6aee682f88635b6b3dbb181ea2c1d535ffcc2391fa290e7f2cabb28cb834"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_animation_guide",
+      "description": "Returns a comprehensive guide for animating 3D models in SceneView \u2014 playing embedded glTF animations, Spring physics animations (KMP core), Compose property animations (animateFloatAsState, InfiniteTransition), SmoothTransform for smooth following, and AR animated models. Includes compilable Kotlin code samples. Use this when a user asks about animation, motion, springs, smooth movement, or how to play model animations.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a1d1d9215df845bb61fa45db54c699ea636966020c468b74a6be32e9d5f568cf"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_gesture_guide",
+      "description": "Returns a comprehensive guide for adding gestures to 3D objects in SceneView \u2014 isEditable for one-line pinch-to-scale/drag-to-rotate/tap-to-select, custom onTouchEvent handlers, AR tap-to-place, drag-to-rotate with sensitivity, pinch-to-scale with limits, multi-model selection, and HitResultNode surface cursor. Includes compilable Kotlin code samples. Use this when a user asks about touch, gestures, interaction, drag, pinch, tap, or editing 3D objects.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ac21464ff9e66ab7682fda8c0ffbddf93efba7caeb4ba5144de44f58f7270bdc"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_performance_tips",
+      "description": "Returns a comprehensive performance optimization guide for SceneView \u2014 polygon budgets per device tier, LOD, texture compression (KTX2/Basis Universal), mesh compression (Draco/Meshopt), engine reuse, per-frame allocation avoidance, frustum culling, instancing, lighting optimization, post-processing costs, and profiling with Systrace and Android GPU Inspector. Includes code samples and CLI commands. Use this when a user asks about performance, optimization, FPS, memory, profiling, or slow rendering.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8c9862e46c1c9a67e17b136847df3b4c906035853faeb0b90db595ad11126205"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_material_guide",
+      "description": "Returns a comprehensive guide for PBR materials in SceneView \u2014 baseColor, metallic, roughness, reflectance, emissive, clearCoat, normal maps. Includes recipes for common materials (glass, chrome, gold, rubber, car paint), code samples for modifying materials on ModelNode, texture setup, and environment lighting requirements. Use this when a user asks about materials, textures, colors, shaders, appearance, or why their model looks wrong (flat, dark, too shiny).",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:41723f98d0dffa9e8f523af21f7b2dbd049326c322ee27a50d9743913b6bce09"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_collision_guide",
+      "description": "Returns a comprehensive guide for collision detection, hit testing, and physics in SceneView \u2014 node tapping (onTouchEvent), AR surface hit testing (frame.hitTest), ray-box/ray-sphere intersection (KMP core), bounding boxes, and basic rigid body physics. Use this when a user asks about tapping 3D objects, collision detection, physics simulation, ray casting, or hit testing.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:60a3876fa5fa7193cb3ae576fcdc026a29db8b5f79d421b9daa538d791f65731"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_model_optimization_guide",
+      "description": "Returns a complete guide for optimizing 3D models for SceneView \u2014 polygon budgets per device tier, file size targets, Draco/Meshopt mesh compression, KTX2 texture compression, the recommended optimization pipeline (gltf-transform CLI), texture sizing rules, LOD strategies, and quick wins. Use this when a user asks about model optimization, file size, load times, polygon count, texture compression, or preparing models for mobile.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "ile size, load times, polygon count, texture compression, or prep"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:9ea1624b093fc3cadab30b72179d8c5781e0f14b610bf4fcf9f3ba8afa299463"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "get_web_rendering_guide",
+      "description": "Returns a comprehensive guide for SceneView Web (Filament.js WASM) \u2014 architecture, quick start (sceneview.js npm or Kotlin/JS), IBL environment lighting (critical for PBR quality), rendering quality settings (SSAO, bloom, TAA), camera exposure tuning, Filament.js vs model-viewer comparison, and web performance tips. Use this when a user asks about web 3D rendering, Filament.js, browser viewing, WebGL, or wants to display 3D models in a web page.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:930f06a119f3d1acd762d03d1d100bba732b875370216969bd4d24de8a192ca4"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "search_models",
+      "description": "Searches Sketchfab for free 3D models matching a natural-language query and returns a shortlist with names, authors, licenses, thumbnails, triangle counts, and viewer/embed URLs. Use this BEFORE generating SceneView code when the user asks for a specific asset (\"a red sports car\", \"a low-poly tree\", \"a sci-fi robot\") \u2014 pick the best result, then load it with `rememberModelInstance(modelLoader, \"models/your-file.glb\")` or embed its viewer URL. Requires a free `SKETCHFAB_API_KEY` environment variable (BYOK \u2014 nothing is charged by SceneView). If the key is missing, the tool returns instructions for getting one at sketchfab.com/register.",
+      "param_names": [
+        "category",
+        "downloadable",
+        "maxResults",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "le.glb\")` or embed its viewer URL. Requires a free `SKETCHFAB_A"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        },
+        {
+          "capability": "secrets_access",
+          "title": "Reads secrets / credentials / env",
+          "severity": "HIGH",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "environment variable",
+            "pattern": "\\b(read[\\s_-]?env|environment[\\s_-]?variable|getenv|dotenv)\\b",
+            "snippet": "es a free `SKETCHFAB_API_KEY` environment variable (BYOK \u2014 nothing is charged by"
+          },
+          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "credentials_secrets",
+          "label": "Secrets, tokens & credentials",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "environment variable",
+            "pattern": "\\b(read[\\s_-]?env|environment[\\s_-]?variable|getenv|dotenv)\\b",
+            "snippet": "es a free `SKETCHFAB_API_KEY` environment variable (BYOK \u2014 nothing is charged by"
+          },
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": "critical",
+      "digest": "sha256:0f84b00e7264849e47ccac60b9c32ca93883fed79c1dc347e2bb887c97d5eaff"
+    },
+    {
+      "server": "sceneview-2",
+      "name": "analyze_project",
+      "description": "Scans a local SceneView project on the user's machine and returns a structured analysis: detected project type (Android, iOS, Web), extracted SceneView dependency version, whether it is outdated vs the latest known release, and any known anti-patterns found by reading source files (threading violations, LightNode trailing-lambda bug, deprecated 2.x APIs, Sceneform imports). Safe: scans at most 30 source files and 500 KB total, never writes to disk. Use this when a user asks 'is my project up to date?', 'what's wrong with my SceneView code?', or when you want a fast sanity check of a project before generating code for it.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "faults to the current working directory of the MCP server."
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "analyze_project analyze project"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "st 30 source files and 500 KB total, never writes to disk. Use th"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:7f6fbaea2187e03b94c5e1acf4aa1944ee05116aa5f2e02063bbab3fc4ae7f2a"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 6,
+        "confidence": "high"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "contacts",
+      "credentials_secrets",
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; contacts, credentials_secrets, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
+      "contributing": [
+        "secrets_access",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 28,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 5,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "contacts",
+      "credentials_secrets",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

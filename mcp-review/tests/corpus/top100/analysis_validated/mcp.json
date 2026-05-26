@@ -1,0 +1,762 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@playwright/mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:ffd05b5e6dc1faa0aef7cad4d2e361a282365e16aab92ce5d376bb84df4f4d9a",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @playwright/mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@playwright/mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp' package spec '@playwright/mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@playwright/mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp",
+      "name": "browser_close",
+      "description": "Close the page",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6baef26ea2a4b522ef587ce52b434327d9db3db171a045303c3aac7ff2a522c1"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_resize",
+      "description": "Resize the browser window",
+      "param_names": [
+        "height",
+        "width"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5ea47d50cd2d3e0365ad65043ce9ac93e974f612c1c265d5f388817e1e252ffb"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_console_messages",
+      "description": "Returns all console messages",
+      "param_names": [
+        "all",
+        "filename",
+        "level"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:a3b30a9c19901777163b85eed51cbf191753d67cef29d0d971459d90ea5876fe"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_handle_dialog",
+      "description": "Handle a dialog",
+      "param_names": [
+        "accept",
+        "promptText"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:807a759bbb7e064fce3b9d9fa4c03f58641c5f3679d9f472797b02a007dbdfa6"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_evaluate",
+      "description": "Evaluate JavaScript expression on page or element",
+      "param_names": [
+        "element",
+        "filename",
+        "function",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:94cdc9a25f73055afd7dc26869f61d8c18072eedb9846872084910ac776c5a73"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_file_upload",
+      "description": "Upload one or multiple files",
+      "param_names": [
+        "paths"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "upload",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "wser_file_upload browser file upload"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:742d88bcde29be61619acde9ab754b182ed4198598e23b1a540dea2dc033b55e"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_drop",
+      "description": "Drop files or MIME-typed data onto an element, as if dragged from outside the page. At least one of \"paths\" or \"data\" must be provided.",
+      "param_names": [
+        "data",
+        "element",
+        "paths",
+        "target"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "uri",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "{\"text/plain\": \"hello\", \"text/uri-list\": \"https://example.com\"}"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The URI appears in example MIME data for drag-simulation; the tool simulates UI drops but does not initiate network requests."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:281b6b35addbb62cab6218b9fca9fe2229db4ec0ef8defbbea8b74280d070791"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_fill_form",
+      "description": "Fill multiple form fields",
+      "param_names": [
+        "fields"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c4c9f0fecdee7ed86168e17d2030a4f9ea23a8c45542d291a4a5f59fe47b895f"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_press_key",
+      "description": "Press a key on the keyboard",
+      "param_names": [
+        "key"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:3e964327512ae36b6a098a352e1b07ef8a6d73ebe1d0eabea7e767af52502108"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_type",
+      "description": "Type text into editable element",
+      "param_names": [
+        "element",
+        "slowly",
+        "submit",
+        "target",
+        "text"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:274103d447cfe2936b666b84c222019ef222cb2817c117bbdf18f43f3c32ab6c"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_navigate",
+      "description": "Navigate to a URL",
+      "param_names": [
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:6f470f3fcb19c3114263d214202836528d07267c031ec8a74eb27d09c9e4fad9"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_navigate_back",
+      "description": "Go back to the previous page in the history",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8644dd166ff7cf093829a74f4c97137afce081b9eab48ed4c75788200afe64af"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_network_requests",
+      "description": "Returns a numbered list of network requests since loading the page. Use browser_network_request with the number to get full details.",
+      "param_names": [
+        "filename",
+        "filter",
+        "static"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "e. Only return requests whose URL matches this regexp (e.g. \"/a"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool passively observes and reports on existing network requests; it does not initiate egress itself."
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:c0b29eda68c06e8a7ca9cd326653caa122b8e7b2bb97f3b9161e26652c635a90"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_network_request",
+      "description": "Returns full details (headers and body) of a single network request, or a single part if `part` is set. Use the number from browser_network_requests.",
+      "param_names": [
+        "filename",
+        "index",
+        "part"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:7efb9f1d0b996b5cd8cb0e5a526fd6548aa7f530b5fa16858b4dcd9c8f2ff3f7"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_run_code_unsafe",
+      "description": "Run a Playwright code snippet. Unsafe: executes arbitrary JavaScript in the Playwright server process and is RCE-equivalent.",
+      "param_names": [
+        "code",
+        "filename"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "run code",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[\\s_-]?command|run[\\s_-]?code|run[\\s_-]?script)\\b",
+            "snippet": "owser_run_code_unsafe browser run code unsafe"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "code"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:2f4dc48965e0e55beb91973b91d66512a86acc43ab4fb933d60b9fc42457829f"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_take_screenshot",
+      "description": "Take a screenshot of the current page. You can't perform actions based on the screenshot, use browser_snapshot for actions.",
+      "param_names": [
+        "element",
+        "filename",
+        "fullPage",
+        "target",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[\\s_-]?book|directory|roster|connections)\\b",
+            "snippet": "mes to stay within the output directory. When true, takes a screensho"
+          },
+          "rationale": "Exposes a person's full social/professional graph.",
+          "validated_out": true,
+          "validation_reason": "Matched 'directory' refers to file system output directory for saving screenshots, not a contacts/address-book directory."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:00cd93677638438d6251d85a48b0fcf00c08320ae0668bf11550e19dfe094555"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_snapshot",
+      "description": "Capture accessibility snapshot of the current page, this is better than screenshot",
+      "param_names": [
+        "boxes",
+        "depth",
+        "filename",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "idth,height] in the snapshot. Coordinates are viewport-relative, in CSS"
+          },
+          "rationale": "Physical tracking risk.",
+          "validated_out": true,
+          "validation_reason": "Matched 'Coordinates' refers to CSS pixel positions of UI elements in the viewport, not geographic location data."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:7bac4b2090cd7f190f9a1096fc1400330b05def8ffe08b5e6ed92248aae46eca"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_click",
+      "description": "Perform click on a web page",
+      "param_names": [
+        "button",
+        "doubleClick",
+        "element",
+        "modifiers",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8e8dbe8cae07d4f84022e2afa3f175503d11817078c30f6323681435ce383d66"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_drag",
+      "description": "Perform drag and drop between two elements",
+      "param_names": [
+        "endElement",
+        "endTarget",
+        "startElement",
+        "startTarget"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1bbd146c7a84c821e30d1538b3af284b9129ad7838941dc1298a18b9bd72d4df"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_hover",
+      "description": "Hover over element on page",
+      "param_names": [
+        "element",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:30ad4fb088ae3823a175332bf295f7916c883d292464a73d102ff4e019752674"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_select_option",
+      "description": "Select an option in a dropdown",
+      "param_names": [
+        "element",
+        "target",
+        "values"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8199a59c0c625938ccf32d5dde0c53ef5531be1c2620d1f5fee8cad8e67b316b"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_tabs",
+      "description": "List, create, close, or select a browser tab.",
+      "param_names": [
+        "action",
+        "index",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[\\s_-]?api)\\b",
+            "snippet": "action index url"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:43d376a153394f4c89e2de4b68da5cfcd77035ce6dce2e207a32e72ef3b58392"
+    },
+    {
+      "server": "mcp",
+      "name": "browser_wait_for",
+      "description": "Wait for text to appear or disappear or a specified time to pass",
+      "param_names": [
+        "text",
+        "textGone",
+        "time"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9868c8943340255f0754b148cc404a7245074f0f2f7d923853838aa7c18409e7"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "high"
+    ],
+    "categories": {
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 23,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 6,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "location"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 4,
+      "false_positive": 4,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "cap::browser_drop::network_egress",
+        "reason": "The URI appears in example MIME data for drag-simulation; the tool simulates UI drops but does not initiate network requests."
+      },
+      {
+        "id": "cap::browser_network_requests::network_egress",
+        "reason": "Tool passively observes and reports on existing network requests; it does not initiate egress itself."
+      },
+      {
+        "id": "data::browser_take_screenshot::contacts",
+        "reason": "Matched 'directory' refers to file system output directory for saving screenshots, not a contacts/address-book directory."
+      },
+      {
+        "id": "data::browser_snapshot::location",
+        "reason": "Matched 'Coordinates' refers to CSS pixel positions of UI elements in the viewport, not geographic location data."
+      }
+    ]
+  }
+}

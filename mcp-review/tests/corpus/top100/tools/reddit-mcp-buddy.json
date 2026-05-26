@@ -1,0 +1,257 @@
+{
+  "server": "reddit-mcp-buddy",
+  "captured_at": "2026-05-26T22:24:46Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "reddit-mcp-buddy",
+    "version": "1.1.13",
+    "description": "Reddit content browser and analyzer. Access posts, comments, and user data from Reddit.\n\nKEY CONCEPTS:\n- Subreddits: Communities like \"technology\", \"science\". Use without r/ prefix\n- Special subreddits: \"all\" (entire Reddit), \"popular\" (trending/default)\n- Sorting: \"hot\" (trending), \"new\" (recent), \"top\" (highest score), \"rising\" (gaining traction), \"controversial\" (disputed)\n- Time ranges: For \"top\" sort - \"hour\", \"day\", \"week\", \"month\", \"year\", \"all\"\n- Post IDs: Short codes like \"abc123\" from Reddit URLs\n- Usernames: Without u/ prefix (use \"spez\" not \"u/spez\")\n\nCOMMON QUERIES:\n- \"What's trending on Reddit?\" \u2192 browse_subreddit with subreddit=\"all\" and sort=\"hot\"\n- \"Top posts this week in technology\" \u2192 browse_subreddit with subreddit=\"technology\", sort=\"top\", time=\"week\"\n- \"Search for AI discussions\" \u2192 search_reddit with query=\"artificial intelligence\"\n- \"Get comments on a Reddit post\" \u2192 get_post_details with URL or just post_id\n- \"Analyze a Reddit user\" \u2192 user_analysis with username\n\nRate limits: 10 requests/minute. Cache TTL: 15 minutes."
+  },
+  "tools": [
+    {
+      "name": "browse_subreddit",
+      "description": "Fetch posts from a subreddit sorted by your choice (hot/new/top/rising). Returns post list with content, scores, and metadata.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subreddit": {
+            "type": "string",
+            "description": "Subreddit name without r/ prefix. Use specific subreddit (e.g., \"technology\"), \"all\" for Reddit-wide posts, or \"popular\" for trending across default subreddits"
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "hot",
+              "new",
+              "top",
+              "rising",
+              "controversial"
+            ],
+            "default": "hot"
+          },
+          "time": {
+            "type": "string",
+            "enum": [
+              "hour",
+              "day",
+              "week",
+              "month",
+              "year",
+              "all"
+            ]
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 25,
+            "description": "Default 25, range (1-100). Change ONLY IF user specifies."
+          },
+          "include_nsfw": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_subreddit_info": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include subreddit metadata like subscriber count and description"
+          }
+        },
+        "required": [
+          "subreddit"
+        ],
+        "additionalProperties": false
+      },
+      "readOnlyHint": true
+    },
+    {
+      "name": "search_reddit",
+      "description": "Search for posts across Reddit or specific subreddits. Returns matching posts with content and metadata.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "subreddits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Subreddits to search in (leave empty for all)"
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "hot",
+              "top",
+              "new",
+              "comments"
+            ],
+            "default": "relevance"
+          },
+          "time": {
+            "type": "string",
+            "enum": [
+              "hour",
+              "day",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
+            "default": "all"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 25,
+            "description": "Default 25, range (1-100). Override ONLY IF user requests."
+          },
+          "author": {
+            "type": "string"
+          },
+          "flair": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "readOnlyHint": true
+    },
+    {
+      "name": "get_post_details",
+      "description": "Fetch a Reddit post with its comments. Requires EITHER url OR post_id. IMPORTANT: When using post_id alone, an extra API call is made to fetch the subreddit first (2 calls total). For better efficiency, always provide the subreddit parameter when known (1 call total).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_id": {
+            "type": "string",
+            "description": "Reddit post ID (e.g., \"1abc2d3\")"
+          },
+          "subreddit": {
+            "type": "string",
+            "description": "Subreddit name (optional with post_id, but more efficient if provided)"
+          },
+          "url": {
+            "type": "string",
+            "description": "Full Reddit URL (alternative to post_id)"
+          },
+          "comment_limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 20,
+            "description": "Default 20, range (1-500). Change ONLY IF user asks."
+          },
+          "comment_sort": {
+            "type": "string",
+            "enum": [
+              "best",
+              "top",
+              "new",
+              "controversial",
+              "qa"
+            ],
+            "default": "best"
+          },
+          "comment_depth": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 3,
+            "description": "Default 3, range (1-10). Override ONLY IF user specifies."
+          },
+          "extract_links": {
+            "type": "boolean",
+            "default": false
+          },
+          "max_top_comments": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5,
+            "description": "Default 5, range (1-20). Change ONLY IF user requests."
+          }
+        },
+        "additionalProperties": false
+      },
+      "readOnlyHint": true
+    },
+    {
+      "name": "user_analysis",
+      "description": "Analyze a Reddit user's posting history, karma, and activity patterns. Returns posts, comments, and statistics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Reddit username"
+          },
+          "posts_limit": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 10,
+            "description": "Default 10, range (0-100). Change ONLY IF user specifies."
+          },
+          "comments_limit": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 10,
+            "description": "Default 10, range (0-100). Override ONLY IF user asks."
+          },
+          "time_range": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
+            "default": "month",
+            "description": "Time range for posts/comments (default: month). Note: When set to values other than \"all\", posts are sorted by top scores within that period. When set to \"all\", posts are sorted by newest"
+          },
+          "top_subreddits_limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10,
+            "description": "Default 10, range (1-50). Change ONLY IF user requests."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false
+      },
+      "readOnlyHint": true
+    },
+    {
+      "name": "reddit_explain",
+      "description": "Get explanations of Reddit terms, slang, and culture. Returns definition, origin, usage, and examples.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "description": "Reddit term to explain (e.g., \"karma\", \"cake day\", \"AMA\")"
+          }
+        },
+        "required": [
+          "term"
+        ],
+        "additionalProperties": false
+      },
+      "readOnlyHint": true
+    }
+  ]
+}

@@ -1,0 +1,588 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-5",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@rsdoctor/mcp-server"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@rsdoctor/mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:8807610d8689e9fc7c00a6d2bc39d678e89565cda81e52fb9cde0037a1ddc179",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-5' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @rsdoctor/mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@rsdoctor/mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-5' package spec '@rsdoctor/mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@rsdoctor/mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mcp-5",
+      "name": "get_chunks",
+      "description": "get all chunks",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:64279a0e684b6599be20534d8babd7db1d8f0d022ce959da7ccda4939ec88920"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_chunk_by_id",
+      "description": "get chunk by id",
+      "param_names": [
+        "chunkId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2aab86c54af5826f2ae9ff1f3c15f1843338dc575fa7058f5fc9f7bc9c9797d8"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_module_by_id",
+      "description": "\n    get module detail by id (Rspack or Webpack module id)\uff1a\n    - id: the id of the module (corresponds to Rspack or Webpack's internal module id)\n    - issuerPath: the referrer chain (array of module ids, from entry to this module)\n    - dependencies: direct dependencies (array of module ids this module imports/requires)\n    - allDependencies: all transitive dependencies (if user asks for detail)\n    - chunks: array of chunk ids this module belongs to\n    - imported: array of module ids that import this module\n    - isEntry: whether this module is an entry point\n    - size: { sourceSize, transformedSize, parsedSize }\n    - layer, modules, rootModule, webpackId: advanced info\n    - bailoutReason: if present, the reason why this module is not tree-shaken or optimized away (e.g. \"side effects\", \"dynamic import\", \"unknown exports\", etc.)\n    - Please use Rspack or Webpack's terminology for all fields.\n    - If user asks for \"why not tree-shaken\", always return bailoutReason and explain in plain language.\n    - If user asks for \"who imported this module\", return issuerPath as a dependency chain.\n    - If user asks for \"all dependencies\", return allDependencies.\n  ",
+      "param_names": [
+        "moduleId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:d8b353936d138674f9652e6eb2643f922ec99ca0498c3bfff88c0d8d4fc89977"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_module_by_path",
+      "description": "\n    get module detail by module name or path (absolute or relative, as in Rspack or Webpack stats)\n    - If multiple modules match, return all matched module paths and stop, let user select.\n    - Otherwise, return the same fields as getModuleById.\n    - Always include bailoutReason if present.\n    - If user asks for \"why is this module in the bundle\", show the full issuerPath chain.\n    - If user asks for \"why not tree-shaken\", show bailoutReason and explain.\n  ",
+      "param_names": [
+        "modulePath"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ec33ed8768250f5d2d46ec3f4ada8441619d4d2312d12fbc6c63441f85495794"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_module_issuer_path",
+      "description": "\n    get module issuer path (who imported this module, recursively)\n    - Return as a dependency chain (array of module ids from entry to this module)\n    - If possible, render as a tree or graph for clarity.\n    - For each module in the chain, show its path and (if present) bailoutReason.\n  ",
+      "param_names": [
+        "moduleId"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:64a4ed7878b8af9b498ea48be7cbbded5f3d57fb3099ee06147fe2e1e8444219"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_package_info",
+      "description": "get package info",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:99098a0753429f658899c172d9f176debfcd12e75bd04accdd5fdbd092eedfa6"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_package_dependency",
+      "description": "get package dependency",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:782769bdf744e8c8a72f8cd9678033826e3ec4140bf2b9d35fda6bba66dea276"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_rule_info",
+      "description": "get rules info, the rules info is a Record<{id: number, name: string, description: string, severity: string, category: string, module: string, path: string, line: number, column: number, message: string, fix: string}>, where:\n  - id: an incremental sequence mark\n  - name: the name of the rule\n  - description: the description of the rule\n  - severity: the severity of the rule\n  - category: the category of the rule\n  - E1001 Duplicate Packages:\n      #### Description\n\n      there is a same name package which bundled more than one version in your application.\n\n      it is not good to the bundle size of your application.\n\n      #### General Solution\n\n      add an entry in `resolve.alias` which will configure Webpack to route any package references to a single specified path.\n\n      For example, if `lodash` is duplicated in your bundle, the following configuration would render all Lodash imports to always refer to the `lodash` instance found at `./node_modules/lodash`:\n\n      ```js\n      {\n        alias: {\n          lodash: path.resolve(__dirname, 'node_modules/lodash')\n        }\n      }\n      ```\n      ,\n  - E1002 Cross Chunks Packages:  #### Description\n    There is a package with the same version that is duplicated across different chunks in your application. This redundancy increases the overall bundle size, which is not optimal for performance.\n\n    #### General Solution\n\n    To address this issue, you can use Rspack's **SplitChunksPlugin** to extract common dependencies into a separate chunk. This ensures that the same package is not duplicated across multiple chunks, thereby reducing the bundle size.\n\n    For example, if **lodash** is being duplicated across different chunks, you can configure the **optimization.splitChunks** option in your Webpack configuration to extract **lodash** into a separate chunk:\n\n    ```\n    module.exports = {\n      optimization: {\n        splitChunks: {\n          cacheGroups: {\n            commons: {\n              test: /[\\/]node_modules[\\/]lodash[\\/]/,\n              name: 'lodash',\n              chunks: 'all',\n            },\n          },\n        },\n      },\n    };\n    ```\n\n    This configuration will automatically split out common dependencies (including those from `node_modules`) into separate chunks, ensuring that no package is duplicated across different chunks.\n\n  - E1004 ECMA Version Check:\n      #### Description\n      This rule is used to detect incompatible advanced syntax. When scanning the rule, the configuration of browserslist is prioritized.\n  ",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "line: number, column: number, message: string, fix: string}>, where"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "The matched word 'message' refers to a rule diagnostic message field (error/warning text from a linter), not user communications or email content."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Solution\n\n    To address this issue, you can use Rspack's **Split"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "The word 'issue' is used as generic English ('to address this issue') in documentation prose, not referring to project tickets or task metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:3daae315988263413ef4947e358cf6a061f5e7a94d6c7730c11c35e452313a27"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_similar_packages",
+      "description": "get similar packages. Similar packages are categorized as follows, with each line representing a category of similar packages. The presence of packages below does not necessarily mean there are similar packages - replacement should only be considered when packages from the same category exist:\n    1. cannot exist simultaneously: lodash\u3001lodash-es\u3001string_decode\uff1aConsider migrating to lodash-es for better Tree Shaking support. /n\n    2. cannot exist simultaneously: dayjs, moment, date-fns, js-joda. Consider using dayjs to replace moment for smaller bundle size. /n\n    3. cannot exist simultaneously: antd, material-ui, semantic-ui-react, material-ui, arco-design /n\n    4. cannot exist simultaneously: axios, node-fetch\n    5. cannot exist simultaneously: redux, mobx, Zustand, Recoil, Jotai\n    6. cannot exist simultaneously: chalk, colors, picocolors, kleur\n    7. cannot exist simultaneously: fs-extra, graceful-fs\n\n    It's fine to have any of the above packages in your project, but packages from the same category (i.e. same line) should not coexist.\n    If there are no similar packages, just return that there are no similar packages, without listing which packages exist.\n    Please provide a simple response without listing all packages.\n  ",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "t simultaneously: axios, node-fetch\n    5. cannot exist simultane"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The match on 'node-fetch' is the package name itself listed in a category description; the tool catalogs packages rather than performing network egress."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_metadata",
+          "label": "Communication metadata (who / where / when)",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "presence",
+            "pattern": "\\b(list[\\s_-]?(channel|conversation|member|participant)s?|channel[\\s_-]?list|presence|who[\\s_-]?is|members?)\\b",
+            "snippet": "gory of similar packages. The presence of packages below does not ne"
+          },
+          "rationale": "Not the message bodies, but the social graph and channel structure.",
+          "validated_out": true,
+          "validation_reason": "The word 'presence' is used as generic English ('the presence of packages below') meaning existence, not a communication system feature."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "of the above packages in your project, but packages from the same c"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "The word 'project' is used generically to mean a codebase or development project, not a project management system or metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:5e25835c0e6fb0b0f8eb58ddae0cf4a235babe5cb37dbb0b3e27e002cc0eea53"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_packages_by_package_name",
+      "description": "get similar packages. Similar packages are categorized as follows, with each line representing a category of similar packages. The presence of packages below does not necessarily mean there are similar packages - replacement should only be considered when packages from the same category exist:\n    1. cannot exist simultaneously: lodash\u3001lodash-es\u3001string_decode\uff1aConsider migrating to lodash-es for better Tree Shaking support. /n\n    2. cannot exist simultaneously: dayjs, moment, date-fns, js-joda. Consider using dayjs to replace moment for smaller bundle size. /n\n    3. cannot exist simultaneously: antd, material-ui, semantic-ui-react, material-ui, arco-design /n\n    4. cannot exist simultaneously: axios, node-fetch\n    5. cannot exist simultaneously: redux, mobx, Zustand, Recoil, Jotai\n    6. cannot exist simultaneously: chalk, colors, picocolors, kleur\n    7. cannot exist simultaneously: fs-extra, graceful-fs\n\n    It's fine to have any of the above packages in your project, but packages from the same category (i.e. same line) should not coexist.\n    If there are no similar packages, just return that there are no similar packages, without listing which packages exist.\n    Please provide a simple response without listing all packages.\n  ",
+      "param_names": [
+        "packageName"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[\\s_-]?request|send[\\s_-]?request|api[\\s_-]?call|post[\\s_-]?to|send[\\s_-]?to|exfil)\\b",
+            "snippet": "t simultaneously: axios, node-fetch\n    5. cannot exist simultane"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Same as claim 3: the tool documents package categories (including 'node-fetch'), not performing network operations itself."
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "communications_metadata",
+          "label": "Communication metadata (who / where / when)",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "presence",
+            "pattern": "\\b(list[\\s_-]?(channel|conversation|member|participant)s?|channel[\\s_-]?list|presence|who[\\s_-]?is|members?)\\b",
+            "snippet": "gory of similar packages. The presence of packages below does not ne"
+          },
+          "rationale": "Not the message bodies, but the social graph and channel structure.",
+          "validated_out": true,
+          "validation_reason": "Same as claim 4: 'presence' is generic English for existence in a description, not a communications feature."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "of the above packages in your project, but packages from the same c"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same as claim 5: 'project' is a generic development term, not project management metadata."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:5c281c985f70b6309877adc96ff04d6cecdadf676088f28845da625531eb08d1"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_duplicate_packages",
+      "description": "",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:965c0dfdd0172723bfc12db776eddfaa192e71bd1e259c88d839c46756942181"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_bundle_optimize",
+      "description": "\n    getBundleOptimize calls multiple functions to provide conclusions to users:\n      - getRuleInfo for duplicate packages\n      - GetSimilarPackages to check if there are similar packages that need optimization\n      - getMediaAssetPrompt to check if media assets need optimization\n      - GetAllChunks to check if there are oversized resources and provide splitChunk suggestions\n  ",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:98199d6c9de3683bdb2f033aab19b7c3885cdd49d97872d4fed0f0492fca476f"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_loader_time_all_files",
+      "description": "Get compilation time spent by each loader on individual files",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:15d0f5f05682079db616989fd4c17003bc289c658f8448ffb5fa58e62b324ed9"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_loader_times",
+      "description": "Get compiled directories loader times",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e1bfedb5a6ab7a7bc8593a496ca9a8f464eaa93593a8ce2ef2d09b9ab919d55f"
+    },
+    {
+      "server": "mcp-5",
+      "name": "get_port",
+      "description": "Get the port of the MCP server",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6bf23919fbe48530442096758a2e0f11aa8553ce6d24def2f8c9e33fff6a8b37"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "medium"
+    ],
+    "categories": {
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "communications_metadata": {
+        "label": "Communication metadata (who / where / when)",
+        "tier": "medium",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "The combination depends on communications_content and network_egress signals that are demonstrably false; the toxic pattern does not hold."
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 15,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "communications_metadata",
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  },
+  "validation": {
+    "method": "agentic:haiku",
+    "counts": {
+      "confirmed": 0,
+      "false_positive": 9,
+      "needs_source": 0,
+      "unreviewed": 0
+    },
+    "validated_out": [
+      {
+        "id": "data::get_rule_info::communications_content",
+        "reason": "The matched word 'message' refers to a rule diagnostic message field (error/warning text from a linter), not user communications or email content."
+      },
+      {
+        "id": "data::get_rule_info::project_metadata",
+        "reason": "The word 'issue' is used as generic English ('to address this issue') in documentation prose, not referring to project tickets or task metadata."
+      },
+      {
+        "id": "cap::get_similar_packages::network_egress",
+        "reason": "The match on 'node-fetch' is the package name itself listed in a category description; the tool catalogs packages rather than performing network egress."
+      },
+      {
+        "id": "data::get_similar_packages::communications_metadata",
+        "reason": "The word 'presence' is used as generic English ('the presence of packages below') meaning existence, not a communication system feature."
+      },
+      {
+        "id": "data::get_similar_packages::project_metadata",
+        "reason": "The word 'project' is used generically to mean a codebase or development project, not a project management system or metadata."
+      },
+      {
+        "id": "cap::get_packages_by_package_name::network_egress",
+        "reason": "Same as claim 3: the tool documents package categories (including 'node-fetch'), not performing network operations itself."
+      },
+      {
+        "id": "data::get_packages_by_package_name::communications_metadata",
+        "reason": "Same as claim 4: 'presence' is generic English for existence in a description, not a communications feature."
+      },
+      {
+        "id": "data::get_packages_by_package_name::project_metadata",
+        "reason": "Same as claim 5: 'project' is a generic development term, not project management metadata."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "The combination depends on communications_content and network_egress signals that are demonstrably false; the toxic pattern does not hold."
+      }
+    ]
+  }
+}

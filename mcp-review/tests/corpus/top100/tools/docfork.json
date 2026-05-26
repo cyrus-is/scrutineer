@@ -1,0 +1,88 @@
+{
+  "server": "docfork",
+  "captured_at": "2026-05-26T22:23:38Z",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Docfork",
+    "version": "2.2.5",
+    "websiteUrl": "https://docfork.com",
+    "icons": [
+      {
+        "src": "https://docfork.com/icon.svg",
+        "mimeType": "image/svg+xml"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "search_docs",
+      "title": "Search Documentation",
+      "description": "Search a library's indexed documentation and return relevant sections with titles, summaries, and URLs. Results are sourced from official, versioned documentation.\n\nUsage:\n- Be specific in your query. Include the feature, API, or concept you need. Good: \"server-side rendering with App Router\". Bad: \"rendering\".\n- The library parameter accepts a simple name (e.g., react, nextjs) or exact owner/repo for precision (e.g., vercel/next.js, TanStack/query).\n- When multiple library candidates appear, prefer exact name matches and official organizations over forks.\n- After 2 searches without finding the relevant section, switch to fetch_doc on the best result URL or the library's documentation root rather than searching again.\n- Use fetch_doc on result URLs to retrieve full documentation content.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query. Be specific and include relevant details. Good: 'How to set up server-side rendering in Next.js' or 'Zod schema validation for nested objects'. Bad: 'rendering' or 'validation'."
+          },
+          "library": {
+            "type": "string",
+            "description": "Library name or keyword (e.g., react, nextjs), or exact owner/repo for higher precision (e.g., vercel/next.js, TanStack/query). Prefer official organizations and upstream repositories when multiple candidates match."
+          },
+          "tokens": {
+            "description": "Result detail level. Omit for automatic sizing.",
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "dynamic"
+              },
+              {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 10000
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "query",
+          "library"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "fetch_doc",
+      "title": "Fetch Documentation",
+      "description": "Retrieve full documentation content from a URL and return it as rendered markdown. Use this tool to get complete pages \u2014 including code examples, API signatures, and prose \u2014 from search_docs result URLs.\n\n- Pass a URL directly from search_docs results to retrieve that section's full content.\n- Trim the URL anchor or path to a parent directory to get a broader table of contents with section previews.\n- Returns rendered markdown that preserves code blocks, headings, and document structure.\n- Only works on Docfork-indexed documentation \u2014 use WebFetch for URLs not returned by search_docs.\n- If search_docs returns sparse or no results, try fetch_doc on the library's root documentation URL (e.g. https://github.com/owner/repo/tree/main/docs) to browse available content.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL from search_docs results. Keep the anchor for a specific section, or trim it for a broader page view."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

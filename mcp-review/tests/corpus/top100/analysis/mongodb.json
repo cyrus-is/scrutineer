@@ -1,0 +1,992 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mongodb",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server"
+      ],
+      "env_keys": [
+        "MDB_MCP_ALLOW_REQUEST_OVERRIDES",
+        "MDB_MCP_API_CLIENT_ID",
+        "MDB_MCP_API_CLIENT_SECRET",
+        "MDB_MCP_ASSISTANT_BASE_URL",
+        "MDB_MCP_ATLAS_TEMPORARY_DATABASE_USER_LIFETIME_MS",
+        "MDB_MCP_CONFIRMATION_REQUIRED_TOOLS",
+        "MDB_MCP_CONNECTION_STRING",
+        "MDB_MCP_DISABLED_TOOLS",
+        "MDB_MCP_DRY_RUN",
+        "MDB_MCP_EXPORTS_PATH",
+        "MDB_MCP_EXPORT_CLEANUP_INTERVAL_MS",
+        "MDB_MCP_EXPORT_TIMEOUT_MS",
+        "MDB_MCP_EXTERNALLY_MANAGED_SESSIONS",
+        "MDB_MCP_HEALTH_CHECK_HOST",
+        "MDB_MCP_HEALTH_CHECK_PORT",
+        "MDB_MCP_HTTP_BODY_LIMIT",
+        "MDB_MCP_HTTP_HEADERS",
+        "MDB_MCP_HTTP_HOST",
+        "MDB_MCP_HTTP_PORT",
+        "MDB_MCP_HTTP_RESPONSE_TYPE",
+        "MDB_MCP_IDLE_TIMEOUT_MS",
+        "MDB_MCP_INDEX_CHECK",
+        "MDB_MCP_LOGGERS",
+        "MDB_MCP_LOG_PATH",
+        "MDB_MCP_MAX_BYTES_PER_QUERY",
+        "MDB_MCP_MAX_DOCUMENTS_PER_QUERY",
+        "MDB_MCP_MAX_TIME_M_S",
+        "MDB_MCP_MCP_CLIENT_LOG_LEVEL",
+        "MDB_MCP_MONITORING_SERVER_FEATURES",
+        "MDB_MCP_MONITORING_SERVER_HOST",
+        "MDB_MCP_MONITORING_SERVER_PORT",
+        "MDB_MCP_NOTIFICATION_TIMEOUT_MS",
+        "MDB_MCP_PREVIEW_FEATURES",
+        "MDB_MCP_READ_ONLY",
+        "MDB_MCP_TELEMETRY",
+        "MDB_MCP_TRANSPORT",
+        "MDB_MCP_VOYAGE_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "MDB_MCP_API_CLIENT_SECRET",
+        "MDB_MCP_EXTERNALLY_MANAGED_SESSIONS",
+        "MDB_MCP_VOYAGE_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "mongodb-mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:c3f4bedcd6f732f7d112fcfe3f1a2fff176acad975b3a9691c79eb53e718736c",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mongodb' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: mongodb-mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "mongodb-mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mongodb' package spec 'mongodb-mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "mongodb-mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'mongodb' requires credential-like env keys: MDB_MCP_API_CLIENT_SECRET, MDB_MCP_EXTERNALLY_MANAGED_SESSIONS, MDB_MCP_VOYAGE_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "MDB_MCP_API_CLIENT_SECRET",
+              "MDB_MCP_EXTERNALLY_MANAGED_SESSIONS",
+              "MDB_MCP_VOYAGE_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "mongodb",
+      "name": "aggregate-db",
+      "description": "Run an aggregation against a MongoDB database",
+      "param_names": [
+        "database",
+        "pipeline",
+        "responseBytesLimit"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Run an aggregation against a MongoDB database"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "aggregate-db aggregate db"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:a7f9a314072b12af265ddf7b3d7c1192e7e0633ff7fa07bcac7f8fb767587c0b"
+    },
+    {
+      "server": "mongodb",
+      "name": "aggregate",
+      "description": "Run an aggregation against a MongoDB collection",
+      "param_names": [
+        "collection",
+        "database",
+        "pipeline",
+        "responseBytesLimit"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Run an aggregation against a MongoDB collection"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "aggregate"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:4d9ef7c8b7aac6de9253e87174a155a7a295b1c14e68f7b54da56464cca3a923"
+    },
+    {
+      "server": "mongodb",
+      "name": "collection-indexes",
+      "description": "Describe the indexes for a collection",
+      "param_names": [
+        "collection",
+        "database"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:d6db20d68f282e42c4a026f7f7abc09cfa234036b3f0c31df1607896197a1e63"
+    },
+    {
+      "server": "mongodb",
+      "name": "collection-schema",
+      "description": "Describe the schema for a collection",
+      "param_names": [
+        "collection",
+        "database",
+        "responseBytesLimit",
+        "sampleSize"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:5d40f775794a471470602421e1518c417f2b336991068f7858979df931f1d777"
+    },
+    {
+      "server": "mongodb",
+      "name": "collection-storage-size",
+      "description": "Gets the size of the collection",
+      "param_names": [
+        "collection",
+        "database"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:1c331da127b138e025ee381420c475cb6954e4fe63d9a25dd842ec277e6bc478"
+    },
+    {
+      "server": "mongodb",
+      "name": "connect",
+      "description": "Connect to a MongoDB instance. The config resource captures if the server is already connected to a MongoDB cluster. If the user has configured a connection string or has previously called the connect tool, a connection is already established and there's no need to call this tool unless the user has explicitly requested to switch to a new MongoDB cluster.",
+      "param_names": [
+        "connectionString"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Connect to a MongoDB instance. The config resource"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:ec3303b07c0eaa46670a355728e80b2ae4ed521e3600ff204e6eaff399f66c2c"
+    },
+    {
+      "server": "mongodb",
+      "name": "count",
+      "description": "Gets the number of documents in a MongoDB collection using db.collection.count() and query as an optional filter parameter",
+      "param_names": [
+        "collection",
+        "database",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "the number of documents in a MongoDB collection using db.collectio"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
+            "snippet": "count"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "low",
+      "digest": "sha256:004d1c67dcf3c48b70f69b4c0f66f0f1e6b9c1e9d01e2f653cdbaa3d276df683"
+    },
+    {
+      "server": "mongodb",
+      "name": "create-collection",
+      "description": "Creates a new collection in a database. If the database doesn't exist, it will be created automatically.",
+      "param_names": [
+        "collection",
+        "database"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:973f8c017049aa7013953be8f75604051ad45fec0d81e6920363d9e3b64d73af"
+    },
+    {
+      "server": "mongodb",
+      "name": "create-index",
+      "description": "Create an index for a collection",
+      "param_names": [
+        "collection",
+        "database",
+        "definition",
+        "name"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:993fccb76ef73b7039eca75a0496faf9c9884dc41d3b3feaf482601ebf5f1e8f"
+    },
+    {
+      "server": "mongodb",
+      "name": "db-stats",
+      "description": "Returns statistics that reflect the use state of a single database",
+      "param_names": [
+        "database"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b362ac5b65dad069e44feace70426770cc2cf5ef036cdffa0140c225633c1715"
+    },
+    {
+      "server": "mongodb",
+      "name": "delete-many",
+      "description": "Removes all documents that match the filter from a MongoDB collection",
+      "param_names": [
+        "collection",
+        "database",
+        "filter"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "that match the filter from a MongoDB collection"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:57754d6108db4a8400b5f69b691e60b43c2ce16c8d39254e541d798479f3da81"
+    },
+    {
+      "server": "mongodb",
+      "name": "drop-collection",
+      "description": "Removes a collection or view from the database. The method also removes any indexes associated with the dropped collection.",
+      "param_names": [
+        "collection",
+        "database"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "drop-collection",
+            "pattern": "\\bdrop[\\s_-]?(table|database|collection)\\b",
+            "snippet": "drop-collection drop collection"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:e8f7e4fddd2119fb65c761d29edff8f7e0d4f44ef0545e55952d8dc4cb9e4121"
+    },
+    {
+      "server": "mongodb",
+      "name": "drop-database",
+      "description": "Removes the specified database, deleting the associated data files",
+      "param_names": [
+        "database"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "drop-database",
+            "pattern": "\\bdrop[\\s_-]?(table|database|collection)\\b",
+            "snippet": "drop-database drop database"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:653fecf8df612bf4eb45ee21d7c7c214d06da4ffb3a0682686f76658f11032c3"
+    },
+    {
+      "server": "mongodb",
+      "name": "drop-index",
+      "description": "Drop an index for the provided database and collection.",
+      "param_names": [
+        "collection",
+        "database",
+        "indexName",
+        "type"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:4acd95fb4634e10ca06c1ad435ba2112912813a9d01dbf5dc20bb299b0dbd025"
+    },
+    {
+      "server": "mongodb",
+      "name": "explain",
+      "description": "Returns statistics describing the execution of the winning plan chosen by the query optimizer for the evaluated method",
+      "param_names": [
+        "collection",
+        "database",
+        "method",
+        "verbosity"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "arguments"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:e56fe35bde34ddf53d46d7eb9603d1c852087ee8d08e161c212d0ed486eefa82"
+    },
+    {
+      "server": "mongodb",
+      "name": "export",
+      "description": "Export a query or aggregation results in the specified EJSON format.",
+      "param_names": [
+        "collection",
+        "database",
+        "exportTarget",
+        "exportTitle",
+        "jsonExportFormat"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "arguments"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:ab3e3e4c31523c6d4a8ecb8a9fa3ed02e05d7a23cdce28d66519bcf85f0480c1"
+    },
+    {
+      "server": "mongodb",
+      "name": "find",
+      "description": "Run a find query against a MongoDB collection",
+      "param_names": [
+        "collection",
+        "database",
+        "filter",
+        "limit",
+        "projection",
+        "responseBytesLimit",
+        "sort"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Run a find query against a MongoDB collection"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:0d01f1a338f6a7f6028fac457b456af029cfaa7ccd6f1dadefe3cf28840557b8"
+    },
+    {
+      "server": "mongodb",
+      "name": "insert-many",
+      "description": "Insert an array of documents into a MongoDB collection. If the list of documents is above com.mongodb/maxRequestPayloadBytes, consider inserting them in batches.",
+      "param_names": [
+        "collection",
+        "database",
+        "documents"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "an array of documents into a MongoDB collection. If the list of do"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:3d76362b4406d5aa3bb090b11e7affad7319b648e40433cc7ca8af2210871e35"
+    },
+    {
+      "server": "mongodb",
+      "name": "list-collections",
+      "description": "List all collections for a given database",
+      "param_names": [
+        "database"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:bd4279212ad35cfb5482d6b38a37b0f0afc86a7efd3251499159c08af3b034e0"
+    },
+    {
+      "server": "mongodb",
+      "name": "list-databases",
+      "description": "List all databases for a MongoDB connection",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "List all databases for a MongoDB connection"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:696ab93038a1f2b924bf8c7befc2ef3d66ad3958ad79d254d2f7260f1b056cbc"
+    },
+    {
+      "server": "mongodb",
+      "name": "mongodb-logs",
+      "description": "Returns the most recent logged mongod events",
+      "param_names": [
+        "limit",
+        "type"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "mongodb",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "mongodb-logs mongodb logs"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:e91ced30ea78244325c0c6dadcf46a16d0b389528dceb572d929a0de9fe866aa"
+    },
+    {
+      "server": "mongodb",
+      "name": "rename-collection",
+      "description": "Renames a collection in a MongoDB database",
+      "param_names": [
+        "collection",
+        "database",
+        "dropTarget",
+        "newName"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Renames a collection in a MongoDB database"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:ba644f77c3e88e3e74734e324e696ac850f0f9825a8ef14d27f26d6dc8fdeffa"
+    },
+    {
+      "server": "mongodb",
+      "name": "update-many",
+      "description": "Updates all documents that match the specified filter for a collection. If the list of documents is above com.mongodb/maxRequestPayloadBytes, consider updating them in batches.",
+      "param_names": [
+        "collection",
+        "database",
+        "filter",
+        "update",
+        "upsert"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "mongodb",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ist of documents is above com.mongodb/maxRequestPayloadBytes, consi"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:bb264612e1b8b1561d3fc5f4bbd324a197e1939c40b2e03be12d71999340cf4d"
+    },
+    {
+      "server": "mongodb",
+      "name": "list-knowledge-sources",
+      "description": "List available data sources in the MongoDB Assistant knowledge base. Use this to explore available data sources or to find search filter parameters to use in search-knowledge.",
+      "param_names": [],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "available data sources in the MongoDB Assistant knowledge base. Use"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:5dc4759778d07c84ca94053b77fdd497a0283360ae89511c43da435ef31d3143"
+    },
+    {
+      "server": "mongodb",
+      "name": "search-knowledge",
+      "description": "Search for information in the MongoDB Assistant knowledge base. This includes official documentation, curated expert guidance, and other resources provided by MongoDB. Supports filtering by data source and version.",
+      "param_names": [
+        "dataSources",
+        "limit",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "MongoDB",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "Search for information in the MongoDB Assistant knowledge base. Thi"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:88ac004691a4c29c49c6ceebb7c0ddb4cacc9bec3c793f698444db81b7285905"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 3,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 25,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 15,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 16,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}
