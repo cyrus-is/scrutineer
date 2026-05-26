@@ -171,21 +171,7 @@
           "suppressed": false
         }
       ],
-      "data_categories": [
-        {
-          "category": "credentials_secrets",
-          "label": "Secrets, tokens & credentials",
-          "tier": "critical",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "token",
-            "pattern": "\\btoken\\b(?!\\s+limit)",
-            "snippet": "Notion | Retrieve your token's bot user\nError Responses:\n4"
-          },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -193,7 +179,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "critical",
+      "data_tier": null,
       "digest": "sha256:0e3228393dd703a4ee24cb829c302b0e195bd656b74d4a9493694fb39711b2c5"
     },
     {
@@ -669,19 +655,10 @@
     }
   ],
   "data_profile": {
-    "rating": "HIGHLY_SENSITIVE",
+    "rating": "MINIMAL",
     "surface_assessed": true,
-    "tiers_present": [
-      "critical"
-    ],
-    "categories": {
-      "credentials_secrets": {
-        "label": "Secrets, tokens & credentials",
-        "tier": "critical",
-        "tool_count": 1,
-        "confidence": "medium"
-      }
-    }
+    "tiers_present": [],
+    "categories": {}
   },
   "toxic_combinations": [
     {
@@ -714,10 +691,8 @@
       "LOW": 0,
       "INFO": 1
     },
-    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
-    "data_categories_touched": [
-      "credentials_secrets"
-    ],
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true
   }

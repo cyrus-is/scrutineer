@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrutineer"
-version = "1.6.2"
+version = "1.6.3"
 description = "Agentic code review toolkit for Claude Code — one-command installer for the scrutineer-* skill set."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -53,11 +53,12 @@ include = [
     "README.md",
     "LICENSE*",
 ]
-# The MCP eval corpus (live-captured tool surfaces + capture scripts) is a
-# repo-only dogfooding/regression asset — keep it in git, but never ship it in
-# the PyPI sdist. (The wheel already excludes it via the force-include allowlist.)
+# The entire test tree — unit tests, fixtures, and the MCP eval corpus
+# (live-captured tool surfaces, the top-100 survey, capture scripts) — is a
+# repo-only dev/regression asset. Keep it in git, never ship it in the PyPI
+# sdist. (The wheel already excludes it via the force-include allowlist.)
 exclude = [
-    "mcp-review/tests/corpus",
-    "mcp-review/tests/corpus/**",
+    "mcp-review/tests",
+    "mcp-review/tests/**",
     "**/.DS_Store",
 ]

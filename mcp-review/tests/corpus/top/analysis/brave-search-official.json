@@ -619,19 +619,6 @@
       ],
       "data_categories": [
         {
-          "category": "credentials_secrets",
-          "label": "Secrets, tokens & credentials",
-          "tier": "critical",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "token",
-            "pattern": "\\btoken\\b(?!\\s+limit)",
-            "snippet": "to true. Optional geolocation token used to refine results. The A"
-          },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -678,7 +665,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "critical",
+      "data_tier": "high",
       "digest": "sha256:25f3f24ddafa4312e0b32d1115739050c4973aac8be9756888d0166de0c7d66f"
     }
   ],
@@ -709,12 +696,6 @@
         "tool_count": 7,
         "confidence": "high"
       },
-      "credentials_secrets": {
-        "label": "Secrets, tokens & credentials",
-        "tier": "critical",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
@@ -723,10 +704,9 @@
       }
     },
     "unconfirmed_higher_categories": [
-      "credentials_secrets",
       "source_code"
     ],
-    "note": "Rating reflects high-confidence matches; credentials_secrets, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [
     {
@@ -762,7 +742,6 @@
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "contacts",
-      "credentials_secrets",
       "location",
       "public_data",
       "source_code"

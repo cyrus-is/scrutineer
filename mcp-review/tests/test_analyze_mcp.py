@@ -328,6 +328,46 @@ _git = A.analyze_tool({"name": "git_commit", "description": "Create a commit.",
 check("data: high-confidence critical => HIGHLY_SENSITIVE",
       A.data_profile([_git], G)["rating"] == "HIGHLY_SENSITIVE")
 
+# --- 1.6.3: data-category sense disambiguation (health/credentials FPs) ---
+def _dcats(name, desc, props=None):
+    t = A.analyze_tool({"name": name, "description": desc,
+                        "inputSchema": {"type": "object", "properties": props or {}}}, "s", G)
+    return {d["category"] for d in t["data_categories"]}
+
+# health: system health-checks and ambiguous words must NOT read as medical data
+check("health fp: agent_health not medical",
+      "health" not in _dcats("agent_health", "Report the agent's health status."))
+check("health fp: system_health not medical",
+      "health" not in _dcats("system_health", "Check system health and metrics."))
+check("health fp: 'health score' metric not medical",
+      "health" not in _dcats("swarm_status", "Return the health score (0-1) of the swarm."))
+check("health fp: 'phi' LLM model not PHI",
+      "health" not in _dcats("chat_format", "Template: llama3, mistral, chatml, phi, gemma."))
+check("health fp: 'be patient' not medical",
+      "health" not in _dcats("agent_poll", "Be patient with polling; results may take time."))
+# health: real medical references MUST still register
+check("health tp: diagnosis/prescription is medical",
+      "health" in _dcats("get_record", "Return the patient diagnosis and prescription."))
+check("health tp: patient records is medical",
+      "health" in _dcats("fetch", "Fetch patient records and medical history."))
+check("health tp: PHI acronym is medical",
+      "health" in _dcats("export_phi", "Export PHI for the clinical encounter."))
+
+# credentials_secrets: ambiguous "token" must require an auth qualifier
+check("cred fp: count_tokens not credential",
+      "credentials_secrets" not in _dcats("count_tokens", "Count the number of tokens in the text."))
+check("cred fp: token compression not credential",
+      "credentials_secrets" not in _dcats("optimize", "Compress tokens to reduce token usage."))
+check("cred fp: crypto token swap not credential",
+      "credentials_secrets" not in _dcats("swap", "Swap one crypto token for another on the DEX."))
+# credentials_secrets: real auth tokens + other secret signals MUST still register
+check("cred tp: oauth access token is credential",
+      "credentials_secrets" in _dcats("refresh", "Refresh the OAuth access token for the session."))
+check("cred tp: personal access token is credential",
+      "credentials_secrets" in _dcats("store", "Store the GitHub personal access token."))
+check("cred tp: api_key still credential",
+      "credentials_secrets" in _dcats("configure", "Set the api_key for the service."))
+
 # --- Phase 9: agentic validator scaffolding (deterministic plumbing) ---
 _van = {
     "tools": [{"name": "web_search", "description": "Search the web.", "param_names": ["query"],

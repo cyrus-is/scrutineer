@@ -416,7 +416,10 @@ data_sensitivity:
     tier: critical
     patterns:
       - "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b"
-      - "\\btoken\\b(?!\\s+limit)"
+      # "token" alone is ambiguous (LLM/BPE tokens, crypto tokens) — require an
+      # auth qualifier. Bare-token credential exposure is still caught via env
+      # keys (sensitive_env_keys) + the secret/api_key patterns above.
+      - "\\b(auth|access|bearer|refresh|api|session|oauth|jwt|csrf|sso|personal[\\s_-]?access)[\\s_-]?tokens?\\b"
       - "\\b(read[\\s_-]?env|environment[\\s_-]?variable|getenv|dotenv)\\b"
     rationale: The most sensitive payload — leaks compromise everything downstream.
 
@@ -448,7 +451,14 @@ data_sensitivity:
     label: Health / medical data
     tier: critical
     patterns:
-      - "\\b(health|medical|patient|diagnosis|prescription|clinical|phi)\\b"
+      # Bare "health" matches system health-checks (agent_health, system_health),
+      # bare "patient" matches the adjective ("be patient"), and lowercase "phi"
+      # matches the Phi LLM / greek letter. Require medical sense: unambiguous
+      # medical vocabulary, patient-with-medical-context, and PHI as a case-
+      # sensitive acronym.
+      - "\\b(medical|diagnosis|prescription|clinical|healthcare|immunization|medication|hipaa|ehr)\\b"
+      - "\\bpatient[\\s_-]?(record|records|data|history|histories|chart|charts|visit|visits|care|info)\\b"
+      - "(?-i:\\bPHI\\b)"
     rationale: Regulated, highly sensitive personal data.
 
   personal_identifiers:

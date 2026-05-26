@@ -454,19 +454,6 @@
       ],
       "data_categories": [
         {
-          "category": "credentials_secrets",
-          "label": "Secrets, tokens & credentials",
-          "tier": "critical",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "token",
-            "pattern": "\\btoken\\b(?!\\s+limit)",
-            "snippet": "scoveryDepth too high (causes token overflow) or too low (causes"
-          },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
@@ -515,7 +502,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "critical",
+      "data_tier": "high",
       "digest": "sha256:ee37a519af4c4248881330a68e2f2830d9a648b1c400de4bae33715cd02ce5c9"
     },
     {
@@ -604,19 +591,6 @@
       ],
       "data_categories": [
         {
-          "category": "health",
-          "label": "Health / medical data",
-          "tier": "critical",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "patient",
-            "pattern": "\\b(health|medical|patient|diagnosis|prescription|clinical|phi)\\b",
-            "snippet": "PORTANT - Async workflow with patient polling:**\n1. Call `firecrawl"
-          },
-          "rationale": "Regulated, highly sensitive personal data."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -637,7 +611,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "critical",
+      "data_tier": "medium",
       "digest": "sha256:28de0de0ad41c443d4603775c3523dd12b9ab84c010646e3cc123a7689daa665"
     },
     {
@@ -649,19 +623,6 @@
       ],
       "candidate_capabilities": [],
       "data_categories": [
-        {
-          "category": "health",
-          "label": "Health / medical data",
-          "tier": "critical",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "patient",
-            "pattern": "\\b(health|medical|patient|diagnosis|prescription|clinical|phi)\\b",
-            "snippet": "awl_agent`.\n\n**IMPORTANT - Be patient with polling:**\n- Poll every"
-          },
-          "rationale": "Regulated, highly sensitive personal data."
-        },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
@@ -683,7 +644,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "critical",
+      "data_tier": "medium",
       "digest": "sha256:514bbbe104fc4ae8943062a9191fd037d74b345c2b5e46e81adfc2d757ba0412"
     },
     {
@@ -1421,18 +1382,6 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "credentials_secrets": {
-        "label": "Secrets, tokens & credentials",
-        "tier": "critical",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
-      "health": {
-        "label": "Health / medical data",
-        "tier": "critical",
-        "tool_count": 2,
-        "confidence": "medium"
-      },
       "financial": {
         "label": "Financial / payment data",
         "tier": "critical",
@@ -1460,12 +1409,10 @@
     },
     "unconfirmed_higher_categories": [
       "communications_content",
-      "credentials_secrets",
       "financial",
-      "health",
       "source_code"
     ],
-    "note": "Rating reflects high-confidence matches; communications_content, credentials_secrets, financial, health, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    "note": "Rating reflects high-confidence matches; communications_content, financial, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [
     {
@@ -1525,10 +1472,8 @@
     "data_categories_touched": [
       "calendar",
       "communications_content",
-      "credentials_secrets",
       "files_documents",
       "financial",
-      "health",
       "location",
       "org_structure",
       "personal_identifiers",
