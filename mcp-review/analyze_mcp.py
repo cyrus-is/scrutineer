@@ -899,6 +899,20 @@ def data_profile(tools: list[dict], g: Guidance) -> dict:
     """Aggregate the union of data categories across a set of tools into a
     single sensitivity rating. This is what answers "how much / how sensitive
     is the data this server wants?" — independent of any security finding."""
+    # No tool surface => the data question is UNANSWERED, not "minimal". A server
+    # whose tools weren't captured (e.g. it wouldn't start without a real key)
+    # must not be silently rated low — that under-states a Stripe/Postgres-class
+    # server. UNKNOWN tells the verdict layer to capture the surface and elevate.
+    if not tools:
+        return {
+            "rating": "UNKNOWN",
+            "surface_assessed": False,
+            "tiers_present": [],
+            "categories": {},
+            "note": "No tool surface was provided or captured — data sensitivity "
+                    "could not be assessed. Do NOT read this as low sensitivity; "
+                    "capture a tools/list and re-run.",
+        }
     categories: dict[str, dict] = {}
     for t in tools:
         for d in t["data_categories"]:
@@ -912,6 +926,7 @@ def data_profile(tools: list[dict], g: Guidance) -> dict:
     rating = _TIER_TO_RATING[_TIER_ORDER[top]] if top else "MINIMAL"
     return {
         "rating": rating,
+        "surface_assessed": True,
         "tiers_present": tiers_present,
         "categories": categories,
     }

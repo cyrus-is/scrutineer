@@ -284,6 +284,15 @@ check("args: https url -> no non_https",
 check("args: localhost http -> no non_https",
       "non_https_remote" not in _codes({"command": "npx", "args": ["mcp-remote", "http://localhost:3000/sse"]}))
 
+# --- Phase 7: no tool surface => UNKNOWN (not a silent MINIMAL) ---
+_none = A.data_profile([], G)
+check("data_profile UNKNOWN when no surface",
+      _none["rating"] == "UNKNOWN" and _none["surface_assessed"] is False)
+_low = A.data_profile([A.analyze_tool(
+    {"name": "ping", "description": "Return pong.", "inputSchema": {"type": "object", "properties": {}}}, "s", G)], G)
+check("data_profile MINIMAL when surface present but low",
+      _low["rating"] == "MINIMAL" and _low["surface_assessed"] is True)
+
 # --- suppression reconcile / stale exposure ---
 fs_only = [A.analyze_server("filesystem", A.find_server_map(cfg)["filesystem"], G)]
 recon = A.reconcile(fs_only, [],
