@@ -21,6 +21,7 @@ FIX = HERE / "fixtures"
 sys.path.insert(0, str(ROOT))
 
 import analyze_mcp as A  # noqa: E402
+import validate_findings as V  # noqa: E402
 
 G = A.Guidance(ROOT / "mcp_risk_guidance.yaml")
 
@@ -314,6 +315,29 @@ _git = A.analyze_tool({"name": "git_commit", "description": "Create a commit.",
                        "inputSchema": {"type": "object", "properties": {"message": {"type": "string"}}}}, "s", G)
 check("data: high-confidence critical => HIGHLY_SENSITIVE",
       A.data_profile([_git], G)["rating"] == "HIGHLY_SENSITIVE")
+
+# --- Phase 9: agentic validator scaffolding (deterministic plumbing) ---
+_van = {
+    "tools": [{"name": "web_search", "description": "Search the web.", "param_names": ["query"],
+               "candidate_capabilities": [{"capability": "database_access", "severity": "MEDIUM",
+                                           "confidence": "high", "evidence": {"matched": "query", "zone": "param_name"}}],
+               "data_categories": []}],
+    "injection_findings": [], "toxic_combinations": [],
+}
+_vclaims = V.extract_claims(_van)
+check("validator: extracts capability claim",
+      any(c["id"] == "cap::web_search::database_access" for c in _vclaims))
+check("validator: prompt includes the rubric + claims",
+      "false_positive" in V.build_prompt(_vclaims) and "database_access" in V.build_prompt(_vclaims))
+_vtri = {"triage": [{"id": "cap::web_search::database_access", "judgment": "false_positive",
+                     "rationale": "'query' is a web-search param, not database access."}]}
+_vres = V.apply_triage(json.loads(json.dumps(_van)), _vtri)
+_vcap = _vres["tools"][0]["candidate_capabilities"][0]
+check("validator: false positive marked validated_out (with reason)",
+      _vcap.get("validated_out") is True and bool(_vcap.get("validation_reason")))
+check("validator: severity is untouched (suppress-only)", _vcap["severity"] == "MEDIUM")
+check("validator: summary counts the false positive",
+      _vres["validation"]["counts"]["false_positive"] == 1)
 
 # --- suppression reconcile / stale exposure ---
 fs_only = [A.analyze_server("filesystem", A.find_server_map(cfg)["filesystem"], G)]
