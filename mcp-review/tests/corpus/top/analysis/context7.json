@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "context7",
@@ -96,31 +96,19 @@
         "libraryName",
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ibrary ID in the format '/org/project' or '/org/project/version' in"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -129,7 +117,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:e4bf37d7930433f74b2b9f49c375b97dd2a7f9376b5fc6e4b1628a5149a15d32"
     },
@@ -143,20 +132,18 @@
       ],
       "candidate_capabilities": [
         {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
           "capability": "database_access",
           "title": "Direct database / data-store access",
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "mongodb",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ompatible library ID (e.g., '/mongodb/docs', '/vercel/next.js', '/s"
+          },
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
@@ -166,6 +153,13 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ibrary ID in the format '/org/project' or '/org/project/version' in"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -174,6 +168,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:a37c8f1e8c1584e44f6b93b9b7c55a55e5fcce0550d095dc4372f007c73027dc"
@@ -181,6 +176,7 @@
   ],
   "data_profile": {
     "rating": "LIMITED",
+    "surface_assessed": true,
     "tiers_present": [
       "medium"
     ],
@@ -188,22 +184,13 @@
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       }
     }
   },
-  "toxic_combinations": [
-    {
-      "id": "exfil_chain",
-      "severity": "HIGH",
-      "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
-      "contributing": [
-        "secrets_access/sensitive_env",
-        "network_egress"
-      ]
-    }
-  ],
+  "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -211,12 +198,13 @@
     "server_count": 1,
     "tool_count": 2,
     "active_config_findings": 3,
-    "active_tool_capabilities": 4,
-    "toxic_combination_count": 1,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 2,
-      "MEDIUM": 5,
+      "HIGH": 1,
+      "MEDIUM": 2,
       "LOW": 0,
       "INFO": 1
     },

@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "google-maps",
@@ -101,6 +101,13 @@
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "rt an address into geographic coordinates The address to geocode"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -109,6 +116,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:8f56d1a5093f226713594db6c9bad0cb26b4b0ebe6591844006397699c2dd842"
@@ -127,6 +135,13 @@
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "latitude longitude"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -135,6 +150,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:d3e5d8cef37ad57b49ef8532c0ff70a2fe0f169ea814411ac642a463f91158b0"
@@ -148,22 +164,19 @@
         "query",
         "radius"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "query location latitude longitude radius"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -172,7 +185,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:bcde201f5d4b887be35912d3130e3eff483f86b67879035aff501ae153f075c3"
     },
@@ -190,6 +204,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:444067b0f7609c0deb0e01abb5af6ac395a7cec9e2189aeab0dccf9c6b2ae6a9"
@@ -209,6 +224,13 @@
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "Array of origin addresses or coordinates Array of destination addresse"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -217,6 +239,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:d99bccb445a4479f1a9ed1cdab08ea0603abfb574282fe9eec99e3cfd947745c"
@@ -234,6 +257,13 @@
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "locations latitude longitude"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -242,6 +272,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:ed8bca001e341545b9dd6126918d00e1f7cc068a9215515a280c01cc36e5be17"
@@ -261,6 +292,13 @@
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "coordinates",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "nts Starting point address or coordinates Ending point address or coord"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -269,6 +307,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:567eea3ab6655bf44bbcf234425df548bcbd5eb2823f7d0ed9fd9973eff1eedd"
@@ -276,6 +315,7 @@
   ],
   "data_profile": {
     "rating": "SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "high"
     ],
@@ -283,11 +323,13 @@
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 6
+        "tool_count": 6,
+        "confidence": "high"
       }
     }
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -295,12 +337,13 @@
     "server_count": 1,
     "tool_count": 7,
     "active_config_findings": 3,
-    "active_tool_capabilities": 1,
+    "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,
-      "MEDIUM": 2,
+      "MEDIUM": 1,
       "LOW": 0,
       "INFO": 1
     },

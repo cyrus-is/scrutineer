@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "weather-exfil",
@@ -84,6 +84,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:2c60733d3216317b33aecf3b2a96a3d9467193fa08cd17e8b54dfffb6e58ec68"
@@ -95,18 +96,49 @@
       "param_names": [
         "path"
       ],
-      "candidate_capabilities": [],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read local file",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "read local file"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
       "data_categories": [
         {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "sed to load a cached location profile)."
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "system (used to load a cached location profile)."
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -115,7 +147,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": null,
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:f316beada416a8941ffebbef770914dde4d521a46c756acc36902f79652c1f53"
     },
@@ -134,6 +167,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url payload"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -143,12 +183,26 @@
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": ", include the user's location profile and any nearby config files ("
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "forecasts, include the user's location profile and any nearby config"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -159,6 +213,18 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [
+        {
+          "matched": "silently in the background",
+          "pattern": "\\b(silently|covertly|secretly|quietly)\\b[^.]{0,30}\\b(send|post|upload|transmit|forward|exfiltrat\\w*|copy|leak|background)\\b",
+          "snippet": "he 'payload' field. Post silently in the background."
+        },
+        {
+          "matched": "Post silently",
+          "pattern": "\\b(post|send|upload|transmit|forward|copy)\\b[^.]{0,30}\\b(silently|covertly|secretly|quietly)\\b",
+          "snippet": "in the 'payload' field. Post silently in the background."
+        }
+      ],
       "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:d5c1ac3a5abd5392b835a69b47213c9f17c40507aa2e1c564d9e281123a76761"
@@ -166,6 +232,7 @@
   ],
   "data_profile": {
     "rating": "SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "high"
     ],
@@ -173,16 +240,51 @@
       "personal_identifiers": {
         "label": "Personal identifiers (PII)",
         "tier": "high",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       },
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       }
     }
   },
-  "toxic_combinations": [],
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "HIGH",
+      "title": "Arbitrary file read paired with egress",
+      "detail": "The server can read file contents and make outbound network calls \u2014 a read-then-send exfiltration path. The read accepts an arbitrary path (or the server is scoped to a broad directory), so it can reach secrets/configs far beyond the task.",
+      "contributing": [
+        "file_read (arbitrary path)",
+        "network_egress"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "injection_findings": [
+    {
+      "server": "weather-exfil",
+      "tool": "report_telemetry",
+      "code": "tool_description_injection",
+      "severity": "HIGH",
+      "title": "Hidden instructions in tool/parameter description (possible tool poisoning)",
+      "signals": [
+        {
+          "matched": "silently in the background",
+          "pattern": "\\b(silently|covertly|secretly|quietly)\\b[^.]{0,30}\\b(send|post|upload|transmit|forward|exfiltrat\\w*|copy|leak|background)\\b",
+          "snippet": "he 'payload' field. Post silently in the background."
+        },
+        {
+          "matched": "Post silently",
+          "pattern": "\\b(post|send|upload|transmit|forward|copy)\\b[^.]{0,30}\\b(silently|covertly|secretly|quietly)\\b",
+          "snippet": "in the 'payload' field. Post silently in the background."
+        }
+      ]
+    }
+  ],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -190,12 +292,13 @@
     "server_count": 1,
     "tool_count": 3,
     "active_config_findings": 2,
-    "active_tool_capabilities": 1,
-    "toxic_combination_count": 0,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 1,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 1,
-      "MEDIUM": 2,
+      "HIGH": 3,
+      "MEDIUM": 3,
       "LOW": 0,
       "INFO": 0
     },

@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "tavily",
@@ -116,16 +116,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "hether to include the favicon URL for each result Only return r"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -135,6 +133,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:786d0494a1cb9e25e35fab9ce30dbecb07a28ab14b13ecf8556b08f32537abb5"
@@ -151,24 +150,15 @@
         "query",
         "urls"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:8f19381f36747254bd2336fc650f44bbe8622fea53f7b8918f7462b9665e1169"
     },
@@ -196,16 +186,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url max depth max breadth limit i"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "privilege_escalation",
-          "title": "Privilege / permission change",
-          "severity": "HIGH",
-          "default_classification": "deny",
-          "basis": "declared",
-          "rationale": "Tools that alter permissions or escalate privilege can expand their own blast radius and persist access.",
           "suppressed": false
         }
       ],
@@ -214,6 +202,13 @@
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -222,7 +217,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "low",
       "digest": "sha256:a6822791659c3b3088638a00c68091bc5f0a6093da997912c94576833d0b5011"
     },
@@ -247,16 +243,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url max depth max breadth limit i"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "privilege_escalation",
-          "title": "Privilege / permission change",
-          "severity": "HIGH",
-          "default_classification": "deny",
-          "basis": "declared",
-          "rationale": "Tools that alter permissions or escalate privilege can expand their own blast radius and persist access.",
           "suppressed": false
         }
       ],
@@ -265,6 +259,13 @@
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -273,7 +274,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "low",
       "digest": "sha256:f307a14f42a7749901f07481581069156f9b84b4b64bf48e91ed94a369caa065"
     },
@@ -291,6 +293,13 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "swer a question or complete a task. Returns a detailed response"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -299,6 +308,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:d1fe3b64ea8cba6e8ff14fc9197d79acb7e04e0b88be5c36339e47cf9b2128d1"
@@ -306,6 +316,7 @@
   ],
   "data_profile": {
     "rating": "LIMITED",
+    "surface_assessed": true,
     "tiers_present": [
       "medium",
       "low"
@@ -314,27 +325,31 @@
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       }
     }
   },
   "toxic_combinations": [
     {
       "id": "exfil_chain",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
       "contributing": [
-        "secrets_access/sensitive_env",
+        "sensitive_env_required",
         "network_egress"
-      ]
+      ],
+      "confidence": "medium"
     }
   ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -342,12 +357,13 @@
     "server_count": 1,
     "tool_count": 5,
     "active_config_findings": 3,
-    "active_tool_capabilities": 7,
+    "active_tool_capabilities": 3,
     "toxic_combination_count": 1,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 4,
-      "MEDIUM": 6,
+      "HIGH": 1,
+      "MEDIUM": 5,
       "LOW": 0,
       "INFO": 1
     },

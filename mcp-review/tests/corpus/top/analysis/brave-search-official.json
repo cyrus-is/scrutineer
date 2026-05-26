@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "brave-search-official",
@@ -116,16 +116,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "with title, description, and URL.\n    \n    When the \"results_f"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -134,18 +132,39 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": ", or current topics\n        - Location-based queries (restaurants, b"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "y country search lang ui lang count offset safesearch freshness t"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -154,6 +173,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:5478ee4df1554870f8c77c225bdd01a4b7dce9e54a459e3925711d4f4852b98b"
@@ -186,16 +206,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "The parameter supports both a url where the Goggle is hosted or"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -204,18 +222,39 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "API provides enrichments for location search results. Access to thi"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "y country search lang ui lang count offset safesearch freshness t"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -224,6 +263,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:838b68aaa1d278a23a214929e9d930e2695e7cb2ece0783019be677ee4cc111a"
@@ -250,16 +290,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "o-related results with title, url, description, duration, and t"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -268,6 +306,13 @@
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "y country search lang ui lang count offset spellcheck safesearch"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -276,6 +321,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "low",
       "digest": "sha256:fd4a4338e00a4e4db8463276770b93e71d622618baa6b6053f4d1ac96f187a99"
@@ -299,16 +345,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "image.title](image.properties.url)).\n The user's search query."
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -317,6 +361,13 @@
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query country search lang count safesearch spellcheck"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -325,6 +376,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "low",
       "digest": "sha256:610d4a7b526aa146b6d756be25184244f584da0cb47fa54f6da3363ba602240e"
@@ -353,16 +405,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "s-related results with title, url, and description. Some result"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -371,12 +421,26 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "y country search lang ui lang count offset spellcheck safesearch"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -385,6 +449,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:bcb2a408e717ddaf18ee41fb9b1d4da1d15b4b97aee2a6a7697bdeb7438bd9df"
@@ -398,24 +463,15 @@
         "inline_references",
         "key"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:7d00f5589fdfca10cdd31827af53af0b834abfa0f1ef0a2f22c96d94255b9f79"
     },
@@ -458,16 +514,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "maximum number of tokens per url maximum number of snippets pe"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -476,18 +530,39 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "ttribute of the response. The latitude of the client's geographical"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query country search lang count spellcheck maximum number of"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -496,6 +571,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:2029bab0caf6e523ace797df931fa77a9691b4d6f430258581e1c686bcd439fa"
@@ -525,30 +601,19 @@
       ],
       "candidate_capabilities": [
         {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
           "capability": "secrets_access",
           "title": "Reads secrets / credentials / env",
           "severity": "HIGH",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "to true. Optional geolocation token used to refine results. The A"
+          },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -557,24 +622,52 @@
           "category": "credentials_secrets",
           "label": "Secrets, tokens & credentials",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "to true. Optional geolocation token used to refine results. The A"
+          },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
         },
         {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "contact",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "data (postal address, hours, contact, ratings, photos, categories,"
+          },
           "rationale": "Exposes a person's full social/professional graph."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "latitude",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "query radius count latitude longitude location country se"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query radius count latitude longitude location c"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -583,13 +676,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "HIGH",
       "data_tier": "critical",
       "digest": "sha256:25f3f24ddafa4312e0b32d1115739050c4973aac8be9756888d0166de0c7d66f"
     }
   ],
   "data_profile": {
-    "rating": "HIGHLY_SENSITIVE",
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -599,42 +694,54 @@
       "source_code": {
         "label": "Source code & repository contents",
         "tier": "critical",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "medium"
       },
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "high"
       },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 7
+        "tool_count": 7,
+        "confidence": "high"
       },
       "credentials_secrets": {
         "label": "Secrets, tokens & credentials",
         "tier": "critical",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       }
-    }
+    },
+    "unconfirmed_higher_categories": [
+      "credentials_secrets",
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; credentials_secrets, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [
     {
       "id": "exfil_chain",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
       "contributing": [
-        "secrets_access/sensitive_env",
+        "secrets_access",
         "network_egress"
-      ]
+      ],
+      "confidence": "medium"
     }
   ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -642,16 +749,17 @@
     "server_count": 1,
     "tool_count": 8,
     "active_config_findings": 3,
-    "active_tool_capabilities": 16,
+    "active_tool_capabilities": 7,
     "toxic_combination_count": 1,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 3,
-      "MEDIUM": 16,
+      "HIGH": 2,
+      "MEDIUM": 8,
       "LOW": 0,
       "INFO": 1
     },
-    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "contacts",
       "credentials_secrets",

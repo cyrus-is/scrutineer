@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "github",
@@ -101,34 +101,45 @@
         "repo",
         "sha"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "owner repo path content message branch sha"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo path content message branch s"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Path where t"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -137,7 +148,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:f033311ca8c542fccd42df73b96ada74525cb2bef9196cfbc097ed2d64254f79"
     },
@@ -150,33 +162,15 @@
         "perPage",
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:6a8c050fd6115437100b363f0dc9cba81ca54a34198ef399b14950902ea2ffd1"
     },
@@ -190,22 +184,19 @@
         "name",
         "private"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "create repository"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         }
       ],
@@ -214,7 +205,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:d1d018c8430121c2748c706bc95b1ae0c677b0a908eb4da13575a9b0306b9721"
     },
@@ -228,34 +220,45 @@
         "path",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo path branch"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "Get the contents of a file or directory from a GitHub repository Repo"
+          },
           "rationale": "Exposes a person's full social/professional graph."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Path to the"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -264,7 +267,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:8c190725e0c744c1fd5f8a082b9948b7a1bbbe824373e4251a202104262e905a"
     },
@@ -279,34 +283,45 @@
         "owner",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "epo branch files path content message"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo branch files path content mes"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Branch to pu"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -315,7 +330,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:e57af4eb0d1c35ea30ef8dbad0140a1dda115a3632ec96778389099516914c97"
     },
@@ -332,28 +348,32 @@
         "repo",
         "title"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo title body assignees mileston"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "create issue"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -362,7 +382,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:020db3ecf4bd7bae0ebdf1364ad8cb9341fbe8dc2397589ba8fccb526b37911a"
     },
@@ -380,28 +401,32 @@
         "repo",
         "title"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo title body head base draft ma"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -410,7 +435,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:90b73c9094c3723d8f2bf86fe04cb7253529fdd20035fed020814304bf20dc1e"
     },
@@ -423,28 +449,32 @@
         "owner",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "fork repository"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "owner repo organization"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -453,7 +483,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:351aa863e36bcce768a8c8dd42131a21ae8fc6edda745cdce14d9b213c26b52c"
     },
@@ -467,28 +498,32 @@
         "owner",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo branch from branch"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Name for the"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -497,7 +532,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:67a187c1fe64e90e37120b2dc6470b0f8ab462566c43d5472a7b513216d4f3f6"
     },
@@ -512,22 +548,19 @@
         "repo",
         "sha"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo sha page perPage"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         }
       ],
@@ -536,7 +569,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:fc449a6a26ccabba9a9ab74c955cbc92f151b5f70752957cde0fa12912f7a7ac"
     },
@@ -555,29 +589,20 @@
         "sort",
         "state"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo direction labels page per pag"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
-        {
-          "category": "project_metadata",
-          "label": "Project / task / status metadata",
-          "tier": "medium",
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
       "schema_signals": {
@@ -585,7 +610,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:dfe3ecf3b223b1ab9f151ee91ee2106183beafc2df61fc671b7235892ea0f8f2"
     },
@@ -604,28 +630,32 @@
         "state",
         "title"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number title body assig"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "update issue"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -634,7 +664,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:308e98cfbafcb84a3133f7d9f1d5b9badc2eda45c9f2ef6e5ae3e0ee2efe15fb"
     },
@@ -648,28 +679,32 @@
         "owner",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number body"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "add issue comment"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -678,7 +713,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:72803cbc17f979c893c506d85c26784440f4c70144098a49e4c7f86e93642500"
     },
@@ -692,24 +728,15 @@
         "per_page",
         "q"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:c38cbaddecc2125d17216030a412cc3a3b8dc3e280d313f4faad9d4c8f1c7e23"
     },
@@ -724,24 +751,15 @@
         "q",
         "sort"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:b6f513e2c30536d0e3a5c1422ff2c6cba2961aa6afff9c347dec072166406c7f"
     },
@@ -756,24 +774,15 @@
         "q",
         "sort"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:f3457309a8bba755bd068dc22fe652ffdb396452241acd42ef9d6e4331545dd1"
     },
@@ -786,28 +795,32 @@
         "owner",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "get issue"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -816,7 +829,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:8f874f74996bb849f7e7cc16340d299a4c15a38707ecc7abf3a43b0c755cd4fe"
     },
@@ -829,28 +843,32 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -859,7 +877,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:0304666f07338895a02951aab1924bb73dde2075a68fca85ede3462fe5274ce2"
     },
@@ -878,28 +897,32 @@
         "sort",
         "state"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo state head base sort directio"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name State of the"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -908,7 +931,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:553aaa44088f03b0e8fad87814168c17c5c544d0c13da2b0566b26adc3e193d7"
     },
@@ -925,34 +949,45 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number commit id body ev"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "po pull number commit id body event comments path position body p"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -961,7 +996,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:0155fb1a8bf56db6ef99ef54bbc4eaeeb49a156bf4151ff964c5662923c69d74"
     },
@@ -977,34 +1013,45 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "ll number commit title commit message merge method"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number commit title comm"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1013,7 +1060,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:5edda3bef0ace6f95036993ae01c6478ae8a1e244d7552f70755fd40a623d69d"
     },
@@ -1026,28 +1074,32 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1056,7 +1108,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:efb39d49f7c685b88c1b7b940bafbb7d68bc81549a95c0903ae3698166968aab"
     },
@@ -1069,34 +1122,45 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "get pull request status"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1105,7 +1169,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:9104b921fe81d6c340089e1d95fe17884dd849a36d2d0ef60311801ada6de782"
     },
@@ -1119,28 +1184,32 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number expected head sha"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1149,7 +1218,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:aac9049ac4101da4c507f2efb1b3653100d3156bad747eaea4dab3e044afc236"
     },
@@ -1162,28 +1232,32 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1192,7 +1266,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:45752f08f8ca9b0e86d6e38bca6555a4f93f72fbd51c5e579cad5510abc073d3"
     },
@@ -1205,28 +1280,32 @@
         "pull_number",
         "repo"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1235,13 +1314,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:a8452feff689dad5764948b418d574be7ebcdad6a525ece93098c835d48753bb"
     }
   ],
   "data_profile": {
     "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -1251,47 +1332,43 @@
       "communications_content": {
         "label": "Message / email / DM contents",
         "tier": "critical",
-        "tool_count": 3
+        "tool_count": 3,
+        "confidence": "high"
       },
       "source_code": {
         "label": "Source code & repository contents",
         "tier": "critical",
-        "tool_count": 22
+        "tool_count": 22,
+        "confidence": "high"
       },
       "org_structure": {
         "label": "Org / team structure",
         "tier": "medium",
-        "tool_count": 15
+        "tool_count": 15,
+        "confidence": "high"
       },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 6
+        "tool_count": 5,
+        "confidence": "high"
       },
       "calendar": {
         "label": "Calendar & schedule",
         "tier": "high",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "high"
       }
     }
   },
-  "toxic_combinations": [
-    {
-      "id": "exfil_chain",
-      "severity": "HIGH",
-      "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
-      "contributing": [
-        "secrets_access/sensitive_env",
-        "network_egress"
-      ]
-    }
-  ],
+  "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -1299,12 +1376,13 @@
     "server_count": 1,
     "tool_count": 26,
     "active_config_findings": 3,
-    "active_tool_capabilities": 27,
-    "toxic_combination_count": 1,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 2,
-      "MEDIUM": 28,
+      "HIGH": 1,
+      "MEDIUM": 1,
       "LOW": 0,
       "INFO": 1
     },

@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "sequential-thinking",
@@ -85,28 +85,19 @@
         "thoughtNumber",
         "totalThoughts"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
-        {
-          "category": "source_code",
-          "label": "Source code & repository contents",
-          "tier": "critical",
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "quence (can go beyond initial total if needed)\n- totalThoughts: C"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -115,31 +106,29 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
-      "data_tier": "critical",
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
       "digest": "sha256:e640dd95635e1815b4c6c6a6c6d73bb8d1171ee1eecd7a400351774a73d7441b"
     }
   ],
   "data_profile": {
-    "rating": "HIGHLY_SENSITIVE",
+    "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [
-      "critical",
       "low"
     ],
     "categories": {
-      "source_code": {
-        "label": "Source code & repository contents",
-        "tier": "critical",
-        "tool_count": 1
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       }
     }
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -147,19 +136,19 @@
     "server_count": 1,
     "tool_count": 1,
     "active_config_findings": 2,
-    "active_tool_capabilities": 1,
+    "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,
-      "MEDIUM": 2,
+      "MEDIUM": 1,
       "LOW": 0,
       "INFO": 0
     },
-    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_sensitivity_rating": "MINIMAL",
     "data_categories_touched": [
-      "public_data",
-      "source_code"
+      "public_data"
     ],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true

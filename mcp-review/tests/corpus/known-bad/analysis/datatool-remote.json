@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "datatool-remote",
@@ -59,11 +59,14 @@
   ],
   "tools": [],
   "data_profile": {
-    "rating": "MINIMAL",
+    "rating": "UNKNOWN",
+    "surface_assessed": false,
     "tiers_present": [],
-    "categories": {}
+    "categories": {},
+    "note": "No tool surface was provided or captured \u2014 data sensitivity could not be assessed. Do NOT read this as low sensitivity; capture a tools/list and re-run."
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -73,6 +76,7 @@
     "active_config_findings": 2,
     "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 2,
@@ -80,7 +84,7 @@
       "LOW": 0,
       "INFO": 0
     },
-    "data_sensitivity_rating": "MINIMAL",
+    "data_sensitivity_rating": "UNKNOWN",
     "data_categories_touched": [],
     "weakest_runtime_binding": "remote_endpoint",
     "all_servers_redacted": true

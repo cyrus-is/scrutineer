@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "firecrawl",
@@ -123,16 +123,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url formats jsonOptions prompt sc"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -141,24 +139,39 @@
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "tention maxAge lockdown proxy profile name saveChanges"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "files_documents",
-          "label": "File & document contents",
-          "tier": "high",
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "rification removeBase64Images location country languages storeInCach"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ent, factual lookups, and any task where you need to understand"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -169,6 +182,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:c47bb6abc2e33547a028d9850c933de24ae5c85db01beeec1b76d6943d6f1d3b"
@@ -192,16 +206,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url search sitemap includeSubdoma"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -211,6 +223,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:b8a0d1efe9656863f5dbc652d3195bfc9792c76cc5f49be29f818e6d1c4e7d51"
@@ -233,56 +246,73 @@
       ],
       "candidate_capabilities": [
         {
-          "capability": "file_delete",
-          "title": "Filesystem delete / destructive",
-          "severity": "HIGH",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Destructive operations are irreversible and a common accidental-blast- radius source. Default to ask even when the server is trusted.",
-          "suppressed": false
-        },
-        {
           "capability": "network_egress",
           "title": "Outbound network / data egress",
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "ts that include a word in the URL | `inurl:firecrawl`\n| `allinu"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
       "data_categories": [
         {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "words in the URL | `allinurl:git firecrawl`\n| `intitle:` | Onl"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "tention maxAge lockdown proxy profile name saveChanges enterprise"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "files_documents",
-          "label": "File & document contents",
-          "tier": "high",
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "query limit tbs filter location includeDomains excludeDomains"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "published",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "latest research papers on AI published in 2023.\"\n**Sources:** web, i"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -293,8 +323,9 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
-      "data_tier": "high",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "critical",
       "digest": "sha256:d6da006b68730fad282e277a608df457e295c8224e4aca196da5fa47db960799"
     },
     {
@@ -315,16 +346,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "archId rating valuableSources url reason missingContent topic d"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -333,12 +362,26 @@
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "team",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "n).\n- **Daily refund cap (per team, per UTC day, default 100 cre"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "s\"}`. **Be specific** \u2014 these aggregate across teams and tell us what"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -347,6 +390,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:66be50d01c09922dfc17c8c9f91a667481f7dc2dd6d7868d1b7a79c697a7fc6a"
@@ -381,6 +425,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "webhook",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "reDomain delay maxConcurrency webhook webhookHeaders deduplicateSim"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         },
@@ -390,16 +441,14 @@
           "severity": "HIGH",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "scoveryDepth too high (causes token overflow) or too low (causes"
+          },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -408,30 +457,52 @@
           "category": "credentials_secrets",
           "label": "Secrets, tokens & credentials",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "token",
+            "pattern": "\\btoken\\b(?!\\s+limit)",
+            "snippet": "scoveryDepth too high (causes token overflow) or too low (causes"
+          },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
         },
         {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "tention maxAge lockdown proxy profile name saveChanges"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "files_documents",
-          "label": "File & document contents",
-          "tier": "high",
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "rification removeBase64Images location country languages storeInCach"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "**Returns:** Operation ID for status checking; use firecrawl_check"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -442,6 +513,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "HIGH",
       "data_tier": "critical",
       "digest": "sha256:ee37a519af4c4248881330a68e2f2830d9a648b1c400de4bae33715cd02ce5c9"
@@ -453,22 +525,19 @@
       "param_names": [
         "id"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "firecrawl check crawl status"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -477,7 +546,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:14c7a458f91ee1613989d99cc0d4d0c0f93d311ff18d14dc564e9de9d9f35740"
     },
@@ -493,24 +563,15 @@
         "schema",
         "urls"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:73992d1fde4883010b17676a398b6f2168d1c9d24aefe52bf7241c4b5357bf87"
     },
@@ -530,16 +591,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "ge extraction when you have a URL (use firecrawl_scrape, faster"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -548,12 +607,26 @@
           "category": "health",
           "label": "Health / medical data",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "patient",
+            "pattern": "\\b(health|medical|patient|diagnosis|prescription|clinical|phi)\\b",
+            "snippet": "PORTANT - Async workflow with patient polling:**\n1. Call `firecrawl"
+          },
           "rationale": "Regulated, highly sensitive personal data."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "oll every 15-30 seconds until status is \"completed\" or \"failed\"\n5."
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -562,6 +635,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:28de0de0ad41c443d4603775c3523dd12b9ab84c010646e3cc123a7689daa665"
@@ -573,28 +647,32 @@
       "param_names": [
         "id"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "health",
           "label": "Health / medical data",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "patient",
+            "pattern": "\\b(health|medical|patient|diagnosis|prescription|clinical|phi)\\b",
+            "snippet": "awl_agent`.\n\n**IMPORTANT - Be patient with polling:**\n- Poll every"
+          },
           "rationale": "Regulated, highly sensitive personal data."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "firecrawl agent status"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -603,7 +681,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:514bbbe104fc4ae8943062a9191fd037d74b345c2b5e46e81adfc2d757ba0412"
     },
@@ -624,6 +703,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "**Returns:** Session ID, CDP URL, and live view URL."
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -633,12 +719,26 @@
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "ttl activityTtl streamWebView profile name saveChanges"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Total",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "ocol).\n\n**Arguments:**\n- ttl: Total session lifetime in seconds ("
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -647,6 +747,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:259f0089f319538cfa480bfab3cc469307fb2391d3eb5fc34826b61f7feb19b2"
@@ -667,6 +768,13 @@
           "severity": "HIGH",
           "default_classification": "deny",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b",
+            "snippet": "firecrawl browser execute"
+          },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false
         },
@@ -676,6 +784,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nds:**\n- `agent-browser open <url>` \u2014 Navigate to URL\n- `agent-"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -688,6 +803,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "HIGH",
       "data_tier": null,
       "digest": "sha256:51a4b2b36f1ed6aca695ce8f725d9bdd7ee8cf5f1e6b7c76e48b495fad584f97"
@@ -699,33 +815,15 @@
       "param_names": [
         "sessionId"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "file_delete",
-          "title": "Filesystem delete / destructive",
-          "severity": "HIGH",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Destructive operations are irreversible and a common accidental-blast- radius source. Default to ask even when the server is trusted.",
-          "suppressed": false
-        },
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:474a568417c52faa2de1b6c3fbbc363f83e1c3974f354dbb5f58246238520a18"
     },
@@ -736,22 +834,19 @@
       "param_names": [
         "status"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "status"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -760,7 +855,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:fa0d314bf88af4ab5b0e61475be90691cb4a8dc1c8d7d6fa0f85930c7ea5e9ca"
     },
@@ -782,16 +878,14 @@
           "severity": "HIGH",
           "default_classification": "deny",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b",
+            "snippet": "this OR code)\n- code: Code to execute in the browser session (use t"
+          },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false
-        },
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
       ],
@@ -803,6 +897,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "HIGH",
       "data_tier": null,
       "digest": "sha256:4fc9b0623ac65a73b4df5303ddde4280b1a1c1f92e1961b3b98f2af8bd4747bb"
@@ -814,24 +909,15 @@
       "param_names": [
         "scrapeId"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:3bbaae531af4ace84644ff27b23914e1547a4a32dd7090bf40045721ba18cd3d"
     },
@@ -864,57 +950,68 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "endpoint",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "ted Firecrawl API's /v2/parse endpoint.\nThis is the fastest and most"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "secrets_access",
-          "title": "Reads secrets / credentials / env",
-          "severity": "HIGH",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
       "data_categories": [
         {
-          "category": "credentials_secrets",
-          "label": "Secrets, tokens & credentials",
-          "tier": "critical",
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
           "category": "financial",
           "label": "Financial / payment data",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "invoice",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[_-]?card|bank|salary|payroll|ledger|account[_-]?balance)\\b",
+            "snippet": "uments\": {\n    \"filePath\": \"./invoice.html\",\n    \"formats\": [\"json\""
+          },
           "rationale": "Direct financial exposure and a regulated data class."
         },
         {
           "category": "files_documents",
           "label": "File & document contents",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "document",
+            "pattern": "\\b(read[_-]?file|get[_-]?file|file[_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "way to extract content from a document on disk \u2014 if the file lives l"
+          },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "geTracking); setting waitFor, location, mobile, or a non-basic/auto"
+          },
           "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "don't want to host it on the public web first; pulling structured"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -923,7 +1020,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:c9c1395161c7d780414fdb0601110b3c01237985214f2b0520fb0be0872ddd5e"
     },
@@ -941,6 +1039,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "webhook",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "', url: '...' }`). Optional: `webhook`, `notification`, `retentionD"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -950,18 +1055,39 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "}],\n      \"notification\": { \"email\": { \"enabled\": true, \"recipie"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "check produces a unified text diff of the page's markdown. No ex"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "dy. Required fields: `name`, `schedule` (with `cron` or `text`), and"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         }
       ],
@@ -970,6 +1096,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:e877ab5c001265cca32fa1ae17b6270fa066febfc4f825617f1c661b3c9df9da"
@@ -982,24 +1109,15 @@
         "limit",
         "offset"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:1d8c17c78307dbde7fff6f77cd6fa904c2bde4858d0ee5fee56ececf4d451303"
     },
@@ -1010,24 +1128,15 @@
       "param_names": [
         "id"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:0422f3ea07f8abf9a9284491e8b10198c6cdd5b0d620c47652ebc87efbc4cb4d"
     },
@@ -1046,6 +1155,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "webhook",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "ed\"), `schedule`, `targets`, `webhook`, `notification`, `retentionD"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -1055,12 +1171,26 @@
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "atus` (\"active\" | \"paused\"), `schedule`, `targets`, `webhook`, `noti"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "of fields to patch: `name`, `status` (\"active\" | \"paused\"), `sche"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -1069,6 +1199,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:c6b3893924d029fee62236a0e7d76379bb6b9ea4943caad881164d945631f61c"
@@ -1080,31 +1211,19 @@
       "param_names": [
         "id"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "file_delete",
-          "title": "Filesystem delete / destructive",
-          "severity": "HIGH",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Destructive operations are irreversible and a common accidental-blast- radius source. Default to ask even when the server is trusted.",
-          "suppressed": false
-        },
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "delete a monitor and stop its schedule. This cannot be undone.\n\n**Us"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         }
       ],
@@ -1113,7 +1232,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:f7f5c0717ccfeda1d02e92d1362c98919f29a71fba028bdb14cc9047d9ab6286"
     },
@@ -1124,22 +1244,19 @@
       "param_names": [
         "id"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "schedule",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "mediately, outside its normal schedule. Returns the queued check.\n\n*"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         }
       ],
@@ -1148,7 +1265,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:16cf386b5beebcbb3cd42b855e38669e3044284854263f4037c00625cac862c3"
     },
@@ -1161,24 +1279,15 @@
         "limit",
         "offset"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:44693dab550f5f4c39733b8938142b25c13c6ca92608d251e770f28a11411963"
     },
@@ -1200,6 +1309,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "Increase `limit` (max 100) to fetch fewer pages.\n\n**Usage Example"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -1209,12 +1325,26 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "single check with page-level diff results. Filter `pageStatus`"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "in `data.pages[]` has `url`, `status` (`same` | `new` | `changed`"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -1223,13 +1353,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:0937311ae4237baa92a9e461bc14df0a11f34d2fb0e01915b9f82731d3bd2fca"
     }
   ],
   "data_profile": {
-    "rating": "HIGHLY_SENSITIVE",
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -1240,97 +1372,122 @@
       "personal_identifiers": {
         "label": "Personal identifiers (PII)",
         "tier": "high",
-        "tool_count": 4
-      },
-      "files_documents": {
-        "label": "File & document contents",
-        "tier": "high",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "high"
       },
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "high"
       },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 8
-      },
-      "public_data": {
-        "label": "Public / aggregate data",
-        "tier": "low",
-        "tool_count": 4
-      },
-      "org_structure": {
-        "label": "Org / team structure",
-        "tier": "medium",
-        "tool_count": 1
-      },
-      "credentials_secrets": {
-        "label": "Secrets, tokens & credentials",
-        "tier": "critical",
-        "tool_count": 2
-      },
-      "health": {
-        "label": "Health / medical data",
-        "tier": "critical",
-        "tool_count": 2
-      },
-      "financial": {
-        "label": "Financial / payment data",
-        "tier": "critical",
-        "tool_count": 1
-      },
-      "communications_content": {
-        "label": "Message / email / DM contents",
-        "tier": "critical",
-        "tool_count": 1
+        "tool_count": 8,
+        "confidence": "high"
       },
       "source_code": {
         "label": "Source code & repository contents",
         "tier": "critical",
-        "tool_count": 2
+        "tool_count": 3,
+        "confidence": "medium"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 4,
+        "confidence": "medium"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "credentials_secrets": {
+        "label": "Secrets, tokens & credentials",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "health": {
+        "label": "Health / medical data",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      },
+      "financial": {
+        "label": "Financial / payment data",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "files_documents": {
+        "label": "File & document contents",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
       },
       "calendar": {
         "label": "Calendar & schedule",
         "tier": "high",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "medium"
       }
-    }
+    },
+    "unconfirmed_higher_categories": [
+      "communications_content",
+      "credentials_secrets",
+      "financial",
+      "health",
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; communications_content, credentials_secrets, financial, health, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [
     {
       "id": "exfil_chain",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host.",
       "contributing": [
-        "secrets_access/sensitive_env",
+        "secrets_access",
         "network_egress"
-      ]
+      ],
+      "confidence": "medium"
     },
     {
       "id": "exec_with_secret_access",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "title": "Code execution alongside secret access",
       "detail": "Arbitrary execution combined with credential access means a single tool call can read and abuse every secret the server holds.",
       "contributing": [
         "code_execution",
-        "secrets_access/sensitive_env"
-      ]
+        "secrets_access"
+      ],
+      "confidence": "medium"
     },
     {
-      "id": "remote_controlled_fs_mutation",
-      "severity": "HIGH",
-      "title": "Filesystem mutation driven by network input",
-      "detail": "The server can write/delete files and make network calls \u2014 remote input can drive destructive or persistence-establishing writes.",
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
       "contributing": [
-        "file_write/file_delete",
+        "file_read",
+        "communications_content",
         "network_egress"
-      ]
+      ],
+      "confidence": "medium"
     }
   ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -1338,16 +1495,17 @@
     "server_count": 1,
     "tool_count": 24,
     "active_config_findings": 3,
-    "active_tool_capabilities": 38,
+    "active_tool_capabilities": 15,
     "toxic_combination_count": 3,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 11,
-      "MEDIUM": 32,
+      "HIGH": 4,
+      "MEDIUM": 16,
       "LOW": 0,
       "INFO": 1
     },
-    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "calendar",
       "communications_content",

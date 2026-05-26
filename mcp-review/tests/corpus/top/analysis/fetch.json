@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "fetch",
@@ -83,6 +83,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "fetch"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -95,6 +102,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:fe1e2fdaac56b133fb09efde4bd0d856f340f41f8e0deff6d0d63a664ad045c8"
@@ -102,10 +110,12 @@
   ],
   "data_profile": {
     "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [],
     "categories": {}
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -115,6 +125,7 @@
     "active_config_findings": 2,
     "active_tool_capabilities": 1,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,

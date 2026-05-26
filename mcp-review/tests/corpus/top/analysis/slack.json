@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "slack",
@@ -103,12 +103,26 @@
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "r pre-defined channels in the workspace with pagination Maximum numbe"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "public",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "List public or pre-defined channels in th"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -117,6 +131,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:197f61291e51f860d908eb36a1b20ff60f3a963e689cdf25403aa4fd82ef0f7b"
@@ -135,6 +150,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "slack post message"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -143,6 +165,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:9e5e1bed86588c0dd5d1628aad4af006fe76e02946d7a6b4313c4d3fd8bac12e"
@@ -162,6 +185,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "reply",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "slack reply to thread"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -170,6 +200,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:80f2f04bf95cb108157be242107ecbee2c0ddc53e92bbb2d69ba9ed35c6ce512"
@@ -189,6 +220,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "Add a reaction emoji to a message The ID of the channel contain"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -197,6 +235,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:287795fae9d6d998047f36a6cee58166083101d19f07fe6ad9730430aed9d770"
@@ -216,6 +255,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:d9a5fa9c8acb644235b97b0ff54b21c4229f58b31cd2af045ad95c291c820ade"
@@ -234,6 +274,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "thread",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "slack get thread replies"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -242,6 +289,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:b382d7c30f31e2f4a40454cd1704d4409830b8f5b5a4afd618d051f1927aa9e1"
@@ -260,12 +308,26 @@
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "he workspace with their basic profile information Pagination cursor"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "workspace",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "et a list of all users in the workspace with their basic profile info"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -274,6 +336,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:6726d6fa2c43e22451d90e46c7a3663006408df911e6e4e6689b2f069040abe1"
@@ -291,6 +354,13 @@
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "slack get user profile"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         }
       ],
@@ -299,6 +369,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:4c852e27696d277b9e45e5df316149174b01188c12f633762417337394215dac"
@@ -306,6 +377,7 @@
   ],
   "data_profile": {
     "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -316,26 +388,31 @@
       "org_structure": {
         "label": "Org / team structure",
         "tier": "medium",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       },
       "communications_content": {
         "label": "Message / email / DM contents",
         "tier": "critical",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "high"
       },
       "personal_identifiers": {
         "label": "Personal identifiers (PII)",
         "tier": "high",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "high"
       }
     }
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -345,6 +422,7 @@
     "active_config_findings": 3,
     "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,

@@ -16,6 +16,7 @@ corpus/
   capture_tools.py          # minimal MCP stdio client: initialize -> tools/list -> dump
   capture_all.sh            # run capture across every server in top/config.json
   run_analysis.sh           # run analyze_mcp.py over both corpora -> analysis/
+  # (validate_findings.py, in mcp-review/, runs the Pass-4 agentic FP sweep over an analysis)
   top/
     config.json             # 22 servers, documented unpinned install specs
     tools/<server>.json     # live-captured tools/list (serverInfo records the version seen)

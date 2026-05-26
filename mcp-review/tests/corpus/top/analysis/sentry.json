@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "sentry",
@@ -76,22 +76,19 @@
       "name": "whoami",
       "description": "Identify the authenticated user in Sentry.\n\nUse this tool when you need to:\n- Get the user's name and email address.",
       "param_names": [],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "to:\n- Get the user's name and email address."
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -100,7 +97,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:15b2119e1db9547f87d56bc8c44d0c56ef0a4f45c6227b18c6b740c9d4b2ebf0"
     },
@@ -111,31 +109,19 @@
       "param_names": [
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "nizations in Sentry\n- Find an organization's slug to aid other tool requ"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -144,7 +130,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:e2a77a2ca1413b181f9dba2ebdb8742d2a93279b0c946b32a2a6c4e639a1bf17"
     },
@@ -164,16 +151,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -182,6 +167,13 @@
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Find teams in an organization in Sentry.\n\nUse this tool whe"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -190,6 +182,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:cc5095fe6e991d91f44dc3a72be2c2d827a82958223b0f5c67441a0f1bc3c769"
@@ -210,16 +203,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -228,12 +219,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "Sentry organization\n- Find a project's slug to aid other tool requ"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": ":\n- View projects in a Sentry organization\n- Find a project's slug to ai"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -242,6 +247,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:e052eb6bae6d5a0db3e3a65c133c9ae985189bc46ee04a6803684eb4929cf1d7"
@@ -263,16 +269,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -281,12 +285,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ersion released of a specific project\n- Determine when a release wa"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "d recent releases in a Sentry organization\n- Find the most recent versio"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -295,6 +313,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:c1a4ef14c611078498b4d8c27fd0fd1a76204d74798b0cbb3f15b7f5b3b936f5"
@@ -317,6 +336,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "atically\n\nCommon tag keys:\n- `url`: Request URLs affected by th"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -326,18 +352,39 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "get issue tag values"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "g_values(organizationSlug='my-organization', issueId='PROJECT-123', tagK"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "aggregate",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "ss different tag values\n- Get aggregate counts of unique tag values ("
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -346,6 +393,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:8f59cea94e4163cb4936d78135dc1f1a37d38b3f11d136f6bc49a9c025ca8667"
@@ -367,6 +415,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "t a specific Sentry replay by URL or replay ID.\n\nUSE THIS TOOL"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -376,12 +431,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "replay summary plus the next issue or trace lookups to run\n\n<exa"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "details(replayUrl='https://my-organization.sentry.io/explore/replays/7e0"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -390,6 +459,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:00cb37bb9d0561937765f2b9f1692d913bc75aaa9a961b7c7ef6dfebde5bf1d9"
@@ -412,6 +482,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Download",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "Download attachments from a Sentry eve"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -421,24 +498,52 @@
           "category": "files_documents",
           "label": "File & document contents",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "attachment",
+            "pattern": "\\b(read[_-]?file|get[_-]?file|file[_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "get event attachment"
+          },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "get event attachment"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "rganization', projectSlug='my-project', eventId='c49541c747cb4d8aa3"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "tachment(organizationSlug='my-organization', projectSlug='my-project', e"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -447,6 +552,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "high",
       "digest": "sha256:0b778680fb85b9dca9c88b6098800096928130da574a0717e54e593d4b012881"
@@ -477,6 +583,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -486,12 +599,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "update issue"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "team",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "gnedTo` format: `user:ID` or `team:ID_OR_SLUG`.\n- Use `whoami` t"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -500,6 +627,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:9a3a364603ed5fb895f2bd4c0475dbbcc163fd1b587b70332664cefc0dbfaec9"
@@ -528,16 +656,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "7d, 14d, 30d, etc. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -546,36 +672,78 @@
           "category": "financial",
           "label": "Financial / payment data",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Transaction",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[_-]?card|bank|salary|payroll|ledger|account[_-]?balance)\\b",
+            "snippet": "ributions, values\n- profiles: Transaction/continuous profile results, p"
+          },
           "rationale": "Direct financial exposure and a regulated data class."
         },
         {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "files: Transaction/continuous profile results, profile IDs, profile"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "y events and replays. Use for event counts/statistics.\n\n`query` c"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "t supported.\n\nNOT for grouped issue lists (use search_issues) or"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "stamp for newest\n</hints> The organization's slug. You can find a existi"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "total",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "verages): 'how many errors', 'total tokens'\n2. Individual events"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -584,6 +752,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:a3a1a63d0e8de5ca30e18526ecbe8d76a8a60eb2214a05ecbd9507b5a27c64fb"
@@ -604,6 +773,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -613,12 +789,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "[X]'\n- 'I need a team for my project'\n\nBe careful when using this"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "team",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "create team"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -627,6 +817,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:1cb62448348bd31a267dd8d02314dff997fdf6cc170257391c139ac01f10f227"
@@ -649,6 +840,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -658,18 +856,39 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "s is commonly the name of the repository or service. It is only used a"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "create project"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "team",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "roject for [app/service] with team [X]'\n- 'I need a new Sentry p"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -678,6 +897,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:1076bc59cf03214c87cec998e08ce8cd5eff79fecae394ebb42a7e96121dac04"
@@ -702,6 +922,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -711,12 +938,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "update project"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "team",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "as name, slug, platform, and team assignment.\n\nBe careful when"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -725,6 +966,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:132a60ed4631cdd96512ba0572a12093ec163db5636f8064a2873b819609b7f5"
@@ -746,6 +988,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -755,12 +1004,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "dditional DSN for an EXISTING project.\n\nUSE THIS TOOL WHEN:\n- Proje"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "eate_dsn(organizationSlug='my-organization', projectSlug='my-project', n"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -769,6 +1032,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:6c360200c9311d82e4d32fde61f4b7872aab1a7b88862b1adc1b7bed685fb66b"
@@ -789,6 +1053,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -798,12 +1069,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ll Sentry DSNs for a specific project.\n\nUse this tool when you need"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "ations()` first.\n</hints> The organization's slug. You can find a existi"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -812,6 +1097,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:37273fc17388c89b65f16ae8d6647088ab49ac54448e5f7378b7a6ca79e9227b"
@@ -834,16 +1120,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "nizations()` tool. The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "privilege_escalation",
-          "title": "Privilege / permission change",
-          "severity": "HIGH",
-          "default_classification": "deny",
-          "basis": "declared",
-          "rationale": "Tools that alter permissions or escalate privilege can expand their own blast radius and persist access.",
           "suppressed": false
         }
       ],
@@ -852,12 +1136,26 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "analyze issue with seer"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "ith_seer(organizationSlug='my-organization', issueId='ERROR-456')\n```\n</"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -866,7 +1164,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:1e55a93fabda27ad258ff804c6df94b65fe2ac38cc7055549ee6b1650affebe8"
     },
@@ -886,16 +1185,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "Use `get_doc(path='...')` to fetch full documentation content."
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -905,6 +1202,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:dafd735f988e45c3c342d2ffbf9b19f309f5ddc6f845b7f1003e6c3aff2069e6"
@@ -923,18 +1221,40 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "Fetch the full markdown content of"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
       ],
-      "data_categories": [],
+      "data_categories": [
+        {
+          "category": "files_documents",
+          "label": "File & document contents",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "doc",
+            "pattern": "\\b(read[_-]?file|get[_-]?file|file[_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
+            "snippet": "get doc"
+          },
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+        }
+      ],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": null,
+      "data_tier": "high",
       "digest": "sha256:54c206dcb8229925a22c0c7307e24e3038783f182c7dc53231aca83165392449"
     },
     {
@@ -957,16 +1277,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "eric ID (optional) The region URL for the organization you're q"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -975,18 +1293,39 @@
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "as natural language or Sentry issue search syntax. When an embedd"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "e.g., '123456').\n</hints> The organization's slug. You can find a existi"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "like title, status, and user count.\n\nCommon Query Syntax:\n- is:u"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -995,6 +1334,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "medium",
       "digest": "sha256:4ed5d133a8614ef86d86bfb203e62ac7de38262cac2b554997c3d0612fc34a8a"
@@ -1022,16 +1362,14 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "e issueUrl. Full Sentry issue URL (e.g., 'https://sentry.io/org"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false
         }
       ],
@@ -1040,24 +1378,52 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "ter by release version\n- user.email:alice@example.com - Filter by"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "as natural language or Sentry event search syntax. When an embedd"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "search issue events"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "statsPeriod='7d')\n</examples> Organization slug. Required when using iss"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1066,6 +1432,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:93be7b9697133c15a96f9144ae7d6a114a13f291ecd7a69d7f9bb1652e13da8c"
@@ -1092,6 +1459,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "shares a transaction profile URL and wants the details\n- User"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -1101,36 +1475,78 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "thread",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "nt, sample count, stacks, and thread breakdown\n- Top frames by occ"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "financial",
           "label": "Financial / payment data",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "transaction",
+            "pattern": "\\b(payment|invoice|transaction|billing|credit[_-]?card|bank|salary|payroll|ledger|account[_-]?balance)\\b",
+            "snippet": "IS TOOL WHEN:\n- User shares a transaction profile URL and wants the det"
+          },
           "rationale": "Direct financial exposure and a regulated data class."
         },
         {
           "category": "personal_identifiers",
           "label": "Personal identifiers (PII)",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "profile",
+            "pattern": "\\b(profile|full[_-]?name|email[_-]?address|phone[_-]?number|home[_-]?address|ssn|date[_-]?of[_-]?birth|national[_-]?id)\\b",
+            "snippet": "get profile details"
+          },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "L. If provided, organization, project, and profile identifiers are"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "ous profile URL. If provided, organization, project, and profile identif"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "cture summaries such as frame count, sample count, stacks, and th"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -1139,6 +1555,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:272d3b19e52a93b609388960a9f2cab7e8ad4521fb2821f318b49a438e8fa8d5"
@@ -1160,6 +1577,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url resourceType resourceId organ"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -1169,30 +1593,65 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "conversation",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "b-8b14-26260799b51f')\n\n### AI conversation by ID\nget_sentry_resource(res"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "diff",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "apshot=: returns the snapshot diff summary (changed, added, remo"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "calendar",
           "label": "Calendar & schedule",
           "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "e for breadcrumbs on an issue/event URL or for `trace` on a span-"
+          },
           "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "PROJECT",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "url='https://sentry.io/issues/PROJECT-123/')\n\n### Breadcrumbs from"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "red when not using a URL. The organization's slug. You can find a existi"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1201,6 +1660,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:3a36bbc1a352ca28450b862c0ddd352b73a7e47de1c76f3341560ed4049eef6d"
@@ -1218,20 +1678,18 @@
       ],
       "candidate_capabilities": [
         {
-          "capability": "code_execution",
-          "title": "Arbitrary code / command execution",
-          "severity": "HIGH",
-          "default_classification": "deny",
-          "basis": "declared",
-          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false
-        },
-        {
           "capability": "network_egress",
           "title": "Outbound network / data egress",
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "mage, use get_sentry_resource(url='<snapshot_url>?selectedSnaps"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -1241,18 +1699,39 @@
           "category": "source_code",
           "label": "Source code & repository contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "ernews'). Required. Filter by git branch (e.g. 'main'). Omit to"
+          },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "organizationSlug appId branch project regionUrl"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         },
         {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "he snapshot URL.\n</hints> The organization's slug. You can find a existi"
+          },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships."
         }
       ],
@@ -1261,13 +1740,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "HIGH",
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": "critical",
       "digest": "sha256:3fca28734b4299c210937a13b8ef720d53ce10834cf3b5888f3196d298391c9e"
     }
   ],
   "data_profile": {
-    "rating": "HIGHLY_SENSITIVE",
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -1278,51 +1759,80 @@
       "communications_content": {
         "label": "Message / email / DM contents",
         "tier": "critical",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "medium"
       },
       "org_structure": {
         "label": "Org / team structure",
         "tier": "medium",
-        "tool_count": 20
+        "tool_count": 20,
+        "confidence": "high"
       },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 18
+        "tool_count": 18,
+        "confidence": "high"
       },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "medium"
       },
       "files_documents": {
         "label": "File & document contents",
         "tier": "high",
-        "tool_count": 1
+        "tool_count": 2,
+        "confidence": "high"
       },
       "calendar": {
         "label": "Calendar & schedule",
         "tier": "high",
-        "tool_count": 4
+        "tool_count": 4,
+        "confidence": "high"
       },
       "financial": {
         "label": "Financial / payment data",
         "tier": "critical",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       },
       "personal_identifiers": {
         "label": "Personal identifiers (PII)",
         "tier": "high",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "high"
       },
       "source_code": {
         "label": "Source code & repository contents",
         "tier": "critical",
-        "tool_count": 3
+        "tool_count": 3,
+        "confidence": "medium"
       }
-    }
+    },
+    "unconfirmed_higher_categories": [
+      "communications_content",
+      "financial",
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; communications_content, financial, source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
-  "toxic_combinations": [],
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -1330,16 +1840,17 @@
     "server_count": 1,
     "tool_count": 23,
     "active_config_findings": 2,
-    "active_tool_capabilities": 33,
-    "toxic_combination_count": 0,
+    "active_tool_capabilities": 21,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 3,
-      "MEDIUM": 32,
+      "HIGH": 1,
+      "MEDIUM": 23,
       "LOW": 0,
       "INFO": 0
     },
-    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "calendar",
       "communications_content",

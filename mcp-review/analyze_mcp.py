@@ -1409,7 +1409,7 @@ def main():
         }
 
     out = {
-        "schema": "mcp-review/analysis@2",
+        "schema": "mcp-review/analysis@3",
         "servers": servers,
         "tools": tools,
         "data_profile": profile,

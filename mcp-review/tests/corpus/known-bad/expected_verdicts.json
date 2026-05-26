@@ -1,5 +1,17 @@
 {
   "_about": "Detection scorecard for the known-bad corpus. Each entry maps to a documented real-world incident (see README.md). 'expected' is the correct verdict (all should be BLOCK). 'analyzer_alone' is what the deterministic Pass 1+2 layer produces from config+surface WITHOUT a prose source review. The gap between them is the headline result: config/transport attacks are caught deterministically; behavioral/semantic attacks are not, and rely entirely on the model's source/metadata review.",
+  "_update_2026_05_26": {
+    "note": "After the fix branch (analysis@3), behavioral detection improved markedly. The per-entry 'analyzer_alone'/'detection' fields below describe the ORIGINAL (pre-fix) state; this block records the after-state.",
+    "after": {
+      "weather-exfil": "read_and_exfil HIGH/high (new file_read capability) + tool_description_injection HIGH — was a MISS (CAUTION)",
+      "calc-poisoned": "tool_description_injection HIGH, 5 signals — was a MISS (CAUTION)",
+      "mcp-remote-untrusted": "non_https_remote now fires from the command arg — was a MISS",
+      "postmark-mcp": "still surface-clean (BCC backdoor needs Pass-3 source, by design); config flags + data=HIGHLY_SENSITIVE flag it harder",
+      "cryptoprice-installer": "BLOCK via shell_wrapper — unchanged (STRONG)",
+      "datatool-remote": "BLOCK via credentials_in_url + non_https_remote — unchanged (STRONG)"
+    },
+    "scorecard_after": "config/transport attacks 2/2 (unchanged); behavioral attacks 3/4 now caught deterministically (weather-exfil, calc-poisoned, mcp-remote-untrusted). postmark BCC remains source-only by design. Version-vs-advisory matching (CVE-2025-6514 / postmark 1.0.16) tracked in scrutineer issue #35."
+  },
   "servers": {
     "postmark-mcp": {
       "expected": "BLOCK",

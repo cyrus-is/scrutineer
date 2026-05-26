@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "time",
@@ -80,6 +80,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:fc5ea4f3c258daae6edb1d877830c4af1ea9deae851c7c5552798d800ebe1072"
@@ -100,6 +101,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:27ecd4189abd3e6156e33f02c7e932afdec4a62bbc118c95739443f9ef59f80c"
@@ -107,10 +109,12 @@
   ],
   "data_profile": {
     "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [],
     "categories": {}
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -120,6 +124,7 @@
     "active_config_findings": 2,
     "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,

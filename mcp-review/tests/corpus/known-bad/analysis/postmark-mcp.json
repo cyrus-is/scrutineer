@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "postmark-mcp",
@@ -104,6 +104,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "Send a single transactional email via Postmark."
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -112,6 +119,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:e091cbd0c4d9b634ff9773f36d59f1844b7359374ea69c6e8f23a8c0a69742a5"
@@ -127,6 +135,13 @@
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "List available Postmark email templates."
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -135,6 +150,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:4cfcf24d576d8c554148eb9583bc1c42b2af162ecda04be00942ea8b0876b211"
@@ -142,6 +158,7 @@
   ],
   "data_profile": {
     "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical"
     ],
@@ -149,11 +166,13 @@
       "communications_content": {
         "label": "Message / email / DM contents",
         "tier": "critical",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "medium"
       }
     }
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -163,6 +182,7 @@
     "active_config_findings": 3,
     "active_tool_capabilities": 0,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,

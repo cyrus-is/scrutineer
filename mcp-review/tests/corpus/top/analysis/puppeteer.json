@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "puppeteer",
@@ -86,6 +86,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url launchOptions allowDangerous"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -96,6 +103,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:243c856333fec0b3ab06632c8a258c918869837ed2168e7f8dba90f1704f15b2"
@@ -111,14 +119,32 @@
         "selector",
         "width"
       ],
-      "candidate_capabilities": [],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URI",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "shot as a base64-encoded data URI (as text) instead of binary i"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": null,
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:4a49c9f4d9355b7cdc63ffe411ee6c1aeba376260d5e771ec69a08b4b1157ac2"
     },
@@ -136,6 +162,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:52113c65fbb6474b7222de9230cba6fb6705d3eb0c8acf803af3f6fd217d7ab4"
@@ -155,6 +182,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:50179ac0adffc4155894b3e546f79507a5b93165c9deb513a06f07cc5d3420dc"
@@ -174,6 +202,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:2e006928c68289f7e0d60f349e858f93adea31ef08e6e63c27eb0299d82804e3"
@@ -192,6 +221,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": null,
       "data_tier": null,
       "digest": "sha256:9bd33952c6b4469b81226885240da46da43442da13b510521fd257b1cdabff79"
@@ -210,6 +240,13 @@
           "severity": "HIGH",
           "default_classification": "deny",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b",
+            "snippet": "Execute JavaScript in the browser con"
+          },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false
         }
@@ -222,6 +259,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "HIGH",
       "data_tier": null,
       "digest": "sha256:ad1319891acd43ab7af01e30802f50d6009b274466bedf91be09fbf107d61ee3"
@@ -229,10 +267,12 @@
   ],
   "data_profile": {
     "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [],
     "categories": {}
   },
   "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -240,12 +280,13 @@
     "server_count": 1,
     "tool_count": 7,
     "active_config_findings": 2,
-    "active_tool_capabilities": 2,
+    "active_tool_capabilities": 3,
     "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 2,
-      "MEDIUM": 2,
+      "MEDIUM": 3,
       "LOW": 0,
       "INFO": 0
     },

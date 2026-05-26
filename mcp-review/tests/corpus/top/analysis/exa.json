@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "exa",
@@ -96,33 +96,15 @@
         "numResults",
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:911b5e29ff5103616b1f89e0dbaeccf52b472f766ec34b76c827452d7aba0b02"
     },
@@ -141,6 +123,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "web fetch exa"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -151,6 +140,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:891c4f0d7065b7d9836e59267ecaf74e8fc1b225978809bed605a0b53ef81f77"
@@ -158,21 +148,24 @@
   ],
   "data_profile": {
     "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [],
     "categories": {}
   },
   "toxic_combinations": [
     {
       "id": "exfil_chain",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
       "contributing": [
-        "secrets_access/sensitive_env",
+        "sensitive_env_required",
         "network_egress"
-      ]
+      ],
+      "confidence": "medium"
     }
   ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -180,12 +173,13 @@
     "server_count": 1,
     "tool_count": 2,
     "active_config_findings": 3,
-    "active_tool_capabilities": 3,
+    "active_tool_capabilities": 1,
     "toxic_combination_count": 1,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 2,
-      "MEDIUM": 4,
+      "HIGH": 1,
+      "MEDIUM": 3,
       "LOW": 0,
       "INFO": 1
     },

@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "brave-search",
@@ -97,31 +97,19 @@
         "offset",
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query count offset"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -130,7 +118,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "low",
       "digest": "sha256:ddc0232ef5e794473691444176985321d1b6f0de76c0bcbec607c3844c3e3aad"
     },
@@ -142,22 +131,19 @@
         "count",
         "query"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query count"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -166,13 +152,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "low",
       "digest": "sha256:6863d0afe176a49820e48e3e7769ccbd1038eb9be2f380969b22e0037c81f895"
     }
   ],
   "data_profile": {
     "rating": "MINIMAL",
+    "surface_assessed": true,
     "tiers_present": [
       "low"
     ],
@@ -180,22 +168,13 @@
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "high"
       }
     }
   },
-  "toxic_combinations": [
-    {
-      "id": "exfil_chain",
-      "severity": "HIGH",
-      "title": "Read-then-send exfiltration chain",
-      "detail": "The server can both read secrets/credentials and make outbound network calls \u2014 a complete path to exfiltrate them to an attacker-chosen host.",
-      "contributing": [
-        "secrets_access/sensitive_env",
-        "network_egress"
-      ]
-    }
-  ],
+  "toxic_combinations": [],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -203,12 +182,13 @@
     "server_count": 1,
     "tool_count": 2,
     "active_config_findings": 3,
-    "active_tool_capabilities": 3,
-    "toxic_combination_count": 1,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
-      "HIGH": 2,
-      "MEDIUM": 4,
+      "HIGH": 1,
+      "MEDIUM": 1,
       "LOW": 0,
       "INFO": 1
     },

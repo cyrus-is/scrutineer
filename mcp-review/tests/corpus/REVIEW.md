@@ -1,8 +1,28 @@
 # /scrutineer-mcp — eval corpus review
 
-**Date:** 2026-05-25 · **Analyzer:** `mcp-review/analyze_mcp.py` (schema `mcp-review/analysis@2`) · **Method:** Pass 1 (config) + Pass 2 (live-captured tool surface) on 22 reputable servers + 6 reconstructed known-bad cases. No Pass 3 source review except the two crafted source snippets in `known-bad/source/`.
+**Date:** 2026-05-25 (original review) · **Analyzer:** `mcp-review/analyze_mcp.py` (corpus `analysis/` regenerated at schema `mcp-review/analysis@3`; see the 2026-05-26 update box) · **Method:** Pass 1 (config) + Pass 2 (live-captured tool surface) on 22 reputable servers + 6 reconstructed known-bad cases. No Pass 3 source review except the two crafted source snippets in `known-bad/source/`.
 
 This is the first time the MCP auditor has been run against a real corpus rather than its own unit fixtures. Headline: **the provenance/config/transport gate is solid; the capability + data-sensitivity layer is noisy in both directions and leans hard on the LLM reviewer; and the flagship behavioral detectors (exfil-chain, tool-poisoning) have coverage holes that let crafted attacks through.**
+
+> ## Update (2026-05-26) — fixes applied (analysis schema `@3`)
+>
+> The findings below drove a 9-phase fix on branch `fix/mcp-analyzer-calibration` (analyzer + guidance + a new agentic validator; 90 unit checks). The corpus `analysis/` here has been regenerated with the fixed analyzer. What changed against the results documented below:
+>
+> | Issue (below) | Before | After |
+> |---|---|---|
+> | Capability false positives (`$schema` URL → egress, `system`/`root`/`query`/`remove` bare-word hits) | 120+ across the top corpus | **0** residual token FPs; every candidate now carries `evidence` + `confidence` |
+> | filesystem phantom HIGH toxic-combos | 2 (off a false `network_egress`) | **0** |
+> | `weather-exfil` read-then-send | MISS (CAUTION) | **`read_and_exfil` HIGH** (new `file_read` capability) |
+> | `calc-poisoned` tool-poisoning | MISS (CAUTION) | **`tool_description_injection` HIGH** (new scan; 0 FPs on the 20 legit servers) |
+> | `mcp-remote-untrusted` cleartext remote | MISS (in args) | **`non_https_remote` fires** (args now scanned) |
+> | Credentialed API servers as HIGH exfil chains | HIGH | **MEDIUM** (confidence-gated; only a real secrets-reading tool + egress is HIGH) |
+> | `sequential-thinking` data rating | HIGHLY_SENSITIVE | **MINIMAL**; `brave-search-official` HIGHLY_SENSITIVE → **SENSITIVE** |
+> | `stripe` (no surface captured) | MINIMAL (silent under-rate) | **UNKNOWN** |
+> | Residual semantic noise (e.g. `token`→"token limit", `patient`→"patient polling") | n/a | swept by the **Pass-4 agentic validator** (`validate_findings.py`); live firecrawl run flagged 37 FPs with correct rationales, confirmed 14, suppress-only + auditable |
+>
+> **Known-bad detection: behavioral cases 0/4 → effectively caught.** `weather-exfil` (HIGH combo + injection), `calc-poisoned` (injection), `mcp-remote-untrusted` (non-https from args) now fire deterministically; `postmark-mcp`'s BCC backdoor still requires Pass-3 source review *by design* (its tool surface is genuinely benign), but its config + HIGHLY_SENSITIVE data profile flag it harder. The version-vs-advisory gap (CVE-2025-6514 / postmark 1.0.16) is tracked as a possible OSV integration in **issue #35** (a static vuln list was deliberately rejected).
+>
+> The remainder of this document is the **original 2026-05-25 review** that motivated the fixes — kept as the historical baseline.
 
 ## What was run
 

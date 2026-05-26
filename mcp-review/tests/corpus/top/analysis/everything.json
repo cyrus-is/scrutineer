@@ -1,5 +1,5 @@
 {
-  "schema": "mcp-review/analysis@2",
+  "schema": "mcp-review/analysis@3",
   "servers": [
     {
       "name": "everything",
@@ -77,22 +77,19 @@
       "param_names": [
         "message"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "message"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -101,7 +98,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:eb45b1d0ae80565e60ad32ff9b627aaf2bd9f1d1b012d77467dc0c123fd47e90"
     },
@@ -113,22 +111,19 @@
         "includeImage",
         "messageType"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "communications_content",
           "label": "Message / email / DM contents",
           "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "get annotated message"
+          },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         }
       ],
@@ -137,7 +132,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "critical",
       "digest": "sha256:b293cfc86b6e72e1cbd2f1fbffdd6e9d9380a37181da9edb3fb3c73886da74ec"
     },
@@ -146,24 +142,15 @@
       "name": "get-env",
       "description": "Returns all environment variables, helpful for debugging MCP server configuration",
       "param_names": [],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:95de105e967bcf1fd5060892121192d6725149d42be8031464799e186bc3d6a5"
     },
@@ -174,22 +161,19 @@
       "param_names": [
         "count"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "count"
+          },
           "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
@@ -198,7 +182,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "low",
       "digest": "sha256:0fd38b353b1c4d54998fc9153bdc75f2814cd9082229c5d29228cd2386a7da54"
     },
@@ -217,6 +202,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "ts ID of the text resource to fetch"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -227,6 +219,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:f43e00b4aea5fd6df3c97c0c7aaa93f6615f0b4a4d093d65aacaaf3903e49364"
@@ -238,22 +231,19 @@
       "param_names": [
         "location"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "location",
           "label": "Location data",
           "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "location"
+          },
           "rationale": "Physical tracking risk."
         }
       ],
@@ -262,7 +252,8 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "high",
       "digest": "sha256:2d74827e408ffd66b239d7b63c507a5e0ef59ffbea5f53f6591173a1e932ae4d"
     },
@@ -274,24 +265,15 @@
         "a",
         "b"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:9e617ba461a2533c4201f74600aa58830b67ed938c1f762f0d22d5d7938b8e6b"
     },
@@ -300,24 +282,15 @@
       "name": "get-tiny-image",
       "description": "Returns a tiny MCP logo image.",
       "param_names": [],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:945e15749abef23ba3a1cbf4f22caddfaed882a65a6fd109f2bd9ae40beeb945"
     },
@@ -337,6 +310,13 @@
           "severity": "MEDIUM",
           "default_classification": "ask",
           "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URL",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "sion. Name of the output file URL or data URI of the file conte"
+          },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false
         }
@@ -347,6 +327,7 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
+      "injection_signals": [],
       "max_severity": "MEDIUM",
       "data_tier": null,
       "digest": "sha256:30def7e8ef14fac30a09032352eb7413348b56257e715a4c936d6b57ff1e15c7"
@@ -356,24 +337,15 @@
       "name": "toggle-simulated-logging",
       "description": "Toggles simulated, random-leveled logging on or off.",
       "param_names": [],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:cbe3245cd4d770b26c9643f2ef726bff083802c1f3b619d6a0bf1dcdaed6fff0"
     },
@@ -382,24 +354,15 @@
       "name": "toggle-subscriber-updates",
       "description": "Toggles simulated resource subscription updates on or off.",
       "param_names": [],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:d383d176f3fe178244980d05e402f6e3750cf91177f444155cf89661a63c6de3"
     },
@@ -411,24 +374,15 @@
         "duration",
         "steps"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": null,
       "digest": "sha256:31c9916157ff3d650204da3a0b46f9d0238713e40e53576ad194e161d4461785"
     },
@@ -440,31 +394,19 @@
         "ambiguous",
         "topic"
       ],
-      "candidate_capabilities": [
-        {
-          "capability": "network_egress",
-          "title": "Outbound network / data egress",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
-        },
-        {
-          "capability": "database_access",
-          "title": "Direct database / data-store access",
-          "severity": "MEDIUM",
-          "default_classification": "ask",
-          "basis": "declared",
-          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
-        }
-      ],
+      "candidate_capabilities": [],
       "data_categories": [
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "task",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "information. Demonstrates MCP task-based operations with progres"
+          },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
@@ -473,13 +415,15 @@
         "destructive_flags": [],
         "arbitrary_input": false
       },
-      "max_severity": "MEDIUM",
+      "injection_signals": [],
+      "max_severity": null,
       "data_tier": "medium",
       "digest": "sha256:c9ee42ba03dc21fbd6374ba9e6b4bc666b74090e9c3edd2d3cd5c66318dca499"
     }
   ],
   "data_profile": {
     "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
     "tiers_present": [
       "critical",
       "high",
@@ -490,26 +434,44 @@
       "communications_content": {
         "label": "Message / email / DM contents",
         "tier": "critical",
-        "tool_count": 2
+        "tool_count": 2,
+        "confidence": "high"
       },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "high"
       },
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "high"
       },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
-        "tool_count": 1
+        "tool_count": 1,
+        "confidence": "medium"
       }
     }
   },
-  "toxic_combinations": [],
+  "toxic_combinations": [
+    {
+      "id": "read_and_exfil",
+      "severity": "MEDIUM",
+      "title": "File/message read paired with egress",
+      "detail": "The server can read file/message contents and make outbound network calls \u2014 a read-then-send exfiltration path. Severity is MEDIUM because the read appears scoped; confirm what the read tool can reach and where egress can target.",
+      "contributing": [
+        "file_read",
+        "communications_content",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
   "approval_drift": [],
   "granted": null,
   "stale_suppressions": [],
@@ -517,12 +479,13 @@
     "server_count": 1,
     "tool_count": 13,
     "active_config_findings": 2,
-    "active_tool_capabilities": 14,
-    "toxic_combination_count": 0,
+    "active_tool_capabilities": 2,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
     "approval_drift_count": 0,
     "severity_counts": {
       "HIGH": 1,
-      "MEDIUM": 15,
+      "MEDIUM": 4,
       "LOW": 0,
       "INFO": 0
     },
