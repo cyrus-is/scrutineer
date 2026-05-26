@@ -293,6 +293,28 @@ _low = A.data_profile([A.analyze_tool(
 check("data_profile MINIMAL when surface present but low",
       _low["rating"] == "MINIMAL" and _low["surface_assessed"] is True)
 
+# --- Phase 8: stable, confidence-aware data-sensitivity rating ---
+_think = A.analyze_tool({"name": "sequentialthinking",
+                         "description": "Revise thoughts; branch into alternate reasoning paths.",
+                         "inputSchema": {"type": "object", "properties": {"thought": {"type": "string"}}}}, "s", G)
+check("data: a reasoning 'branch' is not source_code",
+      "source_code" not in {d["category"] for d in _think["data_categories"]})
+
+# high-confidence HIGH tier (latitude param) + medium-only CRITICAL (repo in prose)
+# => SENSITIVE, with the critical category flagged unconfirmed (not HIGHLY_SENSITIVE).
+_mixed = A.analyze_tool({"name": "local_search",
+                         "description": "Search places; may reference a code repository.",
+                         "inputSchema": {"type": "object", "properties": {"latitude": {"type": "number"}}}}, "s", G)
+_pm = A.data_profile([_mixed], G)
+check("data: medium-only critical does not force HIGHLY_SENSITIVE",
+      _pm["rating"] == "SENSITIVE" and "source_code" in _pm.get("unconfirmed_higher_categories", []))
+
+# high-confidence CRITICAL (commit in the name) => HIGHLY_SENSITIVE stands
+_git = A.analyze_tool({"name": "git_commit", "description": "Create a commit.",
+                       "inputSchema": {"type": "object", "properties": {"message": {"type": "string"}}}}, "s", G)
+check("data: high-confidence critical => HIGHLY_SENSITIVE",
+      A.data_profile([_git], G)["rating"] == "HIGHLY_SENSITIVE")
+
 # --- suppression reconcile / stale exposure ---
 fs_only = [A.analyze_server("filesystem", A.find_server_map(cfg)["filesystem"], G)]
 recon = A.reconcile(fs_only, [],

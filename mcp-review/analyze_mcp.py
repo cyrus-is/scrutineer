@@ -917,19 +917,43 @@ def data_profile(tools: list[dict], g: Guidance) -> dict:
     for t in tools:
         for d in t["data_categories"]:
             cat = d["category"]
-            if cat not in categories:
-                categories[cat] = {"label": d["label"], "tier": d["tier"], "tool_count": 0}
-            categories[cat]["tool_count"] += 1
+            c = categories.setdefault(
+                cat, {"label": d["label"], "tier": d["tier"], "tool_count": 0, "confidence": "medium"})
+            c["tool_count"] += 1
+            if d.get("confidence") == "high":
+                c["confidence"] = "high"
     tiers_present = sorted({c["tier"] for c in categories.values()},
                            key=lambda t: _TIER_ORDER.get(t, 0), reverse=True)
-    top = _max_tier([c["tier"] for c in categories.values()])
-    rating = _TIER_TO_RATING[_TIER_ORDER[top]] if top else "MINIMAL"
-    return {
+
+    # The rating is driven by the highest tier that has a HIGH-confidence hit
+    # (matched in a tool/param NAME). A higher tier seen only in prose (medium
+    # confidence) is reported as "unconfirmed" rather than silently setting the
+    # rating — that is what stopped one prose match (e.g. 'repository'/'token' in
+    # a web-search description) from rating a search server HIGHLY_SENSITIVE.
+    conf_top = _max_tier([c["tier"] for c in categories.values() if c["confidence"] == "high"])
+    any_top = _max_tier([c["tier"] for c in categories.values()])
+    if conf_top:
+        rating = _TIER_TO_RATING[_TIER_ORDER[conf_top]]
+        unconfirmed = sorted(cat for cat, c in categories.items()
+                             if _TIER_ORDER[c["tier"]] > _TIER_ORDER[conf_top])
+    elif any_top:
+        rating = _TIER_TO_RATING[_TIER_ORDER[any_top]]
+        unconfirmed = []
+    else:
+        rating, unconfirmed = "MINIMAL", []
+
+    out = {
         "rating": rating,
         "surface_assessed": True,
         "tiers_present": tiers_present,
         "categories": categories,
     }
+    if unconfirmed:
+        out["unconfirmed_higher_categories"] = unconfirmed
+        out["note"] = ("Rating reflects high-confidence matches; "
+                       + ", ".join(unconfirmed) + " matched only in prose (medium "
+                       "confidence) and would raise the rating if confirmed in review.")
+    return out
 
 
 # ---------------------------------------------------------------------------

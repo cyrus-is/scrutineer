@@ -413,7 +413,8 @@ data_sensitivity:
     label: Secrets, tokens & credentials
     tier: critical
     patterns:
-      - "\\b(secret|credential|token|api[_-]?key|password|keychain|vault|private[_-]?key)\\b"
+      - "\\b(secret|credential|api[_-]?key|password|keychain|vault|private[_-]?key)\\b"
+      - "\\btoken\\b(?!\\s+limit)"
       - "\\b(read[_-]?env|environment[_-]?variable|getenv|dotenv)\\b"
     rationale: The most sensitive payload — leaks compromise everything downstream.
 
@@ -429,7 +430,8 @@ data_sensitivity:
     label: Source code & repository contents
     tier: critical
     patterns:
-      - "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|branch|blame)\\b"
+      # bare 'branch' dropped — it matched "thought branch" on a reasoning tool.
+      - "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b"
       - "\\b(read|get|search)[_-]?(code|file)\\b.*\\b(repo|repository|src|source)\\b"
     rationale: Proprietary logic, embedded secrets, and architecture all live in source.
 
