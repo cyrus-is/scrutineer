@@ -260,6 +260,22 @@ dangerous_capabilities:
       Write access lets a server plant files, overwrite configs, or stage a
       later code-execution path.
 
+  file_read:
+    title: Filesystem read
+    severity: MEDIUM
+    default_classification: ask
+    patterns:
+      # Underscore-joined names (read_local_file, read_text_file, get_file_contents)
+      # plus prose ("read any file") and the explicit forms.
+      - "\\b(read|get|load|open|cat|slurp|retrieve)[_-]?(\\w+[_-])?(file|files|text|contents?|document|media)\\b"
+      - "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b"
+      - "\\b(read[_-]?file|get[_-]?file|file[_-]?contents?|read[_-]?text)\\b"
+    rationale: >
+      Reading file contents is the most common SOURCE half of an exfiltration
+      chain — pair it with any network_egress tool and the server can read a
+      secret/config/document and send it out. Modelling read as a capability is
+      what lets the read-then-send toxic combination fire.
+
   file_delete:
     title: Filesystem delete / destructive
     severity: HIGH

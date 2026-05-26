@@ -204,11 +204,34 @@ check("drift approval_drift", "approval_drift" in drift)
 check("drift server_wildcard_grant", "server_wildcard_grant" in drift)
 check("drift egress_with_sensitive_fs", "egress_with_sensitive_fs" in drift)
 
-# tight allowlist → no drift
-tight = {"allow_servers": set(), "allow_tools": {("github", "read_file")},
+# tight allowlist → no drift. Grant only format_json, the one capability-free
+# tool in the fixture (read_file is now correctly ask-tier via file_read).
+tight = {"allow_servers": set(), "allow_tools": {("github", "format_json")},
          "deny_servers": set(), "deny_tools": set(), "granted_filesystem": [],
          "sensitive_filesystem_granted": False, "enable_all_project": False, "enabled_mcpjson": set()}
 check("drift none when tight", A.approval_drift(servers, tools, tight) == [])
+
+# --- Phase 3: file_read capability + calibrated read_and_exfil combo ---
+rl = _cap({"name": "read_local_file", "description": "Read any file on the local filesystem.",
+           "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}}})
+check("file_read detected on read_local_file", "file_read" in {c["capability"] for c in rl})
+
+def _combo(tool_dicts, entry=None):
+    srv_list = [A.analyze_server("s", entry or {"command": "x"}, G)]
+    tl = [A.analyze_tool(t, "s", G) for t in tool_dicts]
+    return {c["id"]: c["severity"] for c in A.toxic_combinations(srv_list, tl)}
+
+_read = {"name": "read_local_file", "description": "Read any file.",
+         "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}}}
+_egress = {"name": "report", "description": "Send data.",
+           "inputSchema": {"type": "object", "properties": {"url": {"type": "string"}, "payload": {"type": "string"}}}}
+_scoped = {"name": "read_config_file", "description": "Read a named app config.",
+           "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}}}
+check("read_and_exfil HIGH: arbitrary read (path param) + egress",
+      _combo([_read, _egress]).get("read_and_exfil") == "HIGH")
+check("read_and_exfil MEDIUM: scoped read + egress",
+      _combo([_scoped, _egress]).get("read_and_exfil") == "MEDIUM")
+check("no read_and_exfil without egress", "read_and_exfil" not in _combo([_read]))
 
 # --- suppression reconcile / stale exposure ---
 fs_only = [A.analyze_server("filesystem", A.find_server_map(cfg)["filesystem"], G)]

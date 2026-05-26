@@ -862,8 +862,19 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
         or "sensitive_env_required" in config_codes
     egress = "network_egress" in cap_set
     broad_fs = "broad_filesystem_scope" in config_codes
-    reads_files = "files_documents" in data_set
+    reads_files = "file_read" in cap_set or "files_documents" in data_set
     reads_comms = "communications_content" in data_set
+
+    # Is the read ARBITRARY? A file_read tool exposing a free path-like param can
+    # be pointed at any file (a secret, a config) — that's what makes read+egress
+    # a HIGH exfil primitive rather than a benign scoped read.
+    _PATH_PARAMS = {"path", "file_path", "filepath", "filename", "file", "paths",
+                    "dir", "directory", "uri", "location"}
+    arbitrary_read = broad_fs or any(
+        any(c["capability"] == "file_read" for c in t["candidate_capabilities"])
+        and (_PATH_PARAMS & {p.lower() for p in t.get("param_names", [])})
+        for t in tools
+    )
 
     combos = []
 
@@ -895,12 +906,27 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
             "input can drive destructive or persistence-establishing writes.",
             ["file_write/file_delete", "network_egress"])
 
-    if (reads_files or reads_comms) and egress and broad_fs:
-        add("broad_read_and_exfil", "HIGH",
-            "Broad data read paired with egress",
-            "Broad filesystem scope plus the ability to read file/message "
-            "contents and send outbound — wide-radius data exfiltration.",
-            ["broad_filesystem_scope", "file/message read", "network_egress"])
+    if (reads_files or reads_comms) and egress:
+        sev = "HIGH" if arbitrary_read else "MEDIUM"
+        title = ("Arbitrary file read paired with egress" if arbitrary_read
+                 else "File/message read paired with egress")
+        detail = (
+            "The server can read file" + ("/message " if reads_comms else " ")
+            + "contents and make outbound network calls — a read-then-send "
+            "exfiltration path. "
+            + ("The read accepts an arbitrary path (or the server is scoped to a "
+               "broad directory), so it can reach secrets/configs far beyond the "
+               "task." if arbitrary_read
+               else "Severity is MEDIUM because the read appears scoped; confirm "
+                    "what the read tool can reach and where egress can target.")
+        )
+        contributing = ["file_read" + (" (arbitrary path)" if arbitrary_read else "")]
+        if reads_comms:
+            contributing.append("communications_content")
+        if broad_fs:
+            contributing.append("broad_filesystem_scope")
+        contributing.append("network_egress")
+        add("read_and_exfil", sev, title, detail, contributing)
 
     return combos
 
