@@ -147,6 +147,33 @@ prose = _cap({"name": "do_thing", "description": "This will fetch a remote resou
 eg2 = next((c for c in prose if c["capability"] == "network_egress"), None)
 check("confidence: description-only zone is medium", eg2 and eg2["confidence"] == "medium")
 
+# --- Phase 2: tightened regexes kill bare-token false positives, keep TPs ---
+def _caps(name, desc, props=None):
+    return {c["capability"] for c in _cap(
+        {"name": name, "description": desc,
+         "inputSchema": {"type": "object", "properties": props or {}}})}
+
+# False positives that must NO LONGER fire:
+check("fp: 'file system' is not code_execution",
+      "code_execution" not in _caps("read_text_file", "Read a file from the file system as text."))
+check("fp: 'root URL' is not privilege_escalation",
+      "privilege_escalation" not in _caps("crawl", "Crawl from the root URL.", {"root_url": {"type": "string"}}))
+check("fp: search 'query' param is not database_access",
+      "database_access" not in _caps("web_search", "Search the web.", {"query": {"type": "string"}}))
+check("fp: 'pull request' is not network_egress",
+      "network_egress" not in _caps("create_pull_request", "Create a pull request in the repository."))
+check("fp: 'remove domains' is not file_delete",
+      "file_delete" not in _caps("search", "Use excludeDomains to remove domains from results."))
+
+# True positives that must STILL fire:
+check("tp: SQL query is database_access",
+      "database_access" in _caps("query", "Run a read-only SQL query against the database."))
+check("tp: delete_file is file_delete", "file_delete" in _caps("delete_file", "Delete a file at the given path."))
+check("tp: 'remove a file' is file_delete", "file_delete" in _caps("cleanup", "Remove a file from disk."))
+check("tp: chmod is privilege_escalation", "privilege_escalation" in _caps("set_perms", "chmod the target path."))
+check("tp: url param is network_egress",
+      "network_egress" in _caps("navigate", "Go to a page.", {"url": {"type": "string"}}))
+
 # --- 5-server fixture: config smells land on the right servers ---
 cfg = json.loads((FIX / "sample_config.json").read_text())
 servers = [A.analyze_server(n, e, G) for n, e in A.find_server_map(cfg).items()]

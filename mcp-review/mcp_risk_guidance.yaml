@@ -241,8 +241,10 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: deny
     patterns:
-      - "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|system)\\b"
-      - "\\b(interpreter|sandbox\\s*escape|child[_-]?process)\\b"
+      # 'system' dropped as a bare token — it matched "file system" /
+      # "snapshot system". Kept only as system_call / system_command.
+      - "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b"
+      - "\\b(interpreter|sandbox\\s*escape|child[_-]?process|system[_-]?(call|command))\\b"
     rationale: >
       A tool that runs arbitrary commands or code is the highest-impact surface
       an MCP server can expose — it collapses every other boundary.
@@ -263,7 +265,14 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: ask
     patterns:
-      - "\\b(delete|remove|unlink|rm|destroy|purge|truncate|drop)\\b"
+      # Must be FILE/PATH-scoped. Bare verbs (remove/drop/destroy/truncate)
+      # matched "remove domains", "Destroy the browser session", drag-and-"drop".
+      # Pattern 1: adjacent (delete_file / removepath). Pattern 2: a destructive
+      # verb within a few words of a file/path noun ("remove a file").
+      - "\\b(delete|remove|unlink|destroy|erase|purge|truncate|wipe)[_-]?(file|files|path|dir|directory|folder)\\b"
+      - "\\b(delete|remove|unlink|destroy|erase|purge|wipe)\\b[^.]{0,15}?\\b(file|path|directory|folder)\\b"
+      - "\\b(unlink|rmdir)\\b"
+      - "\\brm\\s+-[rf]"
     rationale: >
       Destructive operations are irreversible and a common accidental-blast-
       radius source. Default to ask even when the server is trusted.
@@ -273,8 +282,13 @@ dangerous_capabilities:
     severity: MEDIUM
     default_classification: ask
     patterns:
-      - "\\b(fetch|http[s]?|request|curl|webhook|post[_-]?to|send[_-]?to|upload)\\b"
-      - "\\b(url|endpoint|remote|external[_-]?api)\\b"
+      # 'request' dropped (matched "pull request"); bare 'http[s]' dropped
+      # (matched the $schema URL pre-zoning) and bare 'remote' dropped (matched
+      # "git remote"). This now keys on FREE-FORM egress signals (a fetch/curl/
+      # webhook verb or a url/endpoint param) — the kind that can target an
+      # attacker-chosen host — not on every server that happens to call an API.
+      - "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b"
+      - "\\b(url|uri|endpoint|external[_-]?api)\\b"
     rationale: >
       A tool that makes outbound calls can exfiltrate anything it can read
       (including the server's own credentials) to an attacker-chosen host.
@@ -295,7 +309,14 @@ dangerous_capabilities:
     severity: MEDIUM
     default_classification: ask
     patterns:
-      - "\\b(sql|query|database|db[_-]?(exec|query)|mongo|redis|psql|select\\s+\\*)\\b"
+      # Bare 'query'/'database' dropped — 'query' matched the search param on
+      # nearly every web-search tool. Now requires a real datastore signal or a
+      # db-qualified query.
+      - "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b"
+      - "\\b(database|db|datastore)[_-]?(query|exec|execute|connection|table|schema|record)\\b"
+      - "\\bexecute[_-]?query\\b"
+      - "\\bselect\\b.{0,40}\\bfrom\\b"
+      - "\\bdrop[_-]?(table|database|collection)\\b"
     rationale: >
       Raw query access bypasses application-level authorization and tenant
       scoping; injection in a tool parameter reaches the data directly.
@@ -305,7 +326,13 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: deny
     patterns:
-      - "\\b(sudo|chmod|chown|setuid|grant|elevate|admin|root|privilege)\\b"
+      # Bare 'root'/'admin'/'grant' dropped — they matched "root URL", "root
+      # cause", "grant access to docs". Now requires an actual priv-change verb
+      # or a qualified root/admin reference.
+      - "\\b(sudo|setuid|setgid|chmod|chown|chgrp|chattr)\\b"
+      - "\\b(privilege[_-]?escalat|escalate[_-]?privilege|elevate[_-]?(privilege|permission|access))\\b"
+      - "\\bgrant[_-]?(role|privilege|permission|access|admin|scope)\\b"
+      - "\\broot[_-]?(access|shell|user|account|privilege)\\b"
     rationale: >
       Tools that alter permissions or escalate privilege can expand their own
       blast radius and persist access.
