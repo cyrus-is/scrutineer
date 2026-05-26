@@ -37,6 +37,7 @@ packages = ["scrutineer"]
 "mcp-review/SKILL.md" = "scrutineer/_assets/mcp-review/SKILL.md"
 "mcp-review/analyze_mcp.py" = "scrutineer/_assets/mcp-review/analyze_mcp.py"
 "mcp-review/fetch_source.py" = "scrutineer/_assets/mcp-review/fetch_source.py"
+"mcp-review/validate_findings.py" = "scrutineer/_assets/mcp-review/validate_findings.py"
 "mcp-review/mcp_risk_guidance.yaml" = "scrutineer/_assets/mcp-review/mcp_risk_guidance.yaml"
 "references/schema.md" = "scrutineer/_assets/references/schema.md"
 
@@ -51,4 +52,12 @@ include = [
     "scrutineer-setup/",
     "README.md",
     "LICENSE*",
+]
+# The MCP eval corpus (live-captured tool surfaces + capture scripts) is a
+# repo-only dogfooding/regression asset — keep it in git, but never ship it in
+# the PyPI sdist. (The wheel already excludes it via the force-include allowlist.)
+exclude = [
+    "mcp-review/tests/corpus",
+    "mcp-review/tests/corpus/**",
+    "**/.DS_Store",
 ]
