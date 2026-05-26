@@ -1,0 +1,202 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "brave-search",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env_keys": [
+        "BRAVE_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "BRAVE_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-brave-search",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:51890b7cb988e45c153956b9dcce66f9c07c3a8ff9ede1792d218ae62044bb0b",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'brave-search' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-brave-search.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-brave-search",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'brave-search' package spec '@modelcontextprotocol/server-brave-search' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-brave-search",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'brave-search' requires credential-like env keys: BRAVE_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "BRAVE_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "brave-search",
+      "name": "brave_web_search",
+      "description": "Performs a web search using the Brave Search API, ideal for general queries, news, articles, and online content. Use this for broad information gathering, recent events, or when you need diverse web sources. Supports pagination, content filtering, and freshness controls. Maximum 20 results per request, with offset for pagination. ",
+      "param_names": [
+        "count",
+        "offset",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query count offset"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:ddc0232ef5e794473691444176985321d1b6f0de76c0bcbec607c3844c3e3aad"
+    },
+    {
+      "server": "brave-search",
+      "name": "brave_local_search",
+      "description": "Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc. Returns detailed information including:\n- Business names and addresses\n- Ratings and review counts\n- Phone numbers and opening hours\nUse this when the query implies 'near me' or mentions specific locations. Automatically falls back to web search if no local results are found.",
+      "param_names": [
+        "count",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "query count"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "low",
+      "digest": "sha256:6863d0afe176a49820e48e3e7769ccbd1038eb9be2f380969b22e0037c81f895"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [
+      "low"
+    ],
+    "categories": {
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 2,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [
+      "public_data"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

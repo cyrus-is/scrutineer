@@ -1,0 +1,141 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "postgres",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://localhost/mydb"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-postgres",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:a761782049fbada1e950072611522632e1ad168941d24f045bcbde66c901f4a4",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'postgres' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-postgres.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-postgres",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'postgres' package spec '@modelcontextprotocol/server-postgres' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-postgres",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "postgres",
+      "name": "query",
+      "description": "Run a read-only SQL query",
+      "param_names": [
+        "sql"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "sql",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "sql"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:d30b6fe5f5d87fbd23f935f9edf5161fabd7a277164b83b010ac58d995dd5245"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [],
+    "categories": {}
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 1,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

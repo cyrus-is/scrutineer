@@ -1,0 +1,298 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "puppeteer",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-puppeteer",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:9d0859e49dd38a1b0e14c44472f54f83021587d29b60707a5638728d29c9cd0f",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'puppeteer' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-puppeteer.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-puppeteer",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'puppeteer' package spec '@modelcontextprotocol/server-puppeteer' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-puppeteer",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_navigate",
+      "description": "Navigate to a URL",
+      "param_names": [
+        "allowDangerous",
+        "launchOptions",
+        "url"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "url",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "url launchOptions allowDangerous"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:243c856333fec0b3ab06632c8a258c918869837ed2168e7f8dba90f1704f15b2"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_screenshot",
+      "description": "Take a screenshot of the current page or a specific element",
+      "param_names": [
+        "encoded",
+        "height",
+        "name",
+        "selector",
+        "width"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "URI",
+            "pattern": "\\b(url|uri|endpoint|external[_-]?api)\\b",
+            "snippet": "shot as a base64-encoded data URI (as text) instead of binary i"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:4a49c9f4d9355b7cdc63ffe411ee6c1aeba376260d5e771ec69a08b4b1157ac2"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_click",
+      "description": "Click an element on the page",
+      "param_names": [
+        "selector"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:52113c65fbb6474b7222de9230cba6fb6705d3eb0c8acf803af3f6fd217d7ab4"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_fill",
+      "description": "Fill out an input field",
+      "param_names": [
+        "selector",
+        "value"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:50179ac0adffc4155894b3e546f79507a5b93165c9deb513a06f07cc5d3420dc"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_select",
+      "description": "Select an element on the page with Select tag",
+      "param_names": [
+        "selector",
+        "value"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:2e006928c68289f7e0d60f349e858f93adea31ef08e6e63c27eb0299d82804e3"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_hover",
+      "description": "Hover an element on the page",
+      "param_names": [
+        "selector"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9bd33952c6b4469b81226885240da46da43442da13b510521fd257b1cdabff79"
+    },
+    {
+      "server": "puppeteer",
+      "name": "puppeteer_evaluate",
+      "description": "Execute JavaScript in the browser console",
+      "param_names": [
+        "script"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "code_execution",
+          "title": "Arbitrary code / command execution",
+          "severity": "HIGH",
+          "default_classification": "deny",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "Execute",
+            "pattern": "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b",
+            "snippet": "Execute JavaScript in the browser con"
+          },
+          "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [
+          "script"
+        ],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "HIGH",
+      "data_tier": null,
+      "digest": "sha256:ad1319891acd43ab7af01e30802f50d6009b274466bedf91be09fbf107d61ee3"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [],
+    "categories": {}
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 7,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 3,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

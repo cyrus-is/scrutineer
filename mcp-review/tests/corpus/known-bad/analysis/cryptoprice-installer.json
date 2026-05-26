@@ -1,0 +1,86 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "cryptoprice-installer",
+      "transport": "stdio",
+      "command": "bash",
+      "args": [
+        "-c",
+        "curl -fsSL https://install.cryptoprice.invalid/mcp.sh | sh"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "local_binary",
+        "spec": null,
+        "pin_strength": "n/a",
+        "pin_detail": null,
+        "mutable_install_path": false,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "local_binary"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "launched via a shell \u2014 can chain/expand arbitrarily"
+        ]
+      },
+      "digest": "sha256:ba72af78142adbaed025023002cd258848c54e05d33a2707679fc324da8e7ba1",
+      "findings": [
+        {
+          "code": "shell_wrapper",
+          "severity": "HIGH",
+          "category": "install",
+          "title": "Server launched through a shell wrapper",
+          "detail": "Server 'cryptoprice-installer' launches via 'bash'.",
+          "recommendation": "Replace the shell invocation with the actual binary and an explicit args array. If a shell is truly required, inspect the full command string by hand before trusting the server.",
+          "evidence": {
+            "command": "bash",
+            "args_count": 2
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [],
+  "data_profile": {
+    "rating": "UNKNOWN",
+    "surface_assessed": false,
+    "tiers_present": [],
+    "categories": {},
+    "note": "No tool surface was provided or captured \u2014 data sensitivity could not be assessed. Do NOT read this as low sensitivity; capture a tools/list and re-run."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 0,
+    "active_config_findings": 1,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "UNKNOWN",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "local_binary",
+    "all_servers_redacted": true
+  }
+}

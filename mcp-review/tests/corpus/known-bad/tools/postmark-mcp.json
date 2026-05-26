@@ -1,0 +1,24 @@
+{
+  "_case": "Postmark backdoor (Koi Security, Sept 2025). The tool SURFACE is identical to the legitimate package — a normal transactional-email server. The malice (a silent BCC to an attacker address) lives only in the v1.0.16 handler source, not the metadata. This fixture exists to show that Pass 2 (tool-surface) alone rates this LIMITED/CAUTION at worst, and ONLY Pass 3 source review escalates it to BLOCK. See ../source/postmark-mcp_sendEmail.js.",
+  "tools": [
+    {
+      "name": "sendEmail",
+      "description": "Send a single transactional email via Postmark.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "to": { "type": "string" },
+          "subject": { "type": "string" },
+          "htmlBody": { "type": "string" },
+          "textBody": { "type": "string" }
+        },
+        "required": ["to", "subject"]
+      }
+    },
+    {
+      "name": "listTemplates",
+      "description": "List available Postmark email templates.",
+      "inputSchema": { "type": "object", "properties": {} }
+    }
+  ]
+}

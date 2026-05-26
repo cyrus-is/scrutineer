@@ -212,6 +212,35 @@ tool_schema_signals:
     - command
     - cmd
 
+# Prompt-injection / tool-poisoning signals in a tool's or parameter's
+# DESCRIPTION. A poisoned description carries hidden instructions to the MODEL
+# (read secret files, exfiltrate via an innocuous param, conceal the action) —
+# the attack lives entirely in natural-language metadata, invisible to the
+# capability scan. Low-precision by design: a hit is a flag for the reviewer,
+# not proof. The analyzer records the matched span; the skill judges intent.
+tool_injection:
+  title: Hidden instructions in tool/parameter description (possible tool poisoning)
+  severity: HIGH
+  category: prompt_injection
+  patterns:
+    - "<\\s*(important|system|secret|instruction|admin|inject)\\b"
+    - "\\b(do not|don't|never)\\s+(tell|mention|inform|reveal|disclose|notify|report|say)\\b"
+    - "\\bignore\\s+(all\\s+|any\\s+)?(previous|prior|above|earlier)\\b"
+    # "before using this tool" only when followed by an imperative — bare usage
+    # notes ("confirm the plan before using this tool") are benign.
+    - "\\b(before|prior to)\\s+(using|calling|invoking|running)\\s+this\\s+tool\\b[^.]{0,60}\\b(you must|read|send|fetch|pass|exfiltrat\\w*|upload|secretly|silently|first\\s)\\b"
+    - "\\b(read|cat|open|load|access|send|exfiltrat\\w*|upload|post|leak|include|attach)\\b[^.]{0,45}(\\.ssh|id_rsa|id_ed25519|\\.env\\b|\\.aws|\\.npmrc|credentials|mcp\\.json|private[_-]?key)"
+    - "\\bpass\\b[^.]{0,45}\\b(sidenote|side[_-]note)\\b"
+    # covert exfil — a concealment word paired with a send/exfil verb (bare
+    # "succeed silently" is benign).
+    - "\\b(silently|covertly|secretly|quietly)\\b[^.]{0,30}\\b(send|post|upload|transmit|forward|exfiltrat\\w*|copy|leak|background)\\b"
+    - "\\b(post|send|upload|transmit|forward|copy)\\b[^.]{0,30}\\b(silently|covertly|secretly|quietly)\\b"
+    - "\\bwithout\\s+(telling|informing|notifying|asking|mentioning)\\b"
+  recommendation: >
+    Treat a tool description as untrusted model-facing text. One that instructs
+    the model to read files, exfiltrate data, or conceal what it did is a
+    tool-poisoning attack — do not enable the server.
+
 # Env-key NAMES (not values) matching any of these regexes are "sensitive".
 # Case-insensitive. Drives sensitive_env_required and informs the secret-value
 # refusal (we only inspect values of sensitive-looking keys for live secrets).
@@ -241,8 +270,10 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: deny
     patterns:
-      - "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|system)\\b"
-      - "\\b(interpreter|sandbox\\s*escape|child[_-]?process)\\b"
+      # 'system' dropped as a bare token — it matched "file system" /
+      # "snapshot system". Kept only as system_call / system_command.
+      - "\\b(exec|execute|eval|spawn|subprocess|shell|run[_-]?command|run[_-]?code|run[_-]?script)\\b"
+      - "\\b(interpreter|sandbox\\s*escape|child[_-]?process|system[_-]?(call|command))\\b"
     rationale: >
       A tool that runs arbitrary commands or code is the highest-impact surface
       an MCP server can expose — it collapses every other boundary.
@@ -258,12 +289,35 @@ dangerous_capabilities:
       Write access lets a server plant files, overwrite configs, or stage a
       later code-execution path.
 
+  file_read:
+    title: Filesystem read
+    severity: MEDIUM
+    default_classification: ask
+    patterns:
+      # Underscore-joined names (read_local_file, read_text_file, get_file_contents)
+      # plus prose ("read any file") and the explicit forms.
+      - "\\b(read|get|load|open|cat|slurp|retrieve)[_-]?(\\w+[_-])?(file|files|text|contents?|document|media)\\b"
+      - "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b"
+      - "\\b(read[_-]?file|get[_-]?file|file[_-]?contents?|read[_-]?text)\\b"
+    rationale: >
+      Reading file contents is the most common SOURCE half of an exfiltration
+      chain — pair it with any network_egress tool and the server can read a
+      secret/config/document and send it out. Modelling read as a capability is
+      what lets the read-then-send toxic combination fire.
+
   file_delete:
     title: Filesystem delete / destructive
     severity: HIGH
     default_classification: ask
     patterns:
-      - "\\b(delete|remove|unlink|rm|destroy|purge|truncate|drop)\\b"
+      # Must be FILE/PATH-scoped. Bare verbs (remove/drop/destroy/truncate)
+      # matched "remove domains", "Destroy the browser session", drag-and-"drop".
+      # Pattern 1: adjacent (delete_file / removepath). Pattern 2: a destructive
+      # verb within a few words of a file/path noun ("remove a file").
+      - "\\b(delete|remove|unlink|destroy|erase|purge|truncate|wipe)[_-]?(file|files|path|dir|directory|folder)\\b"
+      - "\\b(delete|remove|unlink|destroy|erase|purge|wipe)\\b[^.]{0,15}?\\b(file|path|directory|folder)\\b"
+      - "\\b(unlink|rmdir)\\b"
+      - "\\brm\\s+-[rf]"
     rationale: >
       Destructive operations are irreversible and a common accidental-blast-
       radius source. Default to ask even when the server is trusted.
@@ -273,8 +327,13 @@ dangerous_capabilities:
     severity: MEDIUM
     default_classification: ask
     patterns:
-      - "\\b(fetch|http[s]?|request|curl|webhook|post[_-]?to|send[_-]?to|upload)\\b"
-      - "\\b(url|endpoint|remote|external[_-]?api)\\b"
+      # 'request' dropped (matched "pull request"); bare 'http[s]' dropped
+      # (matched the $schema URL pre-zoning) and bare 'remote' dropped (matched
+      # "git remote"). This now keys on FREE-FORM egress signals (a fetch/curl/
+      # webhook verb or a url/endpoint param) — the kind that can target an
+      # attacker-chosen host — not on every server that happens to call an API.
+      - "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b"
+      - "\\b(url|uri|endpoint|external[_-]?api)\\b"
     rationale: >
       A tool that makes outbound calls can exfiltrate anything it can read
       (including the server's own credentials) to an attacker-chosen host.
@@ -284,7 +343,10 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: ask
     patterns:
-      - "\\b(secret|credential|token|api[_-]?key|password|keychain|vault)\\b"
+      - "\\b(secret|credential|api[_-]?key|password|passwd|keychain|vault)\\b"
+      # 'token' split out with a negative lookahead so "token limit(s)" (LLM
+      # context windows) doesn't read as credential access.
+      - "\\btoken\\b(?!\\s+limit)"
       - "\\b(read[_-]?env|environment[_-]?variable|getenv|dotenv)\\b"
     rationale: >
       A tool that surfaces secrets pairs dangerously with any network_egress
@@ -295,7 +357,14 @@ dangerous_capabilities:
     severity: MEDIUM
     default_classification: ask
     patterns:
-      - "\\b(sql|query|database|db[_-]?(exec|query)|mongo|redis|psql|select\\s+\\*)\\b"
+      # Bare 'query'/'database' dropped — 'query' matched the search param on
+      # nearly every web-search tool. Now requires a real datastore signal or a
+      # db-qualified query.
+      - "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b"
+      - "\\b(database|db|datastore)[_-]?(query|exec|execute|connection|table|schema|record)\\b"
+      - "\\bexecute[_-]?query\\b"
+      - "\\bselect\\b.{0,40}\\bfrom\\b"
+      - "\\bdrop[_-]?(table|database|collection)\\b"
     rationale: >
       Raw query access bypasses application-level authorization and tenant
       scoping; injection in a tool parameter reaches the data directly.
@@ -305,7 +374,13 @@ dangerous_capabilities:
     severity: HIGH
     default_classification: deny
     patterns:
-      - "\\b(sudo|chmod|chown|setuid|grant|elevate|admin|root|privilege)\\b"
+      # Bare 'root'/'admin'/'grant' dropped — they matched "root URL", "root
+      # cause", "grant access to docs". Now requires an actual priv-change verb
+      # or a qualified root/admin reference.
+      - "\\b(sudo|setuid|setgid|chmod|chown|chgrp|chattr)\\b"
+      - "\\b(privilege[_-]?escalat|escalate[_-]?privilege|elevate[_-]?(privilege|permission|access))\\b"
+      - "\\bgrant[_-]?(role|privilege|permission|access|admin|scope)\\b"
+      - "\\broot[_-]?(access|shell|user|account|privilege)\\b"
     rationale: >
       Tools that alter permissions or escalate privilege can expand their own
       blast radius and persist access.
@@ -338,7 +413,8 @@ data_sensitivity:
     label: Secrets, tokens & credentials
     tier: critical
     patterns:
-      - "\\b(secret|credential|token|api[_-]?key|password|keychain|vault|private[_-]?key)\\b"
+      - "\\b(secret|credential|api[_-]?key|password|keychain|vault|private[_-]?key)\\b"
+      - "\\btoken\\b(?!\\s+limit)"
       - "\\b(read[_-]?env|environment[_-]?variable|getenv|dotenv)\\b"
     rationale: The most sensitive payload — leaks compromise everything downstream.
 
@@ -354,7 +430,8 @@ data_sensitivity:
     label: Source code & repository contents
     tier: critical
     patterns:
-      - "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|branch|blame)\\b"
+      # bare 'branch' dropped — it matched "thought branch" on a reasoning tool.
+      - "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b"
       - "\\b(read|get|search)[_-]?(code|file)\\b.*\\b(repo|repository|src|source)\\b"
     rationale: Proprietary logic, embedded secrets, and architecture all live in source.
 

@@ -1,0 +1,618 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "filesystem",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/clawrus/Projects"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-filesystem",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "broad",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:b5551b07fc5594538b46fe3c14eddfb90c44440d2a5b087abf3c0052c04d47f3",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'filesystem' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-filesystem.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-filesystem",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'filesystem' package spec '@modelcontextprotocol/server-filesystem' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-filesystem",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "broad_filesystem_scope",
+          "severity": "MEDIUM",
+          "category": "scope",
+          "title": "Broad filesystem path granted to the server",
+          "detail": "Server 'filesystem' is pointed at broad path(s): /Users/clawrus/Projects.",
+          "recommendation": "Scope filesystem servers to the narrowest directory that works. Avoid home, root, and system paths.",
+          "evidence": {
+            "paths": [
+              "/Users/clawrus/Projects"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "filesystem",
+      "name": "read_file",
+      "description": "Read the complete contents of a file as text. DEPRECATED: Use read_text_file instead.",
+      "param_names": [
+        "head",
+        "path",
+        "tail"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read file",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "read file"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:1a19f9c66da8234489eca4a46359ff2adbaed9b04b273e25135123764dbdb991"
+    },
+    {
+      "server": "filesystem",
+      "name": "read_text_file",
+      "description": "Read the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+      "param_names": [
+        "head",
+        "path",
+        "tail"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read text file",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "read text file"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:1d8b2b6ca5e1073726f4f41ba61ac8c888d2867157d6cf12547c55051c7f482a"
+    },
+    {
+      "server": "filesystem",
+      "name": "read_media_file",
+      "description": "Read an image or audio file. Returns the base64 encoded data and MIME type. Only works within allowed directories.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read media file",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "read media file"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:075ca529d04a890ea9ed337b85159e1ae0c03437f08647c591731414f3db09e5"
+    },
+    {
+      "server": "filesystem",
+      "name": "read_multiple_files",
+      "description": "Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+      "param_names": [
+        "paths"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "file_read",
+          "title": "Filesystem read",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "read multiple files",
+            "pattern": "\\bread\\b[^.]{0,15}?\\b(file|files|contents?|document)\\b",
+            "snippet": "read multiple files"
+          },
+          "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:4c8a0ffe6571a32fd912099c90ded68dd23a05daa2604004330fcd5076ea6e9e"
+    },
+    {
+      "server": "filesystem",
+      "name": "write_file",
+      "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+      "param_names": [
+        "content",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:7b912840bf28bc44ce107f55630d64b645ad78ed92be02185b7ca9143bb0b917"
+    },
+    {
+      "server": "filesystem",
+      "name": "edit_file",
+      "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+      "param_names": [
+        "dryRun",
+        "edits",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "s with new content. Returns a git-style diff showing the change"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:fcbcdc0249981d411ac04fddf7b390b674d502fd5ad0cb0c37c9c23f74089b14"
+    },
+    {
+      "server": "filesystem",
+      "name": "create_directory",
+      "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "create directory"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:2d7848f9113d21f55f60e177430ba1dda372354fd94075d52bccde5c6f5637e2"
+    },
+    {
+      "server": "filesystem",
+      "name": "list_directory",
+      "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "list directory"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:488944e6d821c9e6bc6cdc1347c5d01edaa3c1ed633f3b87dbccb3880dfd5702"
+    },
+    {
+      "server": "filesystem",
+      "name": "list_directory_with_sizes",
+      "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+      "param_names": [
+        "path",
+        "sortBy"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "list directory with sizes"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:6a88e86c3c59f13f5b3602e162746cd7f970554d0f8e5c7193eb5c88f150dd14"
+    },
+    {
+      "server": "filesystem",
+      "name": "directory_tree",
+      "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+      "param_names": [
+        "excludePatterns",
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "directory tree"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:25f83f24b499219f8e9e6d6f25bb8546b8a318084d98cdc56a7b4753f956ced5"
+    },
+    {
+      "server": "filesystem",
+      "name": "move_file",
+      "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+      "param_names": [
+        "destination",
+        "source"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "mple renaming within the same directory. Both source and destination"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:ccd3a2f3e87121650767bc135408da868b67f6fc140d77ab75e3d6ea0b71ee66"
+    },
+    {
+      "server": "filesystem",
+      "name": "search_files",
+      "description": "Recursively search for files and directories matching a pattern. The patterns should be glob-style patterns that match paths relative to the working directory. Use pattern like '*.ext' to match files in current directory, and '**/*.ext' to match files in all subdirectories. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.",
+      "param_names": [
+        "excludePatterns",
+        "path",
+        "pattern"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "paths relative to the working directory. Use pattern like '*.ext' to"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "location",
+          "label": "Location data",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "location",
+            "pattern": "\\b(location|gps|coordinates|geo[_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "en you don't know their exact location. Only searches within allowed"
+          },
+          "rationale": "Physical tracking risk."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:41f144836f5e786009e2173256759e37b687add572cfba808e24bebb9a04ce96"
+    },
+    {
+      "server": "filesystem",
+      "name": "get_file_info",
+      "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+      "param_names": [
+        "path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "iled metadata about a file or directory. Returns comprehensive inform"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "high",
+      "digest": "sha256:6ff64b49d487d69c8743ec6c81fe5bb0cf7459267b6146b522d565e405a66ae8"
+    },
+    {
+      "server": "filesystem",
+      "name": "list_allowed_directories",
+      "description": "Returns the list of directories that this server is allowed to access. Subdirectories within these allowed directories are also accessible. Use this to understand which directories and their nested paths are available before trying to access files.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:fe7d40d713a335fa54765eb86288cdd59c2a8eedc121f6156f45f9c96271c0e4"
+    }
+  ],
+  "data_profile": {
+    "rating": "SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 7,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      }
+    },
+    "unconfirmed_higher_categories": [
+      "source_code"
+    ],
+    "note": "Rating reflects high-confidence matches; source_code matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 14,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 4,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "SENSITIVE",
+    "data_categories_touched": [
+      "contacts",
+      "location",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

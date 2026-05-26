@@ -1,0 +1,273 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "memory",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-memory",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:7f412564f5b20b5da088306fb6579b6401b32cc00b84615c11fe33437f33f3e7",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'memory' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-memory.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-memory",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'memory' package spec '@modelcontextprotocol/server-memory' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-memory",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "memory",
+      "name": "create_entities",
+      "description": "Create multiple new entities in the knowledge graph",
+      "param_names": [
+        "entities"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6ce7dc5b45d4e6c256bb20feed616343e011b6929d7d3d36439df4ce10a3231d"
+    },
+    {
+      "server": "memory",
+      "name": "create_relations",
+      "description": "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
+      "param_names": [
+        "relations"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:9618aebf22f9736ab47a333971d03c827bbd63e86e11b3ca2d361d34d5dd1438"
+    },
+    {
+      "server": "memory",
+      "name": "add_observations",
+      "description": "Add new observations to existing entities in the knowledge graph",
+      "param_names": [
+        "observations"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:20a69b24a5f88cdfc1cdb6f99f54e1862b86093559b4489f03bcf7de9a334ef8"
+    },
+    {
+      "server": "memory",
+      "name": "delete_entities",
+      "description": "Delete multiple entities and their associated relations from the knowledge graph",
+      "param_names": [
+        "entityNames"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:8732851d4c21195d8897cd73fc21a2872d909f417dc5ce9ba4b1627d7aa41a46"
+    },
+    {
+      "server": "memory",
+      "name": "delete_observations",
+      "description": "Delete specific observations from entities in the knowledge graph",
+      "param_names": [
+        "deletions"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:af8caf807674837f3f384863e76fe3af3cadceba068fa4564a19d147a2fdea95"
+    },
+    {
+      "server": "memory",
+      "name": "delete_relations",
+      "description": "Delete multiple relations from the knowledge graph",
+      "param_names": [
+        "relations"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b5df204cc87e52c33ec7e709e2c384f6a1bcdfc5e200847713b73784a1bb36d6"
+    },
+    {
+      "server": "memory",
+      "name": "read_graph",
+      "description": "Read the entire knowledge graph",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c0c21cc9552b694d4128f62a4e0e353ea15da9c690ddee4ae46485f280fd1a40"
+    },
+    {
+      "server": "memory",
+      "name": "search_nodes",
+      "description": "Search for nodes in the knowledge graph based on a query",
+      "param_names": [
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f931cc8a5ae4584a576b253acf24e2473dbb823cc6c9d253e65ad4ef7282aae0"
+    },
+    {
+      "server": "memory",
+      "name": "open_nodes",
+      "description": "Open specific nodes in the knowledge graph by their names",
+      "param_names": [
+        "names"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b7c053613513ee0d46a5db261c81377546df01e739ce1911e71dbdd86e191310"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [],
+    "categories": {}
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 9,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

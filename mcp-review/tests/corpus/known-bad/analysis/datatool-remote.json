@@ -1,0 +1,92 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "datatool-remote",
+      "transport": "http",
+      "command": null,
+      "args": [],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": "http://api.datatool.invalid/mcp/sse?api_key=***",
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "remote",
+        "spec": null,
+        "pin_strength": "n/a",
+        "pin_detail": null,
+        "mutable_install_path": false,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "remote_endpoint"
+      },
+      "containment": {
+        "transport": "http",
+        "localhost": false,
+        "network_exposure": "remote",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": []
+      },
+      "digest": "sha256:0fe5ec6f42cd1a36ff126cf88afcd3b391a701a6fb952a7e491764befb4703d0",
+      "findings": [
+        {
+          "code": "credentials_in_url",
+          "severity": "HIGH",
+          "category": "secrets",
+          "title": "Credentials embedded in the remote URL",
+          "detail": "Server 'datatool-remote' embeds credentials in its URL: credential-bearing query parameter: api_key.",
+          "recommendation": "Move the credential into an env var or an Authorization header. Never put secrets in a URL.",
+          "evidence": {
+            "reason": "credential-bearing query parameter: api_key"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "non_https_remote",
+          "severity": "HIGH",
+          "category": "transport",
+          "title": "Remote server over a non-HTTPS transport",
+          "detail": "Server 'datatool-remote' uses cleartext transport 'http://' to a non-localhost host.",
+          "recommendation": "Use https:// (or wss://). If this is a local dev server on localhost, confirm it is never reachable off-host.",
+          "evidence": {
+            "scheme": "http"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [],
+  "data_profile": {
+    "rating": "UNKNOWN",
+    "surface_assessed": false,
+    "tiers_present": [],
+    "categories": {},
+    "note": "No tool surface was provided or captured \u2014 data sensitivity could not be assessed. Do NOT read this as low sensitivity; capture a tools/list and re-run."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 0,
+    "active_config_findings": 2,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "UNKNOWN",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "remote_endpoint",
+    "all_servers_redacted": true
+  }
+}

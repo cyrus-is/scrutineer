@@ -1,0 +1,191 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "exa",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "exa-mcp-server"
+      ],
+      "env_keys": [
+        "EXA_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "EXA_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "exa-mcp-server",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:42b8bbeb60c261fce3909b89058974177e37dfaaa00a3545c3071c2b155cc530",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'exa' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: exa-mcp-server.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "exa-mcp-server",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'exa' package spec 'exa-mcp-server' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "exa-mcp-server",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'exa' requires credential-like env keys: EXA_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "EXA_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "exa",
+      "name": "web_search_exa",
+      "description": "Search the web for any topic and get clean, ready-to-use content.\n\n      Best for: Finding current information, news, facts, people, companies, or answering questions about any topic.\n      Returns: Clean text content from top search results.\n\n      Query tips: \n      describe the ideal page, not keywords. \"blog post comparing React and Vue performance\" not \"React vs Vue\".\n      Use category:people / category:company to search through Linkedin profiles / companies respectively.\n      If highlights are insufficient, follow up with web_fetch_exa on the best URLs.",
+      "param_names": [
+        "numResults",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:911b5e29ff5103616b1f89e0dbaeccf52b472f766ec34b76c827452d7aba0b02"
+    },
+    {
+      "server": "exa",
+      "name": "web_fetch_exa",
+      "description": "Read a webpage's full content as clean markdown. Use after web_search_exa when highlights are insufficient or to read any URL.\n\nBest for: Extracting full content from known URLs. Batch multiple URLs in one call.\nReturns: Clean text content and metadata from the page(s).",
+      "param_names": [
+        "maxCharacters",
+        "urls"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "network_egress",
+          "title": "Outbound network / data egress",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "fetch",
+            "pattern": "\\b(fetch|curl|wget|webhook|upload|download|http[_-]?request|send[_-]?request|api[_-]?call|post[_-]?to|send[_-]?to|exfil)\\b",
+            "snippet": "web fetch exa"
+          },
+          "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": null,
+      "digest": "sha256:891c4f0d7065b7d9836e59267ecaf74e8fc1b225978809bed605a0b53ef81f77"
+    }
+  ],
+  "data_profile": {
+    "rating": "MINIMAL",
+    "surface_assessed": true,
+    "tiers_present": [],
+    "categories": {}
+  },
+  "toxic_combinations": [
+    {
+      "id": "exfil_chain",
+      "severity": "MEDIUM",
+      "title": "Read-then-send exfiltration chain",
+      "detail": "The server can both access secrets/credentials and make outbound network calls \u2014 a path to exfiltrate them to an attacker-chosen host. No tool explicitly reads secrets \u2014 this is the server's own required credential plus an egress path (true of most credentialed API servers); confirm egress targets are fixed/trusted before treating as active exfiltration.",
+      "contributing": [
+        "sensitive_env_required",
+        "network_egress"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 1,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "MINIMAL",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

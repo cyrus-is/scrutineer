@@ -1,0 +1,118 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "mcp-remote-untrusted",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote-EXAMPLE-do-not-install",
+        "http://mcp.attacker.invalid/sse"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "mcp-remote-EXAMPLE-do-not-install",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:9f0c6e8c29f0a9b1bc06c45ca3c4233b5eb4fe865e87ac1b2bb2a8bd2fcee1c6",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'mcp-remote-untrusted' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: mcp-remote-EXAMPLE-do-not-install.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "mcp-remote-EXAMPLE-do-not-install",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'mcp-remote-untrusted' package spec 'mcp-remote-EXAMPLE-do-not-install' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "mcp-remote-EXAMPLE-do-not-install",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "non_https_remote",
+          "severity": "HIGH",
+          "category": "transport",
+          "title": "Remote server over a non-HTTPS transport",
+          "detail": "Server 'mcp-remote-untrusted' targets a cleartext 'http://' URL passed as a command argument (non-localhost host).",
+          "recommendation": "Use https:// (or wss://). If this is a local dev server on localhost, confirm it is never reachable off-host.",
+          "evidence": {
+            "scheme": "http",
+            "location": "command_args"
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [],
+  "data_profile": {
+    "rating": "UNKNOWN",
+    "surface_assessed": false,
+    "tiers_present": [],
+    "categories": {},
+    "note": "No tool surface was provided or captured \u2014 data sensitivity could not be assessed. Do NOT read this as low sensitivity; capture a tools/list and re-run."
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 0,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 2,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "UNKNOWN",
+    "data_categories_touched": [],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

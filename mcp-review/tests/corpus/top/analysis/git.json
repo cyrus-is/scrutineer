@@ -1,0 +1,622 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "git",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "/Users/clawrus/Projects/scrutineer"
+      ],
+      "env_keys": [],
+      "sensitive_env_keys": [],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "mcp-server-git",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "broad",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch"
+        ]
+      },
+      "digest": "sha256:5e171f7b5ec1364fcde5dbfba58fff44bce5cfb43a804a5804e670b3ba0ac593",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'git' is fetched and executed at launch via 'uvx'; package spec: mcp-server-git.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "uvx",
+            "spec": "mcp-server-git",
+            "auto_accept": []
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'git' package spec 'mcp-server-git' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "mcp-server-git",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "broad_filesystem_scope",
+          "severity": "MEDIUM",
+          "category": "scope",
+          "title": "Broad filesystem path granted to the server",
+          "detail": "Server 'git' is pointed at broad path(s): /Users/clawrus/Projects/scrutineer.",
+          "recommendation": "Scope filesystem servers to the narrowest directory that works. Avoid home, root, and system paths.",
+          "evidence": {
+            "paths": [
+              "/Users/clawrus/Projects/scrutineer"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "git",
+      "name": "git_status",
+      "description": "Shows the working tree status",
+      "param_names": [
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git status"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "git status"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:b1d7e1b7eafc593d3050cd66b5c0b96fa657659883ef9364204ccc366f2fcc42"
+    },
+    {
+      "server": "git",
+      "name": "git_diff_unstaged",
+      "description": "Shows changes in the working directory that are not yet staged",
+      "param_names": [
+        "context_lines",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git diff unstaged"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "Shows changes in the working directory that are not yet staged"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:305f9aae3a2feedad80537c1313cb0dcf629c5a521c1fd79ffd9d1a1a17dc774"
+    },
+    {
+      "server": "git",
+      "name": "git_diff_staged",
+      "description": "Shows changes that are staged for commit",
+      "param_names": [
+        "context_lines",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git diff staged"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:7f11b1f5ecfbd5414a7d6c417fa26050b3d7c7b179ea2a538f457dc9d0e9f45c"
+    },
+    {
+      "server": "git",
+      "name": "git_diff",
+      "description": "Shows differences between branches or commits",
+      "param_names": [
+        "context_lines",
+        "repo_path",
+        "target"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git diff"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:6b86de880995a4328b324abd766dfb2d2c2ea91c3292b4032876e9c8e3b280c0"
+    },
+    {
+      "server": "git",
+      "name": "git_commit",
+      "description": "Records changes to the repository",
+      "param_names": [
+        "message",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "repo path message"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git commit"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:bcf88c337b067feaf523923be94ece2e655a79b39010ba27334c9523ae1d57c3"
+    },
+    {
+      "server": "git",
+      "name": "git_add",
+      "description": "Adds file contents to the staging area",
+      "param_names": [
+        "files",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git add"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:f7892ff5ff8b262ac42fa1a93408e25bdcffc5df5ad87442b900ff2a145cc590"
+    },
+    {
+      "server": "git",
+      "name": "git_reset",
+      "description": "Unstages all staged changes",
+      "param_names": [
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git reset"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:80ec00d7e5e694938c87007a0cc17e61f5cabd2fb72948fa0309919730d3843a"
+    },
+    {
+      "server": "git",
+      "name": "git_log",
+      "description": "Shows the commit logs",
+      "param_names": [
+        "end_timestamp",
+        "max_count",
+        "repo_path",
+        "start_timestamp"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git log"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "public_data",
+          "label": "Public / aggregate data",
+          "tier": "low",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "count",
+            "pattern": "\\b(public|published|open[_-]?data|aggregate|count|summary[_-]?stat|total)\\b",
+            "snippet": "repo path max count start timestamp end timestamp"
+          },
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:7a3ff9a39871c79f068c047f79b87e5476fdb49d34424cba6497f5c9042708ab"
+    },
+    {
+      "server": "git",
+      "name": "git_create_branch",
+      "description": "Creates a new branch from an optional base branch",
+      "param_names": [
+        "base_branch",
+        "branch_name",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git create branch"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:9a67ba77fa3525250d1a65cf61c39cb90da4d4aae9d0bb572454865609171231"
+    },
+    {
+      "server": "git",
+      "name": "git_checkout",
+      "description": "Switches branches",
+      "param_names": [
+        "branch_name",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git checkout"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:b45035a2a09dcff9bbd1ad0d5edbadc84245a34fc331dbbf464c755b8de2b371"
+    },
+    {
+      "server": "git",
+      "name": "git_show",
+      "description": "Shows the contents of a commit",
+      "param_names": [
+        "repo_path",
+        "revision"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git show"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:d3e2b3865ffd8f724833c47e8eca2ab00c88a9e755c1ac6b8ccc1fa15e3a9d1f"
+    },
+    {
+      "server": "git",
+      "name": "git_branch",
+      "description": "List Git branches",
+      "param_names": [
+        "branch_type",
+        "contains",
+        "not_contains",
+        "repo_path"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "git",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "git branch"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:cf790372eb5f5e71038f44b86798ae5aedc937a5eefa6589c782f6250c0d50bd"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "categories": {
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 12,
+        "confidence": "high"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 1,
+        "confidence": "high"
+      },
+      "public_data": {
+        "label": "Public / aggregate data",
+        "tier": "low",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 12,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "INFO": 0
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content",
+      "contacts",
+      "project_metadata",
+      "public_data",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

@@ -1,0 +1,1401 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "github",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env_keys": [
+        "GITHUB_PERSONAL_ACCESS_TOKEN"
+      ],
+      "sensitive_env_keys": [
+        "GITHUB_PERSONAL_ACCESS_TOKEN"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@modelcontextprotocol/server-github",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:3adb1146478403df8a1c14a0257859019f00c7c5e421b1b9df9101d5bfb2f767",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'github' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @modelcontextprotocol/server-github.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@modelcontextprotocol/server-github",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'github' package spec '@modelcontextprotocol/server-github' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@modelcontextprotocol/server-github",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'github' requires credential-like env keys: GITHUB_PERSONAL_ACCESS_TOKEN.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "GITHUB_PERSONAL_ACCESS_TOKEN"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "github",
+      "name": "create_or_update_file",
+      "description": "Create or update a single file in a GitHub repository",
+      "param_names": [
+        "branch",
+        "content",
+        "message",
+        "owner",
+        "path",
+        "repo",
+        "sha"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "owner repo path content message branch sha"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo path content message branch s"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Path where t"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:f033311ca8c542fccd42df73b96ada74525cb2bef9196cfbc097ed2d64254f79"
+    },
+    {
+      "server": "github",
+      "name": "search_repositories",
+      "description": "Search for GitHub repositories",
+      "param_names": [
+        "page",
+        "perPage",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:6a8c050fd6115437100b363f0dc9cba81ca54a34198ef399b14950902ea2ffd1"
+    },
+    {
+      "server": "github",
+      "name": "create_repository",
+      "description": "Create a new GitHub repository in your account",
+      "param_names": [
+        "autoInit",
+        "description",
+        "name",
+        "private"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "create repository"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:d1d018c8430121c2748c706bc95b1ae0c677b0a908eb4da13575a9b0306b9721"
+    },
+    {
+      "server": "github",
+      "name": "get_file_contents",
+      "description": "Get the contents of a file or directory from a GitHub repository",
+      "param_names": [
+        "branch",
+        "owner",
+        "path",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo path branch"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "contacts",
+          "label": "Contacts & address book",
+          "tier": "high",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "directory",
+            "pattern": "\\b(contact|address[_-]?book|directory|roster|connections)\\b",
+            "snippet": "Get the contents of a file or directory from a GitHub repository Repo"
+          },
+          "rationale": "Exposes a person's full social/professional graph."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Path to the"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:8c190725e0c744c1fd5f8a082b9948b7a1bbbe824373e4251a202104262e905a"
+    },
+    {
+      "server": "github",
+      "name": "push_files",
+      "description": "Push multiple files to a GitHub repository in a single commit",
+      "param_names": [
+        "branch",
+        "files",
+        "message",
+        "owner",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "epo branch files path content message"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo branch files path content mes"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Branch to pu"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:e57af4eb0d1c35ea30ef8dbad0140a1dda115a3632ec96778389099516914c97"
+    },
+    {
+      "server": "github",
+      "name": "create_issue",
+      "description": "Create a new issue in a GitHub repository",
+      "param_names": [
+        "assignees",
+        "body",
+        "labels",
+        "milestone",
+        "owner",
+        "repo",
+        "title"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo title body assignees mileston"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "create issue"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:020db3ecf4bd7bae0ebdf1364ad8cb9341fbe8dc2397589ba8fccb526b37911a"
+    },
+    {
+      "server": "github",
+      "name": "create_pull_request",
+      "description": "Create a new pull request in a GitHub repository",
+      "param_names": [
+        "base",
+        "body",
+        "draft",
+        "head",
+        "maintainer_can_modify",
+        "owner",
+        "repo",
+        "title"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo title body head base draft ma"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:90b73c9094c3723d8f2bf86fe04cb7253529fdd20035fed020814304bf20dc1e"
+    },
+    {
+      "server": "github",
+      "name": "fork_repository",
+      "description": "Fork a GitHub repository to your account or specified organization",
+      "param_names": [
+        "organization",
+        "owner",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "repository",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "fork repository"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "owner repo organization"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:351aa863e36bcce768a8c8dd42131a21ae8fc6edda745cdce14d9b213c26b52c"
+    },
+    {
+      "server": "github",
+      "name": "create_branch",
+      "description": "Create a new branch in a GitHub repository",
+      "param_names": [
+        "branch",
+        "from_branch",
+        "owner",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo branch from branch"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Name for the"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:67a187c1fe64e90e37120b2dc6470b0f8ab462566c43d5472a7b513216d4f3f6"
+    },
+    {
+      "server": "github",
+      "name": "list_commits",
+      "description": "Get list of commits of a branch in a GitHub repository",
+      "param_names": [
+        "owner",
+        "page",
+        "perPage",
+        "repo",
+        "sha"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo sha page perPage"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:fc449a6a26ccabba9a9ab74c955cbc92f151b5f70752957cde0fa12912f7a7ac"
+    },
+    {
+      "server": "github",
+      "name": "list_issues",
+      "description": "List issues in a GitHub repository with filtering options",
+      "param_names": [
+        "direction",
+        "labels",
+        "owner",
+        "page",
+        "per_page",
+        "repo",
+        "since",
+        "sort",
+        "state"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo direction labels page per pag"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:dfe3ecf3b223b1ab9f151ee91ee2106183beafc2df61fc671b7235892ea0f8f2"
+    },
+    {
+      "server": "github",
+      "name": "update_issue",
+      "description": "Update an existing issue in a GitHub repository",
+      "param_names": [
+        "assignees",
+        "body",
+        "issue_number",
+        "labels",
+        "milestone",
+        "owner",
+        "repo",
+        "state",
+        "title"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number title body assig"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "update issue"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:308e98cfbafcb84a3133f7d9f1d5b9badc2eda45c9f2ef6e5ae3e0ee2efe15fb"
+    },
+    {
+      "server": "github",
+      "name": "add_issue_comment",
+      "description": "Add a comment to an existing issue",
+      "param_names": [
+        "body",
+        "issue_number",
+        "owner",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number body"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "add issue comment"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:72803cbc17f979c893c506d85c26784440f4c70144098a49e4c7f86e93642500"
+    },
+    {
+      "server": "github",
+      "name": "search_code",
+      "description": "Search for code across GitHub repositories",
+      "param_names": [
+        "order",
+        "page",
+        "per_page",
+        "q"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:c38cbaddecc2125d17216030a412cc3a3b8dc3e280d313f4faad9d4c8f1c7e23"
+    },
+    {
+      "server": "github",
+      "name": "search_issues",
+      "description": "Search for issues and pull requests across GitHub repositories",
+      "param_names": [
+        "order",
+        "page",
+        "per_page",
+        "q",
+        "sort"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:b6f513e2c30536d0e3a5c1422ff2c6cba2961aa6afff9c347dec072166406c7f"
+    },
+    {
+      "server": "github",
+      "name": "search_users",
+      "description": "Search for users on GitHub",
+      "param_names": [
+        "order",
+        "page",
+        "per_page",
+        "q",
+        "sort"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": null,
+      "digest": "sha256:f3457309a8bba755bd068dc22fe652ffdb396452241acd42ef9d6e4331545dd1"
+    },
+    {
+      "server": "github",
+      "name": "get_issue",
+      "description": "Get details of a specific issue in a GitHub repository.",
+      "param_names": [
+        "issue_number",
+        "owner",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo issue number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "issue",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "get issue"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:8f874f74996bb849f7e7cc16340d299a4c15a38707ecc7abf3a43b0c755cd4fe"
+    },
+    {
+      "server": "github",
+      "name": "get_pull_request",
+      "description": "Get details of a specific pull request",
+      "param_names": [
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:0304666f07338895a02951aab1924bb73dde2075a68fca85ede3462fe5274ce2"
+    },
+    {
+      "server": "github",
+      "name": "list_pull_requests",
+      "description": "List and filter repository pull requests",
+      "param_names": [
+        "base",
+        "direction",
+        "head",
+        "owner",
+        "page",
+        "per_page",
+        "repo",
+        "sort",
+        "state"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo state head base sort directio"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name State of the"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:553aaa44088f03b0e8fad87814168c17c5c544d0c13da2b0566b26adc3e193d7"
+    },
+    {
+      "server": "github",
+      "name": "create_pull_request_review",
+      "description": "Create a review on a pull request",
+      "param_names": [
+        "body",
+        "comments",
+        "commit_id",
+        "event",
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number commit id body ev"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "calendar",
+          "label": "Calendar & schedule",
+          "tier": "high",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "event",
+            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
+            "snippet": "po pull number commit id body event comments path position body p"
+          },
+          "rationale": "Reveals who you meet, when, and movements/availability."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:0155fb1a8bf56db6ef99ef54bbc4eaeeb49a156bf4151ff964c5662923c69d74"
+    },
+    {
+      "server": "github",
+      "name": "merge_pull_request",
+      "description": "Merge a pull request",
+      "param_names": [
+        "commit_message",
+        "commit_title",
+        "merge_method",
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "message",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "ll number commit title commit message merge method"
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        },
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number commit title comm"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:5edda3bef0ace6f95036993ae01c6478ae8a1e244d7552f70755fd40a623d69d"
+    },
+    {
+      "server": "github",
+      "name": "get_pull_request_files",
+      "description": "Get the list of files changed in a pull request",
+      "param_names": [
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:efb39d49f7c685b88c1b7b940bafbb7d68bc81549a95c0903ae3698166968aab"
+    },
+    {
+      "server": "github",
+      "name": "get_pull_request_status",
+      "description": "Get the combined status of all status checks for a pull request",
+      "param_names": [
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "high",
+          "evidence": {
+            "zone": "name",
+            "matched": "status",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "get pull request status"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:9104b921fe81d6c340089e1d95fe17884dd849a36d2d0ef60311801ada6de782"
+    },
+    {
+      "server": "github",
+      "name": "update_pull_request_branch",
+      "description": "Update a pull request branch with the latest changes from the base branch",
+      "param_names": [
+        "expected_head_sha",
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number expected head sha"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:aac9049ac4101da4c507f2efb1b3653100d3156bad747eaea4dab3e044afc236"
+    },
+    {
+      "server": "github",
+      "name": "get_pull_request_comments",
+      "description": "Get the review comments on a pull request",
+      "param_names": [
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:45752f08f8ca9b0e86d6e38bca6555a4f93f72fbd51c5e579cad5510abc073d3"
+    },
+    {
+      "server": "github",
+      "name": "get_pull_request_reviews",
+      "description": "Get the reviews on a pull request",
+      "param_names": [
+        "owner",
+        "pull_number",
+        "repo"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "source_code",
+          "label": "Source code & repository contents",
+          "tier": "critical",
+          "confidence": "high",
+          "evidence": {
+            "zone": "param_name",
+            "matched": "repo",
+            "pattern": "\\b(source[_-]?code|repository|repo|codebase|commit|diff|pull[_-]?request|blame|git)\\b",
+            "snippet": "owner repo pull number"
+          },
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
+        },
+        {
+          "category": "org_structure",
+          "label": "Org / team structure",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "organization",
+            "pattern": "\\b(team|organization|org[_-]?chart|workspace|department|role|reporting[_-]?line)\\b",
+            "snippet": "Repository owner (username or organization) Repository name Pull request"
+          },
+          "rationale": "Reveals headcount, hierarchy, and reporting relationships."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:a8452feff689dad5764948b418d574be7ebcdad6a525ece93098c835d48753bb"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "categories": {
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 3,
+        "confidence": "high"
+      },
+      "source_code": {
+        "label": "Source code & repository contents",
+        "tier": "critical",
+        "tool_count": 22,
+        "confidence": "high"
+      },
+      "org_structure": {
+        "label": "Org / team structure",
+        "tier": "medium",
+        "tool_count": 15,
+        "confidence": "high"
+      },
+      "contacts": {
+        "label": "Contacts & address book",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "medium"
+      },
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 5,
+        "confidence": "high"
+      },
+      "calendar": {
+        "label": "Calendar & schedule",
+        "tier": "high",
+        "tool_count": 1,
+        "confidence": "high"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 26,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "calendar",
+      "communications_content",
+      "contacts",
+      "org_structure",
+      "project_metadata",
+      "source_code"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

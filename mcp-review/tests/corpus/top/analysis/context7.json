@@ -1,0 +1,218 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "context7",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env_keys": [
+        "CONTEXT7_API_KEY"
+      ],
+      "sensitive_env_keys": [
+        "CONTEXT7_API_KEY"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "@upstash/context7-mcp",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:246d91541a079fadb156a00a725392c0dafa48161a6d7a685422c8decc323425",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'context7' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: @upstash/context7-mcp.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "@upstash/context7-mcp",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'context7' package spec '@upstash/context7-mcp' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "@upstash/context7-mcp",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'context7' requires credential-like env keys: CONTEXT7_API_KEY.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "CONTEXT7_API_KEY"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "context7",
+      "name": "resolve-library-id",
+      "description": "Resolves a package/product name to a Context7-compatible library ID and returns matching libraries.\n\nYou MUST call this function before 'Query Documentation' tool to obtain a valid Context7-compatible library ID UNLESS the user explicitly provides a library ID in the format '/org/project' or '/org/project/version' in their query.\n\nEach result includes:\n- Library ID: Context7-compatible identifier (format: /org/project)\n- Name: Library or package name\n- Description: Short summary\n- Code Snippets: Number of available code examples\n- Source Reputation: Authority indicator (High, Medium, Low, or Unknown)\n- Benchmark Score: Quality indicator (100 is the highest score)\n- Versions: List of versions if available. Use one of those versions if the user provides a version in their query. The format of the version is /org/project/version.\n\nFor best results, select libraries based on name match, source reputation, snippet coverage, benchmark score, and relevance to your use case.\n\nSelection Process:\n1. Analyze the query to understand what library/package the user is looking for\n2. Return the most relevant match based on:\n- Name similarity to the query (exact matches prioritized)\n- Description relevance to the query's intent\n- Documentation coverage (prioritize libraries with higher Code Snippet counts)\n- Source reputation (consider libraries with High or Medium reputation more authoritative)\n- Benchmark Score: Quality indicator (100 is the highest score)\n\nResponse Format:\n- Return the selected library ID in a clearly marked section\n- Provide a brief explanation for why this library was chosen\n- If multiple good matches exist, acknowledge this but proceed with the most relevant one\n- If no good matches exist, clearly state this and suggest query refinements\n\nFor ambiguous queries, request clarification before proceeding with a best-guess match.\n\nIMPORTANT: Do not call this tool more than 3 times per question. If you cannot find what you need after 3 calls, use the best result you have.",
+      "param_names": [
+        "libraryName",
+        "query"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ibrary ID in the format '/org/project' or '/org/project/version' in"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "medium",
+      "digest": "sha256:e4bf37d7930433f74b2b9f49c375b97dd2a7f9376b5fc6e4b1628a5149a15d32"
+    },
+    {
+      "server": "context7",
+      "name": "query-docs",
+      "description": "Retrieves and queries up-to-date documentation and code examples from Context7 for any programming library or framework.\n\nYou must call 'Resolve Context7 Library ID' tool first to obtain the exact Context7-compatible library ID required to use this tool, UNLESS the user explicitly provides a library ID in the format '/org/project' or '/org/project/version' in their query.\n\nDo not call this tool more than 3 times per question.",
+      "param_names": [
+        "libraryId",
+        "query"
+      ],
+      "candidate_capabilities": [
+        {
+          "capability": "database_access",
+          "title": "Direct database / data-store access",
+          "severity": "MEDIUM",
+          "default_classification": "ask",
+          "basis": "declared",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "mongodb",
+            "pattern": "\\b(sql|psql|nosql|mongo(db)?|redis|sqlite|postgres|cypher)\\b",
+            "snippet": "ompatible library ID (e.g., '/mongodb/docs', '/vercel/next.js', '/s"
+          },
+          "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
+          "suppressed": false
+        }
+      ],
+      "data_categories": [
+        {
+          "category": "project_metadata",
+          "label": "Project / task / status metadata",
+          "tier": "medium",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "project",
+            "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
+            "snippet": "ibrary ID in the format '/org/project' or '/org/project/version' in"
+          },
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": "MEDIUM",
+      "data_tier": "medium",
+      "digest": "sha256:a37c8f1e8c1584e44f6b93b9b7c55a55e5fcce0550d095dc4372f007c73027dc"
+    }
+  ],
+  "data_profile": {
+    "rating": "LIMITED",
+    "surface_assessed": true,
+    "tiers_present": [
+      "medium"
+    ],
+    "categories": {
+      "project_metadata": {
+        "label": "Project / task / status metadata",
+        "tier": "medium",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 1,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "LIMITED",
+    "data_categories_touched": [
+      "project_metadata"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}

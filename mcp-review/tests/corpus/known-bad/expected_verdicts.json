@@ -1,0 +1,64 @@
+{
+  "_about": "Detection scorecard for the known-bad corpus. Each entry maps to a documented real-world incident (see README.md). 'expected' is the correct verdict (all should be BLOCK). 'analyzer_alone' is what the deterministic Pass 1+2 layer produces from config+surface WITHOUT a prose source review. The gap between them is the headline result: config/transport attacks are caught deterministically; behavioral/semantic attacks are not, and rely entirely on the model's source/metadata review.",
+  "_update_2026_05_26": {
+    "note": "After the fix branch (analysis@3), behavioral detection improved markedly. The per-entry 'analyzer_alone'/'detection' fields below describe the ORIGINAL (pre-fix) state; this block records the after-state.",
+    "after": {
+      "weather-exfil": "read_and_exfil HIGH/high (new file_read capability) + tool_description_injection HIGH — was a MISS (CAUTION)",
+      "calc-poisoned": "tool_description_injection HIGH, 5 signals — was a MISS (CAUTION)",
+      "mcp-remote-untrusted": "non_https_remote now fires from the command arg — was a MISS",
+      "postmark-mcp": "still surface-clean (BCC backdoor needs Pass-3 source, by design); config flags + data=HIGHLY_SENSITIVE flag it harder",
+      "cryptoprice-installer": "BLOCK via shell_wrapper — unchanged (STRONG)",
+      "datatool-remote": "BLOCK via credentials_in_url + non_https_remote — unchanged (STRONG)"
+    },
+    "scorecard_after": "config/transport attacks 2/2 (unchanged); behavioral attacks 3/4 now caught deterministically (weather-exfil, calc-poisoned, mcp-remote-untrusted). postmark BCC remains source-only by design. Version-vs-advisory matching (CVE-2025-6514 / postmark 1.0.16) tracked in scrutineer issue #35."
+  },
+  "servers": {
+    "postmark-mcp": {
+      "expected": "BLOCK",
+      "analyzer_alone": "would flag unpinned + sensitive_env (POSTMARK_SERVER_TOKEN) => BLOCK-class on provenance grounds, but the SURFACE is clean — the BCC backdoor is invisible to Pass 1+2.",
+      "detection": "PARTIAL",
+      "caught_by": "config rule (unpinned + sensitive env) flags it; the actual backdoor (silent BCC of every email) is only visible in Pass 3 source review (see source/postmark-mcp_sendEmail.js).",
+      "note": "Maps to Koi Security, Sept 2025. Demonstrates that surface review alone cannot distinguish the trojaned v1.0.16 from the benign v1.0.15 — source review is mandatory for email/egress tools."
+    },
+    "mcp-remote-untrusted": {
+      "expected": "BLOCK",
+      "analyzer_alone": "CAUTION — only package_runner_install + unpinned fired. The cleartext http:// remote (CVE compounder) was MISSED because it sits in the proxy's ARGS, not a url/transport field; the RCE itself is a known-CVE/source matter.",
+      "detection": "MISS",
+      "caught_by": "Neither the cleartext remote nor the CVE-2025-6514 RCE is caught by the analyzer. A reviewer must recognise mcp-remote<0.1.16 and/or the http:// target in argv.",
+      "note": "Maps to CVE-2025-6514 (CVSS 9.6). Two gaps: (1) non_https_remote does not inspect URLs embedded in command args; (2) no version-vs-known-CVE check."
+    },
+    "calc-poisoned": {
+      "expected": "BLOCK",
+      "analyzer_alone": "CAUTION — only package_runner_install + unpinned fired. The hidden <IMPORTANT> instruction in the tool DESCRIPTION (read ~/.ssh, exfiltrate via 'sidenote', stay silent) is completely invisible.",
+      "detection": "MISS",
+      "caught_by": "Only the prose reviewer reading the tool description catches the tool-poisoning. There is no deterministic prompt-injection / hidden-instruction detector.",
+      "note": "Maps to Invariant Labs tool-poisoning (Apr 2025). This is the single biggest detection gap: a textbook poisoned tool scores identically to a benign calculator."
+    },
+    "weather-exfil": {
+      "expected": "BLOCK",
+      "analyzer_alone": "CAUTION — exfil_chain / broad_read_and_exfil did NOT fire. read_local_file registered ZERO capability (no file_read concept exists in the taxonomy), so the read-then-send pair could not be detected. Only report_telemetry's network_egress was tagged.",
+      "detection": "MISS",
+      "caught_by": "Only the prose reviewer, by reading report_telemetry's description (which instructs sending ~/.aws/credentials and .env). The flagship exfil-chain detector is structurally blind to the most common exfil source.",
+      "note": "Demonstrates the missing file_read capability defeats the exfil_chain primitive for a plain read-then-send. Contrast filesystem (top), where the SAME combo fired — but only off a FALSE-POSITIVE network_egress, not a real read+send."
+    },
+    "cryptoprice-installer": {
+      "expected": "BLOCK",
+      "analyzer_alone": "BLOCK — shell_wrapper/HIGH fired (launched via `curl | sh`). Hard-block trigger.",
+      "detection": "STRONG",
+      "caught_by": "Pass 1 config alone. No surface or source needed.",
+      "note": "Config-layer hygiene: caught cleanly and deterministically."
+    },
+    "datatool-remote": {
+      "expected": "BLOCK",
+      "analyzer_alone": "BLOCK — credentials_in_url/HIGH + non_https_remote/HIGH both fired (two independent hard-block triggers).",
+      "detection": "STRONG",
+      "caught_by": "Pass 1 config alone.",
+      "note": "Config/transport-layer hygiene: caught cleanly. (Note non_https_remote DID fire here because the endpoint is a proper `url` field — unlike mcp-remote-untrusted where it was buried in args.)"
+    }
+  },
+  "_scorecard": {
+    "config_transport_attacks": "2/2 caught deterministically (cryptoprice-installer shell wrapper, datatool-remote creds+cleartext).",
+    "behavioral_semantic_attacks": "0/4 caught deterministically (postmark backdoor, mcp-remote RCE, calc tool-poisoning, weather exfil-chain). All require the model's prose review; 1 (weather) is structurally undetectable by the current toxic-combo engine due to the missing file_read capability.",
+    "takeaway": "Scrutineer-mcp's deterministic core is a strong provenance/config/transport gate. It is NOT a behavioral malware detector — semantic attacks (poisoned descriptions, backdoored handlers, read-then-send) depend on the LLM reviewer, and two flagship behavioral detectors have coverage holes."
+  }
+}

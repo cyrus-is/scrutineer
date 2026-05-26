@@ -133,6 +133,19 @@ def redact_url(url: str) -> str:
     return urlunsplit((parts.scheme, netloc, parts.path, query, parts.fragment))
 
 
+_URL_IN_TEXT = re.compile(r"(https?|wss?|ftp)://\S+", re.IGNORECASE)
+
+
+def _redact_embedded_url(a: str) -> str:
+    """Redact a URL appearing inside an arg (e.g. `--endpoint=http://u:p@h`),
+    preserving any prefix. Ensures a credential-bearing URL passed as a command
+    argument never reaches the output or digest unredacted."""
+    m = _URL_IN_TEXT.search(a)
+    if not m:
+        return a
+    return a[:m.start()] + redact_url(m.group(0)) + a[m.end():]
+
+
 def mask_args(args: list) -> list:
     """Mask secret-bearing CLI args: the value after a sensitive flag, the
     value in --flag=value form, and any bare token matching a known secret
@@ -154,6 +167,9 @@ def mask_args(args: list) -> list:
                 continue
             if _SECRET_VALUE_RE.search(a):
                 out.append(_MASK)
+                continue
+            if "://" in a:
+                out.append(_redact_embedded_url(a))
                 continue
         out.append(a)
     return out
@@ -202,6 +218,10 @@ class Guidance:
             cat: [re.compile(p, re.IGNORECASE) for p in spec.get("patterns", [])]
             for cat, spec in self.data_sensitivity.items()
         }
+        self.tool_injection = self.data.get("tool_injection", {})
+        self._injection_res = [
+            re.compile(p, re.IGNORECASE) for p in self.tool_injection.get("patterns", [])
+        ]
         sig = self.data.get("tool_schema_signals", {})
         self._power_param_res = [re.compile(p, re.IGNORECASE) for p in sig.get("power_params", [])]
         self._destructive_flag_res = [re.compile(p, re.IGNORECASE) for p in sig.get("destructive_flags", [])]
@@ -228,14 +248,30 @@ class Guidance:
             return True
         return any(m in v for m in self.placeholder_markers)
 
-    def capability_hits(self, text: str) -> list[dict]:
-        # These are RECALL-ORIENTED CANDIDATES from metadata naming, not a
-        # classification. basis="declared" marks that the signal is the tool's
-        # own description — the skill refines via schema semantics and, where
-        # available, handler source, weighting implementation over naming.
+    def capability_hits(self, name: str, description: str,
+                        param_names: list[str], param_descs: list[str]) -> list[dict]:
+        # RECALL-ORIENTED CANDIDATES from metadata, not a classification.
+        # basis="declared" marks the signal is the tool's own metadata; the skill
+        # refines via schema semantics and, where available, handler source.
+        # Each hit now carries evidence (the matched token + zone + snippet) and
+        # a confidence derived from WHERE it matched: a hit in the tool/param NAME
+        # is high-confidence; one only in prose is medium. This is what the
+        # SKILL's "basis=declared" transparency promised, and it lets the verdict
+        # layer (and the toxic-combo gate) discount weak signals.
+        # Normalize _/- to spaces in the NAME/param zones so word-boundary
+        # patterns fire on each token: "read_secret" -> "read secret",
+        # "run_shell_command" -> "run shell command". Without this, \b-anchored
+        # patterns never match underscore-joined tool names, so a genuinely
+        # dangerous tool only ever matched (medium-confidence) in its prose.
+        zones = [
+            ("name", _norm(name), "high"),
+            ("param_name", _norm(" ".join(param_names)), "high"),
+            ("description", " ".join([description or ""] + param_descs), "medium"),
+        ]
         hits = []
         for cap, regexes in self._cap_res.items():
-            if any(r.search(text) for r in regexes):
+            ev = _first_zone_match(regexes, zones)
+            if ev:
                 spec = self.capabilities[cap]
                 hits.append({
                     "capability": cap,
@@ -243,6 +279,8 @@ class Guidance:
                     "severity": spec.get("severity", "MEDIUM"),
                     "default_classification": spec.get("default_classification", "ask"),
                     "basis": "declared",
+                    "confidence": ev["confidence"],
+                    "evidence": {k: ev[k] for k in ("zone", "matched", "pattern", "snippet")},
                     "rationale": " ".join((spec.get("rationale", "") or "").split()),
                 })
         return hits
@@ -294,15 +332,39 @@ class Guidance:
         walk(schema)
         return out
 
-    def data_category_hits(self, text: str) -> list[dict]:
+    def injection_hits(self, text: str) -> list[dict]:
+        """Scan model-facing description text for tool-poisoning / hidden-
+        instruction signals. Returns the matched spans (evidence), not a verdict."""
+        hits = []
+        for r in self._injection_res:
+            m = r.search(text)
+            if m:
+                s, e = m.start(), m.end()
+                hits.append({
+                    "matched": m.group(0),
+                    "pattern": r.pattern,
+                    "snippet": text[max(0, s - 25):e + 35].strip(),
+                })
+        return hits
+
+    def data_category_hits(self, name: str, description: str,
+                          param_names: list[str], param_descs: list[str]) -> list[dict]:
+        zones = [
+            ("name", _norm(name), "high"),
+            ("param_name", _norm(" ".join(param_names)), "high"),
+            ("description", " ".join([description or ""] + param_descs), "medium"),
+        ]
         hits = []
         for cat, regexes in self._data_res.items():
-            if any(r.search(text) for r in regexes):
+            ev = _first_zone_match(regexes, zones)
+            if ev:
                 spec = self.data_sensitivity[cat]
                 hits.append({
                     "category": cat,
                     "label": spec.get("label", cat),
                     "tier": spec.get("tier", "medium"),
+                    "confidence": ev["confidence"],
+                    "evidence": {k: ev[k] for k in ("zone", "matched", "pattern", "snippet")},
                     "rationale": " ".join((spec.get("rationale", "") or "").split()),
                 })
         return hits
@@ -515,6 +577,36 @@ def analyze_server(name: str, entry: dict, g: Guidance) -> dict:
                 evidence={"paths": sorted(set(broad))},
             ))
 
+        # --- URLs embedded in command args ----------------------------------
+        # A proxy/wrapper often takes the real endpoint as an argument
+        # (`mcp-remote http://host/sse`). Give those URLs the same transport and
+        # credential checks as the url field — a cleartext or cred-bearing remote
+        # is just as exposed whether it sits in `url` or in `args`. (args are
+        # already URL-redacted above, so detection runs on the redacted form.)
+        for a in args:
+            if not isinstance(a, str) or "://" not in a:
+                continue
+            m = _URL_IN_TEXT.search(a)
+            if not m:
+                continue
+            au = m.group(0)
+            creds = url_credentials(au)
+            if creds:
+                findings.append(g.smell(
+                    "credentials_in_url",
+                    f"Server '{name}' embeds credentials in a URL passed as a "
+                    f"command argument: {creds}.",
+                    evidence={"reason": creds, "location": "command_args"},
+                ))
+            ascheme = (urlsplit(au).scheme or "").lower()
+            if ascheme in ("http", "ws") and not is_localhost(au):
+                findings.append(g.smell(
+                    "non_https_remote",
+                    f"Server '{name}' targets a cleartext '{ascheme}://' URL passed "
+                    f"as a command argument (non-localhost host).",
+                    evidence={"scheme": ascheme, "location": "command_args"},
+                ))
+
     # --- remote: transport + url creds ---------------------------------------
     if url:
         creds = url_credentials(url)
@@ -679,18 +771,90 @@ def extract_tools(payload) -> list[dict]:
     return []
 
 
+def _schema_param_text(schema) -> tuple[list[str], list[str]]:
+    """Recursively collect (property_names, descriptions) from a JSON Schema.
+
+    Deliberately EXCLUDES meta-keys ($schema/$id/$ref), type strings, enum and
+    default VALUES — i.e. everything that is not a human-meaningful name or
+    description. Matching capability/data regexes against the full
+    canonical(schema) blob is what made 'http' in the "$schema":"http://..."
+    dialect URL light up network_egress on every tool; names + descriptions are
+    the only zones an evader actually uses."""
+    names, descs = [], []
+
+    def walk(node, depth=0):
+        if depth > 6 or not isinstance(node, dict):
+            return
+        d = node.get("description")
+        if isinstance(d, str) and d:
+            descs.append(d)
+        props = node.get("properties")
+        if isinstance(props, dict):
+            for pname, pspec in props.items():
+                names.append(str(pname))
+                walk(pspec, depth + 1)
+        items = node.get("items")
+        if isinstance(items, dict):
+            walk(items, depth + 1)
+        elif isinstance(items, list):
+            for it in items:
+                walk(it, depth + 1)
+        for comb in ("oneOf", "anyOf", "allOf"):
+            for sub in node.get(comb, []) or []:
+                walk(sub, depth + 1)
+        ap = node.get("additionalProperties")
+        if isinstance(ap, dict):
+            walk(ap, depth + 1)
+
+    walk(schema if isinstance(schema, dict) else {})
+    return names, descs
+
+
+def _norm(s: str) -> str:
+    """Replace _/- runs with spaces so \\b-anchored patterns fire on each token
+    of an underscore-joined identifier (read_secret -> 'read secret')."""
+    return re.sub(r"[_\-]+", " ", s or "")
+
+
+def _first_zone_match(regexes: list, zones: list) -> dict | None:
+    """Search ordered (zone_name, text, confidence) tuples and return the FIRST
+    match — zones are passed highest-confidence-first, so the returned evidence
+    carries the strongest basis for the hit (a match in the tool/param NAME is
+    worth more than one buried in prose). snippet gives a reviewer the span to
+    confirm or dismiss the candidate without re-deriving it."""
+    for zone_name, text, conf in zones:
+        if not text:
+            continue
+        for r in regexes:
+            m = r.search(text)
+            if m:
+                s, e = m.start(), m.end()
+                return {
+                    "zone": zone_name,
+                    "matched": m.group(0),
+                    "pattern": r.pattern,
+                    "confidence": conf,
+                    "snippet": text[max(0, s - 30):e + 30].strip(),
+                }
+    return None
+
+
 def analyze_tool(tool: dict, server_name: str | None, g: Guidance) -> dict:
     name = tool.get("name", "")
     description = tool.get("description", "") or ""
     schema = tool.get("inputSchema") or tool.get("input_schema") or {}
 
-    # Capability scan runs over name + description + the schema text, so a
-    # parameter named "command" or "url" is caught even if the description is
-    # vague.
-    haystack = " ".join([name, description, canonical(schema)])
-    caps = g.capability_hits(haystack)
-    data_categories = g.data_category_hits(haystack)
+    # Capability/data scans run over zoned metadata — the tool name, the schema
+    # PROPERTY NAMES, and the descriptions (tool + nested params) — NOT the raw
+    # canonical(schema) blob. That keeps a parameter named "command" or "url" in
+    # scope while excluding meta-keys, type strings, and values (the "$schema"
+    # dialect URL, enum/default strings) that produced systematic false hits.
+    param_names, param_descs = _schema_param_text(schema)
+    caps = g.capability_hits(name, description, param_names, param_descs)
+    data_categories = g.data_category_hits(name, description, param_names, param_descs)
     schema_signals = g.schema_intent_signals(schema)
+    # Tool-poisoning scan over the model-facing text (tool + param descriptions).
+    injection_signals = g.injection_hits(" ".join([name, description] + param_descs))
 
     identity = {"name": name, "description": description, "inputSchema": schema}
     tool_digest = digest(identity)
@@ -703,6 +867,7 @@ def analyze_tool(tool: dict, server_name: str | None, g: Guidance) -> dict:
         "candidate_capabilities": caps,
         "data_categories": data_categories,
         "schema_signals": schema_signals,
+        "injection_signals": injection_signals,
         "max_severity": _max_severity([c["severity"] for c in caps]),
         "data_tier": _max_tier([d["tier"] for d in data_categories]),
         "digest": tool_digest,
@@ -734,22 +899,61 @@ def data_profile(tools: list[dict], g: Guidance) -> dict:
     """Aggregate the union of data categories across a set of tools into a
     single sensitivity rating. This is what answers "how much / how sensitive
     is the data this server wants?" — independent of any security finding."""
+    # No tool surface => the data question is UNANSWERED, not "minimal". A server
+    # whose tools weren't captured (e.g. it wouldn't start without a real key)
+    # must not be silently rated low — that under-states a Stripe/Postgres-class
+    # server. UNKNOWN tells the verdict layer to capture the surface and elevate.
+    if not tools:
+        return {
+            "rating": "UNKNOWN",
+            "surface_assessed": False,
+            "tiers_present": [],
+            "categories": {},
+            "note": "No tool surface was provided or captured — data sensitivity "
+                    "could not be assessed. Do NOT read this as low sensitivity; "
+                    "capture a tools/list and re-run.",
+        }
     categories: dict[str, dict] = {}
     for t in tools:
         for d in t["data_categories"]:
             cat = d["category"]
-            if cat not in categories:
-                categories[cat] = {"label": d["label"], "tier": d["tier"], "tool_count": 0}
-            categories[cat]["tool_count"] += 1
+            c = categories.setdefault(
+                cat, {"label": d["label"], "tier": d["tier"], "tool_count": 0, "confidence": "medium"})
+            c["tool_count"] += 1
+            if d.get("confidence") == "high":
+                c["confidence"] = "high"
     tiers_present = sorted({c["tier"] for c in categories.values()},
                            key=lambda t: _TIER_ORDER.get(t, 0), reverse=True)
-    top = _max_tier([c["tier"] for c in categories.values()])
-    rating = _TIER_TO_RATING[_TIER_ORDER[top]] if top else "MINIMAL"
-    return {
+
+    # The rating is driven by the highest tier that has a HIGH-confidence hit
+    # (matched in a tool/param NAME). A higher tier seen only in prose (medium
+    # confidence) is reported as "unconfirmed" rather than silently setting the
+    # rating — that is what stopped one prose match (e.g. 'repository'/'token' in
+    # a web-search description) from rating a search server HIGHLY_SENSITIVE.
+    conf_top = _max_tier([c["tier"] for c in categories.values() if c["confidence"] == "high"])
+    any_top = _max_tier([c["tier"] for c in categories.values()])
+    if conf_top:
+        rating = _TIER_TO_RATING[_TIER_ORDER[conf_top]]
+        unconfirmed = sorted(cat for cat, c in categories.items()
+                             if _TIER_ORDER[c["tier"]] > _TIER_ORDER[conf_top])
+    elif any_top:
+        rating = _TIER_TO_RATING[_TIER_ORDER[any_top]]
+        unconfirmed = []
+    else:
+        rating, unconfirmed = "MINIMAL", []
+
+    out = {
         "rating": rating,
+        "surface_assessed": True,
         "tiers_present": tiers_present,
         "categories": categories,
     }
+    if unconfirmed:
+        out["unconfirmed_higher_categories"] = unconfirmed
+        out["note"] = ("Rating reflects high-confidence matches; "
+                       + ", ".join(unconfirmed) + " matched only in prose (medium "
+                       "confidence) and would raise the rating if confirmed in review.")
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -776,45 +980,120 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
         or "sensitive_env_required" in config_codes
     egress = "network_egress" in cap_set
     broad_fs = "broad_filesystem_scope" in config_codes
-    reads_files = "files_documents" in data_set
+    reads_files = "file_read" in cap_set or "files_documents" in data_set
     reads_comms = "communications_content" in data_set
+
+    # Is the read ARBITRARY? A file_read tool exposing a free path-like param can
+    # be pointed at any file (a secret, a config) — that's what makes read+egress
+    # a HIGH exfil primitive rather than a benign scoped read.
+    _PATH_PARAMS = {"path", "file_path", "filepath", "filename", "file", "paths",
+                    "dir", "directory", "uri", "location"}
+    arbitrary_read = broad_fs or any(
+        any(c["capability"] == "file_read" for c in t["candidate_capabilities"])
+        and (_PATH_PARAMS & {p.lower() for p in t.get("param_names", [])})
+        for t in tools
+    )
+
+    # Confidence gating: a toxic combination is only as strong as the capability
+    # signals that compose it. A combo whose contributing capability matched only
+    # in prose (medium confidence) — or whose "reads secrets" is merely the server
+    # REQUIRING a credential (sensitive_env) rather than a tool that READS one —
+    # is downgraded HIGH -> MEDIUM with a note. This stops one weak/false-positive
+    # signal from minting a deterministic HIGH (and is what kept credentialed API
+    # servers from all reading as HIGH exfil chains).
+    def _cap_conf(cap):
+        confs = [c.get("confidence") for t in tools
+                 for c in t["candidate_capabilities"] if c["capability"] == cap]
+        confs = [c for c in confs if c]
+        if not confs:
+            return None
+        return "high" if "high" in confs else "medium"
+
+    def _data_conf(cat):
+        confs = [d.get("confidence") for t in tools
+                 for d in t["data_categories"] if d["category"] == cat]
+        confs = [c for c in confs if c]
+        if not confs:
+            return None
+        return "high" if "high" in confs else "medium"
+
+    secret_tool = "secrets_access" in cap_set or "credentials_secrets" in data_set
+    secret_conf = _cap_conf("secrets_access") or _data_conf("credentials_secrets")
+    secret_strong = secret_tool and secret_conf == "high"
+    egress_weak = _cap_conf("network_egress") == "medium"
 
     combos = []
 
-    def add(cid, severity, title, detail, contributing):
+    def add(cid, severity, title, detail, contributing, confidence="high"):
         combos.append({
             "id": cid, "severity": severity, "title": title,
-            "detail": detail, "contributing": contributing,
+            "detail": detail, "contributing": contributing, "confidence": confidence,
         })
 
     if reads_secrets and egress:
-        add("exfil_chain", "HIGH",
+        # Strong only if an actual tool reads secrets AT HIGH CONFIDENCE.
+        # sensitive_env alone ("the server holds a credential it could leak") or
+        # a prose-only secret/token match is MEDIUM — the former is true of nearly
+        # every credentialed API server, the latter is often noise ("token limit").
+        weak = (not secret_strong) or egress_weak
+        note = ("" if secret_tool else
+                " No tool explicitly reads secrets — this is the server's own "
+                "required credential plus an egress path (true of most credentialed "
+                "API servers); confirm egress targets are fixed/trusted before "
+                "treating as active exfiltration.")
+        add("exfil_chain", "MEDIUM" if weak else "HIGH",
             "Read-then-send exfiltration chain",
-            "The server can both read secrets/credentials and make outbound "
-            "network calls — a complete path to exfiltrate them to an "
-            "attacker-chosen host.",
-            ["secrets_access/sensitive_env", "network_egress"])
+            "The server can both access secrets/credentials and make outbound "
+            "network calls — a path to exfiltrate them to an attacker-chosen host."
+            + note,
+            ["secrets_access" if secret_tool else "sensitive_env_required", "network_egress"],
+            confidence="medium" if weak else "high")
 
     if "code_execution" in cap_set and reads_secrets:
-        add("exec_with_secret_access", "HIGH",
+        weak = (not secret_strong) or _cap_conf("code_execution") == "medium"
+        add("exec_with_secret_access", "MEDIUM" if weak else "HIGH",
             "Code execution alongside secret access",
             "Arbitrary execution combined with credential access means a single "
-            "tool call can read and abuse every secret the server holds.",
-            ["code_execution", "secrets_access/sensitive_env"])
+            "tool call can read and abuse every secret the server holds."
+            + ("" if secret_tool else " (Secret access is a required credential, "
+               "not a secrets-reading tool — confirm in source.)"),
+            ["code_execution", "secrets_access" if secret_tool else "sensitive_env_required"],
+            confidence="medium" if weak else "high")
 
     if ("file_write" in cap_set or "file_delete" in cap_set) and egress:
-        add("remote_controlled_fs_mutation", "HIGH",
+        weak = egress_weak or (_cap_conf("file_write") == "medium" and _cap_conf("file_delete") in (None, "medium"))
+        add("remote_controlled_fs_mutation", "MEDIUM" if weak else "HIGH",
             "Filesystem mutation driven by network input",
             "The server can write/delete files and make network calls — remote "
             "input can drive destructive or persistence-establishing writes.",
-            ["file_write/file_delete", "network_egress"])
+            ["file_write/file_delete", "network_egress"],
+            confidence="medium" if weak else "high")
 
-    if (reads_files or reads_comms) and egress and broad_fs:
-        add("broad_read_and_exfil", "HIGH",
-            "Broad data read paired with egress",
-            "Broad filesystem scope plus the ability to read file/message "
-            "contents and send outbound — wide-radius data exfiltration.",
-            ["broad_filesystem_scope", "file/message read", "network_egress"])
+    if (reads_files or reads_comms) and egress:
+        # HIGH only when the read is arbitrary AND the egress signal is strong;
+        # a prose-only egress match downgrades it.
+        strong = arbitrary_read and not egress_weak
+        sev = "HIGH" if strong else "MEDIUM"
+        title = ("Arbitrary file read paired with egress" if arbitrary_read
+                 else "File/message read paired with egress")
+        detail = (
+            "The server can read file" + ("/message " if reads_comms else " ")
+            + "contents and make outbound network calls — a read-then-send "
+            "exfiltration path. "
+            + ("The read accepts an arbitrary path (or the server is scoped to a "
+               "broad directory), so it can reach secrets/configs far beyond the "
+               "task." if arbitrary_read
+               else "Severity is MEDIUM because the read appears scoped; confirm "
+                    "what the read tool can reach and where egress can target.")
+        )
+        contributing = ["file_read" + (" (arbitrary path)" if arbitrary_read else "")]
+        if reads_comms:
+            contributing.append("communications_content")
+        if broad_fs:
+            contributing.append("broad_filesystem_scope")
+        contributing.append("network_egress")
+        add("read_and_exfil", sev, title, detail, contributing,
+            confidence="high" if strong else "medium")
 
     return combos
 
@@ -1073,6 +1352,22 @@ def main():
     for c in combos:
         sev_counts[c["severity"]] = sev_counts.get(c["severity"], 0) + 1
 
+    # Tool-poisoning / hidden-instruction findings — one per tool with signals.
+    inj_sev = g.tool_injection.get("severity", "HIGH")
+    injection_findings = [
+        {
+            "server": t.get("server"),
+            "tool": t["name"],
+            "code": "tool_description_injection",
+            "severity": inj_sev,
+            "title": g.tool_injection.get("title", "Hidden instructions in tool description"),
+            "signals": t["injection_signals"],
+        }
+        for t in tools if t.get("injection_signals")
+    ]
+    for _ in injection_findings:
+        sev_counts[inj_sev] = sev_counts.get(inj_sev, 0) + 1
+
     # Approval drift — what the client has already authorized vs. what review
     # recommends. Requires both an allowlist and a tool surface to correlate.
     allow_info = None
@@ -1114,11 +1409,12 @@ def main():
         }
 
     out = {
-        "schema": "mcp-review/analysis@2",
+        "schema": "mcp-review/analysis@3",
         "servers": servers,
         "tools": tools,
         "data_profile": profile,
         "toxic_combinations": combos,
+        "injection_findings": injection_findings,
         "approval_drift": drift,
         "granted": granted,
         "stale_suppressions": recon["stale_suppressions"],
@@ -1128,6 +1424,7 @@ def main():
             "active_config_findings": len(active_server_findings),
             "active_tool_capabilities": len(active_tool_caps),
             "toxic_combination_count": len(combos),
+            "injection_finding_count": len(injection_findings),
             "approval_drift_count": len(drift),
             "severity_counts": sev_counts,
             "data_sensitivity_rating": profile["rating"],

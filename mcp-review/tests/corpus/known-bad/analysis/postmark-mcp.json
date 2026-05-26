@@ -1,0 +1,200 @@
+{
+  "schema": "mcp-review/analysis@3",
+  "servers": [
+    {
+      "name": "postmark-mcp",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "postmark-mcp-EXAMPLE-do-not-install"
+      ],
+      "env_keys": [
+        "POSTMARK_SERVER_TOKEN"
+      ],
+      "sensitive_env_keys": [
+        "POSTMARK_SERVER_TOKEN"
+      ],
+      "url": null,
+      "redaction_ok": true,
+      "provenance": {
+        "source_type": "registry",
+        "spec": "postmark-mcp-EXAMPLE-do-not-install",
+        "pin_strength": "none",
+        "pin_detail": "no version specified (resolves to whatever the registry serves now)",
+        "mutable_install_path": true,
+        "lockfile_present": null,
+        "signature_status": "unknown",
+        "runtime_binding_confidence": "none"
+      },
+      "containment": {
+        "transport": "stdio",
+        "localhost": null,
+        "network_exposure": "local_stdio",
+        "filesystem_scope": "none_declared",
+        "sandbox_evidence": "none_detected",
+        "privilege_notes": [
+          "runs fetched package code at launch",
+          "non-interactive install (-y)"
+        ]
+      },
+      "digest": "sha256:139ac63e9253e4000042a6f6a54314db04879ba517d4cff0b2a3586c00323487",
+      "findings": [
+        {
+          "code": "package_runner_install",
+          "severity": "MEDIUM",
+          "category": "install",
+          "title": "Installed on-the-fly via a package runner",
+          "detail": "Server 'postmark-mcp' is fetched and executed at launch via 'npx' with auto-accept flag(s) -y; package spec: postmark-mcp-EXAMPLE-do-not-install.",
+          "recommendation": "Install the server as a pinned dependency and invoke the local binary, or vendor it. If a runner is unavoidable, pin an exact version (see unpinned_source).",
+          "evidence": {
+            "runner": "npx",
+            "spec": "postmark-mcp-EXAMPLE-do-not-install",
+            "auto_accept": [
+              "-y"
+            ]
+          },
+          "suppressed": false
+        },
+        {
+          "code": "unpinned_source",
+          "severity": "HIGH",
+          "category": "supply_chain",
+          "title": "Package source is unpinned or mutable",
+          "detail": "Server 'postmark-mcp' package spec 'postmark-mcp-EXAMPLE-do-not-install' is unpinned (pin strength: none): no version specified (resolves to whatever the registry serves now).",
+          "recommendation": "Pin an exact version (pkg@1.2.3) or a git commit SHA. Avoid @latest and branch refs.",
+          "evidence": {
+            "spec": "postmark-mcp-EXAMPLE-do-not-install",
+            "pin_strength": "none",
+            "reason": "no version specified (resolves to whatever the registry serves now)"
+          },
+          "suppressed": false
+        },
+        {
+          "code": "sensitive_env_required",
+          "severity": "INFO",
+          "category": "secrets",
+          "title": "Server requires sensitive credentials",
+          "detail": "Server 'postmark-mcp' requires credential-like env keys: POSTMARK_SERVER_TOKEN.",
+          "recommendation": "Confirm each credential is scoped to least privilege and rotatable. Note which tools can exfiltrate it.",
+          "evidence": {
+            "sensitive_keys": [
+              "POSTMARK_SERVER_TOKEN"
+            ]
+          },
+          "suppressed": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "server": "postmark-mcp",
+      "name": "sendEmail",
+      "description": "Send a single transactional email via Postmark.",
+      "param_names": [
+        "htmlBody",
+        "subject",
+        "textBody",
+        "to"
+      ],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "Send a single transactional email via Postmark."
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:e091cbd0c4d9b634ff9773f36d59f1844b7359374ea69c6e8f23a8c0a69742a5"
+    },
+    {
+      "server": "postmark-mcp",
+      "name": "listTemplates",
+      "description": "List available Postmark email templates.",
+      "param_names": [],
+      "candidate_capabilities": [],
+      "data_categories": [
+        {
+          "category": "communications_content",
+          "label": "Message / email / DM contents",
+          "tier": "critical",
+          "confidence": "medium",
+          "evidence": {
+            "zone": "description",
+            "matched": "email",
+            "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
+            "snippet": "List available Postmark email templates."
+          },
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+        }
+      ],
+      "schema_signals": {
+        "power_params": [],
+        "destructive_flags": [],
+        "arbitrary_input": false
+      },
+      "injection_signals": [],
+      "max_severity": null,
+      "data_tier": "critical",
+      "digest": "sha256:4cfcf24d576d8c554148eb9583bc1c42b2af162ecda04be00942ea8b0876b211"
+    }
+  ],
+  "data_profile": {
+    "rating": "HIGHLY_SENSITIVE",
+    "surface_assessed": true,
+    "tiers_present": [
+      "critical"
+    ],
+    "categories": {
+      "communications_content": {
+        "label": "Message / email / DM contents",
+        "tier": "critical",
+        "tool_count": 2,
+        "confidence": "medium"
+      }
+    }
+  },
+  "toxic_combinations": [],
+  "injection_findings": [],
+  "approval_drift": [],
+  "granted": null,
+  "stale_suppressions": [],
+  "summary": {
+    "server_count": 1,
+    "tool_count": 2,
+    "active_config_findings": 3,
+    "active_tool_capabilities": 0,
+    "toxic_combination_count": 0,
+    "injection_finding_count": 0,
+    "approval_drift_count": 0,
+    "severity_counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
+    "data_categories_touched": [
+      "communications_content"
+    ],
+    "weakest_runtime_binding": "none",
+    "all_servers_redacted": true
+  }
+}
