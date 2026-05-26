@@ -5,6 +5,12 @@
 
 Agentic code review toolkit for [Claude Code](https://claude.ai/code). Three generators that scan your repo and produce tailored review skills — a principal engineer peer review, a security audit, and a service topology map that makes both smarter — plus `/scrutineer-mcp`, a standalone auditor for the MCP servers you're about to trust.
 
+```bash
+pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -security, -servicemap, -mcp to .claude/commands/
+```
+
+> **New in 1.6 — [`/scrutineer-mcp`](#mcp-review): an "npm audit" for MCP servers.** Installing an MCP server hands it tool access, data access, and usually a live credential. `/scrutineer-mcp` audits one *before* it runs — verdict (`SAFE`/`CAUTION`/`BLOCK`) + a separate data-sensitivity rating — catching unpinned installs, creds-in-URLs, read-then-send exfil paths, and tool-poisoning. Motivated by real 2025 incidents (the postmark-mcp backdoor, CVE-2025-6514).
+
 ## What's in the box
 
 ### generate-servicemap

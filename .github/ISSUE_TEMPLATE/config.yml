@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/cyrus-is/scrutineer/security/advisories/new
+    about: Report vulnerabilities privately — please do NOT open a public issue. See SECURITY.md.
+  - name: 💬 Questions & ideas (Discussions)
+    url: https://github.com/cyrus-is/scrutineer/discussions
+    about: Usage questions, "is this finding a false positive?", and general discussion.
