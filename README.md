@@ -63,14 +63,15 @@ A standalone auditor for MCP servers — the `npm audit` equivalent for the [Mod
 It reports **two independent axes** — a server can be perfectly secure and still want to read every message you've ever sent:
 
 - **Security verdict** — `SAFE / CAUTION / BLOCK`
-- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE`
+- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE` (or `UNKNOWN` when no tool surface was captured — so a server whose tools couldn't be enumerated never silently reads as low-risk)
 
-**Three passes, static-first (never starts the server, calls a tool, or fetches a URL):**
-1. **Config review** — install/transport/secret/scope smells, plus *provenance* (can the reviewed code be tied to what actually runs?) and *containment*
-2. **Tool-surface review** — capability classification (allow/ask/deny), the data categories each tool touches, and schema-intent signals that expose the benign-name/powerful-schema evasion shape
+**Static-first passes (never starts the server, calls a tool, or fetches a URL):**
+1. **Config review** — install/transport/secret/scope smells (including a credential or cleartext URL hidden in a command arg, e.g. `mcp-remote http://…`), plus *provenance* (can the reviewed code be tied to what actually runs?) and *containment*
+2. **Tool-surface review** — capability classification (allow/ask/deny), each hit carrying the matched-token *evidence* and a *confidence* (a name/param match outweighs one buried in prose); the data categories each tool touches; schema-intent signals that expose the benign-name/powerful-schema evasion shape; and a **tool-poisoning scan** for hidden instructions in tool descriptions (`<IMPORTANT>`-style directives, "read `~/.ssh`", covert exfil)
 3. **Source review** — handler injection, secret handling, exfil paths, and obfuscation, with source safely acquired by `fetch_source.py` (resolves via registry APIs, integrity-verified, path-sanitized extraction — never runs a package manager or executes fetched code)
+4. **Finding self-review** — an optional agentic false-positive sweep (`validate_findings.py`) that re-examines each candidate against its own evidence and suppresses clear mismatches *auditably* (suppress-only, with a recorded reason)
 
-Plus **toxic combinations** (individually-tolerable capabilities that together form an attack primitive — e.g. secrets-access + network-egress = read-then-send exfil) and **approval drift** (what your client has already auto-authorized vs. what review recommends). Findings bind to a SHA-256 digest so false-positive suppressions auto-expire the moment the server's config or tool surface changes.
+Plus **toxic combinations** (individually-tolerable capabilities that together form an attack primitive — e.g. secrets-access + network-egress = read-then-send exfil), severity- and confidence-gated so a single weak signal can't mint a false HIGH, and **approval drift** (what your client has already auto-authorized vs. what review recommends). Findings bind to a SHA-256 digest so false-positive suppressions auto-expire the moment the server's config or tool surface changes.
 
 See [`mcp-review/README.md`](mcp-review/README.md) for the full design.
 
@@ -218,7 +219,7 @@ The review tools are driven by YAML guidance files:
 
 - **`generate-peer-review/peer_review_guidance.yaml`** — platform detection rules, pre-flight checks, focus areas, and change-type signals for peer review
 - **`generate-security-review/security_guidance.yaml`** — platform detection rules, vulnerability checklists with OWASP mapping, and secure alternatives
-- **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, and the data-sensitivity taxonomy for MCP review
+- **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns for MCP review
 
 To add a new platform or customize checks for your stack, add entries to these files. The two generators pick them up automatically and self-heal — if they detect a platform in your repo that isn't in the guidance file, they'll flag it and offer to enrich the guidance. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
 

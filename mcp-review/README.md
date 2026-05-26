@@ -5,7 +5,7 @@ servers. Reviews an MCP server's install/config, its exposed tool surface, and i
 then reports two independent things:
 
 - **Security verdict** — `SAFE / CAUTION / BLOCK`
-- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE`
+- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE` (or `UNKNOWN` when no tool surface was captured)
 
 A server can be perfectly secure and still want to read every message you've ever sent. Those are different
 questions, so they get separate answers.
@@ -19,10 +19,11 @@ is `generate-servicemap`: a static skill plus a runtime Python helper.
 
 | Piece | Role |
 |---|---|
-| `analyze_mcp.py` | **Deterministic half.** Parses config + `tools/list`, flags known patterns reproducibly, tags data categories, computes stable digests. Produces *evidence, never verdicts*. |
+| `analyze_mcp.py` | **Deterministic half.** Parses config + `tools/list`, flags known patterns reproducibly, tags candidate capabilities and data categories (each with the matched-token *evidence* and a *confidence*), scans descriptions for tool-poisoning, emits confidence-gated toxic combinations, and computes stable digests. Produces *evidence, never verdicts*. |
 | `fetch_source.py` | **Safe-acquisition half of Pass 3.** Resolves + downloads source via registry HTTP APIs (or a commit-pinned GitHub tarball), verifies integrity, and extracts with a path-sanitizing extractor. Never invokes npm/pip/git; never executes fetched code. Emits a manifest with `source_artifact_match`. |
-| `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, assigns the verdict. Copied to `.claude/commands/scrutineer-mcp.md`. |
-| `mcp_risk_guidance.yaml` | Tunable catalog: config-smell definitions, sensitive-env-key patterns, package-runner/shell lists, the dangerous-capability taxonomy, and the data-sensitivity taxonomy. |
+| `validate_findings.py` | **Optional agentic false-positive sweep (Pass 4).** Extracts every candidate finding with its evidence, builds a triage prompt, and applies the result back onto the analysis — suppress-only, auditable. Judgment is agentic (`--run` shells to `claude -p`); the extract/prompt/apply scaffolding is pure and tested. A separate entrypoint, so the analyzer's offline guarantee is untouched. |
+| `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, runs the Pass-4 self-review, assigns the verdict. Copied to `.claude/commands/scrutineer-mcp.md`. |
+| `mcp_risk_guidance.yaml` | Tunable catalog: config-smell definitions, sensitive-env-key patterns, package-runner/shell lists, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns. |
 
 Detection stays deterministic in Python for reproducibility, and because **digest-bound suppression needs
 real hashing** a prompt can't do reliably.
@@ -76,20 +77,25 @@ Safely fetch a server's source for Pass 3 (never runs npm/pip/git, never execute
 .venv/bin/python fetch_source.py --github owner/repo --ref <40-hex-sha> --fetch
 ```
 
-## The three passes (static-first)
+## The passes (static-first)
 
 It never starts the server, calls a tool, or fetches a URL. Requiring the server to run would mean you
 already executed the thing you're trying to evaluate.
 
 1. **Config review** — parse the `mcpServers` map; flag shell wrappers, on-the-fly package-runner installs,
    unpinned/mutable sources, non-HTTPS remotes, credentials-in-URL, sensitive-credential requirements, and
-   broad filesystem scope. Detects — but **never echoes** — live secret values, so the report stays
+   broad filesystem scope. Transport and credential checks also cover URLs hidden in command args (a proxy
+   like `mcp-remote http://…`). Detects — but **never echoes** — live secret values, so the report stays
    shareable.
 2. **Tool-surface review** — consume a captured `tools/list` response. Tag each tool's *candidate
-   capabilities* (a recall-oriented prefilter, `basis: declared`), the *data categories* it touches, and
-   *schema-intent signals* (power params, destructive flags, arbitrary input) that expose the
-   benign-name/powerful-schema evasion shape. The skill refines candidates against schema semantics and
-   handler source, weighting implementation over naming.
+   capabilities* (a recall-oriented prefilter, `basis: declared`) — including `file_read`, the source half of
+   a read-then-send chain — each hit carrying its matched-token *evidence* (token, zone, snippet) and a
+   *confidence* (high when matched in a tool/param **name**, medium when only in prose). Also tag the *data
+   categories* it touches, the *schema-intent signals* (power params, destructive flags, arbitrary input)
+   that expose the benign-name/powerful-schema evasion shape, and **hidden-instruction / tool-poisoning**
+   signals in the descriptions (`<IMPORTANT>`-style directives, "do not mention", secret-path reads, the
+   "pass … as sidenote" exfil pattern). The skill refines candidates against schema semantics and handler
+   source, weighting implementation over naming.
 3. **Source review** — whenever source is obtainable, review the handlers for injection, secret handling,
    exfil paths, supply-chain risk, and **obfuscation** (a BLOCK signal). Acquisition is handled by
    `fetch_source.py`, not a package manager: it resolves the artifact via the registry HTTP APIs (or a
@@ -99,6 +105,12 @@ already executed the thing you're trying to evaluate.
    (verified/unverifiable/unfetchable), turning the Phantom-Artifact check ("is the reviewed source the code
    that runs?") into a checked fact instead of a manual judgment. Closed-source/binary servers degrade
    gracefully: config + tools only, capped at `CAUTION`, clearly labeled.
+4. **Finding self-review (optional, agentic)** — a late-stage false-positive sweep over the candidate
+   findings. The deterministic layer is recall-oriented; this pass re-examines each candidate against its
+   own evidence and the tool's purpose and marks clear mismatches (`token` in "token limit", `query` on a
+   web-search param) — **suppress-only and auditable** (each removal carries a reason), never able to
+   escalate. Run it via `validate_findings.py` (`--run` shells to a model; `--emit-prompt` to drive your own)
+   or do the same reasoning inline as Pass 4 of the skill.
 
 Two cross-cutting evidence layers feed the verdict:
 
@@ -108,9 +120,12 @@ Two cross-cutting evidence layers feed the verdict:
   CAUTION.
 - **Containment** — transport, localhost/network exposure, filesystem scope, sandbox evidence, privilege
   notes.
-- **Toxic combinations** — individually-tolerable capabilities that together form an attack primitive
-  (read-then-send exfil, exec+secrets, fs-mutation+egress, broad-read+egress), emitted as first-class HIGH
-  findings.
+- **Toxic combinations** — individually-tolerable capabilities that together form an attack primitive:
+  `exfil_chain` (secret access + egress), `exec_with_secret_access`, `remote_controlled_fs_mutation`, and
+  `read_and_exfil` (file/message read + egress). Each carries a severity **and** confidence: a combo is
+  `HIGH` only when its contributing capabilities are high-confidence (and, for secret combos, a tool *reads*
+  a secret rather than the server merely *requiring* a credential) — so one weak/ambiguous signal can't mint
+  a false HIGH. A credentialed API server that also egresses reads as `MEDIUM`, not a HIGH exfil chain.
 
 The verdict is **hard blockers first, then a two-axis judgment** (capability severity × inspection
 confidence) — not a weighted sum of smells. `SAFE` always means "no material issues *within the inspected
@@ -148,18 +163,25 @@ Edit `mcp_risk_guidance.yaml`:
 - **`sensitive_env_key_patterns`** — regexes for credential-like env-key names.
 - **`dangerous_capabilities`** — tool capability taxonomy (patterns + default allow/ask/deny).
 - **`data_sensitivity`** — data-category taxonomy (patterns + sensitivity tier).
+- **`tool_injection`** — hidden-instruction / tool-poisoning patterns scanned over tool descriptions.
 
 Detection logic lives in `analyze_mcp.py`; this YAML is the data it keys off. Add a pattern, open a PR.
 
 ## Tests
 
 A dependency-free smoke + regression suite guards the guarantees that matter (secret no-echo,
-redaction-stable digests, pin heuristics, schema-intent, toxic combinations, approval drift):
+redaction-stable digests, pin heuristics, schema-intent, zoned matching + evidence/confidence,
+tool-poisoning detection, confidence-gated toxic combinations, approval drift, and the Pass-4
+validator's extract/apply scaffolding):
 
 ```bash
-.venv/bin/python tests/test_analyze_mcp.py
-.venv/bin/python tests/test_fetch_source.py   # extractor safety: zip-slip, symlink, bombs, no-exec
+.venv/bin/python tests/test_analyze_mcp.py    # 90 checks
+.venv/bin/python tests/test_fetch_source.py   # 67 checks — extractor safety: zip-slip, symlink, bombs, no-exec
 ```
+
+There is also an empirical eval corpus under `tests/corpus/` — 22 top MCP servers (live-captured tool
+surfaces) plus reconstructed, **defanged** known-bad cases — used to dogfood calibration. It is repo-only
+and **excluded from the PyPI package**; see `tests/corpus/REVIEW.md`.
 
 `test_fetch_source.py` builds hostile archives **in memory** (no network) and asserts the extractor refuses
 zip-slip, symlinks, hardlinks, absolute paths, and special files, caps tar/zip bombs, never executes a
@@ -176,13 +198,20 @@ contain only placeholders — no live-looking secrets are committed.
 
 ## Status
 
-Built and tested (`tests/test_analyze_mcp.py`, 50 checks; `tests/test_fetch_source.py`, 54 checks):
-`analyze_mcp.py`, `fetch_source.py`, `mcp_risk_guidance.yaml`, `SKILL.md`. Originated from issue #2, shaped
-by the two-pass / static-first / digest-bound-suppression design discussion there and external review rounds
-that added the provenance, containment, toxic-combination, schema-intent, explicit-rubric, and approval-drift
-layers, plus a security review that closed secret-leak / digest-stability gaps (URL & CLI-arg redaction).
+Built and tested (`tests/test_analyze_mcp.py`, 90 checks; `tests/test_fetch_source.py`, 67 checks):
+`analyze_mcp.py`, `fetch_source.py`, `validate_findings.py`, `mcp_risk_guidance.yaml`, `SKILL.md`. Originated
+from issue #2, shaped by the two-pass / static-first / digest-bound-suppression design discussion there and
+external review rounds that added the provenance, containment, toxic-combination, schema-intent,
+explicit-rubric, and approval-drift layers, plus a security review that closed secret-leak / digest-stability
+gaps (URL & CLI-arg redaction).
 
-Pass 3 source acquisition is now a deterministic, sandboxed step (`fetch_source.py`, issue #22) rather than
-prose rules in `SKILL.md`: registry-HTTP resolution, integrity-verified download, a path-sanitizing
-extractor, and a `source_artifact_match` manifest — closing the Phantom-Artifact gap as a checked fact. It
-never invokes a package manager and never executes fetched code.
+Pass 3 source acquisition is a deterministic, sandboxed step (`fetch_source.py`, issue #22) rather than prose
+rules in `SKILL.md`: registry-HTTP resolution, integrity-verified download, a path-sanitizing extractor, and a
+`source_artifact_match` manifest — closing the Phantom-Artifact gap as a checked fact. It never invokes a
+package manager and never executes fetched code.
+
+The detection layer was recalibrated against an empirical eval corpus (output schema `analysis@3`): zoned
+matching with per-candidate evidence + confidence, a `file_read` capability wired into a calibrated
+`read_and_exfil` combo, confidence-gated toxic combinations, a `tool_description_injection` scan, URL-in-args
+transport checks, an `UNKNOWN` data rating when no surface is captured, and a Pass-4 agentic false-positive
+validator (`validate_findings.py`).
