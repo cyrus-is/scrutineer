@@ -202,6 +202,10 @@ class Guidance:
             cat: [re.compile(p, re.IGNORECASE) for p in spec.get("patterns", [])]
             for cat, spec in self.data_sensitivity.items()
         }
+        self.tool_injection = self.data.get("tool_injection", {})
+        self._injection_res = [
+            re.compile(p, re.IGNORECASE) for p in self.tool_injection.get("patterns", [])
+        ]
         sig = self.data.get("tool_schema_signals", {})
         self._power_param_res = [re.compile(p, re.IGNORECASE) for p in sig.get("power_params", [])]
         self._destructive_flag_res = [re.compile(p, re.IGNORECASE) for p in sig.get("destructive_flags", [])]
@@ -311,6 +315,21 @@ class Guidance:
 
         walk(schema)
         return out
+
+    def injection_hits(self, text: str) -> list[dict]:
+        """Scan model-facing description text for tool-poisoning / hidden-
+        instruction signals. Returns the matched spans (evidence), not a verdict."""
+        hits = []
+        for r in self._injection_res:
+            m = r.search(text)
+            if m:
+                s, e = m.start(), m.end()
+                hits.append({
+                    "matched": m.group(0),
+                    "pattern": r.pattern,
+                    "snippet": text[max(0, s - 25):e + 35].strip(),
+                })
+        return hits
 
     def data_category_hits(self, name: str, description: str,
                           param_names: list[str], param_descs: list[str]) -> list[dict]:
@@ -788,6 +807,8 @@ def analyze_tool(tool: dict, server_name: str | None, g: Guidance) -> dict:
     caps = g.capability_hits(name, description, param_names, param_descs)
     data_categories = g.data_category_hits(name, description, param_names, param_descs)
     schema_signals = g.schema_intent_signals(schema)
+    # Tool-poisoning scan over the model-facing text (tool + param descriptions).
+    injection_signals = g.injection_hits(" ".join([name, description] + param_descs))
 
     identity = {"name": name, "description": description, "inputSchema": schema}
     tool_digest = digest(identity)
@@ -800,6 +821,7 @@ def analyze_tool(tool: dict, server_name: str | None, g: Guidance) -> dict:
         "candidate_capabilities": caps,
         "data_categories": data_categories,
         "schema_signals": schema_signals,
+        "injection_signals": injection_signals,
         "max_severity": _max_severity([c["severity"] for c in caps]),
         "data_tier": _max_tier([d["tier"] for d in data_categories]),
         "digest": tool_digest,
@@ -1245,6 +1267,22 @@ def main():
     for c in combos:
         sev_counts[c["severity"]] = sev_counts.get(c["severity"], 0) + 1
 
+    # Tool-poisoning / hidden-instruction findings — one per tool with signals.
+    inj_sev = g.tool_injection.get("severity", "HIGH")
+    injection_findings = [
+        {
+            "server": t.get("server"),
+            "tool": t["name"],
+            "code": "tool_description_injection",
+            "severity": inj_sev,
+            "title": g.tool_injection.get("title", "Hidden instructions in tool description"),
+            "signals": t["injection_signals"],
+        }
+        for t in tools if t.get("injection_signals")
+    ]
+    for _ in injection_findings:
+        sev_counts[inj_sev] = sev_counts.get(inj_sev, 0) + 1
+
     # Approval drift — what the client has already authorized vs. what review
     # recommends. Requires both an allowlist and a tool surface to correlate.
     allow_info = None
@@ -1291,6 +1329,7 @@ def main():
         "tools": tools,
         "data_profile": profile,
         "toxic_combinations": combos,
+        "injection_findings": injection_findings,
         "approval_drift": drift,
         "granted": granted,
         "stale_suppressions": recon["stale_suppressions"],
@@ -1300,6 +1339,7 @@ def main():
             "active_config_findings": len(active_server_findings),
             "active_tool_capabilities": len(active_tool_caps),
             "toxic_combination_count": len(combos),
+            "injection_finding_count": len(injection_findings),
             "approval_drift_count": len(drift),
             "severity_counts": sev_counts,
             "data_sensitivity_rating": profile["rating"],

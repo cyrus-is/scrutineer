@@ -212,6 +212,35 @@ tool_schema_signals:
     - command
     - cmd
 
+# Prompt-injection / tool-poisoning signals in a tool's or parameter's
+# DESCRIPTION. A poisoned description carries hidden instructions to the MODEL
+# (read secret files, exfiltrate via an innocuous param, conceal the action) —
+# the attack lives entirely in natural-language metadata, invisible to the
+# capability scan. Low-precision by design: a hit is a flag for the reviewer,
+# not proof. The analyzer records the matched span; the skill judges intent.
+tool_injection:
+  title: Hidden instructions in tool/parameter description (possible tool poisoning)
+  severity: HIGH
+  category: prompt_injection
+  patterns:
+    - "<\\s*(important|system|secret|instruction|admin|inject)\\b"
+    - "\\b(do not|don't|never)\\s+(tell|mention|inform|reveal|disclose|notify|report|say)\\b"
+    - "\\bignore\\s+(all\\s+|any\\s+)?(previous|prior|above|earlier)\\b"
+    # "before using this tool" only when followed by an imperative — bare usage
+    # notes ("confirm the plan before using this tool") are benign.
+    - "\\b(before|prior to)\\s+(using|calling|invoking|running)\\s+this\\s+tool\\b[^.]{0,60}\\b(you must|read|send|fetch|pass|exfiltrat\\w*|upload|secretly|silently|first\\s)\\b"
+    - "\\b(read|cat|open|load|access|send|exfiltrat\\w*|upload|post|leak|include|attach)\\b[^.]{0,45}(\\.ssh|id_rsa|id_ed25519|\\.env\\b|\\.aws|\\.npmrc|credentials|mcp\\.json|private[_-]?key)"
+    - "\\bpass\\b[^.]{0,45}\\b(sidenote|side[_-]note)\\b"
+    # covert exfil — a concealment word paired with a send/exfil verb (bare
+    # "succeed silently" is benign).
+    - "\\b(silently|covertly|secretly|quietly)\\b[^.]{0,30}\\b(send|post|upload|transmit|forward|exfiltrat\\w*|copy|leak|background)\\b"
+    - "\\b(post|send|upload|transmit|forward|copy)\\b[^.]{0,30}\\b(silently|covertly|secretly|quietly)\\b"
+    - "\\bwithout\\s+(telling|informing|notifying|asking|mentioning)\\b"
+  recommendation: >
+    Treat a tool description as untrusted model-facing text. One that instructs
+    the model to read files, exfiltrate data, or conceal what it did is a
+    tool-poisoning attack — do not enable the server.
+
 # Env-key NAMES (not values) matching any of these regexes are "sensitive".
 # Case-insensitive. Drives sensitive_env_required and informs the secret-value
 # refusal (we only inspect values of sensitive-looking keys for live secrets).
