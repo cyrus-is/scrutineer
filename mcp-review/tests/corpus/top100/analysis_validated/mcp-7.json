@@ -106,7 +106,9 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "to:\n- Get the user's name and email address."
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "Email as a personal identifier field is not communications_content (message/email data); pattern matches the identifier type, not message content."
         },
         {
           "category": "personal_identifiers",
@@ -538,21 +540,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "get_event_attachment get event attachment"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Matched 'event' in Sentry context refers to error/exception events, not calendar events or meetings."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -713,7 +700,7 @@
           },
           "rationale": "Direct financial exposure and a regulated data class.",
           "validated_out": true,
-          "validation_reason": "Matched 'Transaction' refers to performance-monitoring transactions in Sentry, not financial transactions/payments."
+          "validation_reason": "In Sentry context, 'Transaction' refers to performance transactions/traces, not financial transactions."
         },
         {
           "category": "personal_identifiers",
@@ -726,22 +713,9 @@
             "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
             "snippet": "files: Transaction/continuous profile results, profile IDs, profile"
           },
-          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "y events and replays. Use for event counts/statistics.\n\n`query` c"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "Matched 'event' refers to Sentry error events, not calendar/meeting events."
+          "validation_reason": "Pattern matched 'profile' in 'Transaction/continuous profile results' context; Sentry profiles are performance profiles, not user PII profiles."
         },
         {
           "category": "browsing_history",
@@ -754,7 +728,8 @@
             "pattern": "\\b(bookmarks|visited[\\s_-]?(url|site|page)s?)\\b",
             "snippet": "ts: rage clicks, dead clicks, visited pages, replay users\nIf the user say"
           },
-          "rationale": "A detailed behavioral profile of the user."
+          "rationale": "A detailed behavioral profile of the user.",
+          "needs_source": true
         },
         {
           "category": "project_metadata",
@@ -914,7 +889,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched 'repository' in context that projects often have repo-like names; tool does not read or access source code."
+          "validation_reason": "Pattern matched 'repository' in descriptive text 'project name commonly matches repository name'; tool does not access source code."
         },
         {
           "category": "project_metadata",
@@ -1436,22 +1411,9 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "ter by release version\n- user.email:alice@example.com - Filter by"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "as natural language or Sentry event search syntax. When an embedd"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "Matched 'event' in Sentry context (error events), not calendar/meeting events."
+          "validation_reason": "Pattern matched 'email' as a filter field (user.email); email addresses are personal_identifiers, not communications_content (message data)."
         },
         {
           "category": "project_metadata",
@@ -1537,7 +1499,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "Matched 'thread' in profiling context refers to execution threads, not message/communication threads."
+          "validation_reason": "Pattern matched 'thread' in 'thread breakdown' context; refers to execution threads in CPU profiling, not message threads."
         },
         {
           "category": "financial",
@@ -1552,7 +1514,7 @@
           },
           "rationale": "Direct financial exposure and a regulated data class.",
           "validated_out": true,
-          "validation_reason": "Matched 'transaction' in performance-profiling context refers to user request transactions, not financial transactions."
+          "validation_reason": "Pattern matched 'transaction' in performance profiling context (transaction profiles); not financial transaction data."
         },
         {
           "category": "personal_identifiers",
@@ -1565,7 +1527,9 @@
             "pattern": "\\b(profile|full[\\s_-]?name|email[\\s_-]?address|phone[\\s_-]?number|home[\\s_-]?address|ssn|date[\\s_-]?of[\\s_-]?birth|national[\\s_-]?id)\\b",
             "snippet": "get_profile_details get profile details"
           },
-          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
+          "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
+          "validated_out": true,
+          "validation_reason": "In Sentry context, 'profile' refers to performance/CPU profiles, not user profiles containing PII."
         },
         {
           "category": "project_metadata",
@@ -1657,7 +1621,8 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "b-8b14-26260799b51f')\n\n### AI conversation by ID\nget_sentry_resource(res"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "needs_source": true
         },
         {
           "category": "source_code",
@@ -1671,21 +1636,6 @@
             "snippet": "apshot=: returns the snapshot diff summary (changed, added, remo"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "e for breadcrumbs on an issue/event URL or for `trace` on a span-"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Matched 'event' in Sentry context (error events), not calendar/meeting events."
         },
         {
           "category": "project_metadata",
@@ -1767,7 +1717,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched 'git' in branch-filtering context; tool retrieves UI screenshots, not source code."
+          "validation_reason": "Pattern matched 'git' in 'Filter by git branch'; branch filtering is metadata, not source code access. Tool retrieves screenshots."
         },
         {
           "category": "project_metadata",
@@ -1853,12 +1803,6 @@
         "tool_count": 2,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "financial": {
         "label": "Financial / payment data",
         "tier": "critical",
@@ -1932,7 +1876,6 @@
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "browsing_history",
-      "calendar",
       "communications_content",
       "files_documents",
       "financial",
@@ -1948,47 +1891,47 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 74,
+      "confirmed": 68,
       "false_positive": 9,
-      "needs_source": 1,
+      "needs_source": 3,
       "unreviewed": 0
     },
     "validated_out": [
       {
-        "id": "data::get_event_attachment::calendar",
-        "reason": "Matched 'event' in Sentry context refers to error/exception events, not calendar events or meetings."
+        "id": "data::whoami::communications_content",
+        "reason": "Email as a personal identifier field is not communications_content (message/email data); pattern matches the identifier type, not message content."
       },
       {
         "id": "data::search_events::financial",
-        "reason": "Matched 'Transaction' refers to performance-monitoring transactions in Sentry, not financial transactions/payments."
+        "reason": "In Sentry context, 'Transaction' refers to performance transactions/traces, not financial transactions."
       },
       {
-        "id": "data::search_events::calendar",
-        "reason": "Matched 'event' refers to Sentry error events, not calendar/meeting events."
+        "id": "data::search_events::personal_identifiers",
+        "reason": "Pattern matched 'profile' in 'Transaction/continuous profile results' context; Sentry profiles are performance profiles, not user PII profiles."
       },
       {
         "id": "data::create_project::source_code",
-        "reason": "Matched 'repository' in context that projects often have repo-like names; tool does not read or access source code."
+        "reason": "Pattern matched 'repository' in descriptive text 'project name commonly matches repository name'; tool does not access source code."
       },
       {
-        "id": "data::search_issue_events::calendar",
-        "reason": "Matched 'event' in Sentry context (error events), not calendar/meeting events."
+        "id": "data::search_issue_events::communications_content",
+        "reason": "Pattern matched 'email' as a filter field (user.email); email addresses are personal_identifiers, not communications_content (message data)."
       },
       {
         "id": "data::get_profile_details::communications_content",
-        "reason": "Matched 'thread' in profiling context refers to execution threads, not message/communication threads."
+        "reason": "Pattern matched 'thread' in 'thread breakdown' context; refers to execution threads in CPU profiling, not message threads."
       },
       {
         "id": "data::get_profile_details::financial",
-        "reason": "Matched 'transaction' in performance-profiling context refers to user request transactions, not financial transactions."
+        "reason": "Pattern matched 'transaction' in performance profiling context (transaction profiles); not financial transaction data."
       },
       {
-        "id": "data::get_sentry_resource::calendar",
-        "reason": "Matched 'event' in Sentry context (error events), not calendar/meeting events."
+        "id": "data::get_profile_details::personal_identifiers",
+        "reason": "In Sentry context, 'profile' refers to performance/CPU profiles, not user profiles containing PII."
       },
       {
         "id": "data::get_latest_base_snapshot::source_code",
-        "reason": "Matched 'git' in branch-filtering context; tool retrieves UI screenshots, not source code."
+        "reason": "Pattern matched 'git' in 'Filter by git branch'; branch filtering is metadata, not source code access. Tool retrieves screenshots."
       }
     ]
   }

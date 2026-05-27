@@ -538,19 +538,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "get_event_attachment get event attachment"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -723,19 +710,6 @@
             "snippet": "files: Transaction/continuous profile results, profile IDs, profile"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "y events and replays. Use for event counts/statistics.\n\n`query` c"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
         },
         {
           "category": "browsing_history",
@@ -1431,19 +1405,6 @@
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "as natural language or Sentry event search syntax. When an embedd"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1659,19 +1620,6 @@
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "e for breadcrumbs on an issue/event URL or for `trace` on a span-"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1835,12 +1783,6 @@
         "tool_count": 2,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "financial": {
         "label": "Financial / payment data",
         "tier": "critical",
@@ -1913,7 +1855,6 @@
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "browsing_history",
-      "calendar",
       "communications_content",
       "files_documents",
       "financial",

@@ -169,7 +169,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'aggregate' describes the operation type, not data classification; aggregation works on any visibility level of data."
+          "validation_reason": "Matched 'aggregate' as a function name (aggregation operation), not as indicator of public/summary data; tool accesses arbitrary MongoDB collections."
         }
       ],
       "schema_signals": {
@@ -224,7 +224,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'aggregate' describes the operation type, not data classification; no evidence the data is public."
+          "validation_reason": "Matched 'aggregate' as operation name, not as evidence of public data; tool applies to any MongoDB collection regardless of visibility."
         }
       ],
       "schema_signals": {
@@ -376,7 +376,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'count' describes an aggregation operation, not data classification; any database supports counting."
+          "validation_reason": "Matched 'count' as operation name; tool counts arbitrary collections, not necessarily public data."
         }
       ],
       "schema_signals": {
@@ -788,7 +788,8 @@
             "snippet": "mongodb-logs mongodb logs"
           },
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -903,7 +904,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool lists data sources in MongoDB's documentation knowledge base, not a MongoDB database instance; this is documentation access, not database access."
+          "validation_reason": "Tool searches MongoDB Assistant knowledge base (documentation), not a live MongoDB database; matched 'MongoDB' is part of the knowledge base name."
         }
       ],
       "data_categories": [],
@@ -943,7 +944,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool searches MongoDB's documentation knowledge base (official docs, guidance, resources), not a MongoDB database; this is documentation access, not database access."
+          "validation_reason": "Tool searches MongoDB documentation/resources knowledge base, not database access; 'MongoDB' in description refers to the knowledge base, not database operations."
         }
       ],
       "data_categories": [],
@@ -1002,31 +1003,31 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 13,
+      "confirmed": 12,
       "false_positive": 5,
-      "needs_source": 0,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::aggregate-db::public_data",
-        "reason": "The word 'aggregate' describes the operation type, not data classification; aggregation works on any visibility level of data."
+        "reason": "Matched 'aggregate' as a function name (aggregation operation), not as indicator of public/summary data; tool accesses arbitrary MongoDB collections."
       },
       {
         "id": "data::aggregate::public_data",
-        "reason": "The word 'aggregate' describes the operation type, not data classification; no evidence the data is public."
+        "reason": "Matched 'aggregate' as operation name, not as evidence of public data; tool applies to any MongoDB collection regardless of visibility."
       },
       {
         "id": "data::count::public_data",
-        "reason": "The word 'count' describes an aggregation operation, not data classification; any database supports counting."
+        "reason": "Matched 'count' as operation name; tool counts arbitrary collections, not necessarily public data."
       },
       {
         "id": "cap::list-knowledge-sources::database_access",
-        "reason": "Tool lists data sources in MongoDB's documentation knowledge base, not a MongoDB database instance; this is documentation access, not database access."
+        "reason": "Tool searches MongoDB Assistant knowledge base (documentation), not a live MongoDB database; matched 'MongoDB' is part of the knowledge base name."
       },
       {
         "id": "cap::search-knowledge::database_access",
-        "reason": "Tool searches MongoDB's documentation knowledge base (official docs, guidance, resources), not a MongoDB database; this is documentation access, not database access."
+        "reason": "Tool searches MongoDB documentation/resources knowledge base, not database access; 'MongoDB' in description refers to the knowledge base, not database operations."
       }
     ]
   }

@@ -110,7 +110,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "The matched 'message' is a GraphQL schema field type (message:String), not communications content being accessed."
+          "validation_reason": "The matched 'message' is a GraphQL schema field type definition, not actual communications data being accessed by the documentation search tool."
         }
       ],
       "schema_signals": {
@@ -143,7 +143,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "The matched 'member' describes the user's organizational membership, not a list of communication participants/members."
+          "validation_reason": "The 'member' token refers to organization membership, not communication channel members or participants."
         }
       ],
       "schema_signals": {
@@ -695,7 +695,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The word 'fetch' appears in 'fetch logs for'; this retrieves logs from Supabase's own service, not outbound network egress."
+          "validation_reason": "The 'fetch' token means retrieve/read logs from Supabase infrastructure, not make outbound network calls to external hosts."
         }
       ],
       "data_categories": [
@@ -748,7 +748,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The word 'fetch' appears in 'advisors to fetch'; this retrieves advisory data from Supabase, not outbound network egress."
+          "validation_reason": "The 'fetch' token refers to retrieving advisory notices from Supabase systems, not exfiltrating data via network calls."
         }
       ],
       "data_categories": [
@@ -800,7 +800,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Retrieving a URL string is not network egress; no outbound call is made by this tool."
+          "validation_reason": "Tool returns a URL string as data; retrieving/returning a URL is not network egress."
         }
       ],
       "data_categories": [
@@ -1005,9 +1005,7 @@
             "snippet": "it be disabled. The files to upload. This should include the entr"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "The word 'upload' refers to uploading code to Supabase's platform, not making outbound network calls to external hosts."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -1024,7 +1022,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "The matched 'message' is an example code variable in a JavaScript object, not actual communications content accessed by the tool."
+          "validation_reason": "The matched 'message' is a literal string in example code demonstrating Edge Function format, not communications data."
         },
         {
           "category": "project_metadata",
@@ -1074,7 +1072,8 @@
             "snippet": "g project_ref. Use this ID to execute queries and migrations on the"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -1261,8 +1260,7 @@
         "sensitive_env_required",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "exec_with_secret_access",
@@ -1273,8 +1271,7 @@
         "code_execution",
         "sensitive_env_required"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "read_and_exfil",
@@ -1287,7 +1284,8 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "Combo evidence depends on communications_content capability which consists entirely of false positives; core read/exfil risk requires source verification of file_read scope."
     }
   ],
   "injection_findings": [],
@@ -1321,39 +1319,39 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 30,
+      "confirmed": 32,
       "false_positive": 7,
-      "needs_source": 3,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::search_docs::communications_content",
-        "reason": "The matched 'message' is a GraphQL schema field type (message:String), not communications content being accessed."
+        "reason": "The matched 'message' is a GraphQL schema field type definition, not actual communications data being accessed by the documentation search tool."
       },
       {
         "id": "data::list_organizations::communications_metadata",
-        "reason": "The matched 'member' describes the user's organizational membership, not a list of communication participants/members."
+        "reason": "The 'member' token refers to organization membership, not communication channel members or participants."
       },
       {
         "id": "cap::get_logs::network_egress",
-        "reason": "The word 'fetch' appears in 'fetch logs for'; this retrieves logs from Supabase's own service, not outbound network egress."
+        "reason": "The 'fetch' token means retrieve/read logs from Supabase infrastructure, not make outbound network calls to external hosts."
       },
       {
         "id": "cap::get_advisors::network_egress",
-        "reason": "The word 'fetch' appears in 'advisors to fetch'; this retrieves advisory data from Supabase, not outbound network egress."
+        "reason": "The 'fetch' token refers to retrieving advisory notices from Supabase systems, not exfiltrating data via network calls."
       },
       {
         "id": "cap::get_project_url::network_egress",
-        "reason": "Retrieving a URL string is not network egress; no outbound call is made by this tool."
-      },
-      {
-        "id": "cap::deploy_edge_function::network_egress",
-        "reason": "The word 'upload' refers to uploading code to Supabase's platform, not making outbound network calls to external hosts."
+        "reason": "Tool returns a URL string as data; retrieving/returning a URL is not network egress."
       },
       {
         "id": "data::deploy_edge_function::communications_content",
-        "reason": "The matched 'message' is an example code variable in a JavaScript object, not actual communications content accessed by the tool."
+        "reason": "The matched 'message' is a literal string in example code demonstrating Edge Function format, not communications data."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "Combo evidence depends on communications_content capability which consists entirely of false positives; core read/exfil risk requires source verification of file_read scope."
       }
     ]
   }

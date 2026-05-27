@@ -732,19 +732,6 @@
             "snippet": "lives. Address a note by its vault-relative path. Address by vau"
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "pe period date operation tags location"
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -809,7 +796,7 @@
     }
   ],
   "data_profile": {
-    "rating": "SENSITIVE",
+    "rating": "HIGHLY_SENSITIVE",
     "surface_assessed": true,
     "tiers_present": [
       "critical",
@@ -833,18 +820,8 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "high"
       }
-    },
-    "unconfirmed_higher_categories": [
-      "credentials_secrets"
-    ],
-    "note": "Rating reflects high-confidence matches; credentials_secrets matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    }
   },
   "toxic_combinations": [],
   "injection_findings": [],
@@ -865,12 +842,11 @@
       "LOW": 0,
       "INFO": 1
     },
-    "data_sensitivity_rating": "SENSITIVE",
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "contacts",
       "credentials_secrets",
-      "files_documents",
-      "location"
+      "files_documents"
     ],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true

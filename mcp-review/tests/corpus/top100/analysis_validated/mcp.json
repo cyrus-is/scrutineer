@@ -233,7 +233,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The URI appears in example MIME data for drag-simulation; the tool simulates UI drops but does not initiate network requests."
+          "validation_reason": "Tool simulates drag-drop of data onto page elements; the URI in the example is payload content, not a network destination\u2014this is a local page interaction, not egress."
         }
       ],
       "data_categories": [],
@@ -387,7 +387,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool passively observes and reports on existing network requests; it does not initiate egress itself."
+          "validation_reason": "Tool observes/filters already-initiated network requests; it does not initiate egress itself\u2014it is a passive monitor, not an active capability."
         }
       ],
       "data_categories": [],
@@ -487,7 +487,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system output directory for saving screenshots, not a contacts/address-book directory."
+          "validation_reason": "Matched 'directory' refers to filesystem output directory for screenshots, not a contact/address-book directory; no evidence of contacts data access."
         }
       ],
       "schema_signals": {
@@ -511,23 +511,7 @@
         "target"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "idth,height] in the snapshot. Coordinates are viewport-relative, in CSS"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "Matched 'Coordinates' refers to CSS pixel positions of UI elements in the viewport, not geographic location data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -535,7 +519,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:7bac4b2090cd7f190f9a1096fc1400330b05def8ffe08b5e6ed92248aae46eca"
     },
     {
@@ -696,12 +680,6 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "medium"
       }
     }
   },
@@ -726,8 +704,7 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "contacts",
-      "location"
+      "contacts"
     ],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true
@@ -736,26 +713,22 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 4,
-      "false_positive": 4,
+      "false_positive": 3,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::browser_drop::network_egress",
-        "reason": "The URI appears in example MIME data for drag-simulation; the tool simulates UI drops but does not initiate network requests."
+        "reason": "Tool simulates drag-drop of data onto page elements; the URI in the example is payload content, not a network destination\u2014this is a local page interaction, not egress."
       },
       {
         "id": "cap::browser_network_requests::network_egress",
-        "reason": "Tool passively observes and reports on existing network requests; it does not initiate egress itself."
+        "reason": "Tool observes/filters already-initiated network requests; it does not initiate egress itself\u2014it is a passive monitor, not an active capability."
       },
       {
         "id": "data::browser_take_screenshot::contacts",
-        "reason": "Matched 'directory' refers to file system output directory for saving screenshots, not a contacts/address-book directory."
-      },
-      {
-        "id": "data::browser_snapshot::location",
-        "reason": "Matched 'Coordinates' refers to CSS pixel positions of UI elements in the viewport, not geographic location data."
+        "reason": "Matched 'directory' refers to filesystem output directory for screenshots, not a contact/address-book directory; no evidence of contacts data access."
       }
     ]
   }

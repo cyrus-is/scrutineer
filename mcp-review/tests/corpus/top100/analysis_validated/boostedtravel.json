@@ -121,7 +121,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Snippet explicitly states 'no API key needed, completely FREE' \u2014 the tool does not require or access secrets."
+          "validation_reason": "Description explicitly states 'no API key needed, completely FREE' \u2014 the matched token negates rather than confirms credential requirement."
         }
       ],
       "data_categories": [
@@ -138,22 +138,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Snippet explicitly states 'no API key needed' \u2014 the description negates rather than confirms credential dependency."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Search live flight availability and prices across 400+ airlin"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'availability' refers to flight availability (a property of search results), not calendar/event data or scheduling access."
+          "validation_reason": "Same negation: tool documentation explicitly disclaims API key need, making the credential-access claim false."
         },
         {
           "category": "system_state",
@@ -168,7 +153,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "Snippet 'Use system_info tool to check' is a reference to another tool, not evidence that search_flights itself accesses system state."
+          "validation_reason": "Snippet shows 'Use system_info tool to check' \u2014 a reference to a different tool, not evidence that search_flights itself accesses system state."
         }
       ],
       "schema_signals": {
@@ -189,21 +174,7 @@
         "query"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "resolve_location resolve location"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -211,7 +182,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:86f198b38f617fd0e8e318d2bb0d0951541facb466fc67f36c2e193afdf5ab7e"
     },
     {
@@ -406,7 +377,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'status' match refers to payment/usage status metrics, not project/task/issue status as the pattern intends."
+          "validation_reason": "Matched on 'status' in 'payment status' \u2014 a generic term that does not indicate project/task/board metadata in this context."
         }
       ],
       "schema_signals": {
@@ -531,7 +502,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "'drive' in 'drive the airline website' means to automate/control via Playwright, not to read files/documents."
+          "validation_reason": "Matched on 'drive' in 'Uses Playwright to drive the airline website' \u2014 'drive' is a control verb, not file system access."
         }
       ],
       "schema_signals": {
@@ -605,22 +576,10 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
       "system_state": {
         "label": "System / process / environment state",
         "tier": "high",
         "tool_count": 2,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
         "confidence": "high"
       },
       "financial": {
@@ -724,13 +683,11 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",
       "files_documents",
       "financial",
-      "location",
       "personal_identifiers",
       "project_metadata",
       "public_data",
@@ -742,35 +699,31 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 19,
-      "false_positive": 6,
+      "confirmed": 18,
+      "false_positive": 5,
       "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::search_flights::secrets_access",
-        "reason": "Snippet explicitly states 'no API key needed, completely FREE' \u2014 the tool does not require or access secrets."
+        "reason": "Description explicitly states 'no API key needed, completely FREE' \u2014 the matched token negates rather than confirms credential requirement."
       },
       {
         "id": "data::search_flights::credentials_secrets",
-        "reason": "Snippet explicitly states 'no API key needed' \u2014 the description negates rather than confirms credential dependency."
-      },
-      {
-        "id": "data::search_flights::calendar",
-        "reason": "'availability' refers to flight availability (a property of search results), not calendar/event data or scheduling access."
+        "reason": "Same negation: tool documentation explicitly disclaims API key need, making the credential-access claim false."
       },
       {
         "id": "data::search_flights::system_state",
-        "reason": "Snippet 'Use system_info tool to check' is a reference to another tool, not evidence that search_flights itself accesses system state."
+        "reason": "Snippet shows 'Use system_info tool to check' \u2014 a reference to a different tool, not evidence that search_flights itself accesses system state."
       },
       {
         "id": "data::get_agent_profile::project_metadata",
-        "reason": "'status' match refers to payment/usage status metrics, not project/task/issue status as the pattern intends."
+        "reason": "Matched on 'status' in 'payment status' \u2014 a generic term that does not indicate project/task/board metadata in this context."
       },
       {
         "id": "data::start_checkout::files_documents",
-        "reason": "'drive' in 'drive the airline website' means to automate/control via Playwright, not to read files/documents."
+        "reason": "Matched on 'drive' in 'Uses Playwright to drive the airline website' \u2014 'drive' is a control verb, not file system access."
       }
     ]
   }

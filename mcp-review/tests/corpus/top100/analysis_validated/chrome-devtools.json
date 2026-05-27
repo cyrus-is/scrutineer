@@ -159,9 +159,7 @@
             "snippet": "aders are included into every HTTP request originating from the page and"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Snippet describes how headers flow through HTTP requests originating from the page being emulated, not the tool itself making outbound network calls."
+          "suppressed": false
         },
         {
           "capability": "secrets_access",
@@ -177,9 +175,7 @@
             "snippet": "ue\", \"Authorization\": \"Bearer token\"}. Headers are included into"
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Snippet shows an example of header format (Bearer token example) demonstrating what can be passed via extraHttpHeaders; the tool accepts credentials as input parameters but doesn't access or retrieve secrets from a store."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -204,7 +200,7 @@
           "evidence": {
             "zone": "param_name",
             "matched": "geolocation",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "kConditions cpuThrottlingRate geolocation userAgent colorScheme viewpor"
           },
           "rationale": "Physical tracking risk."
@@ -301,7 +297,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Matched pattern conflates HTML <select> form elements with SQL SELECT...FROM syntax; the tool operates on form controls, not databases."
+          "validation_reason": "Matched pattern is 'select an option from <select> element'\u2014refers to HTML form dropdowns, not SQL SELECT...FROM database queries."
         }
       ],
       "data_categories": [],
@@ -338,9 +334,7 @@
             "snippet": "ount. Example: Fill username, password, and check \"Remember Me\" in o"
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Tool accepts credentials as input parameters and fills them into form fields; it does not access or retrieve secrets from a system or secret store."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -370,7 +364,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "Matched 'count' in 'reduces turn count' is unrelated to aggregate counts or summary statistics; no public data category is evidenced."
+          "validation_reason": "Matched 'count' in 'reduces turn count' refers to iteration count, not data aggregation or public statistics."
         }
       ],
       "schema_signals": {
@@ -405,7 +399,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "Tool retrieves developer console messages/logs, not email, chat, or communication content; 'message' refers to logging output."
+          "validation_reason": "Browser console messages are debug/error logs, not communications like emails or chats; context is DevTools, not messaging systems."
         }
       ],
       "schema_signals": {
@@ -503,7 +497,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'Directory' refers to a file system directory for saving report output, not an address book or contacts directory."
+          "validation_reason": "Matched 'Directory' refers to file system directory for saving reports, not contacts/address book."
         }
       ],
       "schema_signals": {
@@ -619,8 +613,7 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "pt to be executed on each new document before any other scripts for"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
-          "needs_source": true
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "project_metadata",
@@ -635,7 +628,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Phrase 'Use project URL' is a variable/parameter reference in usage documentation, not evidence of accessing project metadata, tickets, or boards."
+          "validation_reason": "'project URL' refers to the web application being tested, not project metadata like issues/boards/sprints."
         }
       ],
       "schema_signals": {
@@ -690,7 +683,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Phrase 'Use project URL' is a parameter reference, not accessing project-specific metadata."
+          "validation_reason": "'project URL' refers to the web application target, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -749,7 +742,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Snippet advises using navigate_page as a prerequisite; the mention of URL is instructional, not evidence that performance_start_trace initiates network calls."
+          "validation_reason": "Matched 'URL' is in instructions to use navigate_page first; performance_start_trace itself does not initiate network calls."
         }
       ],
       "data_categories": [
@@ -766,7 +759,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system directory for saving trace data, not contacts."
+          "validation_reason": "Matched 'directory' in 'current working directory' refers to file system path, not contacts/address book."
         }
       ],
       "schema_signals": {
@@ -801,7 +794,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system directory for saving data, not contacts."
+          "validation_reason": "Matched 'directory' in 'current working directory' refers to file system path, not contacts."
         }
       ],
       "schema_signals": {
@@ -919,7 +912,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system directory for saving screenshots, not contacts."
+          "validation_reason": "Matched 'directory' in 'current working directory' refers to file system path for saving screenshots, not contacts."
         }
       ],
       "schema_signals": {
@@ -955,7 +948,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system directory for saving snapshots, not contacts."
+          "validation_reason": "Matched 'directory' in 'current working directory' refers to file system storage, not contacts/address book."
         }
       ],
       "schema_signals": {
@@ -1204,67 +1197,55 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 12,
-      "false_positive": 14,
-      "needs_source": 2,
+      "confirmed": 16,
+      "false_positive": 11,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
-        "id": "cap::emulate::network_egress",
-        "reason": "Snippet describes how headers flow through HTTP requests originating from the page being emulated, not the tool itself making outbound network calls."
-      },
-      {
-        "id": "cap::emulate::secrets_access",
-        "reason": "Snippet shows an example of header format (Bearer token example) demonstrating what can be passed via extraHttpHeaders; the tool accepts credentials as input parameters but doesn't access or retrieve secrets from a store."
-      },
-      {
         "id": "cap::fill::database_access",
-        "reason": "Matched pattern conflates HTML <select> form elements with SQL SELECT...FROM syntax; the tool operates on form controls, not databases."
-      },
-      {
-        "id": "cap::fill_form::secrets_access",
-        "reason": "Tool accepts credentials as input parameters and fills them into form fields; it does not access or retrieve secrets from a system or secret store."
+        "reason": "Matched pattern is 'select an option from <select> element'\u2014refers to HTML form dropdowns, not SQL SELECT...FROM database queries."
       },
       {
         "id": "data::fill_form::public_data",
-        "reason": "Matched 'count' in 'reduces turn count' is unrelated to aggregate counts or summary statistics; no public data category is evidenced."
+        "reason": "Matched 'count' in 'reduces turn count' refers to iteration count, not data aggregation or public statistics."
       },
       {
         "id": "data::get_console_message::communications_content",
-        "reason": "Tool retrieves developer console messages/logs, not email, chat, or communication content; 'message' refers to logging output."
+        "reason": "Browser console messages are debug/error logs, not communications like emails or chats; context is DevTools, not messaging systems."
       },
       {
         "id": "data::lighthouse_audit::contacts",
-        "reason": "Matched 'Directory' refers to a file system directory for saving report output, not an address book or contacts directory."
+        "reason": "Matched 'Directory' refers to file system directory for saving reports, not contacts/address book."
       },
       {
         "id": "data::navigate_page::project_metadata",
-        "reason": "Phrase 'Use project URL' is a variable/parameter reference in usage documentation, not evidence of accessing project metadata, tickets, or boards."
+        "reason": "'project URL' refers to the web application being tested, not project metadata like issues/boards/sprints."
       },
       {
         "id": "data::new_page::project_metadata",
-        "reason": "Phrase 'Use project URL' is a parameter reference, not accessing project-specific metadata."
+        "reason": "'project URL' refers to the web application target, not project management metadata."
       },
       {
         "id": "cap::performance_start_trace::network_egress",
-        "reason": "Snippet advises using navigate_page as a prerequisite; the mention of URL is instructional, not evidence that performance_start_trace initiates network calls."
+        "reason": "Matched 'URL' is in instructions to use navigate_page first; performance_start_trace itself does not initiate network calls."
       },
       {
         "id": "data::performance_start_trace::contacts",
-        "reason": "Matched 'directory' refers to file system directory for saving trace data, not contacts."
+        "reason": "Matched 'directory' in 'current working directory' refers to file system path, not contacts/address book."
       },
       {
         "id": "data::performance_stop_trace::contacts",
-        "reason": "Matched 'directory' refers to file system directory for saving data, not contacts."
+        "reason": "Matched 'directory' in 'current working directory' refers to file system path, not contacts."
       },
       {
         "id": "data::take_screenshot::contacts",
-        "reason": "Matched 'directory' refers to file system directory for saving screenshots, not contacts."
+        "reason": "Matched 'directory' in 'current working directory' refers to file system path for saving screenshots, not contacts."
       },
       {
         "id": "data::take_snapshot::contacts",
-        "reason": "Matched 'directory' refers to file system directory for saving snapshots, not contacts."
+        "reason": "Matched 'directory' in 'current working directory' refers to file system storage, not contacts/address book."
       }
     ]
   }

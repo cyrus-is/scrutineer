@@ -94,7 +94,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Fetch\" means retrieve/select from available scenarios list, not network egress; tool returns a local Kotlin code sample."
+          "validation_reason": "The matched 'fetch' is guidance text ('to fetch' a scenario) describing how to use the returned sample, not a network capability of the tool itself."
         }
       ],
       "data_categories": [],
@@ -149,7 +149,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Project\" refers to a software development project context, not project management metadata like tasks/tickets/sprints."
+          "validation_reason": "The matched 'project' is contextual language about where to use the output (user's Android project), not project metadata being exposed or tracked."
         }
       ],
       "schema_signals": {
@@ -253,7 +253,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Status\" refers to platform support status (Android, iOS, KMP), not project management metadata."
+          "validation_reason": "The matched 'status' refers to framework/platform support status (what is implemented), not project metadata."
         }
       ],
       "schema_signals": {
@@ -381,8 +381,7 @@
             "snippet": "preview link. Accepts a model URL, a SceneView code snippet, or"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false,
-          "needs_source": true
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -438,8 +437,7 @@
             "snippet": "alize 3D shapes. Public HTTPS URL to a .glb or .gltf model. If"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false,
-          "needs_source": true
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -456,7 +454,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Label\" in 3D context means text/annotation overlays on 3D objects, not project management metadata."
+          "validation_reason": "The 'label' parameter is for labeling 3D visualization elements (data points, shapes), not for accessing or exposing project metadata."
         },
         {
           "category": "public_data",
@@ -548,7 +546,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Issue\" means technical problems/bugs (crash, performance), not tracked project tickets."
+          "validation_reason": "The matched 'issue' refers to technical/library problems (bugs with SceneView), not project management metadata or tracking."
         }
       ],
       "schema_signals": {
@@ -600,7 +598,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Status\" refers to platform support status (stable/beta/planned), not project management metadata."
+          "validation_reason": "The matched 'status' refers to SceneView framework/platform support status, not project metadata."
         }
       ],
       "schema_signals": {
@@ -718,7 +716,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"Count\" refers to polygon count (technical 3D metric), not aggregate or summary statistics of public data."
+          "validation_reason": "The matched 'count' is a technical metric (polygon count), not aggregate public data or statistics being exposed."
         }
       ],
       "schema_signals": {
@@ -839,7 +837,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" refers to file system directory path where project is located, not address/contact directory."
+          "validation_reason": "The matched 'directory' refers to the filesystem directory where the project is located, not an address book or contacts directory."
         },
         {
           "category": "project_metadata",
@@ -867,7 +865,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"Total\" states a tool constraint (500 KB max, 30 files), not aggregate statistics of public data."
+          "validation_reason": "The matched 'total' is a size metric (500 KB total) describing resource usage, not aggregate statistics or public data exposure."
         }
       ],
       "schema_signals": {
@@ -939,8 +937,7 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     }
   ],
   "injection_findings": [],
@@ -975,47 +972,47 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 7,
+      "confirmed": 10,
       "false_positive": 9,
-      "needs_source": 3,
+      "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::get_sample::network_egress",
-        "reason": "\"Fetch\" means retrieve/select from available scenarios list, not network egress; tool returns a local Kotlin code sample."
+        "reason": "The matched 'fetch' is guidance text ('to fetch' a scenario) describing how to use the returned sample, not a network capability of the tool itself."
       },
       {
         "id": "data::get_setup::project_metadata",
-        "reason": "\"Project\" refers to a software development project context, not project management metadata like tasks/tickets/sprints."
+        "reason": "The matched 'project' is contextual language about where to use the output (user's Android project), not project metadata being exposed or tracked."
       },
       {
         "id": "data::get_platform_roadmap::project_metadata",
-        "reason": "\"Status\" refers to platform support status (Android, iOS, KMP), not project management metadata."
+        "reason": "The matched 'status' refers to framework/platform support status (what is implemented), not project metadata."
       },
       {
         "id": "data::create_3d_artifact::project_metadata",
-        "reason": "\"Label\" in 3D context means text/annotation overlays on 3D objects, not project management metadata."
+        "reason": "The 'label' parameter is for labeling 3D visualization elements (data points, shapes), not for accessing or exposing project metadata."
       },
       {
         "id": "data::debug_issue::project_metadata",
-        "reason": "\"Issue\" means technical problems/bugs (crash, performance), not tracked project tickets."
+        "reason": "The matched 'issue' refers to technical/library problems (bugs with SceneView), not project management metadata or tracking."
       },
       {
         "id": "data::list_platforms::project_metadata",
-        "reason": "\"Status\" refers to platform support status (stable/beta/planned), not project management metadata."
+        "reason": "The matched 'status' refers to SceneView framework/platform support status, not project metadata."
       },
       {
         "id": "data::get_model_optimization_guide::public_data",
-        "reason": "\"Count\" refers to polygon count (technical 3D metric), not aggregate or summary statistics of public data."
+        "reason": "The matched 'count' is a technical metric (polygon count), not aggregate public data or statistics being exposed."
       },
       {
         "id": "data::analyze_project::contacts",
-        "reason": "\"Directory\" refers to file system directory path where project is located, not address/contact directory."
+        "reason": "The matched 'directory' refers to the filesystem directory where the project is located, not an address book or contacts directory."
       },
       {
         "id": "data::analyze_project::public_data",
-        "reason": "\"Total\" states a tool constraint (500 KB max, 30 files), not aggregate statistics of public data."
+        "reason": "The matched 'total' is a size metric (500 KB total) describing resource usage, not aggregate statistics or public data exposure."
       }
     ]
   }

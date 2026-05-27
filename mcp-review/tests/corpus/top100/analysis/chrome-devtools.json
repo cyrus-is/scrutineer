@@ -200,7 +200,7 @@
           "evidence": {
             "zone": "param_name",
             "matched": "geolocation",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "kConditions cpuThrottlingRate geolocation userAgent colorScheme viewpor"
           },
           "rationale": "Physical tracking risk."

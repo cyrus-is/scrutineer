@@ -231,7 +231,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' here is a native tool name in comparison text ('native Task tool is wrong'), not project metadata handled by agent_terminate."
+          "validation_reason": "The 'Task' match refers to 'native Task tool', not project tasks\u2014this is a tool comparison, not project metadata exposure."
         }
       ],
       "schema_signals": {
@@ -266,7 +266,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "agent_status agent status"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "agent_status reads agent lifecycle state (idle/running/stopped), which is agent operational state, not project work metadata."
         }
       ],
       "schema_signals": {
@@ -305,7 +307,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' appears in comparative description text ('rather than spawn a new one-shot Task'), not describing what agent_list does; this tool merely lists agents."
+          "validation_reason": "agent_list only lists agents; 'spawn' appears in context explaining when NOT to spawn, not indicating this tool does so."
         }
       ],
       "data_categories": [
@@ -359,7 +361,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' in 'amortize spawn latency' is motivation context, not what the tool does; tool manages a pre-spawned pool, not code execution."
+          "validation_reason": "agent_pool manages pre-existing agent pools; it does not spawn or execute code directly."
         }
       ],
       "data_categories": [
@@ -376,7 +378,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool name in comparison text, not project metadata handled by this tool."
+          "validation_reason": "The 'Task' match is a reference to native Claude Task tool, not project metadata."
         },
         {
           "category": "public_data",
@@ -389,9 +391,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "pology requires a known agent count at all times. For one-shot wo"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' refers to internal agent pool count tracking, not public/published data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -425,8 +425,7 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ealth score (0-1) from recent task success ratio + response-late"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
       "schema_signals": {
@@ -476,9 +475,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "tatus Health value (0-1) Task count Config updates"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' in 'Task count' is internal agent state tracking, not public/aggregate statistics."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -514,8 +511,7 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "t (idle/running history, last task result). Use when native Task"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
       "schema_signals": {
@@ -555,7 +551,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' is in comparison text ('For independent one-shot subagents, native Task is fine; spawn each separately'), not describing swarm_init's behavior."
+          "validation_reason": "swarm_init configures multi-agent coordination; it does not spawn or execute code."
         }
       ],
       "data_categories": [
@@ -572,7 +568,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool name in comparison, not project metadata handled by tool."
+          "validation_reason": "References native Task tool, not project metadata."
         }
       ],
       "schema_signals": {
@@ -609,7 +605,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' is in comparison text; tool returns swarm state, not code execution."
+          "validation_reason": "swarm_status reads state; it does not spawn or execute."
         }
       ],
       "data_categories": [
@@ -662,7 +658,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' in comparison text; tool shuts down swarms, not code execution."
+          "validation_reason": "swarm_shutdown terminates swarms; it does not spawn."
         }
       ],
       "data_categories": [
@@ -679,7 +675,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference in comparison text."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -716,7 +712,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'spawn' in comparison text; tool checks health, not code execution."
+          "validation_reason": "swarm_health checks health status; does not spawn or execute."
         }
       ],
       "data_categories": [
@@ -771,7 +767,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "'organization' is a namespace parameter (string label), not org_structure data being processed."
+          "validation_reason": "'Organization' refers to logical namespace organization, not organizational charts or hierarchy."
         }
       ],
       "schema_signals": {
@@ -848,8 +844,7 @@
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Tool searches memory by semantic similarity for concepts (e.g., 'JWT auth pattern'), not accessing actual secrets; finding references to token-based auth is not secrets access."
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -941,7 +936,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in '.swarm/memory.db' is file path notation, not contacts directory."
+          "validation_reason": "'Directory' refers to filesystem directory management, not contact directories."
         },
         {
           "category": "project_metadata",
@@ -1006,7 +1001,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in file path context, not contacts."
+          "validation_reason": "'Directory' is filesystem directory, not contacts."
         }
       ],
       "schema_signals": {
@@ -1047,7 +1042,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file system path (~/.claude/projects/*/memory/), not contacts."
+          "validation_reason": "'Directory' refers to ~/.claude/projects/ filesystem paths, not contact directories."
         },
         {
           "category": "project_metadata",
@@ -1093,7 +1088,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in path notation."
+          "validation_reason": "'Directory' is filesystem, not contacts."
         },
         {
           "category": "project_metadata",
@@ -1143,7 +1138,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in path notation."
+          "validation_reason": "'Directory' is filesystem directory."
         }
       ],
       "schema_signals": {
@@ -1174,9 +1169,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "store report \u2014 backend, entry count, total bytes, per-namespace c"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "Entry/byte counts are internal system statistics, not public/published data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -1451,21 +1444,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "sumer \u2014 this acknowledges the event today.) ID of the idle teamma"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'event' is generic usage for 'something happened' (agent finished), not calendar event."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1499,7 +1477,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:a5e8d0d9a4e9c6b3b0e22d77f52558d185e2ad75802852dc61acdfb2b6328b2d"
     },
     {
@@ -1579,7 +1557,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text ('For one-off shell commands, plain Bash hooks are fine'); tool provides context/suggestions, not code execution."
+          "validation_reason": "Pre-edit hook gets context before editing; 'shell' appears in description of what it is NOT (plain Bash hooks)."
         }
       ],
       "data_categories": [],
@@ -1619,7 +1597,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records outcome."
+          "validation_reason": "Records editing outcome for learning, does not execute code."
         }
       ],
       "data_categories": [],
@@ -1657,7 +1635,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool assesses risk, doesn't execute."
+          "validation_reason": "Assesses risk before command execution; the hook itself does not execute."
         }
       ],
       "data_categories": [],
@@ -1698,7 +1676,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records outcome."
+          "validation_reason": "Records execution outcome, does not execute."
         }
       ],
       "data_categories": [],
@@ -1740,7 +1718,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool provides routing recommendations."
+          "validation_reason": "Gets routing recommendation; 'shell' in description explains what it is NOT."
         }
       ],
       "data_categories": [
@@ -1793,7 +1771,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns metrics."
+          "validation_reason": "Views metrics dashboard, does not execute."
         }
       ],
       "data_categories": [],
@@ -1829,7 +1807,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool lists hooks."
+          "validation_reason": "Lists hooks, does not execute."
         }
       ],
       "data_categories": [],
@@ -1869,7 +1847,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records task start."
+          "validation_reason": "Records task start; 'shell' in description explains context, not capability."
         }
       ],
       "data_categories": [
@@ -1926,7 +1904,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records completion."
+          "validation_reason": "Records completion for learning, does not execute."
         }
       ],
       "data_categories": [
@@ -1980,7 +1958,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool explains routing decisions."
+          "validation_reason": "Explains routing decision; does not execute code."
         }
       ],
       "data_categories": [
@@ -2034,7 +2012,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool bootstraps intelligence."
+          "validation_reason": "Analyzes repository for learning; analysis is not code execution."
         }
       ],
       "data_categories": [
@@ -2089,7 +2067,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool generates agent configs."
+          "validation_reason": "Generates agent configurations; code generation is not execution."
         }
       ],
       "data_categories": [
@@ -2106,7 +2084,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is output file path, not contacts directory."
+          "validation_reason": "'Directory' refers to output directory path, not contacts."
         }
       ],
       "schema_signals": {
@@ -2145,7 +2123,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool transfers patterns."
+          "validation_reason": "Transfers patterns, does not execute code."
         }
       ],
       "data_categories": [
@@ -2197,9 +2175,7 @@
             "snippet": "ing, audit chain. For one-off shell commands, plain Bash hooks ar"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool initializes sessions."
+          "suppressed": false
         },
         {
           "capability": "secrets_access",
@@ -2217,7 +2193,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'token' in 'prevent unintended token usage' refers to billing/cost tokens, not secrets access."
+          "validation_reason": "Description explicitly states 'opt-in to prevent unintended token usage'\u2014this is about preventing access, not enabling it."
         }
       ],
       "data_categories": [],
@@ -2257,7 +2233,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool ends sessions."
+          "validation_reason": "Ends session and persists state; does not execute code."
         }
       ],
       "data_categories": [],
@@ -2297,7 +2273,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool restores sessions."
+          "validation_reason": "Restores session, does not execute code."
         }
       ],
       "data_categories": [],
@@ -2338,7 +2314,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool sends notifications."
+          "validation_reason": "Sends notifications, does not execute code."
         }
       ],
       "data_categories": [
@@ -2392,7 +2368,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool initializes hooks config."
+          "validation_reason": "Initializes hooks configuration; does not execute code."
         }
       ],
       "data_categories": [
@@ -2453,7 +2429,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool shows intelligence status."
+          "validation_reason": "Shows status of intelligence system, does not execute code."
         }
       ],
       "data_categories": [
@@ -2503,7 +2479,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool resets learning state."
+          "validation_reason": "Resets learning state; does not execute code."
         }
       ],
       "data_categories": [],
@@ -2542,7 +2518,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool begins trajectory."
+          "validation_reason": "Begins trajectory recording for learning; not code execution."
         }
       ],
       "data_categories": [
@@ -2597,7 +2573,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records step."
+          "validation_reason": "Records step in trajectory, does not execute."
         }
       ],
       "data_categories": [],
@@ -2636,8 +2612,7 @@
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool ends trajectory."
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -2678,7 +2653,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool stores patterns."
+          "validation_reason": "Stores pattern in ReasoningBank; storage is not execution."
         }
       ],
       "data_categories": [],
@@ -2719,7 +2694,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool searches patterns."
+          "validation_reason": "Searches patterns using vector search; search is not execution."
         }
       ],
       "data_categories": [],
@@ -2757,7 +2732,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns statistics."
+          "validation_reason": "Gets statistics, does not execute code."
         }
       ],
       "data_categories": [],
@@ -2795,8 +2770,7 @@
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool triggers learning."
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -2836,7 +2810,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool computes similarity."
+          "validation_reason": "Computes similarity using MoE/Flash/Hyperbolic; computation is not code execution."
         }
       ],
       "data_categories": [],
@@ -2875,7 +2849,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool lists workers."
+          "validation_reason": "Lists workers, does not execute code."
         }
       ],
       "data_categories": [
@@ -2930,7 +2904,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool dispatches workers."
+          "validation_reason": "Dispatches a background worker; dispatch is not execution of user code."
         }
       ],
       "data_categories": [],
@@ -2969,7 +2943,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns status."
+          "validation_reason": "Gets worker status, does not execute."
         }
       ],
       "data_categories": [
@@ -3023,7 +2997,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool detects triggers."
+          "validation_reason": "Detects triggers from prompt, does not execute."
         }
       ],
       "data_categories": [],
@@ -3061,7 +3035,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool cancels workers."
+          "validation_reason": "Cancels worker, does not execute."
         }
       ],
       "data_categories": [],
@@ -3101,7 +3075,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool routes to optimal model."
+          "validation_reason": "Routes to optimal Claude model; routing decision is not execution."
         }
       ],
       "data_categories": [
@@ -3155,7 +3129,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool records outcome."
+          "validation_reason": "Records routing outcome for learning, does not execute."
         }
       ],
       "data_categories": [
@@ -3205,7 +3179,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns statistics."
+          "validation_reason": "Gets statistics, does not execute."
         }
       ],
       "data_categories": [],
@@ -3785,7 +3759,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference in comparison."
+          "validation_reason": "References native Task tool, not project metadata."
         },
         {
           "category": "org_structure",
@@ -3811,9 +3785,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "count role agentType prefix"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' is number of agents to spawn, internal parameter not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -3850,7 +3822,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -3919,7 +3891,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "org_structure",
@@ -3967,7 +3939,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -4011,7 +3983,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -4061,7 +4033,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -4097,7 +4069,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -4136,7 +4108,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' is native tool reference."
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -4169,7 +4141,9 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "ttern counts. Use when native conversation memory is wrong because you n"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "Tool optimizes shared memory, not conversation; reference to 'conversation memory' is about an unrelated concept (native Claude memory)."
         }
       ],
       "schema_signals": {
@@ -5006,21 +4980,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "BitQ quantized index status \u2014 availability, vector count, compression ra"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'availability' in 'vector availability' is system uptime/readiness, not calendar availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -5044,9 +5003,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "status \u2014 availability, vector count, compression ratio Use when t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' of vectors is internal metric, not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -5056,7 +5013,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:0ad3baf5a9e487de9649c0e30952edf7b5a123e87f44c9ef2c3bf38f27e31a2c"
     },
     {
@@ -5936,7 +5893,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "state, swarm health, breaker status) \u2014 those are not in /proc, on"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "System info returns OS state (processes, environment), not project metadata."
         }
       ],
       "schema_signals": {
@@ -6110,7 +6069,9 @@
             "snippet": "ture and replay. For one-shot shell commands, native Bash is fine"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Creating a terminal session is not executing code; execution happens when commands are run in the session."
         }
       ],
       "data_categories": [
@@ -6127,7 +6088,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is working directory path, not contacts."
+          "validation_reason": "'Directory' refers to working directory path, not contacts."
         }
       ],
       "schema_signals": {
@@ -6206,7 +6167,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool lists terminal sessions."
+          "validation_reason": "Lists terminal sessions, does not execute."
         }
       ],
       "data_categories": [
@@ -6259,7 +6220,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool closes sessions."
+          "validation_reason": "Closes terminal, does not execute."
         }
       ],
       "data_categories": [],
@@ -6301,7 +6262,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns command history."
+          "validation_reason": "Retrieves history, does not execute code."
         }
       ],
       "data_categories": [],
@@ -6554,7 +6515,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text ('native shell timing'); tool generates benchmarks."
+          "validation_reason": "'Shell' in description explains when NOT to use this tool; tool generates reports, not code execution."
         }
       ],
       "data_categories": [],
@@ -6594,7 +6555,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool detects bottlenecks."
+          "validation_reason": "Detects bottlenecks, does not execute code."
         }
       ],
       "data_categories": [],
@@ -6634,7 +6595,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool runs benchmarks."
+          "validation_reason": "Runs benchmarks (measurement), not arbitrary code execution."
         }
       ],
       "data_categories": [],
@@ -6674,7 +6635,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool profiles components."
+          "validation_reason": "Profiles components, does not execute user code."
         }
       ],
       "data_categories": [
@@ -6691,7 +6652,7 @@
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "'profile' refers to performance profiling, not personal profiles."
+          "validation_reason": "'Profile' is performance profiling, not personal profiles."
         }
       ],
       "schema_signals": {
@@ -6729,7 +6690,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool applies optimizations."
+          "validation_reason": "Applies optimizations, does not execute code."
         }
       ],
       "data_categories": [],
@@ -6769,7 +6730,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool returns metrics."
+          "validation_reason": "Gets metrics, does not execute."
         }
       ],
       "data_categories": [],
@@ -6810,7 +6771,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool analyzes repos via MCP."
+          "validation_reason": "Analyzes repository, does not execute code."
         }
       ],
       "data_categories": [
@@ -6869,7 +6830,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool manages PRs via MCP."
+          "validation_reason": "Manages PRs (CRUD), does not execute code."
         }
       ],
       "data_categories": [
@@ -6928,7 +6889,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool manages issues via MCP."
+          "validation_reason": "Tracks issues, does not execute code."
         }
       ],
       "data_categories": [
@@ -6997,7 +6958,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool manages workflows via MCP."
+          "validation_reason": "Manages workflow definitions, does not execute them."
         }
       ],
       "data_categories": [
@@ -7052,7 +7013,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'shell' in comparison text; tool retrieves metrics via MCP."
+          "validation_reason": "Gets metrics, does not execute."
         }
       ],
       "data_categories": [
@@ -7106,7 +7067,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "onomous agent Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7155,7 +7118,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "d on feedback Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7192,7 +7157,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "mous workflow Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7244,7 +7211,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "DAA workflow Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7280,7 +7249,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "etween agents Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7349,7 +7320,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "tive patterns Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7383,7 +7356,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "mance metrics Use when native Task is wrong because you need age"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7420,7 +7395,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "warm topology Use when native Task is wrong because the work cro"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7491,7 +7468,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "across nodes Use when native Task is wrong because the work cro"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7568,9 +7547,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "ropose) Proposal ID (for vote/commit/status) Vote Voter node ID Co"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "'commit' in '(for vote/commit/status)' refers to consensus proposal commitment, not git commits."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
@@ -7583,7 +7560,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "um strategies Use when native Task is wrong because the work cro"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7653,7 +7632,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ation metrics Use when native Task is wrong because the work cro"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -7708,7 +7689,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file system path (.ruflo/browser-sessions), not contacts."
+          "validation_reason": "'Directory' is default output directory path, not contacts."
         },
         {
           "category": "project_metadata",
@@ -7814,7 +7795,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "'drive' in 'does not itself drive the browser' is metaphorical control, not Google Drive."
+          "validation_reason": "'Drive' is used as a verb ('doesn't drive the browser'), not referring to Google Drive or file access."
         }
       ],
       "schema_signals": {
@@ -7960,9 +7941,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "g cache stats and attestation count Use when generic memory_* too"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' of attestations is internal metric, not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -8144,7 +8123,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "'public' means 'publicly exposed API', not public/external data; no delete API exists for this storage type."
+          "validation_reason": "Description states there is NO public delete API; 'public' refers to the lack of API, not public data exposure."
         }
       ],
       "schema_signals": {
@@ -8333,7 +8312,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "'public' refers to API exposure; tool may not be able to delete from all backends."
+          "validation_reason": "Describes lack of public API, not public data exposure."
         }
       ],
       "schema_signals": {
@@ -8499,21 +8478,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Get ruvllm-wasm availability and initialization status. Us"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'availability' refers to system availability/readiness, not calendar scheduling."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -8534,7 +8498,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c6951107d39e0441803bdced9b0dc785545a3333d503072a5f5873e8d9f04a95"
     },
     {
@@ -8920,7 +8884,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ery template. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -8933,9 +8899,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery templates availability; not handling public/external data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -8971,7 +8935,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "t a response. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -8984,9 +8950,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data handling."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9083,7 +9047,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ontent, ...}. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9096,9 +9062,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9129,7 +9093,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "WASM agents. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9142,9 +9108,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9177,7 +9141,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ee resources. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9190,9 +9156,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9225,7 +9189,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ols and info. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9238,9 +9204,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9286,7 +9250,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ion) as JSON. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9299,9 +9265,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to gallery; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9332,7 +9296,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "rity, Swarm). Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9345,9 +9311,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' agents are templates, not public/external data being processed."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9380,7 +9344,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "tes by query. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9393,9 +9359,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to templates; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9428,7 +9392,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ery template. Use when native Task is wrong because the workload"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9441,9 +9407,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "wasm_gallery_search to find a published agent, or wasm_agent_create t"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'published' refers to templates; not public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9530,9 +9494,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "a WASM agent (messages, turn count, config, stop status). Use wh"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' of turns is internal metric."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9565,7 +9527,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "gent as JSON. Use when native Task is wrong because the todo sta"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -9598,7 +9562,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "gent sandbox. Use when native Task is wrong because the tool reg"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -9631,7 +9597,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "a WASM agent. Use when native Task is wrong because turn-limit e"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9644,9 +9612,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "nt_turn_count wasm agent turn count"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' is internal metric."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -9679,7 +9645,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "plicit stop). Use when native Task is wrong because the stop con"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         }
       ],
       "schema_signals": {
@@ -9712,7 +9680,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "across tasks. Use when native Task is wrong because the agent li"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "References native Task tool."
         },
         {
           "category": "public_data",
@@ -9725,9 +9695,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "nt \u2014 clears messages and turn count so it can be reused across ta"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' in turn-count reset is internal."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -10007,21 +9975,6 @@
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ross turns. Polls the session event log up to maxWaitMs (default"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'event' refers to session event log (activity event), not calendar."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -10065,7 +10018,9 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": ", last error. Use when native conversation memory is wrong because you n"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "Cloud session state is not conversation content; reference to 'conversation memory' is explaining what this is NOT."
         },
         {
           "category": "project_metadata",
@@ -10119,21 +10074,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "tch the full server-persisted event log of a managed cloud-agent"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'event' refers to API events (tool_use, status changes), not calendar."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -10156,7 +10096,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:4514934ff678183c0ddaa464064ca13852871aa131d037ec84c778cd4fbcad43"
     },
     {
@@ -10179,7 +10119,9 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "m_agent_list. Use when native conversation memory is wrong because you n"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
+          "validated_out": true,
+          "validation_reason": "Lists cloud sessions, not conversations; reference to 'conversation memory' explains what this tool is NOT."
         },
         {
           "category": "financial",
@@ -10341,7 +10283,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file system path (.claude/), not contacts."
+          "validation_reason": "'.claude/ directory' is filesystem directory, not contacts."
         },
         {
           "category": "project_metadata",
@@ -10464,9 +10406,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "ing enabled status, iteration count, task progress, and learning"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "'count' of iterations is internal metric."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -10630,21 +10570,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Retrieve the autopilot event log. Shows enable/disable eve"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "'event' is activity event, not calendar event."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -10665,7 +10590,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:59b16f7d0495a1ce2feeed2a61f2ef215bf334d4a60061fd6710bdea91deb5f9"
     },
     {
@@ -10833,7 +10758,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file system path, not contacts."
+          "validation_reason": "'Project root directory' is filesystem path, not contacts."
         },
         {
           "category": "project_metadata",
@@ -10885,7 +10810,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file path."
+          "validation_reason": "'Directory' is filesystem."
         },
         {
           "category": "project_metadata",
@@ -10936,7 +10861,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is file path."
+          "validation_reason": "'Directory' is filesystem."
         },
         {
           "category": "project_metadata",
@@ -10995,12 +10920,6 @@
         "label": "Contacts & address book",
         "tier": "high",
         "tool_count": 12,
-        "confidence": "medium"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 6,
         "confidence": "medium"
       },
       "source_code": {
@@ -11114,7 +11033,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",
@@ -11133,467 +11051,471 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 207,
-      "false_positive": 114,
-      "needs_source": 2,
+      "confirmed": 199,
+      "false_positive": 115,
+      "needs_source": 3,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::agent_terminate::project_metadata",
-        "reason": "'Task' here is a native tool name in comparison text ('native Task tool is wrong'), not project metadata handled by agent_terminate."
+        "reason": "The 'Task' match refers to 'native Task tool', not project tasks\u2014this is a tool comparison, not project metadata exposure."
+      },
+      {
+        "id": "data::agent_status::project_metadata",
+        "reason": "agent_status reads agent lifecycle state (idle/running/stopped), which is agent operational state, not project work metadata."
       },
       {
         "id": "cap::agent_list::code_execution",
-        "reason": "'spawn' appears in comparative description text ('rather than spawn a new one-shot Task'), not describing what agent_list does; this tool merely lists agents."
+        "reason": "agent_list only lists agents; 'spawn' appears in context explaining when NOT to spawn, not indicating this tool does so."
       },
       {
         "id": "cap::agent_pool::code_execution",
-        "reason": "'spawn' in 'amortize spawn latency' is motivation context, not what the tool does; tool manages a pre-spawned pool, not code execution."
+        "reason": "agent_pool manages pre-existing agent pools; it does not spawn or execute code directly."
       },
       {
         "id": "data::agent_pool::project_metadata",
-        "reason": "'Task' is native tool name in comparison text, not project metadata handled by this tool."
-      },
-      {
-        "id": "data::agent_pool::public_data",
-        "reason": "'count' refers to internal agent pool count tracking, not public/published data."
-      },
-      {
-        "id": "data::agent_update::public_data",
-        "reason": "'count' in 'Task count' is internal agent state tracking, not public/aggregate statistics."
+        "reason": "The 'Task' match is a reference to native Claude Task tool, not project metadata."
       },
       {
         "id": "cap::swarm_init::code_execution",
-        "reason": "'spawn' is in comparison text ('For independent one-shot subagents, native Task is fine; spawn each separately'), not describing swarm_init's behavior."
+        "reason": "swarm_init configures multi-agent coordination; it does not spawn or execute code."
       },
       {
         "id": "data::swarm_init::project_metadata",
-        "reason": "'Task' is native tool name in comparison, not project metadata handled by tool."
+        "reason": "References native Task tool, not project metadata."
       },
       {
         "id": "cap::swarm_status::code_execution",
-        "reason": "'spawn' is in comparison text; tool returns swarm state, not code execution."
+        "reason": "swarm_status reads state; it does not spawn or execute."
       },
       {
         "id": "cap::swarm_shutdown::code_execution",
-        "reason": "'spawn' in comparison text; tool shuts down swarms, not code execution."
+        "reason": "swarm_shutdown terminates swarms; it does not spawn."
       },
       {
         "id": "data::swarm_shutdown::project_metadata",
-        "reason": "'Task' is native tool reference in comparison text."
+        "reason": "References native Task tool."
       },
       {
         "id": "cap::swarm_health::code_execution",
-        "reason": "'spawn' in comparison text; tool checks health, not code execution."
+        "reason": "swarm_health checks health status; does not spawn or execute."
       },
       {
         "id": "data::memory_store::org_structure",
-        "reason": "'organization' is a namespace parameter (string label), not org_structure data being processed."
-      },
-      {
-        "id": "cap::memory_search::secrets_access",
-        "reason": "Tool searches memory by semantic similarity for concepts (e.g., 'JWT auth pattern'), not accessing actual secrets; finding references to token-based auth is not secrets access."
+        "reason": "'Organization' refers to logical namespace organization, not organizational charts or hierarchy."
       },
       {
         "id": "data::memory_stats::contacts",
-        "reason": "'directory' in '.swarm/memory.db' is file path notation, not contacts directory."
+        "reason": "'Directory' refers to filesystem directory management, not contact directories."
       },
       {
         "id": "data::memory_migrate::contacts",
-        "reason": "'directory' in file path context, not contacts."
+        "reason": "'Directory' is filesystem directory, not contacts."
       },
       {
         "id": "data::memory_import_claude::contacts",
-        "reason": "'directory' is file system path (~/.claude/projects/*/memory/), not contacts."
+        "reason": "'Directory' refers to ~/.claude/projects/ filesystem paths, not contact directories."
       },
       {
         "id": "data::memory_bridge_status::contacts",
-        "reason": "'directory' in path notation."
+        "reason": "'Directory' is filesystem, not contacts."
       },
       {
         "id": "data::memory_search_unified::contacts",
-        "reason": "'directory' in path notation."
-      },
-      {
-        "id": "data::memory_detailed-stats::public_data",
-        "reason": "Entry/byte counts are internal system statistics, not public/published data."
-      },
-      {
-        "id": "data::hooks_teammate-idle::calendar",
-        "reason": "'event' is generic usage for 'something happened' (agent finished), not calendar event."
+        "reason": "'Directory' is filesystem directory."
       },
       {
         "id": "cap::hooks_pre-edit::code_execution",
-        "reason": "'shell' in comparison text ('For one-off shell commands, plain Bash hooks are fine'); tool provides context/suggestions, not code execution."
+        "reason": "Pre-edit hook gets context before editing; 'shell' appears in description of what it is NOT (plain Bash hooks)."
       },
       {
         "id": "cap::hooks_post-edit::code_execution",
-        "reason": "'shell' in comparison text; tool records outcome."
+        "reason": "Records editing outcome for learning, does not execute code."
       },
       {
         "id": "cap::hooks_pre-command::code_execution",
-        "reason": "'shell' in comparison text; tool assesses risk, doesn't execute."
+        "reason": "Assesses risk before command execution; the hook itself does not execute."
       },
       {
         "id": "cap::hooks_post-command::code_execution",
-        "reason": "'shell' in comparison text; tool records outcome."
+        "reason": "Records execution outcome, does not execute."
       },
       {
         "id": "cap::hooks_route::code_execution",
-        "reason": "'shell' in comparison text; tool provides routing recommendations."
+        "reason": "Gets routing recommendation; 'shell' in description explains what it is NOT."
       },
       {
         "id": "cap::hooks_metrics::code_execution",
-        "reason": "'shell' in comparison text; tool returns metrics."
+        "reason": "Views metrics dashboard, does not execute."
       },
       {
         "id": "cap::hooks_list::code_execution",
-        "reason": "'shell' in comparison text; tool lists hooks."
+        "reason": "Lists hooks, does not execute."
       },
       {
         "id": "cap::hooks_pre-task::code_execution",
-        "reason": "'shell' in comparison text; tool records task start."
+        "reason": "Records task start; 'shell' in description explains context, not capability."
       },
       {
         "id": "cap::hooks_post-task::code_execution",
-        "reason": "'shell' in comparison text; tool records completion."
+        "reason": "Records completion for learning, does not execute."
       },
       {
         "id": "cap::hooks_explain::code_execution",
-        "reason": "'shell' in comparison text; tool explains routing decisions."
+        "reason": "Explains routing decision; does not execute code."
       },
       {
         "id": "cap::hooks_pretrain::code_execution",
-        "reason": "'shell' in comparison text; tool bootstraps intelligence."
+        "reason": "Analyzes repository for learning; analysis is not code execution."
       },
       {
         "id": "cap::hooks_build-agents::code_execution",
-        "reason": "'shell' in comparison text; tool generates agent configs."
+        "reason": "Generates agent configurations; code generation is not execution."
       },
       {
         "id": "data::hooks_build-agents::contacts",
-        "reason": "'directory' is output file path, not contacts directory."
+        "reason": "'Directory' refers to output directory path, not contacts."
       },
       {
         "id": "cap::hooks_transfer::code_execution",
-        "reason": "'shell' in comparison text; tool transfers patterns."
-      },
-      {
-        "id": "cap::hooks_session-start::code_execution",
-        "reason": "'shell' in comparison text; tool initializes sessions."
+        "reason": "Transfers patterns, does not execute code."
       },
       {
         "id": "cap::hooks_session-start::secrets_access",
-        "reason": "'token' in 'prevent unintended token usage' refers to billing/cost tokens, not secrets access."
+        "reason": "Description explicitly states 'opt-in to prevent unintended token usage'\u2014this is about preventing access, not enabling it."
       },
       {
         "id": "cap::hooks_session-end::code_execution",
-        "reason": "'shell' in comparison text; tool ends sessions."
+        "reason": "Ends session and persists state; does not execute code."
       },
       {
         "id": "cap::hooks_session-restore::code_execution",
-        "reason": "'shell' in comparison text; tool restores sessions."
+        "reason": "Restores session, does not execute code."
       },
       {
         "id": "cap::hooks_notify::code_execution",
-        "reason": "'shell' in comparison text; tool sends notifications."
+        "reason": "Sends notifications, does not execute code."
       },
       {
         "id": "cap::hooks_init::code_execution",
-        "reason": "'shell' in comparison text; tool initializes hooks config."
+        "reason": "Initializes hooks configuration; does not execute code."
       },
       {
         "id": "cap::hooks_intelligence::code_execution",
-        "reason": "'shell' in comparison text; tool shows intelligence status."
+        "reason": "Shows status of intelligence system, does not execute code."
       },
       {
         "id": "cap::hooks_intelligence-reset::code_execution",
-        "reason": "'shell' in comparison text; tool resets learning state."
+        "reason": "Resets learning state; does not execute code."
       },
       {
         "id": "cap::hooks_intelligence_trajectory-start::code_execution",
-        "reason": "'shell' in comparison text; tool begins trajectory."
+        "reason": "Begins trajectory recording for learning; not code execution."
       },
       {
         "id": "cap::hooks_intelligence_trajectory-step::code_execution",
-        "reason": "'shell' in comparison text; tool records step."
-      },
-      {
-        "id": "cap::hooks_intelligence_trajectory-end::code_execution",
-        "reason": "'shell' in comparison text; tool ends trajectory."
+        "reason": "Records step in trajectory, does not execute."
       },
       {
         "id": "cap::hooks_intelligence_pattern-store::code_execution",
-        "reason": "'shell' in comparison text; tool stores patterns."
+        "reason": "Stores pattern in ReasoningBank; storage is not execution."
       },
       {
         "id": "cap::hooks_intelligence_pattern-search::code_execution",
-        "reason": "'shell' in comparison text; tool searches patterns."
+        "reason": "Searches patterns using vector search; search is not execution."
       },
       {
         "id": "cap::hooks_intelligence_stats::code_execution",
-        "reason": "'shell' in comparison text; tool returns statistics."
-      },
-      {
-        "id": "cap::hooks_intelligence_learn::code_execution",
-        "reason": "'shell' in comparison text; tool triggers learning."
+        "reason": "Gets statistics, does not execute code."
       },
       {
         "id": "cap::hooks_intelligence_attention::code_execution",
-        "reason": "'shell' in comparison text; tool computes similarity."
+        "reason": "Computes similarity using MoE/Flash/Hyperbolic; computation is not code execution."
       },
       {
         "id": "cap::hooks_worker-list::code_execution",
-        "reason": "'shell' in comparison text; tool lists workers."
+        "reason": "Lists workers, does not execute code."
       },
       {
         "id": "cap::hooks_worker-dispatch::code_execution",
-        "reason": "'shell' in comparison text; tool dispatches workers."
+        "reason": "Dispatches a background worker; dispatch is not execution of user code."
       },
       {
         "id": "cap::hooks_worker-status::code_execution",
-        "reason": "'shell' in comparison text; tool returns status."
+        "reason": "Gets worker status, does not execute."
       },
       {
         "id": "cap::hooks_worker-detect::code_execution",
-        "reason": "'shell' in comparison text; tool detects triggers."
+        "reason": "Detects triggers from prompt, does not execute."
       },
       {
         "id": "cap::hooks_worker-cancel::code_execution",
-        "reason": "'shell' in comparison text; tool cancels workers."
+        "reason": "Cancels worker, does not execute."
       },
       {
         "id": "cap::hooks_model-route::code_execution",
-        "reason": "'shell' in comparison text; tool routes to optimal model."
+        "reason": "Routes to optimal Claude model; routing decision is not execution."
       },
       {
         "id": "cap::hooks_model-outcome::code_execution",
-        "reason": "'shell' in comparison text; tool records outcome."
+        "reason": "Records routing outcome for learning, does not execute."
       },
       {
         "id": "cap::hooks_model-stats::code_execution",
-        "reason": "'shell' in comparison text; tool returns statistics."
+        "reason": "Gets statistics, does not execute."
       },
       {
         "id": "data::hive-mind_spawn::project_metadata",
-        "reason": "'Task' is native tool reference in comparison."
-      },
-      {
-        "id": "data::hive-mind_spawn::public_data",
-        "reason": "'count' is number of agents to spawn, internal parameter not public data."
+        "reason": "References native Task tool, not project metadata."
       },
       {
         "id": "data::hive-mind_init::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_join::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_leave::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_consensus::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_broadcast::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_shutdown::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
         "id": "data::hive-mind_memory::project_metadata",
-        "reason": "'Task' is native tool reference."
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::embeddings_rabitq_status::calendar",
-        "reason": "'availability' in 'vector availability' is system uptime/readiness, not calendar availability."
+        "id": "data::hive-mind_optimize-memory::communications_content",
+        "reason": "Tool optimizes shared memory, not conversation; reference to 'conversation memory' is about an unrelated concept (native Claude memory)."
       },
       {
-        "id": "data::embeddings_rabitq_status::public_data",
-        "reason": "'count' of vectors is internal metric, not public data."
+        "id": "data::system_info::project_metadata",
+        "reason": "System info returns OS state (processes, environment), not project metadata."
+      },
+      {
+        "id": "cap::terminal_create::code_execution",
+        "reason": "Creating a terminal session is not executing code; execution happens when commands are run in the session."
       },
       {
         "id": "data::terminal_create::contacts",
-        "reason": "'directory' is working directory path, not contacts."
+        "reason": "'Directory' refers to working directory path, not contacts."
       },
       {
         "id": "cap::terminal_list::code_execution",
-        "reason": "'shell' in comparison text; tool lists terminal sessions."
+        "reason": "Lists terminal sessions, does not execute."
       },
       {
         "id": "cap::terminal_close::code_execution",
-        "reason": "'shell' in comparison text; tool closes sessions."
+        "reason": "Closes terminal, does not execute."
       },
       {
         "id": "cap::terminal_history::code_execution",
-        "reason": "'shell' in comparison text; tool returns command history."
+        "reason": "Retrieves history, does not execute code."
       },
       {
         "id": "cap::performance_report::code_execution",
-        "reason": "'shell' in comparison text ('native shell timing'); tool generates benchmarks."
+        "reason": "'Shell' in description explains when NOT to use this tool; tool generates reports, not code execution."
       },
       {
         "id": "cap::performance_bottleneck::code_execution",
-        "reason": "'shell' in comparison text; tool detects bottlenecks."
+        "reason": "Detects bottlenecks, does not execute code."
       },
       {
         "id": "cap::performance_benchmark::code_execution",
-        "reason": "'shell' in comparison text; tool runs benchmarks."
+        "reason": "Runs benchmarks (measurement), not arbitrary code execution."
       },
       {
         "id": "cap::performance_profile::code_execution",
-        "reason": "'shell' in comparison text; tool profiles components."
+        "reason": "Profiles components, does not execute user code."
       },
       {
         "id": "data::performance_profile::personal_identifiers",
-        "reason": "'profile' refers to performance profiling, not personal profiles."
+        "reason": "'Profile' is performance profiling, not personal profiles."
       },
       {
         "id": "cap::performance_optimize::code_execution",
-        "reason": "'shell' in comparison text; tool applies optimizations."
+        "reason": "Applies optimizations, does not execute code."
       },
       {
         "id": "cap::performance_metrics::code_execution",
-        "reason": "'shell' in comparison text; tool returns metrics."
+        "reason": "Gets metrics, does not execute."
       },
       {
         "id": "cap::github_repo_analyze::code_execution",
-        "reason": "'shell' in comparison text; tool analyzes repos via MCP."
+        "reason": "Analyzes repository, does not execute code."
       },
       {
         "id": "cap::github_pr_manage::code_execution",
-        "reason": "'shell' in comparison text; tool manages PRs via MCP."
+        "reason": "Manages PRs (CRUD), does not execute code."
       },
       {
         "id": "cap::github_issue_track::code_execution",
-        "reason": "'shell' in comparison text; tool manages issues via MCP."
+        "reason": "Tracks issues, does not execute code."
       },
       {
         "id": "cap::github_workflow::code_execution",
-        "reason": "'shell' in comparison text; tool manages workflows via MCP."
+        "reason": "Manages workflow definitions, does not execute them."
       },
       {
         "id": "cap::github_metrics::code_execution",
-        "reason": "'shell' in comparison text; tool retrieves metrics via MCP."
+        "reason": "Gets metrics, does not execute."
       },
       {
-        "id": "data::coordination_consensus::source_code",
-        "reason": "'commit' in '(for vote/commit/status)' refers to consensus proposal commitment, not git commits."
+        "id": "data::daa_agent_create::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_agent_adapt::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_workflow_create::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_workflow_execute::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_knowledge_share::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_cognitive_pattern::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::daa_performance_metrics::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::coordination_topology::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::coordination_sync::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::coordination_consensus::project_metadata",
+        "reason": "References native Task tool."
+      },
+      {
+        "id": "data::coordination_metrics::project_metadata",
+        "reason": "References native Task tool."
       },
       {
         "id": "data::browser_session_record::contacts",
-        "reason": "'directory' is file system path (.ruflo/browser-sessions), not contacts."
+        "reason": "'Directory' is default output directory path, not contacts."
       },
       {
         "id": "data::browser_session_replay::files_documents",
-        "reason": "'drive' in 'does not itself drive the browser' is metaphorical control, not Google Drive."
-      },
-      {
-        "id": "data::agentdb_health::public_data",
-        "reason": "'count' of attestations is internal metric, not public data."
+        "reason": "'Drive' is used as a verb ('doesn't drive the browser'), not referring to Google Drive or file access."
       },
       {
         "id": "data::agentdb_causal-edge-delete::public_data",
-        "reason": "'public' means 'publicly exposed API', not public/external data; no delete API exists for this storage type."
+        "reason": "Description states there is NO public delete API; 'public' refers to the lack of API, not public data exposure."
       },
       {
         "id": "data::agentdb_hierarchical-delete::public_data",
-        "reason": "'public' refers to API exposure; tool may not be able to delete from all backends."
+        "reason": "Describes lack of public API, not public data exposure."
       },
       {
-        "id": "data::ruvllm_status::calendar",
-        "reason": "'availability' refers to system availability/readiness, not calendar scheduling."
+        "id": "data::wasm_agent_create::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_create::public_data",
-        "reason": "'published' refers to gallery templates availability; not handling public/external data."
+        "id": "data::wasm_agent_prompt::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_prompt::public_data",
-        "reason": "'published' refers to gallery; not public data handling."
+        "id": "data::wasm_agent_tool::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_tool::public_data",
-        "reason": "'published' refers to gallery; not public data."
+        "id": "data::wasm_agent_list::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_list::public_data",
-        "reason": "'published' refers to gallery; not public data."
+        "id": "data::wasm_agent_terminate::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_terminate::public_data",
-        "reason": "'published' refers to gallery; not public data."
+        "id": "data::wasm_agent_files::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_files::public_data",
-        "reason": "'published' refers to gallery; not public data."
+        "id": "data::wasm_agent_export::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_export::public_data",
-        "reason": "'published' refers to gallery; not public data."
+        "id": "data::wasm_gallery_list::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_gallery_list::public_data",
-        "reason": "'published' agents are templates, not public/external data being processed."
+        "id": "data::wasm_gallery_search::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_gallery_search::public_data",
-        "reason": "'published' refers to templates; not public data."
+        "id": "data::wasm_gallery_create::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_gallery_create::public_data",
-        "reason": "'published' refers to templates; not public data."
+        "id": "data::wasm_agent_todos::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_state::public_data",
-        "reason": "'count' of turns is internal metric."
+        "id": "data::wasm_agent_tools::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_turn_count::public_data",
-        "reason": "'count' is internal metric."
+        "id": "data::wasm_agent_turn_count::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::wasm_agent_reset::public_data",
-        "reason": "'count' in turn-count reset is internal."
+        "id": "data::wasm_agent_is_stopped::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::managed_agent_prompt::calendar",
-        "reason": "'event' refers to session event log (activity event), not calendar."
+        "id": "data::wasm_agent_reset::project_metadata",
+        "reason": "References native Task tool."
       },
       {
-        "id": "data::managed_agent_events::calendar",
-        "reason": "'event' refers to API events (tool_use, status changes), not calendar."
+        "id": "data::managed_agent_status::communications_content",
+        "reason": "Cloud session state is not conversation content; reference to 'conversation memory' is explaining what this is NOT."
+      },
+      {
+        "id": "data::managed_agent_list::communications_content",
+        "reason": "Lists cloud sessions, not conversations; reference to 'conversation memory' explains what this tool is NOT."
       },
       {
         "id": "data::guidance_discover::contacts",
-        "reason": "'directory' is file system path (.claude/), not contacts."
-      },
-      {
-        "id": "data::autopilot_status::public_data",
-        "reason": "'count' of iterations is internal metric."
-      },
-      {
-        "id": "data::autopilot_log::calendar",
-        "reason": "'event' is activity event, not calendar event."
+        "reason": "'.claude/ directory' is filesystem directory, not contacts."
       },
       {
         "id": "data::hooks_coverage-route::contacts",
-        "reason": "'directory' is file system path, not contacts."
+        "reason": "'Project root directory' is filesystem path, not contacts."
       },
       {
         "id": "data::hooks_coverage-suggest::contacts",
-        "reason": "'directory' is file path."
+        "reason": "'Directory' is filesystem."
       },
       {
         "id": "data::hooks_coverage-gaps::contacts",
-        "reason": "'directory' is file path."
+        "reason": "'Directory' is filesystem."
       }
     ]
   }

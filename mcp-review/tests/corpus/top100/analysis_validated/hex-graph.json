@@ -106,7 +106,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem directories, not contact/address book directories."
+          "validation_reason": "'Directory' in snippet refers to filesystem path ('Project root directory'), not address book or contacts."
         },
         {
           "category": "project_metadata",
@@ -121,7 +121,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to code projects being indexed, not project management metadata (tasks/issues/tickets)."
+          "validation_reason": "'Project' refers to the codebase being analyzed, not project management metadata (issues, tasks, boards, sprints)."
         }
       ],
       "schema_signals": {
@@ -158,7 +158,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project being analyzed for graph providers, not task/issue tracking metadata."
+          "validation_reason": "'Current project' denotes the codebase, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -201,7 +201,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' in 'working_directory' is a filesystem path parameter, not a contacts directory."
+          "validation_reason": "Parameters (environment_path, working_directory) are filesystem paths, not contact directories."
         },
         {
           "category": "project_metadata",
@@ -216,7 +216,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Matches 'project' in naming parameters refer to the code project identifier, not project management metadata."
+          "validation_reason": "'Project_name' and 'project_namespace' are codebase metadata, not project management system metadata."
         }
       ],
       "schema_signals": {
@@ -253,7 +253,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' in 'project root' refers to the code project directory structure, not project management metadata."
+          "validation_reason": "'Indexed project root' refers to the codebase being analyzed, not PM metadata."
         }
       ],
       "schema_signals": {
@@ -291,7 +291,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem location within the indexed project, not a contacts directory."
+          "validation_reason": "'Directory' in context refers to filesystem paths within the indexed codebase."
         },
         {
           "category": "project_metadata",
@@ -306,7 +306,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+          "validation_reason": "'Project' denotes the codebase, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -351,7 +351,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem path specification, not contacts data."
+          "validation_reason": "'Directory' refers to filesystem locations within the indexed codebase."
         },
         {
           "category": "project_metadata",
@@ -366,7 +366,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project context for symbol analysis, not task/issue metadata."
+          "validation_reason": "'Project root' is the codebase filesystem location, not PM metadata."
         },
         {
           "category": "org_structure",
@@ -381,7 +381,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' in 'workspace_qualified_name' refers to code symbol namespace scope, not organizational structure."
+          "validation_reason": "'Workspace_qualified_name' is a code symbol qualification term (namespace scope), not organizational structure."
         }
       ],
       "schema_signals": {
@@ -435,7 +435,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+          "validation_reason": "References to 'directory' are filesystem paths within the project codebase."
         },
         {
           "category": "project_metadata",
@@ -450,7 +450,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+          "validation_reason": "'Project' denotes the codebase being traced, not PM metadata."
         },
         {
           "category": "org_structure",
@@ -465,7 +465,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' refers to code workspace/namespace scope in symbol tracing, not organizational structure."
+          "validation_reason": "'Workspace_qualified_name' is technical code symbol qualification, not org structure."
         }
       ],
       "schema_signals": {
@@ -512,7 +512,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+          "validation_reason": "'Directory' refers to filesystem structure within the indexed codebase."
         },
         {
           "category": "project_metadata",
@@ -527,7 +527,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+          "validation_reason": "'Project' denotes the codebase, not project management metadata."
         },
         {
           "category": "org_structure",
@@ -542,7 +542,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' refers to code symbol namespace, not organizational structure."
+          "validation_reason": "'Workspace_qualified_name' is code symbol namespace qualification, not org structure."
         }
       ],
       "schema_signals": {
@@ -587,7 +587,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+          "validation_reason": "'Directory' refers to filesystem paths in the codebase."
         },
         {
           "category": "project_metadata",
@@ -602,7 +602,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+          "validation_reason": "'Project' denotes the analyzed codebase, not PM metadata."
         },
         {
           "category": "org_structure",
@@ -617,7 +617,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' refers to code workspace scope for implementation analysis, not organizational structure."
+          "validation_reason": "'Workspace_qualified_name' is code namespace qualification, not organization structure."
         }
       ],
       "schema_signals": {
@@ -662,7 +662,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Match 'directory' refers to filesystem location, not contacts data."
+          "validation_reason": "'Directory' references are filesystem paths within the codebase."
         },
         {
           "category": "project_metadata",
@@ -677,7 +677,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project scope, not project management metadata."
+          "validation_reason": "'Project' denotes the codebase, not project management metadata."
         },
         {
           "category": "org_structure",
@@ -692,7 +692,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' in dataflow tracing refers to code workspace scope, not organizational structure."
+          "validation_reason": "'Workspace_qualified_name' is a code scope/namespace term, not organizational structure."
         }
       ],
       "schema_signals": {
@@ -745,7 +745,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project context, not project management metadata."
+          "validation_reason": "'Project root' refers to the codebase location, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -784,7 +784,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to code project structure, not project management metadata."
+          "validation_reason": "'Project root' denotes the codebase filesystem location, not PM metadata."
         }
       ],
       "schema_signals": {
@@ -822,7 +822,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to code project architecture analysis, not project management metadata."
+          "validation_reason": "'Project root' is the codebase directory, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -862,7 +862,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "Match 'member' in 'clone_member_limit' refers to code clone group members, not communication channel members."
+          "validation_reason": "'clone_member' refers to members of code clone groups (duplicate code), not communication channel participants."
         },
         {
           "category": "project_metadata",
@@ -877,7 +877,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match 'project' refers to the code project being audited, not project management metadata."
+          "validation_reason": "'Project' refers to the code workspace being audited, not PM metadata."
         },
         {
           "category": "org_structure",
@@ -892,7 +892,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "Match 'workspace' refers to code workspace audit for cleanup/maintainability, not organizational structure."
+          "validation_reason": "'Workspace' in tool name denotes code workspace/codebase, not organizational structure."
         }
       ],
       "schema_signals": {
@@ -992,119 +992,119 @@
     "validated_out": [
       {
         "id": "data::index_project::contacts",
-        "reason": "Match 'directory' refers to filesystem directories, not contact/address book directories."
+        "reason": "'Directory' in snippet refers to filesystem path ('Project root directory'), not address book or contacts."
       },
       {
         "id": "data::index_project::project_metadata",
-        "reason": "Match 'project' refers to code projects being indexed, not project management metadata (tasks/issues/tickets)."
+        "reason": "'Project' refers to the codebase being analyzed, not project management metadata (issues, tasks, boards, sprints)."
       },
       {
         "id": "data::install_graph_providers::project_metadata",
-        "reason": "Match 'project' refers to the code project being analyzed for graph providers, not task/issue tracking metadata."
+        "reason": "'Current project' denotes the codebase, not project management metadata."
       },
       {
         "id": "data::export_scip::contacts",
-        "reason": "Match 'directory' in 'working_directory' is a filesystem path parameter, not a contacts directory."
+        "reason": "Parameters (environment_path, working_directory) are filesystem paths, not contact directories."
       },
       {
         "id": "data::export_scip::project_metadata",
-        "reason": "Matches 'project' in naming parameters refer to the code project identifier, not project management metadata."
+        "reason": "'Project_name' and 'project_namespace' are codebase metadata, not project management system metadata."
       },
       {
         "id": "data::import_scip_overlay::project_metadata",
-        "reason": "Match 'project' in 'project root' refers to the code project directory structure, not project management metadata."
+        "reason": "'Indexed project root' refers to the codebase being analyzed, not PM metadata."
       },
       {
         "id": "data::find_symbols::contacts",
-        "reason": "Match 'directory' refers to filesystem location within the indexed project, not a contacts directory."
+        "reason": "'Directory' in context refers to filesystem paths within the indexed codebase."
       },
       {
         "id": "data::find_symbols::project_metadata",
-        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+        "reason": "'Project' denotes the codebase, not project management metadata."
       },
       {
         "id": "data::inspect_symbol::contacts",
-        "reason": "Match 'directory' refers to filesystem path specification, not contacts data."
+        "reason": "'Directory' refers to filesystem locations within the indexed codebase."
       },
       {
         "id": "data::inspect_symbol::project_metadata",
-        "reason": "Match 'project' refers to the code project context for symbol analysis, not task/issue metadata."
+        "reason": "'Project root' is the codebase filesystem location, not PM metadata."
       },
       {
         "id": "data::inspect_symbol::org_structure",
-        "reason": "Match 'workspace' in 'workspace_qualified_name' refers to code symbol namespace scope, not organizational structure."
+        "reason": "'Workspace_qualified_name' is a code symbol qualification term (namespace scope), not organizational structure."
       },
       {
         "id": "data::trace_paths::contacts",
-        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+        "reason": "References to 'directory' are filesystem paths within the project codebase."
       },
       {
         "id": "data::trace_paths::project_metadata",
-        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+        "reason": "'Project' denotes the codebase being traced, not PM metadata."
       },
       {
         "id": "data::trace_paths::org_structure",
-        "reason": "Match 'workspace' refers to code workspace/namespace scope in symbol tracing, not organizational structure."
+        "reason": "'Workspace_qualified_name' is technical code symbol qualification, not org structure."
       },
       {
         "id": "data::find_references::contacts",
-        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+        "reason": "'Directory' refers to filesystem structure within the indexed codebase."
       },
       {
         "id": "data::find_references::project_metadata",
-        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+        "reason": "'Project' denotes the codebase, not project management metadata."
       },
       {
         "id": "data::find_references::org_structure",
-        "reason": "Match 'workspace' refers to code symbol namespace, not organizational structure."
+        "reason": "'Workspace_qualified_name' is code symbol namespace qualification, not org structure."
       },
       {
         "id": "data::find_implementations::contacts",
-        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+        "reason": "'Directory' refers to filesystem paths in the codebase."
       },
       {
         "id": "data::find_implementations::project_metadata",
-        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+        "reason": "'Project' denotes the analyzed codebase, not PM metadata."
       },
       {
         "id": "data::find_implementations::org_structure",
-        "reason": "Match 'workspace' refers to code workspace scope for implementation analysis, not organizational structure."
+        "reason": "'Workspace_qualified_name' is code namespace qualification, not organization structure."
       },
       {
         "id": "data::trace_dataflow::contacts",
-        "reason": "Match 'directory' refers to filesystem location, not contacts data."
+        "reason": "'Directory' references are filesystem paths within the codebase."
       },
       {
         "id": "data::trace_dataflow::project_metadata",
-        "reason": "Match 'project' refers to the code project scope, not project management metadata."
+        "reason": "'Project' denotes the codebase, not project management metadata."
       },
       {
         "id": "data::trace_dataflow::org_structure",
-        "reason": "Match 'workspace' in dataflow tracing refers to code workspace scope, not organizational structure."
+        "reason": "'Workspace_qualified_name' is a code scope/namespace term, not organizational structure."
       },
       {
         "id": "data::analyze_changes::project_metadata",
-        "reason": "Match 'project' refers to the code project context, not project management metadata."
+        "reason": "'Project root' refers to the codebase location, not project management metadata."
       },
       {
         "id": "data::analyze_edit_region::project_metadata",
-        "reason": "Match 'project' refers to code project structure, not project management metadata."
+        "reason": "'Project root' denotes the codebase filesystem location, not PM metadata."
       },
       {
         "id": "data::analyze_architecture::project_metadata",
-        "reason": "Match 'project' refers to code project architecture analysis, not project management metadata."
+        "reason": "'Project root' is the codebase directory, not project management metadata."
       },
       {
         "id": "data::audit_workspace::communications_metadata",
-        "reason": "Match 'member' in 'clone_member_limit' refers to code clone group members, not communication channel members."
+        "reason": "'clone_member' refers to members of code clone groups (duplicate code), not communication channel participants."
       },
       {
         "id": "data::audit_workspace::project_metadata",
-        "reason": "Match 'project' refers to the code project being audited, not project management metadata."
+        "reason": "'Project' refers to the code workspace being audited, not PM metadata."
       },
       {
         "id": "data::audit_workspace::org_structure",
-        "reason": "Match 'workspace' refers to code workspace audit for cleanup/maintainability, not organizational structure."
+        "reason": "'Workspace' in tool name denotes code workspace/codebase, not organizational structure."
       }
     ]
   }

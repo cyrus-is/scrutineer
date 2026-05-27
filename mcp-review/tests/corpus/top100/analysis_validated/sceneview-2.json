@@ -94,7 +94,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The word 'fetch' describes retrieving a code sample from the tool's catalog, not making outbound network requests; the tool is purely a local code generator."
+          "validation_reason": "\"fetch\" in \"The scenario to fetch\" is selecting from a list, not making HTTP requests."
         }
       ],
       "data_categories": [],
@@ -149,7 +149,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'project' refers to the user's Android development project (codebase context), not project management metadata like tasks, issues, or tickets; the tool returns static dependency snippets."
+          "validation_reason": "\"project\" refers to an Android development project/codebase, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -253,7 +253,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'status' refers to platform support status (is Android/iOS supported), not project management status like task or issue status."
+          "validation_reason": "\"status\" refers to platform support/capability status, not project tracking metadata."
         }
       ],
       "schema_signals": {
@@ -397,9 +397,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "hey can click to see it live. Public URL to a .glb or .gltf model"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "The word 'Public' describes the accessibility level of a model URL (publicly reachable, not authenticated), not access to public/aggregate datasets or statistics."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -458,7 +456,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The parameter 'label' refers to UI labels for 3D elements (hotspot labels, data point annotations), not project management labels like issue or ticket labels."
+          "validation_reason": "\"label\" in 3D visualization context is a data-point label, not project management metadata; not in declared params list."
         },
         {
           "category": "public_data",
@@ -471,9 +469,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "uild, or visualize 3D shapes. Public HTTPS URL to a .glb or .gltf"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "The word 'Public' describes the accessibility level of model URLs, not public/open dataset access."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -552,7 +548,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'issue' refers to technical problems or bugs (model-not-showing, crash), not project management issues or tickets."
+          "validation_reason": "\"issue\" in tool name means technical problem/bug, not project management issue/ticket."
         }
       ],
       "schema_signals": {
@@ -604,7 +600,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'status' refers to platform support status (supported/unsupported, version), not project management status."
+          "validation_reason": "\"status\" refers to platform support status, not project tracking metadata."
         }
       ],
       "schema_signals": {
@@ -722,7 +718,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'count' refers to polygon count (a 3D model technical metric), not aggregate or summary statistics of public data."
+          "validation_reason": "\"polygon count\" is a technical 3D model metric, not aggregate statistics about public data."
         }
       ],
       "schema_signals": {
@@ -843,7 +839,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The word 'directory' refers to a file system directory (folder path), not a contacts/address book directory."
+          "validation_reason": "\"directory\" in \"working directory\" refers to file system directory, not contacts/address book."
         },
         {
           "category": "project_metadata",
@@ -871,7 +867,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'total' refers to a file size budget limit (up to 500 KB total scanned), not aggregate or summary statistics of public data."
+          "validation_reason": "\"500 KB total\" is a file size measurement, not public aggregate/summary statistics."
         }
       ],
       "schema_signals": {
@@ -943,7 +939,9 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "validated_out": true,
+      "validation_reason": "Tool legitimately uses both capabilities for Sketchfab API authentication and calls; not exfiltration, normal API usage pattern."
     }
   ],
   "injection_findings": [],
@@ -978,55 +976,51 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 6,
-      "false_positive": 11,
+      "confirmed": 7,
+      "false_positive": 10,
       "needs_source": 2,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::get_sample::network_egress",
-        "reason": "The word 'fetch' describes retrieving a code sample from the tool's catalog, not making outbound network requests; the tool is purely a local code generator."
+        "reason": "\"fetch\" in \"The scenario to fetch\" is selecting from a list, not making HTTP requests."
       },
       {
         "id": "data::get_setup::project_metadata",
-        "reason": "The word 'project' refers to the user's Android development project (codebase context), not project management metadata like tasks, issues, or tickets; the tool returns static dependency snippets."
+        "reason": "\"project\" refers to an Android development project/codebase, not project management metadata."
       },
       {
         "id": "data::get_platform_roadmap::project_metadata",
-        "reason": "The word 'status' refers to platform support status (is Android/iOS supported), not project management status like task or issue status."
-      },
-      {
-        "id": "data::render_3d_preview::public_data",
-        "reason": "The word 'Public' describes the accessibility level of a model URL (publicly reachable, not authenticated), not access to public/aggregate datasets or statistics."
+        "reason": "\"status\" refers to platform support/capability status, not project tracking metadata."
       },
       {
         "id": "data::create_3d_artifact::project_metadata",
-        "reason": "The parameter 'label' refers to UI labels for 3D elements (hotspot labels, data point annotations), not project management labels like issue or ticket labels."
-      },
-      {
-        "id": "data::create_3d_artifact::public_data",
-        "reason": "The word 'Public' describes the accessibility level of model URLs, not public/open dataset access."
+        "reason": "\"label\" in 3D visualization context is a data-point label, not project management metadata; not in declared params list."
       },
       {
         "id": "data::debug_issue::project_metadata",
-        "reason": "The word 'issue' refers to technical problems or bugs (model-not-showing, crash), not project management issues or tickets."
+        "reason": "\"issue\" in tool name means technical problem/bug, not project management issue/ticket."
       },
       {
         "id": "data::list_platforms::project_metadata",
-        "reason": "The word 'status' refers to platform support status (supported/unsupported, version), not project management status."
+        "reason": "\"status\" refers to platform support status, not project tracking metadata."
       },
       {
         "id": "data::get_model_optimization_guide::public_data",
-        "reason": "The word 'count' refers to polygon count (a 3D model technical metric), not aggregate or summary statistics of public data."
+        "reason": "\"polygon count\" is a technical 3D model metric, not aggregate statistics about public data."
       },
       {
         "id": "data::analyze_project::contacts",
-        "reason": "The word 'directory' refers to a file system directory (folder path), not a contacts/address book directory."
+        "reason": "\"directory\" in \"working directory\" refers to file system directory, not contacts/address book."
       },
       {
         "id": "data::analyze_project::public_data",
-        "reason": "The word 'total' refers to a file size budget limit (up to 500 KB total scanned), not aggregate or summary statistics of public data."
+        "reason": "\"500 KB total\" is a file size measurement, not public aggregate/summary statistics."
+      },
+      {
+        "id": "combo::exfil_chain",
+        "reason": "Tool legitimately uses both capabilities for Sketchfab API authentication and calls; not exfiltration, normal API usage pattern."
       }
     ]
   }

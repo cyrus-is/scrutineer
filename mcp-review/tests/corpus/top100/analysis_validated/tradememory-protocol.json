@@ -95,7 +95,9 @@
             "pattern": "\\b(payment|invoice|transaction|billing|credit[\\s_-]?card|bank|salary|payroll|ledger|account[\\s_-]?balance)\\b",
             "snippet": "a trade to build your memory bank.\nInclude market_context and r"
           },
-          "rationale": "Direct financial exposure and a regulated data class."
+          "rationale": "Direct financial exposure and a regulated data class.",
+          "validated_out": true,
+          "validation_reason": "\"Memory bank\" is a metaphorical phrase meaning a repository of stored decisions, not a financial institution; the tool stores trading history and analysis metadata, not financial accounts or payment data."
         }
       ],
       "schema_signals": {
@@ -151,8 +153,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "Get aggregate performance stats per strateg"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "needs_source": true
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -263,8 +264,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "m procedural memory.\n\nReturns aggregate trading behavior stats: hold"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "needs_source": true
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -494,7 +494,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'Token usage' in context refers to LLM API token consumption metrics, not credential or secrets access."
+          "validation_reason": "\"Token usage\" in context refers to LLM API token consumption metrics (similar to \"token limit\"), not access to cryptographic secrets or credentials."
         }
       ],
       "data_categories": [],
@@ -589,7 +589,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "Exfil risk requires both secrets_access and network_egress; secrets_access claim is false positive, eliminating the attack path."
+      "validation_reason": "Combination depends on secrets_access being confirmed, but that capability is a false positive (token usage \u2260 secrets); network egress exists but without secrets to exfiltrate, the chain is not a viable risk."
     }
   ],
   "injection_findings": [],
@@ -621,19 +621,23 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 4,
-      "false_positive": 2,
-      "needs_source": 2,
+      "confirmed": 5,
+      "false_positive": 3,
+      "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
+        "id": "data::store_trade_memory::financial",
+        "reason": "\"Memory bank\" is a metaphorical phrase meaning a repository of stored decisions, not a financial institution; the tool stores trading history and analysis metadata, not financial accounts or payment data."
+      },
+      {
         "id": "cap::evolution_get_log::secrets_access",
-        "reason": "'Token usage' in context refers to LLM API token consumption metrics, not credential or secrets access."
+        "reason": "\"Token usage\" in context refers to LLM API token consumption metrics (similar to \"token limit\"), not access to cryptographic secrets or credentials."
       },
       {
         "id": "combo::exfil_chain",
-        "reason": "Exfil risk requires both secrets_access and network_egress; secrets_access claim is false positive, eliminating the attack path."
+        "reason": "Combination depends on secrets_access being confirmed, but that capability is a false positive (token usage \u2260 secrets); network egress exists but without secrets to exfiltrate, the chain is not a viable risk."
       }
     ]
   }

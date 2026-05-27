@@ -206,19 +206,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Name identifier. Name of the event. New name for renaming. Overw"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -319,34 +306,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "er the operation. Name of the event. Variable type (e.g., Boolean"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nName linkedTo memberName x y location rotation scale operations com"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -354,7 +314,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:97b97e21f34596330fe07c0888e89031551566c30986823c24aa9b82c5fc961f"
     },
     {
@@ -400,21 +360,7 @@
           "suppressed": false
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ssPath meshPath blueprintPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [
@@ -424,7 +370,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:cf8776aa4cded1bbdc6ddedd11331721be5d260cd26ab460175d27a496dce309"
     },
     {
@@ -477,19 +423,6 @@
             "snippet": ". Level asset path. Path to a directory. Name of the actor. Name iden"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -561,19 +494,6 @@
             "snippet": "ing. Action Level asset path. Directory path for asset creation. Path"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ble lightType intensity color location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -676,19 +596,6 @@
           "rationale": "Exposes a person's full social/professional graph."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "minY maxX maxY updateNormals location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -779,21 +686,7 @@
         "wheelConfig"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "th playRate frame time length location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -801,7 +694,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:669cdebdf30c6ae8a204876e167a8f7f3eac59120558837ae59e66b3aaf1c359"
     },
     {
@@ -1084,19 +977,6 @@
             "snippet": "the item/feature is enabled. Directory path for asset creation. Asse"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action name soundPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -1219,21 +1099,7 @@
           "suppressed": false
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action name location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1241,7 +1107,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:375c21246fbce25114271b3becdbd98aad22df4fa60b512916d291d53d7c163f"
     },
     {
@@ -1393,19 +1259,6 @@
           "rationale": "Exposes a person's full social/professional graph."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "depthSegments radialSegments location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1494,19 +1347,6 @@
             "snippet": "o cloth asset. Output file or directory path. Name of the bone. New n"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "Name targetBoneName boneIndex location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -1808,32 +1648,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Mesh asset path. Name of the event."
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "r emitterName emitterTemplate location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1857,7 +1671,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:159c7d4e49da1781e96cda64728f54bfe3d68ebea4168bd32009dd70d0c0cede"
     },
     {
@@ -2110,19 +1924,6 @@
             "snippet": "Name of the asset to create. Directory path for asset creation. Blue"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "to animation blueprint. Mesh location offset. Mesh rotation offset."
-          },
-          "rationale": "Physical tracking risk."
         }
       ],
       "schema_signals": {
@@ -2585,19 +2386,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "r. Tags to ignore in trigger. Event dispatcher name for enter. Ev"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -2894,19 +2682,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nt. Replicated movement mode. Location quantization level. Spatially"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
@@ -2927,7 +2702,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:2f4c3ff514b947830940a6c96da3e96b238b30b1528087c5bccd81e7c78db9e2"
     },
     {
@@ -3008,19 +2783,6 @@
             "snippet": "to perform. Name identifier. Directory path for asset creation. Path"
           },
           "rationale": "Exposes a person's full social/professional graph."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "awnConditions usePlayerStarts location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "org_structure",
@@ -3231,19 +2993,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "distance. Name of the volume. Location of the volume. Extent of the"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -3264,7 +3013,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c0fc015cc593383bc7a56073b97f9043dc8431725c9303d66217317a43e35e19"
     },
     {
@@ -3306,21 +3055,7 @@
         "volumeType"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "lumeName volumePath actorPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3328,7 +3063,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:c57ab29a6851df4e3de2fe5882f43387ca17b7e9fd51781d3d75ff85d434a4f8"
     },
     {
@@ -3397,21 +3132,7 @@
           "suppressed": false
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "xtent x y z obstacleAreaClass location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3419,7 +3140,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:0f19501256a4237fe9db2445ae374e2ee11aa3d2b4ee59f4f587e27b9f6696fe"
     },
     {
@@ -3481,21 +3202,7 @@
         "width"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "e componentName blueprintPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3503,7 +3210,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:f7a6082efe7a547e06c9a3fbd6adf8fb99454b3f9f1e698bda6905f351c42afd"
     }
   ],
@@ -3523,22 +3230,10 @@
         "tool_count": 5,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "medium"
-      },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
         "tool_count": 20,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 18,
         "confidence": "high"
       },
       "public_data": {
@@ -3640,13 +3335,11 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "communications_metadata",
       "contacts",
       "credentials_secrets",
       "files_documents",
-      "location",
       "org_structure",
       "project_metadata",
       "public_data"

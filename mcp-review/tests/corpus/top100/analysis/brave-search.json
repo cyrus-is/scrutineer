@@ -142,19 +142,6 @@
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": ", or current topics\n        - Location-based queries (restaurants, b"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -230,19 +217,6 @@
             "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "API provides enrichments for location search results. Access to thi"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
@@ -547,7 +521,7 @@
           "evidence": {
             "zone": "description",
             "matched": "latitude",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "ttribute of the response. The latitude of the client's geographical"
           },
           "rationale": "Physical tracking risk."
@@ -639,7 +613,7 @@
           "evidence": {
             "zone": "param_name",
             "matched": "latitude",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "query radius count latitude longitude location country se"
           },
           "rationale": "Physical tracking risk."
@@ -684,16 +658,16 @@
         "tool_count": 4,
         "confidence": "medium"
       },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
         "tool_count": 7,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 2,
         "confidence": "high"
       },
       "contacts": {

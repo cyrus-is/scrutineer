@@ -112,7 +112,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched phrase 'read the content of a url' is instructional text describing the downstream tool (ref_read_url), not a capability of ref_search_documentation itself, which only searches."
+          "validation_reason": "The matched phrase 'read the content' refers to instructions for a separate tool (ref_read_url), not the search tool's own capability; ref_search_documentation only has a query parameter and does not itself read files."
         },
         {
           "capability": "network_egress",
@@ -180,7 +180,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The tool reads URL content as markdown (web content), not files from a filesystem; the pattern matches 'content' but in the wrong semantic category (URL \u2260 file)."
+          "validation_reason": "The tool reads URL content (specifically 'as markdown'), not filesystem files; the pattern matched on 'content' but in the context of fetching web resources, not file I/O."
         },
         {
           "capability": "network_egress",
@@ -250,7 +250,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "The 'file_read' component is not actually present (these tools read URLs, not files); without real file-system read capability, the exfil path doesn't materialize."
+      "validation_reason": "This combination depends on a confirmed file_read capability, but ref_read_url reads URLs (network content), not filesystem files; the underlying file_read finding is spurious."
     }
   ],
   "injection_findings": [],
@@ -289,15 +289,15 @@
     "validated_out": [
       {
         "id": "cap::ref_search_documentation::file_read",
-        "reason": "The matched phrase 'read the content of a url' is instructional text describing the downstream tool (ref_read_url), not a capability of ref_search_documentation itself, which only searches."
+        "reason": "The matched phrase 'read the content' refers to instructions for a separate tool (ref_read_url), not the search tool's own capability; ref_search_documentation only has a query parameter and does not itself read files."
       },
       {
         "id": "cap::ref_read_url::file_read",
-        "reason": "The tool reads URL content as markdown (web content), not files from a filesystem; the pattern matches 'content' but in the wrong semantic category (URL \u2260 file)."
+        "reason": "The tool reads URL content (specifically 'as markdown'), not filesystem files; the pattern matched on 'content' but in the context of fetching web resources, not file I/O."
       },
       {
         "id": "combo::read_and_exfil",
-        "reason": "The 'file_read' component is not actually present (these tools read URLs, not files); without real file-system read capability, the exfil path doesn't materialize."
+        "reason": "This combination depends on a confirmed file_read capability, but ref_read_url reads URLs (network content), not filesystem files; the underlying file_read finding is spurious."
       }
     ]
   }

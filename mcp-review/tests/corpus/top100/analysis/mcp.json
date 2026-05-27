@@ -505,21 +505,7 @@
         "target"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "idth,height] in the snapshot. Coordinates are viewport-relative, in CSS"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -527,7 +513,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:7bac4b2090cd7f190f9a1096fc1400330b05def8ffe08b5e6ed92248aae46eca"
     },
     {
@@ -688,12 +674,6 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "medium"
       }
     }
   },
@@ -718,8 +698,7 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "contacts",
-      "location"
+      "contacts"
     ],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true

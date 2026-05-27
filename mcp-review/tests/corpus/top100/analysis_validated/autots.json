@@ -317,7 +317,7 @@
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "Matched token 'profile' in 'profile_template' refers to a forecasting model configuration template (e.g., preset hyperparameters), not a collection of personal identifier data."
+          "validation_reason": "In time-series forecasting context, `profile_template` refers to forecast model/configuration profile, not a personal profile; term is domain-specific, not PII-related."
         }
       ],
       "schema_signals": {
@@ -553,23 +553,7 @@
         "tune"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "forecast_event_risk forecast event risk"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Matched token 'event' in 'forecast_event_risk' refers to statistical threshold-crossing events (e.g., stockout, capacity breach), not calendar/meeting events."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -577,7 +561,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:a73ae8de1f49e487e3ce6bf981451fc47fe27a0343f3c959b99521b99ebbc0f8"
     },
     {
@@ -589,23 +573,7 @@
         "format"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "get_event_risk_results get event risk results"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Matched token 'event' refers to statistical risk events returned by the forecasting tool, not calendar or scheduling data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -613,7 +581,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:549599ec24081c9d07d07072111bf20a9e595a2cb3ea0eddf947fbc949f37e9f"
     },
     {
@@ -624,23 +592,7 @@
         "event_risk_id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "plot_event_risk plot event risk"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Matched token 'event' refers to statistical event risk probabilities being visualized, not calendar/scheduling data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -648,7 +600,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:ce88c836d86e66825b952fed2b6185afb8d19c13b6cb681e8d0345ac1daaf339"
     },
     {
@@ -756,12 +708,6 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "high"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "high"
       }
     },
     "unconfirmed_higher_categories": [
@@ -803,7 +749,6 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "credentials_secrets",
       "personal_identifiers"
     ],
@@ -814,26 +759,14 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 3,
-      "false_positive": 4,
+      "false_positive": 1,
       "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::forecast_fast::personal_identifiers",
-        "reason": "Matched token 'profile' in 'profile_template' refers to a forecasting model configuration template (e.g., preset hyperparameters), not a collection of personal identifier data."
-      },
-      {
-        "id": "data::forecast_event_risk::calendar",
-        "reason": "Matched token 'event' in 'forecast_event_risk' refers to statistical threshold-crossing events (e.g., stockout, capacity breach), not calendar/meeting events."
-      },
-      {
-        "id": "data::get_event_risk_results::calendar",
-        "reason": "Matched token 'event' refers to statistical risk events returned by the forecasting tool, not calendar or scheduling data."
-      },
-      {
-        "id": "data::plot_event_risk::calendar",
-        "reason": "Matched token 'event' refers to statistical event risk probabilities being visualized, not calendar/scheduling data."
+        "reason": "In time-series forecasting context, `profile_template` refers to forecast model/configuration profile, not a personal profile; term is domain-specific, not PII-related."
       }
     ]
   }

@@ -210,8 +210,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "needs_source": true
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -268,8 +267,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "of the tree (i.e., per page) Total number of links the crawler w"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "needs_source": true
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -305,7 +303,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched word 'task' means a user request ('answer a question or complete a task'), not a project management artifact; tavily_research is a general research tool with no evident access to project management systems."
+          "validation_reason": "'Task' in 'complete a task' is generic usage (accomplish an objective), not project-management metadata like tickets, sprints, or boards."
         }
       ],
       "schema_signals": {
@@ -384,15 +382,15 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 3,
+      "confirmed": 5,
       "false_positive": 1,
-      "needs_source": 3,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::tavily_research::project_metadata",
-        "reason": "The matched word 'task' means a user request ('answer a question or complete a task'), not a project management artifact; tavily_research is a general research tool with no evident access to project management systems."
+        "reason": "'Task' in 'complete a task' is generic usage (accomplish an objective), not project-management metadata like tickets, sprints, or boards."
       }
     ]
   }

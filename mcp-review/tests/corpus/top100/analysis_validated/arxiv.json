@@ -234,7 +234,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "Tool returns metadata (title, authors, abstract) and a URL link, not actual document/file contents; PDF URL is a reference, not document data."
+          "validation_reason": "Tool returns a PDF URL (metadata reference), not actual document content; returning a link to a file is not file/document data handling."
         },
         {
           "category": "public_data",
@@ -420,7 +420,8 @@
         "file_read",
         "network_egress"
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -452,15 +453,15 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 8,
+      "confirmed": 7,
       "false_positive": 1,
-      "needs_source": 0,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::get_abstract::files_documents",
-        "reason": "Tool returns metadata (title, authors, abstract) and a URL link, not actual document/file contents; PDF URL is a reference, not document data."
+        "reason": "Tool returns a PDF URL (metadata reference), not actual document content; returning a link to a file is not file/document data handling."
       }
     ]
   }

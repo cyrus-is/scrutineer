@@ -33,16 +33,11 @@ except Exception:
 # Manual-review suppressions: residual semantic FPs caught by human review that
 # the agentic Pass-4 (haiku) missed. Each is a (slug -> {category}) drop with a
 # documented reason; applied on top of validated_out. Transparent + auditable.
-MANUAL_DROP = {
-    "unreal-engine": {"location"},            # 3D actor coordinates (x/y/z), not geographic
-    "mcp-neo4j-data-modeling": {"location"},  # a schema column named "location", not location data
-    "token-optimizer": {"calendar"},          # cache scheduling (cron/schedule), not calendar data
-}
-MANUAL_DROP_REASON = {
-    ("unreal-engine", "location"): "3D actor coordinates (x/y/z), not geographic/personal location",
-    ("mcp-neo4j-data-modeling", "location"): "a data-model column named 'location', not location data",
-    ("token-optimizer", "calendar"): "cache scheduling (cron/schedule/event), not calendar data",
-}
+# Empty as of 1.6.4: the location→3D-coords and calendar→cron/event false positives
+# that previously needed manual suppression are now fixed deterministically in the
+# analyzer (mcp_risk_guidance.yaml). Mechanism kept for any future residual.
+MANUAL_DROP = {}
+MANUAL_DROP_REASON = {}
 
 TIER_RANK = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 TIER_RATING = {"critical": "HIGHLY_SENSITIVE", "high": "SENSITIVE",
@@ -352,14 +347,14 @@ That's a statement about *verifiability*, not about any server's intentions.
 - Config-only servers (capture failed) get a provenance posture but `UNKNOWN` data
   sensitivity — absence of a tool surface is *unknown*, not *minimal*.
 
-## Manual-review corrections
+## Calibration note
 
-Three residual semantic FPs that Pass-4 missed were removed in human review
-(documented + auditable in `survey_build.py`): `unreal-engine`'s `location` (3D actor
-x/y/z coordinates, not geographic), `mcp-neo4j-data-modeling`'s `location` (a data-model
-column literally named "location"), and `token-optimizer`'s `calendar` (cache
-cron/scheduling, not calendar data). `location`→3D and `schedule`→`calendar` are a known
-calibration long-tail tracked for a follow-up release.
+The deterministic scanner is recall-first and over-fires on purpose; the agentic
+Pass-4 validator plus a manual review of every SENSITIVE+ rating clean the residue.
+Two false-positive *classes* this survey surfaced were fixed at the source rather than
+suppressed per-server: `health`→system health-checks read as *medical* data and
+`token`→LLM/crypto tokens read as *credentials* (v1.6.3), and `location`→3D/screen
+coordinates and `event`/`schedule`→*calendar* (v1.6.4). The ratings here are post-fix.
 
 ## Reproduce
 

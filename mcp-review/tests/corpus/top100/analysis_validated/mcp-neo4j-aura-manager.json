@@ -108,7 +108,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name is explicitly prefixed 'placeholder-not-a-real-'; 'credential' is part of the placeholder, not evidence of actual secrets access functionality."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's actual functionality\u2014the tool lists Neo4j database instances, not credentials."
         }
       ],
       "data_categories": [
@@ -125,7 +125,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool name; description (listing instances) contains no credential exposure\u2014matched term is in name, not in actual tool behavior."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating that the tool processes credential data\u2014it returns instance listings."
         }
       ],
       "schema_signals": {
@@ -162,7 +162,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; actual function retrieves database instance metadata, not credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it returns instance metadata."
         }
       ],
       "data_categories": [
@@ -179,7 +179,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; instance detail retrieval does not expose credentials/secrets."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool processes credential data."
         }
       ],
       "schema_signals": {
@@ -216,7 +216,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; lookup by name returns instance details, not credential material."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it queries instances by name."
         }
       ],
       "data_categories": [
@@ -233,7 +233,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; name-based lookup is metadata retrieval, not secrets access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool returns credential data."
         }
       ],
       "schema_signals": {
@@ -278,7 +278,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; creates database instances, does not manage or expose credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it creates database instances."
         }
       ],
       "data_categories": [
@@ -295,7 +295,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; instance creation parameters are configuration only, no credential generation/exposure."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         },
         {
           "category": "project_metadata",
@@ -310,7 +310,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match on 'project' in 'tenant/project' is terminology for organizational container, not project management data exposure."
+          "validation_reason": "Word 'project' refers to the organizational unit (tenant/project scope), not project management metadata."
         }
       ],
       "schema_signals": {
@@ -348,7 +348,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; renaming is metadata update, not secrets access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it updates instance naming."
         }
       ],
       "data_categories": [
@@ -365,7 +365,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; name update does not involve credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -403,7 +403,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; memory allocation change is configuration, not credential-related."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it updates memory allocation."
         }
       ],
       "data_categories": [
@@ -420,7 +420,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; memory config adjustment has no credential exposure."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -458,7 +458,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; feature flag toggle does not access secrets."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it toggles vector optimization."
         }
       ],
       "data_categories": [
@@ -475,7 +475,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; optimization setting change is configuration-only."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -512,7 +512,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; pause is lifecycle control, not credential access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it pauses instances."
         }
       ],
       "data_categories": [
@@ -529,7 +529,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; pause operation does not involve credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -566,7 +566,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; resume is lifecycle control, not credential access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it resumes instances."
         }
       ],
       "data_categories": [
@@ -583,7 +583,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; resume operation does not expose credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -618,7 +618,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; listing organizational tenants is metadata enumeration, not secrets access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it lists tenants."
         }
       ],
       "data_categories": [
@@ -635,7 +635,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; tenant list contains no credential material."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -672,7 +672,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; tenant metadata retrieval does not access credentials."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it retrieves tenant details."
         }
       ],
       "data_categories": [
@@ -689,7 +689,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; tenant detail lookup is metadata-only."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         },
         {
           "category": "project_metadata",
@@ -704,7 +704,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Match on 'project' is organizational terminology; tenant/project container does not expose sensitive project management data."
+          "validation_reason": "Word 'project' refers to the organizational unit (tenant/project scope), not project management metadata."
         }
       ],
       "schema_signals": {
@@ -741,7 +741,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Placeholder tool; deletion is lifecycle management, not credential access."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it deletes instances."
         }
       ],
       "data_categories": [
@@ -758,7 +758,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Placeholder tool; instance deletion does not involve credential exposure."
+          "validation_reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
         }
       ],
       "schema_signals": {
@@ -832,107 +832,107 @@
     "validated_out": [
       {
         "id": "cap::placeholder-not-a-real-credential-list_instances::secrets_access",
-        "reason": "Tool name is explicitly prefixed 'placeholder-not-a-real-'; 'credential' is part of the placeholder, not evidence of actual secrets access functionality."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's actual functionality\u2014the tool lists Neo4j database instances, not credentials."
       },
       {
         "id": "data::placeholder-not-a-real-credential-list_instances::credentials_secrets",
-        "reason": "Placeholder tool name; description (listing instances) contains no credential exposure\u2014matched term is in name, not in actual tool behavior."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating that the tool processes credential data\u2014it returns instance listings."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_instance_details::secrets_access",
-        "reason": "Placeholder tool; actual function retrieves database instance metadata, not credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it returns instance metadata."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_instance_details::credentials_secrets",
-        "reason": "Placeholder tool; instance detail retrieval does not expose credentials/secrets."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool processes credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_instance_by_name::secrets_access",
-        "reason": "Placeholder tool; lookup by name returns instance details, not credential material."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it queries instances by name."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_instance_by_name::credentials_secrets",
-        "reason": "Placeholder tool; name-based lookup is metadata retrieval, not secrets access."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool returns credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-create_instance::secrets_access",
-        "reason": "Placeholder tool; creates database instances, does not manage or expose credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it creates database instances."
       },
       {
         "id": "data::placeholder-not-a-real-credential-create_instance::credentials_secrets",
-        "reason": "Placeholder tool; instance creation parameters are configuration only, no credential generation/exposure."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "data::placeholder-not-a-real-credential-create_instance::project_metadata",
-        "reason": "Match on 'project' in 'tenant/project' is terminology for organizational container, not project management data exposure."
+        "reason": "Word 'project' refers to the organizational unit (tenant/project scope), not project management metadata."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-update_instance_name::secrets_access",
-        "reason": "Placeholder tool; renaming is metadata update, not secrets access."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it updates instance naming."
       },
       {
         "id": "data::placeholder-not-a-real-credential-update_instance_name::credentials_secrets",
-        "reason": "Placeholder tool; name update does not involve credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-update_instance_memory::secrets_access",
-        "reason": "Placeholder tool; memory allocation change is configuration, not credential-related."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it updates memory allocation."
       },
       {
         "id": "data::placeholder-not-a-real-credential-update_instance_memory::credentials_secrets",
-        "reason": "Placeholder tool; memory config adjustment has no credential exposure."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-update_instance_vector_optimization::secrets_access",
-        "reason": "Placeholder tool; feature flag toggle does not access secrets."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it toggles vector optimization."
       },
       {
         "id": "data::placeholder-not-a-real-credential-update_instance_vector_optimization::credentials_secrets",
-        "reason": "Placeholder tool; optimization setting change is configuration-only."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-pause_instance::secrets_access",
-        "reason": "Placeholder tool; pause is lifecycle control, not credential access."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it pauses instances."
       },
       {
         "id": "data::placeholder-not-a-real-credential-pause_instance::credentials_secrets",
-        "reason": "Placeholder tool; pause operation does not involve credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-resume_instance::secrets_access",
-        "reason": "Placeholder tool; resume is lifecycle control, not credential access."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it resumes instances."
       },
       {
         "id": "data::placeholder-not-a-real-credential-resume_instance::credentials_secrets",
-        "reason": "Placeholder tool; resume operation does not expose credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-list_tenants::secrets_access",
-        "reason": "Placeholder tool; listing organizational tenants is metadata enumeration, not secrets access."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it lists tenants."
       },
       {
         "id": "data::placeholder-not-a-real-credential-list_tenants::credentials_secrets",
-        "reason": "Placeholder tool; tenant list contains no credential material."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_tenant_details::secrets_access",
-        "reason": "Placeholder tool; tenant metadata retrieval does not access credentials."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it retrieves tenant details."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_tenant_details::credentials_secrets",
-        "reason": "Placeholder tool; tenant detail lookup is metadata-only."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_tenant_details::project_metadata",
-        "reason": "Match on 'project' is organizational terminology; tenant/project container does not expose sensitive project management data."
+        "reason": "Word 'project' refers to the organizational unit (tenant/project scope), not project management metadata."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-delete_instance::secrets_access",
-        "reason": "Placeholder tool; deletion is lifecycle management, not credential access."
+        "reason": "Word 'credential' is in the placeholder tool name, not in the tool's functionality\u2014it deletes instances."
       },
       {
         "id": "data::placeholder-not-a-real-credential-delete_instance::credentials_secrets",
-        "reason": "Placeholder tool; instance deletion does not involve credential exposure."
+        "reason": "Word 'credential' is in the placeholder tool name, not indicating the tool handles credential data."
       }
     ]
   }

@@ -8,13 +8,13 @@
   "caution": 65,
   "safe": 0,
   "data_distribution": {
-    "MINIMAL": 26,
+    "MINIMAL": 27,
     "HIGHLY_SENSITIVE": 7,
     "UNKNOWN": 46,
-    "SENSITIVE": 14,
+    "SENSITIVE": 13,
     "LIMITED": 7
   },
-  "sensitive_or_higher": 21,
+  "sensitive_or_higher": 20,
   "behavioral_flagged": 6,
   "behavioral_flag_distribution": {
     "read_and_exfil": 5,
@@ -45,5 +45,5 @@
     ]
   },
   "validated_servers": 54,
-  "fp_suppressed_total": 698
+  "fp_suppressed_total": 795
 }

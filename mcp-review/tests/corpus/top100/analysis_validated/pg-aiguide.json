@@ -123,7 +123,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The 'postgres' match describes the search backend infrastructure (TimescaleDB/PostgreSQL as the underlying storage for the semantic search system), not a database_access capability exposed to tool users; the tool parameter zone contains only query/limit/weight controls for documentation retrieval."
+          "validation_reason": "The tool is a documentation search interface; 'postgres' refers to available documentation sources to search through, not direct database access capability."
         }
       ],
       "data_categories": [],
@@ -160,7 +160,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The 'directory' match is filesystem terminology ('file or directory' in a path parameter), not a contact/address-book data category; the tool retrieves TimescaleDB skill documentation, not contacts or rosters."
+          "validation_reason": "The matched 'directory' is filesystem terminology (path to a file or directory within a skill), not a contact directory or address book."
         }
       ],
       "schema_signals": {
@@ -226,11 +226,11 @@
     "validated_out": [
       {
         "id": "cap::search_docs::database_access",
-        "reason": "The 'postgres' match describes the search backend infrastructure (TimescaleDB/PostgreSQL as the underlying storage for the semantic search system), not a database_access capability exposed to tool users; the tool parameter zone contains only query/limit/weight controls for documentation retrieval."
+        "reason": "The tool is a documentation search interface; 'postgres' refers to available documentation sources to search through, not direct database access capability."
       },
       {
         "id": "data::view_skill::contacts",
-        "reason": "The 'directory' match is filesystem terminology ('file or directory' in a path parameter), not a contact/address-book data category; the tool retrieves TimescaleDB skill documentation, not contacts or rosters."
+        "reason": "The matched 'directory' is filesystem terminology (path to a file or directory within a skill), not a contact directory or address book."
       }
     ]
   }

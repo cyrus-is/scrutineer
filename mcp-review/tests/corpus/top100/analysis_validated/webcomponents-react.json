@@ -95,7 +95,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The word 'execute' describes what the user does with the returned instructions (following them), not a tool capability; the tool only returns scaffolding templates."
+          "validation_reason": "The word 'execute' refers to the user running the returned setup instructions, not the tool executing code itself."
         }
       ],
       "data_categories": [
@@ -112,7 +112,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The word 'directory' refers to a filesystem directory for the new application, not a contacts/address book directory."
+          "validation_reason": "Match on 'directory' refers to a file system directory for the new application project, not an address book or contacts directory."
         },
         {
           "category": "project_metadata",
@@ -127,7 +127,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'project' is used generically for software project creation, not for handling project management metadata like issues or tasks."
+          "validation_reason": "The word 'project' here means a software project/starter being created, not project management metadata (tickets, boards, sprints, etc.)."
         }
       ],
       "schema_signals": {
@@ -150,23 +150,7 @@
         "componentName"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ng props, ref methods, types, event detail parameters, and CSS pa"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "The word 'event' in 'event detail parameters' refers to JavaScript/DOM events in web components, not calendar events or meetings."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -174,7 +158,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:4a67609489887a75bb92fec94b83e6e8b5804311569f8faf023331083a5460eb"
     },
     {
@@ -191,21 +175,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "the library \u2014 setup, styling, event handling, SSR, slots, i18n.\nD"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "The word 'event' in 'event handling' refers to UI event handling patterns in the library documentation, not calendar/scheduling events."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -218,7 +187,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The word 'public' qualifies 'utilities'; the tool provides documentation access, not aggregated public data or statistics."
+          "validation_reason": "The matched term 'public' describes public utilities/hooks (the APIs being documented), not public data aggregates or datasets."
         }
       ],
       "schema_signals": {
@@ -228,7 +197,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:d9643913f8e9d192c19baaca2e6e2c07469f933190b9921d105f824de2b85b36"
     },
     {
@@ -306,12 +275,6 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 2,
-        "confidence": "medium"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
@@ -320,11 +283,10 @@
       }
     },
     "unconfirmed_higher_categories": [
-      "calendar",
       "contacts",
       "project_metadata"
     ],
-    "note": "Rating reflects high-confidence matches; calendar, contacts, project_metadata matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    "note": "Rating reflects high-confidence matches; contacts, project_metadata matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [],
   "injection_findings": [],
@@ -347,7 +309,6 @@
     },
     "data_sensitivity_rating": "MINIMAL",
     "data_categories_touched": [
-      "calendar",
       "contacts",
       "project_metadata",
       "public_data"
@@ -359,34 +320,26 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 1,
-      "false_positive": 6,
+      "false_positive": 4,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::create_app::code_execution",
-        "reason": "The word 'execute' describes what the user does with the returned instructions (following them), not a tool capability; the tool only returns scaffolding templates."
+        "reason": "The word 'execute' refers to the user running the returned setup instructions, not the tool executing code itself."
       },
       {
         "id": "data::create_app::contacts",
-        "reason": "The word 'directory' refers to a filesystem directory for the new application, not a contacts/address book directory."
+        "reason": "Match on 'directory' refers to a file system directory for the new application project, not an address book or contacts directory."
       },
       {
         "id": "data::create_app::project_metadata",
-        "reason": "The word 'project' is used generically for software project creation, not for handling project management metadata like issues or tasks."
-      },
-      {
-        "id": "data::get_component_api::calendar",
-        "reason": "The word 'event' in 'event detail parameters' refers to JavaScript/DOM events in web components, not calendar events or meetings."
-      },
-      {
-        "id": "data::get_documentation::calendar",
-        "reason": "The word 'event' in 'event handling' refers to UI event handling patterns in the library documentation, not calendar/scheduling events."
+        "reason": "The word 'project' here means a software project/starter being created, not project management metadata (tickets, boards, sprints, etc.)."
       },
       {
         "id": "data::get_documentation::public_data",
-        "reason": "The word 'public' qualifies 'utilities'; the tool provides documentation access, not aggregated public data or statistics."
+        "reason": "The matched term 'public' describes public utilities/hooks (the APIs being documented), not public data aggregates or datasets."
       }
     ]
   }

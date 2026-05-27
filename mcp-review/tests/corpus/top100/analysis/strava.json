@@ -588,7 +588,7 @@
           "evidence": {
             "zone": "description",
             "matched": "GPS",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "ike heart rate, power, speed, GPS coordinates, etc.\n2. Flexible"
           },
           "rationale": "Physical tracking risk."
@@ -754,19 +754,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "cess photo metadata including location and timestamps\n\nParameters:\n-"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -914,7 +901,7 @@
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 2,
+        "tool_count": 1,
         "confidence": "medium"
       },
       "public_data": {

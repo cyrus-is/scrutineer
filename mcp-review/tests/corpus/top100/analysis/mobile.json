@@ -230,21 +230,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "tes mobile click on screen at coordinates"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -252,7 +238,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:06e1f541d21eb0bd357908e6ba0b95c5b057bb843e2764c1d52bb664e4df1a40"
     },
     {
@@ -265,21 +251,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ap on the screen at given x,y coordinates. The device identifier to use"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -287,7 +259,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:bff13da90045a7a4bc3f99909b73b7142d9ede81e20f7fb4bc78edac4bb9cdd8"
     },
     {
@@ -301,21 +273,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "obile long press on screen at coordinates"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -323,7 +281,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:2b33eabbf267a3199ea2afde25f7a252c8bfbbdbad9c5fd91755d0f601061f85"
     },
     {
@@ -335,19 +293,6 @@
       ],
       "candidate_capabilities": [],
       "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "elements on screen and their coordinates, with display text or accessi"
-          },
-          "rationale": "Physical tracking risk."
-        },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
@@ -369,7 +314,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:b1ad3cd740707b8c33b81a6ae9561c6592aee48f60a4e8238b1f7bfaa5af6d19"
     },
     {
@@ -645,12 +590,6 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
@@ -681,7 +620,6 @@
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "contacts",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",

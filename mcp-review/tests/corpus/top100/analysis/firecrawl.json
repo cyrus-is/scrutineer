@@ -149,19 +149,6 @@
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "rification removeBase64Images location country languages storeInCach"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -288,19 +275,6 @@
             "snippet": "tention maxAge lockdown proxy profile name saveChanges enterprise"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "query limit tbs filter location includeDomains excludeDomains"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "public_data",
@@ -465,19 +439,6 @@
             "snippet": "tention maxAge lockdown proxy profile name saveChanges"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "rification removeBase64Images location country languages storeInCach"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "project_metadata",
@@ -966,19 +927,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "geTracking); setting waitFor, location, mobile, or a non-basic/auto"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1053,19 +1001,6 @@
             "snippet": "check produces a unified text diff of the page's markdown. No ex"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "dy. Required fields: `name`, `schedule` (with `cron` or `text`), and"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
         }
       ],
       "schema_signals": {
@@ -1145,19 +1080,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "atus` (\"active\" | \"paused\"), `schedule`, `targets`, `webhook`, `noti"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1178,7 +1100,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c6b3893924d029fee62236a0e7d76379bb6b9ea4943caad881164d945631f61c"
     },
     {
@@ -1189,21 +1111,7 @@
         "id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "delete a monitor and stop its schedule. This cannot be undone.\n\n**Us"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1211,7 +1119,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:f7f5c0717ccfeda1d02e92d1362c98919f29a71fba028bdb14cc9047d9ab6286"
     },
     {
@@ -1222,21 +1130,7 @@
         "id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "mediately, outside its normal schedule. Returns the queued check.\n\n*"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1244,7 +1138,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:16cf386b5beebcbb3cd42b855e38669e3044284854263f4037c00625cac862c3"
     },
     {
@@ -1352,12 +1246,6 @@
         "tool_count": 4,
         "confidence": "high"
       },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
@@ -1398,12 +1286,6 @@
         "label": "Message / email / DM contents",
         "tier": "critical",
         "tool_count": 1,
-        "confidence": "medium"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
         "confidence": "medium"
       }
     },
@@ -1470,11 +1352,9 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "files_documents",
       "financial",
-      "location",
       "org_structure",
       "personal_identifiers",
       "project_metadata",

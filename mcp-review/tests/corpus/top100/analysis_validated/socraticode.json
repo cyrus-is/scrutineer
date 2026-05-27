@@ -135,7 +135,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' matched is filesystem terminology (project directory), not an address book or contact roster."
+          "validation_reason": "'directory' in 'project directory' refers to filesystem folder, not address book or roster."
         },
         {
           "category": "system_state",
@@ -150,7 +150,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "'env var' reference is just a configuration option name, not actual system state, process list, or environment dump access."
+          "validation_reason": "Tool accepts EXTRA_EXTENSIONS env var as configuration; does not read/expose system state or process info."
         },
         {
           "category": "project_metadata",
@@ -163,7 +163,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "rogress. Absolute path to the project directory. If omitted, uses t"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "'project' in 'project directory' is filesystem folder naming, not project management metadata (tickets/boards/sprints)."
         }
       ],
       "schema_signals": {
@@ -212,7 +214,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same as codebase_index::contacts \u2014 'directory' means filesystem path."
         },
         {
           "category": "project_metadata",
@@ -225,7 +227,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "active. Absolute path to the project directory. Comma-separated li"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same as codebase_index::project_metadata \u2014 'project' is folder naming."
         }
       ],
       "schema_signals": {
@@ -273,7 +277,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern as prior directory matches."
         },
         {
           "category": "project_metadata",
@@ -286,7 +290,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "Remove a project's codebase index entirely fro"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern as prior project matches."
         }
       ],
       "schema_signals": {
@@ -334,7 +340,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -347,7 +353,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "eft off. Absolute path to the project directory. If omitted, uses t"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -396,7 +404,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -409,7 +417,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "Start/stop watching a project directory for file changes an"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -452,7 +462,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'database connection setup' is an example query phrase users might type, not a description of the tool's capability\u2014it searches indexed source code, not databases."
+          "validation_reason": "Example query mentions 'database connection setup' but tool performs semantic search on code chunks, not database queries or connections."
         }
       ],
       "data_categories": [
@@ -482,7 +492,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "system_state",
@@ -497,7 +507,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "'env var' reference is just configuration parameter name, not system state access."
+          "validation_reason": "SEARCH_DEFAULT_LIMIT env var is a configuration parameter, not system state exposure."
         },
         {
           "category": "project_metadata",
@@ -510,7 +520,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "setup'). Absolute path to the project directory. Maximum number of"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -558,7 +570,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -571,7 +583,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "codebase_status codebase status"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Tool reports indexing/infrastructure status (progress %, chunk count), not project metadata (tasks/sprints/tickets)."
         },
         {
           "category": "public_data",
@@ -633,7 +647,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "system_state",
@@ -648,7 +662,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "'env var' reference is configuration option, not system state access."
+          "validation_reason": "Same pattern as env var."
         },
         {
           "category": "project_metadata",
@@ -661,7 +675,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "omplete. Absolute path to the project directory. Comma-separated li"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -710,7 +726,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -723,7 +739,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "d on it. Absolute path to the project directory. Relative path of t"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -771,7 +789,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -784,7 +802,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "dencies. Absolute path to the project directory."
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         },
         {
           "category": "public_data",
@@ -845,7 +865,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -858,7 +878,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "odebase. Absolute path to the project directory."
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -895,7 +917,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "'chat' is mentioned only as an output destination format, not as content the tool handles or accesses."
+          "validation_reason": "'chat' in snippet refers to where diagram can be rendered (inline in chat), not data the tool accesses."
         },
         {
           "category": "source_code",
@@ -923,7 +945,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -936,7 +958,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "diagram. Absolute path to the project directory. \"mermaid\" (default"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -984,7 +1008,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -997,7 +1021,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "Remove a project's persisted code graph. Waits"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1045,7 +1071,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1058,7 +1084,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "e_graph_status codebase graph status"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Tool reports graph build progress/status, not project management metadata."
         },
         {
           "category": "public_data",
@@ -1121,7 +1149,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1134,7 +1162,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "s on it. Absolute path to the project directory. Target file path ("
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1185,7 +1215,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1198,7 +1228,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ll tree. Absolute path to the project directory. Symbol name to tra"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1248,7 +1280,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1261,7 +1293,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "ging it. Absolute path to the project directory. Symbol name (e.g."
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1312,7 +1346,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1325,7 +1359,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "or search by name across the project. Use to discover what exists"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1373,7 +1409,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1386,7 +1422,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "description, path, and index status. Use this to discover what pr"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Tool reports index status (operational), not project metadata."
         }
       ],
       "schema_signals": {
@@ -1426,7 +1464,8 @@
           },
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "Tool searches artifact text content; 'database-schema' is example artifact name, not database query/connection capability."
         }
       ],
       "data_categories": [
@@ -1470,7 +1509,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "system_state",
@@ -1485,7 +1524,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "'env var' reference is configuration option, not system state access."
+          "validation_reason": "Same env var pattern."
         },
         {
           "category": "project_metadata",
@@ -1498,7 +1537,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "imits'). Absolute path to the project directory. Filter search to a"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1546,7 +1587,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1559,7 +1600,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "rst use. Absolute path to the project directory."
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1607,7 +1650,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' is filesystem terminology, not contacts."
+          "validation_reason": "Same pattern."
         },
         {
           "category": "project_metadata",
@@ -1620,7 +1663,9 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "dexed context artifacts for a project from the vector database. Blo"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
+          "validated_out": true,
+          "validation_reason": "Same pattern."
         }
       ],
       "schema_signals": {
@@ -1829,123 +1874,215 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 51,
-      "false_positive": 28,
-      "needs_source": 2,
+      "confirmed": 29,
+      "false_positive": 51,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::codebase_index::contacts",
-        "reason": "'directory' matched is filesystem terminology (project directory), not an address book or contact roster."
+        "reason": "'directory' in 'project directory' refers to filesystem folder, not address book or roster."
       },
       {
         "id": "data::codebase_index::system_state",
-        "reason": "'env var' reference is just a configuration option name, not actual system state, process list, or environment dump access."
+        "reason": "Tool accepts EXTRA_EXTENSIONS env var as configuration; does not read/expose system state or process info."
+      },
+      {
+        "id": "data::codebase_index::project_metadata",
+        "reason": "'project' in 'project directory' is filesystem folder naming, not project management metadata (tickets/boards/sprints)."
       },
       {
         "id": "data::codebase_update::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same as codebase_index::contacts \u2014 'directory' means filesystem path."
+      },
+      {
+        "id": "data::codebase_update::project_metadata",
+        "reason": "Same as codebase_index::project_metadata \u2014 'project' is folder naming."
       },
       {
         "id": "data::codebase_remove::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern as prior directory matches."
+      },
+      {
+        "id": "data::codebase_remove::project_metadata",
+        "reason": "Same pattern as prior project matches."
       },
       {
         "id": "data::codebase_stop::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_stop::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_watch::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_watch::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "cap::codebase_search::database_access",
-        "reason": "'database connection setup' is an example query phrase users might type, not a description of the tool's capability\u2014it searches indexed source code, not databases."
+        "reason": "Example query mentions 'database connection setup' but tool performs semantic search on code chunks, not database queries or connections."
       },
       {
         "id": "data::codebase_search::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_search::system_state",
-        "reason": "'env var' reference is just configuration parameter name, not system state access."
+        "reason": "SEARCH_DEFAULT_LIMIT env var is a configuration parameter, not system state exposure."
+      },
+      {
+        "id": "data::codebase_search::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_status::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_status::project_metadata",
+        "reason": "Tool reports indexing/infrastructure status (progress %, chunk count), not project metadata (tasks/sprints/tickets)."
       },
       {
         "id": "data::codebase_graph_build::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_build::system_state",
-        "reason": "'env var' reference is configuration option, not system state access."
+        "reason": "Same pattern as env var."
+      },
+      {
+        "id": "data::codebase_graph_build::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_query::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_query::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_stats::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_stats::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_circular::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_circular::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_visualize::communications_content",
-        "reason": "'chat' is mentioned only as an output destination format, not as content the tool handles or accesses."
+        "reason": "'chat' in snippet refers to where diagram can be rendered (inline in chat), not data the tool accesses."
       },
       {
         "id": "data::codebase_graph_visualize::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_visualize::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_remove::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_remove::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_graph_status::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_graph_status::project_metadata",
+        "reason": "Tool reports graph build progress/status, not project management metadata."
       },
       {
         "id": "data::codebase_impact::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_impact::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_flow::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_flow::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_symbol::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_symbol::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_symbols::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_symbols::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_context::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_context::project_metadata",
+        "reason": "Tool reports index status (operational), not project metadata."
+      },
+      {
+        "id": "cap::codebase_context_search::database_access",
+        "reason": "Tool searches artifact text content; 'database-schema' is example artifact name, not database query/connection capability."
       },
       {
         "id": "data::codebase_context_search::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_context_search::system_state",
-        "reason": "'env var' reference is configuration option, not system state access."
+        "reason": "Same env var pattern."
+      },
+      {
+        "id": "data::codebase_context_search::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_context_index::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_context_index::project_metadata",
+        "reason": "Same pattern."
       },
       {
         "id": "data::codebase_context_remove::contacts",
-        "reason": "'directory' is filesystem terminology, not contacts."
+        "reason": "Same pattern."
+      },
+      {
+        "id": "data::codebase_context_remove::project_metadata",
+        "reason": "Same pattern."
       }
     ]
   }

@@ -125,19 +125,6 @@
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -200,19 +187,6 @@
             "snippet": "placeholder-not-a-real-credential-validate_relationship placeho"
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "project_metadata",
@@ -548,19 +522,6 @@
             "snippet": "placeholder-not-a-real-credential-get_node_cypher_ingest_query"
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk."
         },
         {
           "category": "project_metadata",
@@ -1140,7 +1101,6 @@
     "surface_assessed": true,
     "tiers_present": [
       "critical",
-      "high",
       "medium"
     ],
     "categories": {
@@ -1148,12 +1108,6 @@
         "label": "Secrets, tokens & credentials",
         "tier": "critical",
         "tool_count": 16,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 3,
         "confidence": "high"
       },
       "project_metadata": {
@@ -1198,7 +1152,6 @@
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "credentials_secrets",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",

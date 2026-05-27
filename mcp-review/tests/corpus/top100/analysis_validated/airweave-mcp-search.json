@@ -120,7 +120,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched token 'credential' appears in a tool name explicitly labeled 'placeholder-not-a-real-credential' \u2014 the 'placeholder-not-a-real' prefix negates the semantic meaning; this is a dummy/test tool, not a credentials-access capability."
+          "validation_reason": "The matched token 'credential' appears in 'placeholder-not-a-real-credential', which explicitly labels this as a placeholder collection containing test data, not actual credentials."
         }
       ],
       "data_categories": [
@@ -137,7 +137,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Same root cause: the tool name itself declares 'not-a-real-credential', so the regex match on 'credential' is a false signal from a placeholder tool name, not an actual data-access risk."
+          "validation_reason": "The tool searches a collection explicitly named 'placeholder-not-a-real-credential', indicating mock/test data rather than actual credentials or sensitive secrets in critical tier."
         }
       ],
       "schema_signals": {
@@ -220,11 +220,11 @@
     "validated_out": [
       {
         "id": "cap::search-placeholder-not-a-real-credential::secrets_access",
-        "reason": "The matched token 'credential' appears in a tool name explicitly labeled 'placeholder-not-a-real-credential' \u2014 the 'placeholder-not-a-real' prefix negates the semantic meaning; this is a dummy/test tool, not a credentials-access capability."
+        "reason": "The matched token 'credential' appears in 'placeholder-not-a-real-credential', which explicitly labels this as a placeholder collection containing test data, not actual credentials."
       },
       {
         "id": "data::search-placeholder-not-a-real-credential::credentials_secrets",
-        "reason": "Same root cause: the tool name itself declares 'not-a-real-credential', so the regex match on 'credential' is a false signal from a placeholder tool name, not an actual data-access risk."
+        "reason": "The tool searches a collection explicitly named 'placeholder-not-a-real-credential', indicating mock/test data rather than actual credentials or sensitive secrets in critical tier."
       }
     ]
   }

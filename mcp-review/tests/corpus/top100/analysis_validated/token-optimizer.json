@@ -114,7 +114,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token refers to LLM prompt tokens (cost metric), not credentials; tool compresses text for API usage."
+          "validation_reason": "Token refers to LLM tokens (units of text compression), not credentials or authentication tokens."
         }
       ],
       "data_categories": [],
@@ -171,7 +171,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token counting for LLM prompt cost estimation, not credential access."
+          "validation_reason": "Token refers to LLM tokens in text, not credentials or secrets."
         }
       ],
       "data_categories": [
@@ -260,7 +260,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token savings refers to LLM token reduction metrics, not secrets access."
+          "validation_reason": "Token refers to LLM tokens in cache statistics, not credentials."
         }
       ],
       "data_categories": [],
@@ -317,7 +317,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token savings is optimization metric, not credential access."
+          "validation_reason": "Token refers to LLM token savings, not credential access."
         }
       ],
       "data_categories": [],
@@ -389,7 +389,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token threshold is a cost-limiting parameter for caching, not secrets access."
+          "validation_reason": "Token threshold is about LLM token minimums, not credential access."
         }
       ],
       "data_categories": [
@@ -444,7 +444,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token analysis is cost estimation across sessions, not credential access."
+          "validation_reason": "Token refers to LLM token usage metrics and costs, not credential access."
         }
       ],
       "data_categories": [
@@ -461,7 +461,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory refers to project file path, not address book or contact roster."
+          "validation_reason": "Directory refers to project file directory, not a contact/address directory."
         },
         {
           "category": "project_metadata",
@@ -527,7 +527,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction refers to ML-based caching optimization metrics."
+          "validation_reason": "Token reduction refers to LLM token optimization, not credential access."
         }
       ],
       "data_categories": [],
@@ -590,23 +590,10 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is caching efficiency metric, not credential access."
+          "validation_reason": "Token reduction refers to LLM token optimization through caching."
         }
       ],
       "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ies pattern priority strategy schedule scheduleId dependencies acces"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
@@ -628,7 +615,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:f2e471617ed23d9b0445f1943c647a2561c71221ea266e6b15126c850eb35a3a"
     },
     {
@@ -662,7 +649,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is code search optimization metric."
+          "validation_reason": "Token reduction refers to LLM token savings through AST indexing."
         }
       ],
       "data_categories": [
@@ -679,7 +666,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contact/roster data."
+          "validation_reason": "Directory refers to project file directory, not contact roster."
         },
         {
           "category": "project_metadata",
@@ -744,7 +731,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is caching analytics metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in analytics."
         }
       ],
       "data_categories": [],
@@ -816,7 +803,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is benchmarking performance metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in benchmarks."
         }
       ],
       "data_categories": [
@@ -882,7 +869,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is compression efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization through compression."
         }
       ],
       "data_categories": [],
@@ -960,7 +947,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is cache management efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in invalidation."
         }
       ],
       "data_categories": [],
@@ -1006,7 +993,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is cache optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization analysis."
         }
       ],
       "data_categories": [],
@@ -1058,7 +1045,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is partitioning efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization through partitioning."
         }
       ],
       "data_categories": [],
@@ -1130,7 +1117,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is replication efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in replication."
         }
       ],
       "data_categories": [],
@@ -1186,7 +1173,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is multi-tier cache efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in multi-tier cache."
         }
       ],
       "data_categories": [],
@@ -1230,7 +1217,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is SQL query analysis optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in SQL analysis."
         },
         {
           "capability": "database_access",
@@ -1292,7 +1279,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is schema analysis optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in schema analysis."
         },
         {
           "capability": "database_access",
@@ -1402,7 +1389,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is HTTP caching efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization, not API credential handling."
         }
       ],
       "data_categories": [],
@@ -1472,25 +1459,10 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is API response caching metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in API caching."
         }
       ],
       "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "aching strategies (TTL, ETag, Event-based, LRU, Size-based)\n- Int"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Event-based refers to caching strategy type, not calendar/event data."
-        },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
@@ -1512,7 +1484,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:c3181e6744d20db6ba93826969e74defed77d7059e768dab06289b33c0bc499f"
     },
     {
@@ -1554,8 +1526,7 @@
             "snippet": "efault: generic) SQL query to execute (required for query/explain/a"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false,
-          "needs_source": true
+          "suppressed": false
         },
         {
           "capability": "secrets_access",
@@ -1573,7 +1544,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is query optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in query analysis."
         },
         {
           "capability": "database_access",
@@ -1653,7 +1624,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is GraphQL query optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in GraphQL analysis."
         }
       ],
       "data_categories": [],
@@ -1698,7 +1669,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is migration tracking optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in migration tracking."
         }
       ],
       "data_categories": [
@@ -1760,7 +1731,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is ORM optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in ORM analysis."
         },
         {
           "capability": "database_access",
@@ -1842,7 +1813,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is REST API analysis optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in REST analysis."
         }
       ],
       "data_categories": [],
@@ -1908,7 +1879,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is WebSocket management metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in WebSocket tracking."
         }
       ],
       "data_categories": [
@@ -1991,7 +1962,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is alerting efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization through caching."
         }
       ],
       "data_categories": [
@@ -2073,7 +2044,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is metrics aggregation efficiency metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in metrics collection."
         }
       ],
       "data_categories": [],
@@ -2193,7 +2164,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is widget rendering optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in widget rendering."
         }
       ],
       "data_categories": [],
@@ -2246,7 +2217,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is visualization optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in visualization."
         }
       ],
       "data_categories": [],
@@ -2310,7 +2281,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is health monitoring metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in health monitoring."
         }
       ],
       "data_categories": [],
@@ -2360,7 +2331,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is log analysis optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in log analysis."
         }
       ],
       "data_categories": [],
@@ -2534,7 +2505,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contact roster."
+          "validation_reason": "Directory refers to project file system directory, not contact directory."
         },
         {
           "category": "project_metadata",
@@ -2589,7 +2560,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -2644,7 +2615,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to log file system locations."
         },
         {
           "category": "project_metadata",
@@ -2711,7 +2682,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -2766,7 +2737,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -2827,7 +2798,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -2884,7 +2855,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token-optimized output is build output optimization, not secrets access."
+          "validation_reason": "Token-optimized output refers to LLM token reduction in build output."
         }
       ],
       "data_categories": [
@@ -2914,7 +2885,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -2969,7 +2940,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -3025,7 +2996,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -3079,7 +3050,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is project root file path, not contacts."
+          "validation_reason": "Directory refers to project file system directory."
         },
         {
           "category": "project_metadata",
@@ -3159,23 +3130,10 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is cron metrics optimization."
+          "validation_reason": "Token reduction refers to LLM token optimization in cron management."
         }
       ],
       "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ration schedulerType taskName schedule command user workingDirectory"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
         {
           "category": "contacts",
           "label": "Contacts & address book",
@@ -3189,7 +3147,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is working directory, not contact data."
+          "validation_reason": "Directory refers to working directory for scheduled tasks."
         },
         {
           "category": "project_metadata",
@@ -3248,7 +3206,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is user management optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in user management."
         }
       ],
       "data_categories": [
@@ -3265,7 +3223,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory refers to file/permission path, not contact roster."
+          "validation_reason": "Directory parameter is filesystem path for permission checks, not contact data."
         }
       ],
       "schema_signals": {
@@ -3310,7 +3268,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is diff output optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in diff output."
         }
       ],
       "data_categories": [
@@ -3340,7 +3298,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is git working directory, not contacts."
+          "validation_reason": "Directory refers to git working directory."
         }
       ],
       "schema_signals": {
@@ -3387,7 +3345,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is branch listing optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in branch output."
         }
       ],
       "data_categories": [
@@ -3417,7 +3375,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is git working directory, not contacts."
+          "validation_reason": "Directory refers to git working directory."
         }
       ],
       "schema_signals": {
@@ -3482,7 +3440,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is merge management optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in merge management."
         }
       ],
       "data_categories": [
@@ -3525,7 +3483,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is git working directory, not contacts."
+          "validation_reason": "Directory refers to git working directory."
         },
         {
           "category": "project_metadata",
@@ -3583,7 +3541,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is git status optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in status output."
         }
       ],
       "data_categories": [
@@ -3613,7 +3571,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Repository directory is git working path, not contacts."
+          "validation_reason": "Directory refers to repository directory."
         },
         {
           "category": "project_metadata",
@@ -3674,7 +3632,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is commit history optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in log output."
         }
       ],
       "data_categories": [
@@ -3717,7 +3675,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is git working directory, not contacts."
+          "validation_reason": "Directory refers to git working directory."
         }
       ],
       "schema_signals": {
@@ -3774,7 +3732,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is file reading optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in file reading."
         }
       ],
       "data_categories": [
@@ -3831,7 +3789,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is file writing optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in write operations."
         }
       ],
       "data_categories": [
@@ -3887,7 +3845,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is file editing optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in line-based edits."
         }
       ],
       "data_categories": [
@@ -3961,7 +3919,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is glob pattern optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in glob output."
         }
       ],
       "data_categories": [
@@ -3991,7 +3949,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is working directory for search, not contacts."
+          "validation_reason": "Directory refers to filesystem search root."
         }
       ],
       "schema_signals": {
@@ -4055,7 +4013,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token reduction is grep output optimization metric."
+          "validation_reason": "Token reduction refers to LLM token optimization in grep output."
         }
       ],
       "data_categories": [
@@ -4072,7 +4030,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Directory is working directory for search, not contacts."
+          "validation_reason": "Directory refers to search root directory."
         },
         {
           "category": "public_data",
@@ -4127,12 +4085,6 @@
         "tool_count": 16,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "high"
-      },
       "files_documents": {
         "label": "File & document contents",
         "tier": "high",
@@ -4169,7 +4121,8 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "needs_source": true
     },
     {
       "id": "exec_with_secret_access",
@@ -4180,7 +4133,8 @@
         "code_execution",
         "secrets_access"
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "needs_source": true
     },
     {
       "id": "read_and_exfil",
@@ -4192,7 +4146,8 @@
         "communications_content",
         "network_egress"
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -4215,7 +4170,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",
@@ -4230,283 +4184,279 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 66,
-      "false_positive": 68,
-      "needs_source": 3,
+      "confirmed": 62,
+      "false_positive": 67,
+      "needs_source": 5,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::optimize_text::secrets_access",
-        "reason": "Token refers to LLM prompt tokens (cost metric), not credentials; tool compresses text for API usage."
+        "reason": "Token refers to LLM tokens (units of text compression), not credentials or authentication tokens."
       },
       {
         "id": "cap::count_tokens::secrets_access",
-        "reason": "Token counting for LLM prompt cost estimation, not credential access."
+        "reason": "Token refers to LLM tokens in text, not credentials or secrets."
       },
       {
         "id": "cap::get_cache_stats::secrets_access",
-        "reason": "Token savings refers to LLM token reduction metrics, not secrets access."
+        "reason": "Token refers to LLM tokens in cache statistics, not credentials."
       },
       {
         "id": "cap::analyze_optimization::secrets_access",
-        "reason": "Token savings is optimization metric, not credential access."
+        "reason": "Token refers to LLM token savings, not credential access."
       },
       {
         "id": "cap::optimize_session::secrets_access",
-        "reason": "Token threshold is a cost-limiting parameter for caching, not secrets access."
+        "reason": "Token threshold is about LLM token minimums, not credential access."
       },
       {
         "id": "cap::analyze_project_tokens::secrets_access",
-        "reason": "Token analysis is cost estimation across sessions, not credential access."
+        "reason": "Token refers to LLM token usage metrics and costs, not credential access."
       },
       {
         "id": "data::analyze_project_tokens::contacts",
-        "reason": "Directory refers to project file path, not address book or contact roster."
+        "reason": "Directory refers to project file directory, not a contact/address directory."
       },
       {
         "id": "cap::predictive_cache::secrets_access",
-        "reason": "Token reduction refers to ML-based caching optimization metrics."
+        "reason": "Token reduction refers to LLM token optimization, not credential access."
       },
       {
         "id": "cap::cache_warmup::secrets_access",
-        "reason": "Token reduction is caching efficiency metric, not credential access."
+        "reason": "Token reduction refers to LLM token optimization through caching."
       },
       {
         "id": "cap::smart_ast_grep::secrets_access",
-        "reason": "Token reduction is code search optimization metric."
+        "reason": "Token reduction refers to LLM token savings through AST indexing."
       },
       {
         "id": "data::smart_ast_grep::contacts",
-        "reason": "Directory is project root file path, not contact/roster data."
+        "reason": "Directory refers to project file directory, not contact roster."
       },
       {
         "id": "cap::cache_analytics::secrets_access",
-        "reason": "Token reduction is caching analytics metric."
+        "reason": "Token reduction refers to LLM token optimization in analytics."
       },
       {
         "id": "cap::cache-benchmark::secrets_access",
-        "reason": "Token reduction is benchmarking performance metric."
+        "reason": "Token reduction refers to LLM token optimization in benchmarks."
       },
       {
         "id": "cap::cache_compression::secrets_access",
-        "reason": "Token reduction is compression efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization through compression."
       },
       {
         "id": "cap::cache_invalidation::secrets_access",
-        "reason": "Token reduction is cache management efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization in invalidation."
       },
       {
         "id": "cap::cache_optimizer::secrets_access",
-        "reason": "Token reduction is cache optimization metric."
+        "reason": "Token reduction refers to LLM token optimization analysis."
       },
       {
         "id": "cap::cache_partition::secrets_access",
-        "reason": "Token reduction is partitioning efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization through partitioning."
       },
       {
         "id": "cap::cache_replication::secrets_access",
-        "reason": "Token reduction is replication efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization in replication."
       },
       {
         "id": "cap::smart_cache::secrets_access",
-        "reason": "Token reduction is multi-tier cache efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization in multi-tier cache."
       },
       {
         "id": "cap::smart_sql::secrets_access",
-        "reason": "Token reduction is SQL query analysis optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in SQL analysis."
       },
       {
         "id": "cap::smart_schema::secrets_access",
-        "reason": "Token reduction is schema analysis optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in schema analysis."
       },
       {
         "id": "cap::smart_api_fetch::secrets_access",
-        "reason": "Token reduction is HTTP caching efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization, not API credential handling."
       },
       {
         "id": "cap::smart-cache-api::secrets_access",
-        "reason": "Token reduction is API response caching metric."
-      },
-      {
-        "id": "data::smart-cache-api::calendar",
-        "reason": "Event-based refers to caching strategy type, not calendar/event data."
+        "reason": "Token reduction refers to LLM token optimization in API caching."
       },
       {
         "id": "cap::smart_database::secrets_access",
-        "reason": "Token reduction is query optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in query analysis."
       },
       {
         "id": "cap::smart_graphql::secrets_access",
-        "reason": "Token reduction is GraphQL query optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in GraphQL analysis."
       },
       {
         "id": "cap::smart_migration::secrets_access",
-        "reason": "Token reduction is migration tracking optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in migration tracking."
       },
       {
         "id": "cap::smart_orm::secrets_access",
-        "reason": "Token reduction is ORM optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in ORM analysis."
       },
       {
         "id": "cap::smart_rest::secrets_access",
-        "reason": "Token reduction is REST API analysis optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in REST analysis."
       },
       {
         "id": "cap::smart_websocket::secrets_access",
-        "reason": "Token reduction is WebSocket management metric."
+        "reason": "Token reduction refers to LLM token optimization in WebSocket tracking."
       },
       {
         "id": "cap::alert_manager::secrets_access",
-        "reason": "Token reduction is alerting efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization through caching."
       },
       {
         "id": "cap::metric_collector::secrets_access",
-        "reason": "Token reduction is metrics aggregation efficiency metric."
+        "reason": "Token reduction refers to LLM token optimization in metrics collection."
       },
       {
         "id": "cap::custom_widget::secrets_access",
-        "reason": "Token reduction is widget rendering optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in widget rendering."
       },
       {
         "id": "cap::data_visualizer::secrets_access",
-        "reason": "Token reduction is visualization optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in visualization."
       },
       {
         "id": "cap::health_monitor::secrets_access",
-        "reason": "Token reduction is health monitoring metric."
+        "reason": "Token reduction refers to LLM token optimization in health monitoring."
       },
       {
         "id": "cap::log_dashboard::secrets_access",
-        "reason": "Token reduction is log analysis optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in log analysis."
       },
       {
         "id": "data::smart_processes::contacts",
-        "reason": "Directory is project root file path, not contact roster."
+        "reason": "Directory refers to project file system directory, not contact directory."
       },
       {
         "id": "data::smart_network::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_logs::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to log file system locations."
       },
       {
         "id": "data::smart_lint::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_install::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_docker::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "cap::smart_build::secrets_access",
-        "reason": "Token-optimized output is build output optimization, not secrets access."
+        "reason": "Token-optimized output refers to LLM token reduction in build output."
       },
       {
         "id": "data::smart_build::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_system_metrics::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_test::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "data::smart_typecheck::contacts",
-        "reason": "Directory is project root file path, not contacts."
+        "reason": "Directory refers to project file system directory."
       },
       {
         "id": "cap::smart_cron::secrets_access",
-        "reason": "Token reduction is cron metrics optimization."
+        "reason": "Token reduction refers to LLM token optimization in cron management."
       },
       {
         "id": "data::smart_cron::contacts",
-        "reason": "Directory is working directory, not contact data."
+        "reason": "Directory refers to working directory for scheduled tasks."
       },
       {
         "id": "cap::smart_user::secrets_access",
-        "reason": "Token reduction is user management optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in user management."
       },
       {
         "id": "data::smart_user::contacts",
-        "reason": "Directory refers to file/permission path, not contact roster."
+        "reason": "Directory parameter is filesystem path for permission checks, not contact data."
       },
       {
         "id": "cap::smart_diff::secrets_access",
-        "reason": "Token reduction is diff output optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in diff output."
       },
       {
         "id": "data::smart_diff::contacts",
-        "reason": "Directory is git working directory, not contacts."
+        "reason": "Directory refers to git working directory."
       },
       {
         "id": "cap::smart_branch::secrets_access",
-        "reason": "Token reduction is branch listing optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in branch output."
       },
       {
         "id": "data::smart_branch::contacts",
-        "reason": "Directory is git working directory, not contacts."
+        "reason": "Directory refers to git working directory."
       },
       {
         "id": "cap::smart_merge::secrets_access",
-        "reason": "Token reduction is merge management optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in merge management."
       },
       {
         "id": "data::smart_merge::contacts",
-        "reason": "Directory is git working directory, not contacts."
+        "reason": "Directory refers to git working directory."
       },
       {
         "id": "cap::smart_status::secrets_access",
-        "reason": "Token reduction is git status optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in status output."
       },
       {
         "id": "data::smart_status::contacts",
-        "reason": "Repository directory is git working path, not contacts."
+        "reason": "Directory refers to repository directory."
       },
       {
         "id": "cap::smart_log::secrets_access",
-        "reason": "Token reduction is commit history optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in log output."
       },
       {
         "id": "data::smart_log::contacts",
-        "reason": "Directory is git working directory, not contacts."
+        "reason": "Directory refers to git working directory."
       },
       {
         "id": "cap::smart_read::secrets_access",
-        "reason": "Token reduction is file reading optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in file reading."
       },
       {
         "id": "cap::smart_write::secrets_access",
-        "reason": "Token reduction is file writing optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in write operations."
       },
       {
         "id": "cap::smart_edit::secrets_access",
-        "reason": "Token reduction is file editing optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in line-based edits."
       },
       {
         "id": "cap::smart_glob::secrets_access",
-        "reason": "Token reduction is glob pattern optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in glob output."
       },
       {
         "id": "data::smart_glob::contacts",
-        "reason": "Directory is working directory for search, not contacts."
+        "reason": "Directory refers to filesystem search root."
       },
       {
         "id": "cap::smart_grep::secrets_access",
-        "reason": "Token reduction is grep output optimization metric."
+        "reason": "Token reduction refers to LLM token optimization in grep output."
       },
       {
         "id": "data::smart_grep::contacts",
-        "reason": "Directory is working directory for search, not contacts."
+        "reason": "Directory refers to search root directory."
       }
     ]
   }

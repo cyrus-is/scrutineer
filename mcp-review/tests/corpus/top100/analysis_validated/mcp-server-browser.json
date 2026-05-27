@@ -203,7 +203,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The tool reads rendered page content (DOM/text), not file system objects; 'get text' matched a file_read pattern but describes browser page content, not file I/O."
+          "validation_reason": "The tool retrieves text content from an already-loaded web page, not from the file system; 'get text' here means DOM content, not file I/O."
         }
       ],
       "data_categories": [],
@@ -383,7 +383,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'Download' in 'get download list' is a noun (files already downloaded), not the verb 'download'; the tool reads local metadata, not making outbound calls."
+          "validation_reason": "The tool lists already-downloaded files; 'download' here refers to the file collection, not an outbound network operation the tool itself initiates."
         }
       ],
       "data_categories": [
@@ -552,7 +552,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Task' in the description refers to completing the automation task generically, not accessing project management tasks/metadata; the tool merely closes the browser."
+          "validation_reason": "The word 'task' is used generically ('when the task is done') and does not indicate access to project management metadata, tickets, or issue systems."
         }
       ],
       "schema_signals": {
@@ -618,8 +618,7 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "validated_out": true,
-      "validation_reason": "The file_read component is not confirmed (false positive in claim 2); combination is invalid if one constituent capability does not exist."
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -652,26 +651,22 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 4,
-      "false_positive": 4,
-      "needs_source": 0,
+      "false_positive": 3,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::browser_get_text::file_read",
-        "reason": "The tool reads rendered page content (DOM/text), not file system objects; 'get text' matched a file_read pattern but describes browser page content, not file I/O."
+        "reason": "The tool retrieves text content from an already-loaded web page, not from the file system; 'get text' here means DOM content, not file I/O."
       },
       {
         "id": "cap::browser_get_download_list::network_egress",
-        "reason": "'Download' in 'get download list' is a noun (files already downloaded), not the verb 'download'; the tool reads local metadata, not making outbound calls."
+        "reason": "The tool lists already-downloaded files; 'download' here refers to the file collection, not an outbound network operation the tool itself initiates."
       },
       {
         "id": "data::browser_close::project_metadata",
-        "reason": "'Task' in the description refers to completing the automation task generically, not accessing project management tasks/metadata; the tool merely closes the browser."
-      },
-      {
-        "id": "combo::read_and_exfil",
-        "reason": "The file_read component is not confirmed (false positive in claim 2); combination is invalid if one constituent capability does not exist."
+        "reason": "The word 'task' is used generically ('when the task is done') and does not indicate access to project management metadata, tickets, or issue systems."
       }
     ]
   }

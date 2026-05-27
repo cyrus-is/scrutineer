@@ -137,19 +137,6 @@
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Search live flight availability and prices across 400+ airlin"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "system_state",
           "label": "System / process / environment state",
           "tier": "high",
@@ -181,21 +168,7 @@
         "query"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "resolve_location resolve location"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -203,7 +176,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:86f198b38f617fd0e8e318d2bb0d0951541facb466fc67f36c2e193afdf5ab7e"
     },
     {
@@ -593,22 +566,10 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
       "system_state": {
         "label": "System / process / environment state",
         "tier": "high",
         "tool_count": 2,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
         "confidence": "high"
       },
       "financial": {
@@ -711,13 +672,11 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",
       "files_documents",
       "financial",
-      "location",
       "personal_identifiers",
       "project_metadata",
       "public_data",

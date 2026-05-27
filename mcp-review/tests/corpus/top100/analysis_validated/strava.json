@@ -162,7 +162,7 @@
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "Tool returns activity statistics (recent, YTD, all-time), not personal identifiers; 'profile' in snippet refers only to where the athlete ID originates."
+          "validation_reason": "Tool returns activity statistics (YTD, all-time metrics), not personal identifiers; 'profile' in description refers to the input parameter source, not output."
         }
       ],
       "schema_signals": {
@@ -250,7 +250,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "'Member' refers to club membership status, not communications participants/channels as the pattern suggests."
+          "validation_reason": "Tool lists clubs (entities), not channels/members/participants; 'member' describes the athlete's relationship to clubs, not what the tool enumerates."
         }
       ],
       "schema_signals": {
@@ -494,7 +494,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' refers to a filesystem directory for saving files, not an address book or contacts roster."
+          "validation_reason": "'Directory' refers to a file system path, not a contact/address directory."
         }
       ],
       "schema_signals": {
@@ -529,7 +529,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' refers to a filesystem directory for saving files, not an address book or contacts roster."
+          "validation_reason": "'Directory' refers to a file system path, not a contact/address directory."
         }
       ],
       "schema_signals": {
@@ -588,7 +588,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "'Message' refers to technical data chunking (chunked to ~50KB per message) for pagination, not actual message/communication content."
+          "validation_reason": "'Message' in '~50KB per message' is a technical term for data packets in network transfer, not message/email/chat content; tool returns metric time-series (heart rate, power, speed, GPS)."
         },
         {
           "category": "location",
@@ -598,7 +598,7 @@
           "evidence": {
             "zone": "description",
             "matched": "GPS",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "ike heart rate, power, speed, GPS coordinates, etc.\n2. Flexible"
           },
           "rationale": "Physical tracking risk."
@@ -651,7 +651,9 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "uires activity:read scope for public/followers activities, activit"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "Snippet discusses authentication scope required, not data category returned; lap data privacy depends on activity settings, not a blanket public aggregate."
         }
       ],
       "schema_signals": {
@@ -764,19 +766,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "cess photo metadata including location and timestamps\n\nParameters:\n-"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -787,7 +776,9 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "1. A text summary with photo count and URLs\n2. Raw photo data co"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "'Count' in output format description ('photo count and URLs') does not indicate public aggregate data\u2014it is just a summary format descriptor."
         }
       ],
       "schema_signals": {
@@ -875,7 +866,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "'Status' refers to Strava connection status (online/offline), not project management status/metadata."
+          "validation_reason": "'Status' refers to authentication connection status, not project metadata (name, description, milestone, etc.)."
         }
       ],
       "schema_signals": {
@@ -926,7 +917,7 @@
       "location": {
         "label": "Location data",
         "tier": "high",
-        "tool_count": 2,
+        "tool_count": 1,
         "confidence": "medium"
       },
       "public_data": {
@@ -963,8 +954,7 @@
         "sensitive_env_required",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "read_and_exfil",
@@ -977,7 +967,8 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "Communications_content is false_positive ('message' is technical term); no file_read capability confirmed in these Strava tools; combination is unfounded."
     }
   ],
   "injection_findings": [],
@@ -1015,35 +1006,47 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 15,
-      "false_positive": 6,
-      "needs_source": 2,
+      "confirmed": 13,
+      "false_positive": 9,
+      "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::get-athlete-stats::personal_identifiers",
-        "reason": "Tool returns activity statistics (recent, YTD, all-time), not personal identifiers; 'profile' in snippet refers only to where the athlete ID originates."
+        "reason": "Tool returns activity statistics (YTD, all-time metrics), not personal identifiers; 'profile' in description refers to the input parameter source, not output."
       },
       {
         "id": "data::list-athlete-clubs::communications_metadata",
-        "reason": "'Member' refers to club membership status, not communications participants/channels as the pattern suggests."
+        "reason": "Tool lists clubs (entities), not channels/members/participants; 'member' describes the athlete's relationship to clubs, not what the tool enumerates."
       },
       {
         "id": "data::export-route-gpx::contacts",
-        "reason": "'Directory' refers to a filesystem directory for saving files, not an address book or contacts roster."
+        "reason": "'Directory' refers to a file system path, not a contact/address directory."
       },
       {
         "id": "data::export-route-tcx::contacts",
-        "reason": "'Directory' refers to a filesystem directory for saving files, not an address book or contacts roster."
+        "reason": "'Directory' refers to a file system path, not a contact/address directory."
       },
       {
         "id": "data::get-activity-streams::communications_content",
-        "reason": "'Message' refers to technical data chunking (chunked to ~50KB per message) for pagination, not actual message/communication content."
+        "reason": "'Message' in '~50KB per message' is a technical term for data packets in network transfer, not message/email/chat content; tool returns metric time-series (heart rate, power, speed, GPS)."
+      },
+      {
+        "id": "data::get-activity-laps::public_data",
+        "reason": "Snippet discusses authentication scope required, not data category returned; lap data privacy depends on activity settings, not a blanket public aggregate."
+      },
+      {
+        "id": "data::get-activity-photos::public_data",
+        "reason": "'Count' in output format description ('photo count and URLs') does not indicate public aggregate data\u2014it is just a summary format descriptor."
       },
       {
         "id": "data::check-strava-connection::project_metadata",
-        "reason": "'Status' refers to Strava connection status (online/offline), not project management status/metadata."
+        "reason": "'Status' refers to authentication connection status, not project metadata (name, description, milestone, etc.)."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "Communications_content is false_positive ('message' is technical term); no file_read capability confirmed in these Strava tools; combination is unfounded."
       }
     ]
   }

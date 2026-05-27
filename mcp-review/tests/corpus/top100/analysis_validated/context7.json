@@ -111,7 +111,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched token 'project' appears in a library ID format specification ('/org/project'), not as evidence of accessing project management data; the tool resolves package names to documentation library identifiers."
+          "validation_reason": "'project' here is part of the library ID syntax format ('/org/project'), not an indication that the tool accesses project management metadata like tasks, sprints, or boards."
         }
       ],
       "schema_signals": {
@@ -149,7 +149,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched token 'mongodb' appears in an example library ID format ('/mongodb/docs'), not as evidence of database access; the tool queries documentation for frameworks and libraries, not databases."
+          "validation_reason": "'mongodb' is an example of a library whose *documentation* can be queried; the tool provides documentation retrieval, not database access capability."
         }
       ],
       "data_categories": [
@@ -166,7 +166,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched token 'project' appears in a library ID format specification ('/org/project'), not as evidence of accessing project management metadata; the tool retrieves documentation examples for programming libraries."
+          "validation_reason": "'project' in the library ID format ('/org/project') is syntax, not an indication the tool accesses project management data."
         }
       ],
       "schema_signals": {
@@ -232,15 +232,15 @@
     "validated_out": [
       {
         "id": "data::resolve-library-id::project_metadata",
-        "reason": "The matched token 'project' appears in a library ID format specification ('/org/project'), not as evidence of accessing project management data; the tool resolves package names to documentation library identifiers."
+        "reason": "'project' here is part of the library ID syntax format ('/org/project'), not an indication that the tool accesses project management metadata like tasks, sprints, or boards."
       },
       {
         "id": "cap::query-docs::database_access",
-        "reason": "The matched token 'mongodb' appears in an example library ID format ('/mongodb/docs'), not as evidence of database access; the tool queries documentation for frameworks and libraries, not databases."
+        "reason": "'mongodb' is an example of a library whose *documentation* can be queried; the tool provides documentation retrieval, not database access capability."
       },
       {
         "id": "data::query-docs::project_metadata",
-        "reason": "The matched token 'project' appears in a library ID format specification ('/org/project'), not as evidence of accessing project management metadata; the tool retrieves documentation examples for programming libraries."
+        "reason": "'project' in the library ID format ('/org/project') is syntax, not an indication the tool accesses project management data."
       }
     ]
   }

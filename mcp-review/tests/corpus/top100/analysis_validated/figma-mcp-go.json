@@ -93,7 +93,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "Word 'document' refers to the Figma design file, not file-system document access or content retrieval."
+          "validation_reason": "The matched word 'document' refers to the Figma design file/project, not sensitive documents; the tool only adds a page with structural parameters."
         }
       ],
       "schema_signals": {
@@ -355,7 +355,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "Parameter 'count' in grid style context is a layout grid quantity (columns/items), not data aggregation or publication."
+          "validation_reason": "The parameter 'count' refers to grid cell count (a grid layout property), not data aggregation or public data exposure."
         }
       ],
       "schema_signals": {
@@ -520,7 +520,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Token in 'design token' is design-system terminology, not a security credential or secret."
+          "validation_reason": "The matched term 'token' in 'design token' is Figma's design system terminology for variables/CSS properties, not authentication/API tokens."
         }
       ],
       "data_categories": [],
@@ -596,7 +596,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "Word 'document' refers to the Figma design file, not file-system document access."
+          "validation_reason": "The word 'document' refers to the Figma design project; the tool modifies structure only, does not read sensitive file contents."
         }
       ],
       "schema_signals": {
@@ -703,7 +703,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Word 'directory' appears in 'relative to working directory or absolute' (filesystem path context), not contact/roster access."
+          "validation_reason": "The matched word 'directory' in the snippet refers to the filesystem path (output directory), not an address book or contacts directory."
         }
       ],
       "schema_signals": {
@@ -737,7 +737,8 @@
             "snippet": "ing Figma variables into your codebase. Output format: json (default"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "The tool outputs design tokens in code-compatible formats (JSON/CSS); it does not access, read, or interact with source code repositories."
         }
       ],
       "schema_signals": {
@@ -793,9 +794,7 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "de annotations in the current document or scoped to a specific node."
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
-          "validated_out": true,
-          "validation_reason": "Word 'document' refers to Figma design file, not file-system document content."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
           "category": "project_metadata",
@@ -809,8 +808,7 @@
             "snippet": "turns annotation objects with label text, measurement type, and t"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "validated_out": true,
-          "validation_reason": "Word 'label' in annotation context is metadata within design tooling, not project-management or issue-tracking metadata."
+          "needs_source": true
         }
       ],
       "schema_signals": {
@@ -865,7 +863,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Word 'token' in 'token-efficient' refers to API/LLM token cost optimization, not secrets or credentials."
+          "validation_reason": "The matched word 'token' in 'token-efficient' refers to API/LLM computational tokens for context efficiency, not authentication secrets."
         }
       ],
       "data_categories": [],
@@ -917,7 +915,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Word 'token' in 'token efficiency matters' refers to API/LLM token usage, not credential access."
+          "validation_reason": "The matched word 'token' in 'token efficiency matters' refers to computational tokens for API/LLM cost, not credential access."
         }
       ],
       "data_categories": [
@@ -1034,7 +1032,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Word 'fetch' in 'fetch multiple nodes' is internal document retrieval, not outbound network calls."
+          "validation_reason": "The matched word 'fetch' refers to querying/retrieving node data from the local design file, not making outbound network requests."
         }
       ],
       "data_categories": [],
@@ -1138,8 +1136,7 @@
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Tool reads reaction definitions (which may include URL actions) but does not itself execute network calls; reading definitions \u2260 performing egress."
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -1258,7 +1255,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Word 'token' in 'design token system' refers to design-system variables, not authentication tokens or secrets."
+          "validation_reason": "The matched term 'token' in 'design token system' is Figma terminology for design variables/CSS custom properties, not API or authentication tokens."
         }
       ],
       "data_categories": [],
@@ -1830,8 +1827,7 @@
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Tool defines reaction configurations (which may include URL actions) but does not execute network calls; configuration \u2260 network egress."
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -2113,63 +2109,51 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 11,
-      "false_positive": 13,
-      "needs_source": 3,
+      "confirmed": 12,
+      "false_positive": 10,
+      "needs_source": 5,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::add_page::files_documents",
-        "reason": "Word 'document' refers to the Figma design file, not file-system document access or content retrieval."
+        "reason": "The matched word 'document' refers to the Figma design file/project, not sensitive documents; the tool only adds a page with structural parameters."
       },
       {
         "id": "data::create_grid_style::public_data",
-        "reason": "Parameter 'count' in grid style context is a layout grid quantity (columns/items), not data aggregation or publication."
+        "reason": "The parameter 'count' refers to grid cell count (a grid layout property), not data aggregation or public data exposure."
       },
       {
         "id": "cap::create_variable::secrets_access",
-        "reason": "Token in 'design token' is design-system terminology, not a security credential or secret."
+        "reason": "The matched term 'token' in 'design token' is Figma's design system terminology for variables/CSS properties, not authentication/API tokens."
       },
       {
         "id": "data::delete_page::files_documents",
-        "reason": "Word 'document' refers to the Figma design file, not file-system document access."
+        "reason": "The word 'document' refers to the Figma design project; the tool modifies structure only, does not read sensitive file contents."
       },
       {
         "id": "data::export_frames_to_pdf::contacts",
-        "reason": "Word 'directory' appears in 'relative to working directory or absolute' (filesystem path context), not contact/roster access."
+        "reason": "The matched word 'directory' in the snippet refers to the filesystem path (output directory), not an address book or contacts directory."
       },
       {
-        "id": "data::get_annotations::files_documents",
-        "reason": "Word 'document' refers to Figma design file, not file-system document content."
-      },
-      {
-        "id": "data::get_annotations::project_metadata",
-        "reason": "Word 'label' in annotation context is metadata within design tooling, not project-management or issue-tracking metadata."
+        "id": "data::export_tokens::source_code",
+        "reason": "The tool outputs design tokens in code-compatible formats (JSON/CSS); it does not access, read, or interact with source code repositories."
       },
       {
         "id": "cap::get_design_context::secrets_access",
-        "reason": "Word 'token' in 'token-efficient' refers to API/LLM token cost optimization, not secrets or credentials."
+        "reason": "The matched word 'token' in 'token-efficient' refers to API/LLM computational tokens for context efficiency, not authentication secrets."
       },
       {
         "id": "cap::get_document::secrets_access",
-        "reason": "Word 'token' in 'token efficiency matters' refers to API/LLM token usage, not credential access."
+        "reason": "The matched word 'token' in 'token efficiency matters' refers to computational tokens for API/LLM cost, not credential access."
       },
       {
         "id": "cap::get_node::network_egress",
-        "reason": "Word 'fetch' in 'fetch multiple nodes' is internal document retrieval, not outbound network calls."
-      },
-      {
-        "id": "cap::get_reactions::network_egress",
-        "reason": "Tool reads reaction definitions (which may include URL actions) but does not itself execute network calls; reading definitions \u2260 performing egress."
+        "reason": "The matched word 'fetch' refers to querying/retrieving node data from the local design file, not making outbound network requests."
       },
       {
         "id": "cap::get_variable_defs::secrets_access",
-        "reason": "Word 'token' in 'design token system' refers to design-system variables, not authentication tokens or secrets."
-      },
-      {
-        "id": "cap::set_reactions::network_egress",
-        "reason": "Tool defines reaction configurations (which may include URL actions) but does not execute network calls; configuration \u2260 network egress."
+        "reason": "The matched term 'token' in 'design token system' is Figma terminology for design variables/CSS custom properties, not API or authentication tokens."
       }
     ]
   }

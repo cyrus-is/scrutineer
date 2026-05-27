@@ -136,7 +136,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Merging within GitLab API (internal operation); 'URL' match is from generic description of project path encoding, not external network parameter."
         }
       ],
       "data_categories": [
@@ -153,7 +155,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "Commit message is source code metadata (what changed in the commit), not communications content like email or chat."
+          "validation_reason": "Matched 'message' in 'merge_commit_message' refers to git commit message, not communications/email/chat content."
         },
         {
           "category": "source_code",
@@ -217,7 +219,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation; 'URL' match is generic project path description."
         },
         {
           "capability": "secrets_access",
@@ -233,8 +237,7 @@
             "snippet": "erge request iid sha approval password"
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
-          "suppressed": false,
-          "needs_source": true
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -249,8 +252,7 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "erge request iid sha approval password"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
-          "needs_source": true
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
         },
         {
           "category": "project_metadata",
@@ -299,7 +301,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -350,7 +354,9 @@
             "snippet": "rovers Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -401,7 +407,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -454,7 +462,9 @@
             "snippet": "nation Project ID or complete URL-encoded path to project The i"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -513,7 +523,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool accepts a content parameter; it does not read existing files. The 'file Content' match describes the input parameter, not a file_read capability."
+          "validation_reason": "Tool creates/updates files (write operation), not reads them; matched pattern is about file content being written."
         },
         {
           "capability": "network_egress",
@@ -529,7 +539,9 @@
             "snippet": "roject Project ID or complete URL-encoded path to project Path"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -546,7 +558,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "commit_message is source code metadata, not communications."
+          "validation_reason": "'message' in 'commit_message' refers to git commit message, not communications content."
         },
         {
           "category": "source_code",
@@ -733,7 +745,9 @@
             "snippet": "GitLab project Project ID or URL-encoded path (optional; falls"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -776,7 +790,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in 'file or directory' refers to file system directories, not contact/address directories."
+          "validation_reason": "'directory' in context refers to filesystem directory in Git, not address book/contacts directory."
         },
         {
           "category": "project_metadata",
@@ -829,7 +843,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The tool pushes files (writes/creates); 'read file' match is on parameter description context, not tool capability. You provide content, the tool doesn't read."
+          "validation_reason": "Tool pushes (writes) files, not reads them."
         },
         {
           "capability": "network_egress",
@@ -845,7 +859,9 @@
             "snippet": "commit Project ID or complete URL-encoded path to project Branc"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -862,7 +878,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "commit_message is source code metadata."
+          "validation_reason": "'message' in 'commit_message' refers to git commit message, not communications."
         },
         {
           "category": "source_code",
@@ -943,7 +959,9 @@
             "snippet": "issue Project ID or complete URL-encoded path to project Issue"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1005,7 +1023,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project Merge"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1035,7 +1055,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "'Allow commits from upstream members' is about git collaboration, not communication channel membership."
+          "validation_reason": "'members' in description means project members with commit access, not a communications roster/participant list."
         },
         {
           "category": "project_metadata",
@@ -1084,7 +1104,9 @@
             "snippet": "espace Project ID or complete URL-encoded path to project Names"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1149,7 +1171,9 @@
             "snippet": "branch Project ID or complete URL-encoded path to project Name"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1213,7 +1237,9 @@
             "snippet": "tatus) Project ID or complete URL-encoded path to project Name"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1279,7 +1305,9 @@
             "snippet": "filter Project ID or complete URL-encoded path to project Searc"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1330,7 +1358,9 @@
             "snippet": "roject Project ID or complete URL-encoded path to project Name"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1382,7 +1412,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1436,7 +1468,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1502,7 +1536,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1570,7 +1606,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1637,7 +1675,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1701,7 +1741,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The i"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1754,7 +1796,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The i"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1821,7 +1865,9 @@
             "snippet": "ommits Project ID or complete URL-encoded path to project The b"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1896,7 +1942,9 @@
             "snippet": "uired) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -1912,21 +1960,6 @@
             "snippet": "Squash commits into a single commit when merging Work in progress"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ids reviewer ids labels state event remove source branch squash d"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "state_event refers to issue/MR state transitions (open/closed/draft), not calendar events."
         },
         {
           "category": "project_metadata",
@@ -2014,7 +2047,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2093,7 +2128,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2159,7 +2196,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2212,7 +2251,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2280,7 +2321,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2347,7 +2390,9 @@
             "snippet": "thread Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2412,7 +2457,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2477,7 +2524,9 @@
             "snippet": "t note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2542,7 +2591,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2610,7 +2661,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2663,7 +2716,9 @@
             "snippet": "t note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2728,7 +2783,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2779,7 +2836,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2834,7 +2893,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2915,7 +2976,9 @@
             "snippet": "t note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -2980,7 +3043,9 @@
             "snippet": "t note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3032,7 +3097,9 @@
             "snippet": "t note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3083,7 +3150,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3134,7 +3203,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3187,7 +3258,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3252,7 +3325,9 @@
             "snippet": "eyes) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3304,7 +3379,9 @@
             "snippet": "equest Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3358,7 +3435,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3425,7 +3504,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3493,7 +3574,9 @@
             "snippet": "d note Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3560,7 +3643,9 @@
             "snippet": "thread Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3624,7 +3709,9 @@
             "snippet": "issue Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3677,7 +3764,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3742,7 +3831,9 @@
             "snippet": "eyes) Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3794,7 +3885,9 @@
             "snippet": "issue Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3848,7 +3941,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3915,7 +4010,9 @@
             "snippet": "plies. Project ID or complete URL-encoded path to project The I"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -3998,7 +4095,9 @@
             "snippet": "='all' for all) Project ID or URL-encoded path (optional - if n"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4026,7 +4125,9 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "ername Filter confidential or public issues Return issues created"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "validated_out": true,
+          "validation_reason": "'public' in description refers to filtering confidential vs public visibility, not aggregate public data stats."
         }
       ],
       "schema_signals": {
@@ -4071,7 +4172,9 @@
             "snippet": "henticated user Project ID or URL-encoded path (optional when G"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4122,7 +4225,9 @@
             "snippet": "specific issue Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4184,25 +4289,12 @@
             "snippet": "Update an issue Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ate labels milestone id state event weight issue type"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "state_event refers to issue state (open/closed), not calendar events."
-        },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
@@ -4224,7 +4316,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:01dc1db333216d1ecaf07d0e8c91ef1ba79a685b4ab1b3defdc14cfeb67a4f8d"
     },
     {
@@ -4255,7 +4347,9 @@
             "snippet": "marize updates. Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         },
         {
           "capability": "secrets_access",
@@ -4273,7 +4367,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'token usage' refers to API request efficiency (token-count), not credential tokens or secrets."
+          "validation_reason": "'token' in 'Reduces token usage' refers to API token rate limiting/quotas, not a secrets access parameter."
         }
       ],
       "data_categories": [
@@ -4337,7 +4431,9 @@
             "snippet": "Delete an issue Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4464,7 +4560,9 @@
             "snippet": "specific issue Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4517,7 +4615,9 @@
             "snippet": "ns for an issue Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4569,7 +4669,9 @@
             "snippet": "ific issue link Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4623,7 +4725,9 @@
             "snippet": "ween two issues Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4675,7 +4779,9 @@
             "snippet": "e an issue link Project ID or URL-encoded path The internal ID"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4785,7 +4891,9 @@
             "snippet": "pecific project Project ID or URL-encoded path"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4847,7 +4955,9 @@
             "pattern": "\\b(list[\\s_-]?(channel|conversation|member|participant)s?|channel[\\s_-]?list|presence|who[\\s_-]?is|members?)\\b",
             "snippet": "jects where current user is a member Return only limited fields Fi"
           },
-          "rationale": "Not the message bodies, but the social graph and channel structure."
+          "rationale": "Not the message bodies, but the social graph and channel structure.",
+          "validated_out": true,
+          "validation_reason": "'member' in 'where current user is a member' refers to project membership/access control, not communications roster."
         },
         {
           "category": "project_metadata",
@@ -4901,7 +5011,9 @@
             "snippet": "GitLab project Project ID or URL-encoded path Search for membe"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -4916,7 +5028,8 @@
             "pattern": "\\b(list[\\s_-]?(channel|conversation|member|participant)s?|channel[\\s_-]?list|presence|who[\\s_-]?is|members?)\\b",
             "snippet": "_project_members list project members"
           },
-          "rationale": "Not the message bodies, but the social graph and channel structure."
+          "rationale": "Not the message bodies, but the social graph and channel structure.",
+          "needs_source": true
         },
         {
           "category": "project_metadata",
@@ -4969,7 +5082,9 @@
             "snippet": "s for a project Project ID or URL-encoded path Whether or not t"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5021,7 +5136,9 @@
             "snippet": "from a project Project ID or URL-encoded path The ID or title"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5075,7 +5192,9 @@
             "snippet": "el in a project Project ID or URL-encoded path The name of the"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5130,7 +5249,9 @@
             "snippet": "el in a project Project ID or URL-encoded path The ID or title"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5181,7 +5302,9 @@
             "snippet": "from a project Project ID or URL-encoded path The ID or title"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5287,7 +5410,9 @@
             "snippet": "ies in a repository The ID or URL-encoded path of the project T"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         },
         {
           "capability": "secrets_access",
@@ -5305,7 +5430,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'page_token' is a pagination token, not a credential secret."
+          "validation_reason": "'page_token' is a pagination token, not a secrets access parameter or API credential."
         }
       ],
       "data_categories": [
@@ -5374,7 +5499,9 @@
             "snippet": "t for a project Project ID or URL-encoded path GitLab CI/CD YAM"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5428,7 +5555,9 @@
             "snippet": "n for a project Project ID or URL-encoded path Commit SHA, bran"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5515,7 +5644,9 @@
             "snippet": "d: project MRs) Project ID or URL-encoded path (optional - if n"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5674,7 +5805,9 @@
             "snippet": "ptions Project ID or complete URL-encoded path to project The n"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5739,7 +5872,9 @@
             "snippet": "commit Project ID or complete URL-encoded path to project The c"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5804,7 +5939,9 @@
             "snippet": "commit Project ID or complete URL-encoded path to project The c"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5887,7 +6024,9 @@
             "snippet": "lines. Project ID or complete URL-encoded path to project The f"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -5904,7 +6043,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "'message' in 'commit message' is the commit message text, which is source code metadata, not communications content."
+          "validation_reason": "'message' in commit blame refers to git commit message, not communications/email."
         },
         {
           "category": "source_code",
@@ -5988,7 +6127,9 @@
             "snippet": "commit Project ID or complete URL-encoded path to project The c"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -6101,7 +6242,8 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "atus Short status description Total code coverage for this status"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
+          "needs_source": true
         }
       ],
       "schema_signals": {
@@ -6145,7 +6287,9 @@
             "snippet": "filtering options Group ID or URL-encoded path Return opened, u"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [],
@@ -6294,7 +6438,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'directory' in 'defaults to current directory' is a file system path, not a contact/address directory."
+          "validation_reason": "'directory' in 'local_path' refers to filesystem directory for saving files, not address book/contacts."
         },
         {
           "category": "project_metadata",
@@ -6339,8 +6483,7 @@
             "snippet": "Verify server status and authentication"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "validated_out": true,
-          "validation_reason": "health_check verifies server status and auth; 'status' in description refers to server health, not project metadata."
+          "needs_source": true
         }
       ],
       "schema_signals": {
@@ -6408,7 +6551,9 @@
             "snippet": "er: YYYY-MM-DD) Project ID or URL-encoded path If defined, retu"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Internal GitLab operation."
         }
       ],
       "data_categories": [
@@ -6508,12 +6653,6 @@
         "tool_count": 3,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 2,
-        "confidence": "high"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
@@ -6550,7 +6689,8 @@
         "communications_content",
         "network_egress"
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -6573,7 +6713,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "communications_metadata",
       "contacts",
@@ -6590,67 +6729,407 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 246,
-      "false_positive": 14,
-      "needs_source": 2,
+      "confirmed": 157,
+      "false_positive": 99,
+      "needs_source": 4,
       "unreviewed": 0
     },
     "validated_out": [
       {
+        "id": "cap::merge_merge_request::network_egress",
+        "reason": "Merging within GitLab API (internal operation); 'URL' match is from generic description of project path encoding, not external network parameter."
+      },
+      {
         "id": "data::merge_merge_request::communications_content",
-        "reason": "Commit message is source code metadata (what changed in the commit), not communications content like email or chat."
+        "reason": "Matched 'message' in 'merge_commit_message' refers to git commit message, not communications/email/chat content."
+      },
+      {
+        "id": "cap::approve_merge_request::network_egress",
+        "reason": "Internal GitLab operation; 'URL' match is generic project path description."
+      },
+      {
+        "id": "cap::unapprove_merge_request::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_approval_state::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_conflicts::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_pipelines::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "cap::create_or_update_file::file_read",
-        "reason": "Tool accepts a content parameter; it does not read existing files. The 'file Content' match describes the input parameter, not a file_read capability."
+        "reason": "Tool creates/updates files (write operation), not reads them; matched pattern is about file content being written."
+      },
+      {
+        "id": "cap::create_or_update_file::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::create_or_update_file::communications_content",
-        "reason": "commit_message is source code metadata, not communications."
+        "reason": "'message' in 'commit_message' refers to git commit message, not communications content."
+      },
+      {
+        "id": "cap::get_file_contents::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::get_file_contents::contacts",
-        "reason": "'directory' in 'file or directory' refers to file system directories, not contact/address directories."
+        "reason": "'directory' in context refers to filesystem directory in Git, not address book/contacts directory."
       },
       {
         "id": "cap::push_files::file_read",
-        "reason": "The tool pushes files (writes/creates); 'read file' match is on parameter description context, not tool capability. You provide content, the tool doesn't read."
+        "reason": "Tool pushes (writes) files, not reads them."
+      },
+      {
+        "id": "cap::push_files::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::push_files::communications_content",
-        "reason": "commit_message is source code metadata."
+        "reason": "'message' in 'commit_message' refers to git commit message, not communications."
+      },
+      {
+        "id": "cap::create_issue::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::create_merge_request::communications_metadata",
-        "reason": "'Allow commits from upstream members' is about git collaboration, not communication channel membership."
+        "reason": "'members' in description means project members with commit access, not a communications roster/participant list."
       },
       {
-        "id": "data::update_merge_request::calendar",
-        "reason": "state_event refers to issue/MR state transitions (open/closed/draft), not calendar events."
+        "id": "cap::fork_repository::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
-        "id": "data::update_issue::calendar",
-        "reason": "state_event refers to issue state (open/closed), not calendar events."
+        "id": "cap::create_branch::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_branch::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_branches::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_branch::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_diffs::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_changed_files::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_diffs::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_file_diff::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_versions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_version::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_branch_diffs::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_merge_request::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request_thread::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::resolve_merge_request_thread::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::mr_discussions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_merge_request_discussion_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_merge_request_discussion_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request_discussion_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_merge_request_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_merge_request_notes::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_merge_request_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_draft_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_draft_notes::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_draft_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_draft_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_draft_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::publish_draft_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::bulk_publish_draft_notes::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_emoji_reactions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_request_note_emoji_reactions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_merge_request_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_merge_request_note_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_merge_request_note_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_issue_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_issue_note::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_issue_emoji_reactions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_issue_note_emoji_reactions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_issue_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_issue_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_issue_note_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_issue_note_emoji_reaction::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_issues::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "data::list_issues::public_data",
+        "reason": "'public' in description refers to filtering confidential vs public visibility, not aggregate public data stats."
+      },
+      {
+        "id": "cap::my_issues::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_issue::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_issue::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_issue_description_patch::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "cap::update_issue_description_patch::secrets_access",
-        "reason": "'token usage' refers to API request efficiency (token-count), not credential tokens or secrets."
+        "reason": "'token' in 'Reduces token usage' refers to API token rate limiting/quotas, not a secrets access parameter."
+      },
+      {
+        "id": "cap::delete_issue::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_issue_links::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_issue_discussions::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_issue_link::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_issue_link::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_issue_link::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_project::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "data::list_projects::communications_metadata",
+        "reason": "'member' in 'where current user is a member' refers to project membership/access control, not communications roster."
+      },
+      {
+        "id": "cap::list_project_members::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_labels::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_label::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::create_label::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::update_label::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::delete_label::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_repository_tree::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "cap::get_repository_tree::secrets_access",
-        "reason": "'page_token' is a pagination token, not a credential secret."
+        "reason": "'page_token' is a pagination token, not a secrets access parameter or API credential."
+      },
+      {
+        "id": "cap::validate_ci_lint::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::validate_project_ci_lint::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_merge_requests::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_commits::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_commit::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_commit_diff::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::get_file_blame::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::get_file_blame::communications_content",
-        "reason": "'message' in 'commit message' is the commit message text, which is source code metadata, not communications content."
+        "reason": "'message' in commit blame refers to git commit message, not communications/email."
+      },
+      {
+        "id": "cap::list_commit_statuses::network_egress",
+        "reason": "Internal GitLab operation."
+      },
+      {
+        "id": "cap::list_group_iterations::network_egress",
+        "reason": "Internal GitLab operation."
       },
       {
         "id": "data::download_attachment::contacts",
-        "reason": "'directory' in 'defaults to current directory' is a file system path, not a contact/address directory."
+        "reason": "'directory' in 'local_path' refers to filesystem directory for saving files, not address book/contacts."
       },
       {
-        "id": "data::health_check::project_metadata",
-        "reason": "health_check verifies server status and auth; 'status' in description refers to server health, not project metadata."
+        "id": "cap::get_project_events::network_egress",
+        "reason": "Internal GitLab operation."
       }
     ]
   }

@@ -93,7 +93,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Text mentions URL as a possible parameter content type ('may be a file path, URL, etc.'), not that the tool makes network calls."
+          "validation_reason": "Generic description text mentioning that a parameter 'may be a file path, URL, etc.' does not indicate the tool makes network calls; validate_node only validates data structures."
         },
         {
           "capability": "secrets_access",
@@ -111,7 +111,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Matched 'credential' in tool name itself, which is just a naming convention; tool validates generic data model structures, not credentials."
+          "validation_reason": "Tool name contains 'placeholder-not-a-real-credential' \u2014 a test token explicitly indicating this is not a real credential-handling tool; functionality is validation of node objects."
         }
       ],
       "data_categories": [
@@ -128,21 +128,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Matched on tool name containing 'credential'; tool is a generic validator with no evidence of handling actual secrets."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk.",
-          "needs_source": true
+          "validation_reason": "Match on placeholder tool name token 'credential'; actual tool function (validate nodes) handles no secrets or credentials."
         },
         {
           "category": "project_metadata",
@@ -156,7 +142,8 @@
             "snippet": "node label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a field name in a generic data model structure, not an indicator of project management metadata access."
         }
       ],
       "schema_signals": {
@@ -194,7 +181,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Matched on tool name 'credential' only; relationship validator has no secrets-handling capability."
+          "validation_reason": "Match on placeholder tool name; validate_relationship validates data structures, not credentials."
         }
       ],
       "data_categories": [
@@ -211,21 +198,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Matched on tool name only; generic relationship validator."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk.",
-          "needs_source": true
+          "validation_reason": "Match on placeholder tool name token; actual functionality is relationship validation."
         },
         {
           "category": "project_metadata",
@@ -239,7 +212,8 @@
             "snippet": "relationship type start node label end node label key property n"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field, not project metadata access."
         }
       ],
       "schema_signals": {
@@ -277,7 +251,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generic validator with no secrets capability."
+          "validation_reason": "Match on placeholder tool name; validate_data_model validates graph data structures."
         }
       ],
       "data_categories": [
@@ -294,7 +268,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Matched on tool name; generic validator."
+          "validation_reason": "Match on placeholder tool name; no credential handling."
         },
         {
           "category": "project_metadata",
@@ -308,7 +282,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in data model schema."
         }
       ],
       "schema_signals": {
@@ -345,7 +320,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; tool loads/parses a data format, not secrets."
+          "validation_reason": "Match on placeholder tool name; tool loads/parses data model format, does not handle secrets."
         }
       ],
       "data_categories": [
@@ -362,7 +337,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; deserialization of graph format, no credential handling."
         }
       ],
       "schema_signals": {
@@ -399,7 +374,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; exports generic data model to format."
+          "validation_reason": "Match on placeholder tool name; tool serializes data model to JSON format."
         }
       ],
       "data_categories": [
@@ -416,7 +391,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; JSON serialization of graph data, not credential handling."
         },
         {
           "category": "project_metadata",
@@ -430,7 +405,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in serialized format."
         }
       ],
       "schema_signals": {
@@ -467,7 +443,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generates visualization config."
+          "validation_reason": "Match on placeholder tool name; tool generates visualization config strings."
         }
       ],
       "data_categories": [
@@ -484,7 +460,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; visualization config generation, not credential handling."
         },
         {
           "category": "project_metadata",
@@ -498,7 +474,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in graph visualization config."
         }
       ],
       "schema_signals": {
@@ -535,7 +512,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Description mentions URL as possible parameter content, not network egress by the tool."
+          "validation_reason": "Generic template text about URL representations does not indicate network capability; tool generates query strings locally."
         },
         {
           "capability": "secrets_access",
@@ -553,7 +530,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generates database ingestion queries."
+          "validation_reason": "Match on placeholder tool name; tool generates Cypher query strings, does not access secrets."
         },
         {
           "capability": "database_access",
@@ -586,21 +563,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "source column_name table_name location description properties name t"
-          },
-          "rationale": "Physical tracking risk.",
-          "needs_source": true
+          "validation_reason": "Match on placeholder tool name; query generation does not involve credential handling."
         },
         {
           "category": "project_metadata",
@@ -614,7 +577,8 @@
             "snippet": "node label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in query template."
         }
       ],
       "schema_signals": {
@@ -654,7 +618,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generates Cypher for relationships."
+          "validation_reason": "Match on placeholder tool name; generates Cypher query strings for relationship ingestion."
         },
         {
           "capability": "database_access",
@@ -687,7 +651,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; no credential handling in query generation."
         },
         {
           "category": "project_metadata",
@@ -701,7 +665,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in query template."
         }
       ],
       "schema_signals": {
@@ -738,7 +703,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generates constraint queries."
+          "validation_reason": "Match on placeholder tool name; generates constraint/index Cypher queries, not credential-related."
         },
         {
           "capability": "database_access",
@@ -771,7 +736,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; query generation for schema constraints, not secrets."
         },
         {
           "category": "project_metadata",
@@ -785,7 +750,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in constraint query."
         }
       ],
       "schema_signals": {
@@ -822,7 +788,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; returns example templates."
+          "validation_reason": "Match on placeholder tool name; returns example graph templates, not credentials."
         }
       ],
       "data_categories": [
@@ -839,7 +805,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; example data model retrieval, no credential handling."
         }
       ],
       "schema_signals": {
@@ -874,7 +840,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; lists available templates."
+          "validation_reason": "Match on placeholder tool name; lists available example templates, does not handle secrets."
         }
       ],
       "data_categories": [
@@ -891,7 +857,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; lists template metadata, not credentials."
         }
       ],
       "schema_signals": {
@@ -928,7 +894,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; parses OWL format."
+          "validation_reason": "Match on placeholder tool name; parses OWL ontology format, no credential handling."
         }
       ],
       "data_categories": [
@@ -945,7 +911,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; ontology parsing, not credential-related."
         }
       ],
       "schema_signals": {
@@ -982,7 +948,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; exports to format."
+          "validation_reason": "Match on placeholder tool name; serializes to OWL format."
         }
       ],
       "data_categories": [
@@ -999,7 +965,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; format serialization, not credential handling."
         },
         {
           "category": "project_metadata",
@@ -1013,7 +979,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in OWL output."
         }
       ],
       "schema_signals": {
@@ -1050,7 +1017,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; generates type models."
+          "validation_reason": "Match on placeholder tool name; generates Pydantic model code, not credential-related."
         }
       ],
       "data_categories": [
@@ -1067,7 +1034,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; code generation for data models, no credential handling."
         },
         {
           "category": "project_metadata",
@@ -1081,7 +1048,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in generated Python code."
         }
       ],
       "schema_signals": {
@@ -1118,7 +1086,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; exports to schema format."
+          "validation_reason": "Match on placeholder tool name; serializes to Neo4j GraphRAG schema format."
         }
       ],
       "data_categories": [
@@ -1135,7 +1103,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; schema format export, not credential handling."
         },
         {
           "category": "project_metadata",
@@ -1149,7 +1117,8 @@
             "snippet": "data_model nodes label key_property name type source"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "'label' is a structural field in schema output."
         }
       ],
       "schema_signals": {
@@ -1186,7 +1155,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool name match only; loads from schema."
+          "validation_reason": "Match on placeholder tool name; parses GraphRAG schema format, no credential handling."
         }
       ],
       "data_categories": [
@@ -1203,7 +1172,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Tool name match only."
+          "validation_reason": "Match on placeholder tool name; schema deserialization, not credential-related."
         }
       ],
       "schema_signals": {
@@ -1222,7 +1191,6 @@
     "surface_assessed": true,
     "tiers_present": [
       "critical",
-      "high",
       "medium"
     ],
     "categories": {
@@ -1230,12 +1198,6 @@
         "label": "Secrets, tokens & credentials",
         "tier": "critical",
         "tool_count": 16,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 3,
         "confidence": "high"
       },
       "project_metadata": {
@@ -1258,7 +1220,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "Depends on secrets_access capability which is false-positive; no genuine exfil path established."
+      "validation_reason": "Composite flag based on false-positive secrets_access and false-positive network_egress capabilities; tool performs data model transformations, not exfiltration."
     }
   ],
   "injection_findings": [],
@@ -1282,7 +1244,6 @@
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "credentials_secrets",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",
@@ -1292,150 +1253,194 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 3,
-      "false_positive": 35,
-      "needs_source": 14,
+      "false_positive": 46,
+      "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::placeholder-not-a-real-credential-validate_node::network_egress",
-        "reason": "Text mentions URL as a possible parameter content type ('may be a file path, URL, etc.'), not that the tool makes network calls."
+        "reason": "Generic description text mentioning that a parameter 'may be a file path, URL, etc.' does not indicate the tool makes network calls; validate_node only validates data structures."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-validate_node::secrets_access",
-        "reason": "Matched 'credential' in tool name itself, which is just a naming convention; tool validates generic data model structures, not credentials."
+        "reason": "Tool name contains 'placeholder-not-a-real-credential' \u2014 a test token explicitly indicating this is not a real credential-handling tool; functionality is validation of node objects."
       },
       {
         "id": "data::placeholder-not-a-real-credential-validate_node::credentials_secrets",
-        "reason": "Matched on tool name containing 'credential'; tool is a generic validator with no evidence of handling actual secrets."
+        "reason": "Match on placeholder tool name token 'credential'; actual tool function (validate nodes) handles no secrets or credentials."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_node::project_metadata",
+        "reason": "'label' is a field name in a generic data model structure, not an indicator of project management metadata access."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-validate_relationship::secrets_access",
-        "reason": "Matched on tool name 'credential' only; relationship validator has no secrets-handling capability."
+        "reason": "Match on placeholder tool name; validate_relationship validates data structures, not credentials."
       },
       {
         "id": "data::placeholder-not-a-real-credential-validate_relationship::credentials_secrets",
-        "reason": "Matched on tool name only; generic relationship validator."
+        "reason": "Match on placeholder tool name token; actual functionality is relationship validation."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_relationship::project_metadata",
+        "reason": "'label' is a structural field, not project metadata access."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-validate_data_model::secrets_access",
-        "reason": "Tool name match only; generic validator with no secrets capability."
+        "reason": "Match on placeholder tool name; validate_data_model validates graph data structures."
       },
       {
         "id": "data::placeholder-not-a-real-credential-validate_data_model::credentials_secrets",
-        "reason": "Matched on tool name; generic validator."
+        "reason": "Match on placeholder tool name; no credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-validate_data_model::project_metadata",
+        "reason": "'label' is a structural field in data model schema."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-load_from_arrows_json::secrets_access",
-        "reason": "Tool name match only; tool loads/parses a data format, not secrets."
+        "reason": "Match on placeholder tool name; tool loads/parses data model format, does not handle secrets."
       },
       {
         "id": "data::placeholder-not-a-real-credential-load_from_arrows_json::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; deserialization of graph format, no credential handling."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-export_to_arrows_json::secrets_access",
-        "reason": "Tool name match only; exports generic data model to format."
+        "reason": "Match on placeholder tool name; tool serializes data model to JSON format."
       },
       {
         "id": "data::placeholder-not-a-real-credential-export_to_arrows_json::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; JSON serialization of graph data, not credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_arrows_json::project_metadata",
+        "reason": "'label' is a structural field in serialized format."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_mermaid_config_str::secrets_access",
-        "reason": "Tool name match only; generates visualization config."
+        "reason": "Match on placeholder tool name; tool generates visualization config strings."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_mermaid_config_str::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; visualization config generation, not credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_mermaid_config_str::project_metadata",
+        "reason": "'label' is a structural field in graph visualization config."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_node_cypher_ingest_query::network_egress",
-        "reason": "Description mentions URL as possible parameter content, not network egress by the tool."
+        "reason": "Generic template text about URL representations does not indicate network capability; tool generates query strings locally."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_node_cypher_ingest_query::secrets_access",
-        "reason": "Tool name match only; generates database ingestion queries."
+        "reason": "Match on placeholder tool name; tool generates Cypher query strings, does not access secrets."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_node_cypher_ingest_query::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; query generation does not involve credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_node_cypher_ingest_query::project_metadata",
+        "reason": "'label' is a structural field in query template."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_relationship_cypher_ingest_query::secrets_access",
-        "reason": "Tool name match only; generates Cypher for relationships."
+        "reason": "Match on placeholder tool name; generates Cypher query strings for relationship ingestion."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_relationship_cypher_ingest_query::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; no credential handling in query generation."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_relationship_cypher_ingest_query::project_metadata",
+        "reason": "'label' is a structural field in query template."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_constraints_cypher_queries::secrets_access",
-        "reason": "Tool name match only; generates constraint queries."
+        "reason": "Match on placeholder tool name; generates constraint/index Cypher queries, not credential-related."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_constraints_cypher_queries::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; query generation for schema constraints, not secrets."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-get_constraints_cypher_queries::project_metadata",
+        "reason": "'label' is a structural field in constraint query."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-get_example_data_model::secrets_access",
-        "reason": "Tool name match only; returns example templates."
+        "reason": "Match on placeholder tool name; returns example graph templates, not credentials."
       },
       {
         "id": "data::placeholder-not-a-real-credential-get_example_data_model::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; example data model retrieval, no credential handling."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-list_example_data_models::secrets_access",
-        "reason": "Tool name match only; lists available templates."
+        "reason": "Match on placeholder tool name; lists available example templates, does not handle secrets."
       },
       {
         "id": "data::placeholder-not-a-real-credential-list_example_data_models::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; lists template metadata, not credentials."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-load_from_owl_turtle::secrets_access",
-        "reason": "Tool name match only; parses OWL format."
+        "reason": "Match on placeholder tool name; parses OWL ontology format, no credential handling."
       },
       {
         "id": "data::placeholder-not-a-real-credential-load_from_owl_turtle::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; ontology parsing, not credential-related."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-export_to_owl_turtle::secrets_access",
-        "reason": "Tool name match only; exports to format."
+        "reason": "Match on placeholder tool name; serializes to OWL format."
       },
       {
         "id": "data::placeholder-not-a-real-credential-export_to_owl_turtle::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; format serialization, not credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_owl_turtle::project_metadata",
+        "reason": "'label' is a structural field in OWL output."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-export_to_pydantic_models::secrets_access",
-        "reason": "Tool name match only; generates type models."
+        "reason": "Match on placeholder tool name; generates Pydantic model code, not credential-related."
       },
       {
         "id": "data::placeholder-not-a-real-credential-export_to_pydantic_models::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; code generation for data models, no credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_pydantic_models::project_metadata",
+        "reason": "'label' is a structural field in generated Python code."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema::secrets_access",
-        "reason": "Tool name match only; exports to schema format."
+        "reason": "Match on placeholder tool name; serializes to Neo4j GraphRAG schema format."
       },
       {
         "id": "data::placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; schema format export, not credential handling."
+      },
+      {
+        "id": "data::placeholder-not-a-real-credential-export_to_neo4j_graphrag_pkg_schema::project_metadata",
+        "reason": "'label' is a structural field in schema output."
       },
       {
         "id": "cap::placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_schema::secrets_access",
-        "reason": "Tool name match only; loads from schema."
+        "reason": "Match on placeholder tool name; parses GraphRAG schema format, no credential handling."
       },
       {
         "id": "data::placeholder-not-a-real-credential-load_from_neo4j_graphrag_pkg_schema::credentials_secrets",
-        "reason": "Tool name match only."
+        "reason": "Match on placeholder tool name; schema deserialization, not credential-related."
       },
       {
         "id": "combo::exfil_chain",
-        "reason": "Depends on secrets_access capability which is false-positive; no genuine exfil path established."
+        "reason": "Composite flag based on false-positive secrets_access and false-positive network_egress capabilities; tool performs data model transformations, not exfiltration."
       }
     ]
   }

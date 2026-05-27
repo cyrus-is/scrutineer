@@ -109,7 +109,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"status\" refers to tool status (enabled/disabled state), not project task tracking."
+          "validation_reason": "Matched 'status' refers to tool operational state (enabled/disabled), not project management metadata."
         }
       ],
       "schema_signals": {
@@ -208,21 +208,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Name identifier. Name of the event. New name for renaming. Overw"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "\"event\" is a parameter name in Material graph node systems (event listeners/dispatchers), not calendar events."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -235,7 +220,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path parameter for asset locations, not a contacts directory."
+          "validation_reason": "Matched 'directory' is a file system path parameter for asset location, not contact/roster data."
         }
       ],
       "schema_signals": {
@@ -325,36 +310,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "er the operation. Name of the event. Variable type (e.g., Boolean"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "\"event\" refers to Blueprint event nodes/dispatchers in the visual programming system, not calendar events."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nName linkedTo memberName x y location rotation scale operations com"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -362,7 +318,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:97b97e21f34596330fe07c0888e89031551566c30986823c24aa9b82c5fc961f"
     },
     {
@@ -407,24 +363,10 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Spawn\" means instantiating game actor objects, not executing arbitrary code or shell commands."
+          "validation_reason": "Spawning game actors means instantiating game objects, not executing arbitrary code."
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ssPath meshPath blueprintPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [
@@ -434,7 +376,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:cf8776aa4cded1bbdc6ddedd11331721be5d260cd26ab460175d27a496dce309"
     },
     {
@@ -488,20 +430,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for assets, not a contacts/address book directory."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'directory' is a file system path, not contact data."
         }
       ],
       "schema_signals": {
@@ -574,20 +503,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for level asset management, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ble lightType intensity color location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'Directory' refers to asset file paths, not contact information."
         }
       ],
       "schema_signals": {
@@ -689,20 +605,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for mesh/material assets, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "minY maxX maxY updateNormals location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'directory' is a file system path for asset creation, not contact data."
         },
         {
           "category": "public_data",
@@ -717,7 +620,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"count\" is a numeric parameter for spawn quantity or triangle limits, not public aggregate statistics."
+          "validation_reason": "Matched 'count' is a technical parameter for landscape component quantities, not public aggregate statistics."
         }
       ],
       "schema_signals": {
@@ -797,21 +700,7 @@
         "wheelConfig"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "th playRate frame time length location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -819,7 +708,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:669cdebdf30c6ae8a204876e167a8f7f3eac59120558837ae59e66b3aaf1c359"
     },
     {
@@ -863,7 +752,8 @@
             "snippet": "profiling, set quality/CVars, execute console commands, run UBT, an"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -963,7 +853,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for asset storage, not contacts."
+          "validation_reason": "Matched 'directory' is a file system path, not contact data."
         }
       ],
       "schema_signals": {
@@ -1013,7 +903,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file output path, not a contacts directory."
+          "validation_reason": "Matched 'directory' is a file system output path, not contact data."
         }
       ],
       "schema_signals": {
@@ -1107,20 +997,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is for asset creation paths, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action name soundPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'Directory' refers to asset directory paths, not contact information."
         }
       ],
       "schema_signals": {
@@ -1166,7 +1043,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"task\" refers to Behavior Tree task node types, not project management tasks."
+          "validation_reason": "Matched 'task' refers to behavior tree task nodes (AI nodes), not project management tasks."
         }
       ],
       "schema_signals": {
@@ -1244,24 +1121,10 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Spawn\" means instantiating light actor objects in the scene, not executing arbitrary code."
+          "validation_reason": "Spawning lights means creating game light objects, not executing code."
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "action name location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1269,7 +1132,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:375c21246fbce25114271b3becdbd98aad22df4fa60b512916d291d53d7c163f"
     },
     {
@@ -1323,7 +1186,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file/output directory path, not contacts."
+          "validation_reason": "Matched 'directory' is a file system output path, not contact data."
         }
       ],
       "schema_signals": {
@@ -1422,20 +1285,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for mesh asset creation, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "depthSegments radialSegments location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'directory' is a file system output path, not contact data."
         },
         {
           "category": "public_data",
@@ -1450,7 +1300,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"count\" is a mesh simplification parameter (triangle count target), not public aggregate statistics."
+          "validation_reason": "Matched 'count' refers to target triangle count for mesh optimization, not public aggregate data."
         }
       ],
       "schema_signals": {
@@ -1529,20 +1379,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for skeletal mesh assets, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "Name targetBoneName boneIndex location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'directory' is a file system output path, not contact data."
         }
       ],
       "schema_signals": {
@@ -1618,7 +1455,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for material asset creation, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         }
       ],
       "schema_signals": {
@@ -1733,7 +1570,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for texture assets, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         }
       ],
       "schema_signals": {
@@ -1848,34 +1685,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Mesh asset path. Name of the event."
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "\"event\" refers to particle system event names or Blueprint event dispatchers, not calendar events."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "r emitterName emitterTemplate location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1888,7 +1697,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"count\" is particle spawn count or loop count configuration, not public aggregate statistics."
+          "validation_reason": "Matched 'count' refers to particle spawn rate and loop counts, not public aggregate statistics."
         }
       ],
       "schema_signals": {
@@ -1901,7 +1710,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:159c7d4e49da1781e96cda64728f54bfe3d68ebea4168bd32009dd70d0c0cede"
     },
     {
@@ -1993,7 +1802,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for gameplay ability system assets, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         },
         {
           "category": "project_metadata",
@@ -2008,7 +1817,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"task\" refers to ability task types/classes in the gameplay system, not project management."
+          "validation_reason": "Matched 'task' refers to ability system task types (game mechanics), not project metadata."
         },
         {
           "category": "public_data",
@@ -2023,7 +1832,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"count\" is a stacking configuration limit, not public aggregate data."
+          "validation_reason": "Matched 'count' is a technical parameter for ability stacking limits, not public aggregate data."
         }
       ],
       "schema_signals": {
@@ -2133,7 +1942,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"vault\" refers to the game mechanic of vaulting over obstacles, not credential vaults."
+          "validation_reason": "Matched 'vault' refers to parkour/platforming vault mechanics, not credential vaults."
         }
       ],
       "data_categories": [
@@ -2150,7 +1959,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "\"vault\" is a character movement mechanic (obstacle vaulting), not credential storage."
+          "validation_reason": "Matched 'vault' refers to game character parkour mechanics, not credential storage."
         },
         {
           "category": "contacts",
@@ -2165,20 +1974,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for character blueprint assets, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "to animation blueprint. Mesh location offset. Mesh rotation offset."
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         }
       ],
       "schema_signals": {
@@ -2300,7 +2096,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Shell\" refers to weapon shell casings ejection mechanics, not shell command execution."
+          "validation_reason": "Matched 'Shell' refers to bullet shell ejection mechanics, not command shell execution."
         }
       ],
       "data_categories": [
@@ -2317,7 +2113,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "\"attachment\" refers to weapon socket attachment points, not file/document attachments."
+          "validation_reason": "Matched 'attachment' refers to weapon attachment sockets/points, not file attachments."
         },
         {
           "category": "contacts",
@@ -2332,7 +2128,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for weapon asset creation, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         }
       ],
       "schema_signals": {
@@ -2421,7 +2217,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for AI controller/behavior tree assets, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         },
         {
           "category": "project_metadata",
@@ -2436,7 +2232,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"Task\" refers to Behavior Tree task node types, not project management items."
+          "validation_reason": "Matched 'Task' refers to AI behavior tree task node types, not project management tasks."
         },
         {
           "category": "org_structure",
@@ -2451,7 +2247,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "\"Team\" is a game team identifier for AI perception/affiliation, not organizational structure."
+          "validation_reason": "Matched 'Team' refers to multiplayer game team identifiers, not organizational structure."
         }
       ],
       "schema_signals": {
@@ -2560,7 +2356,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for inventory system assets, not contacts."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         }
       ],
       "schema_signals": {
@@ -2655,21 +2451,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "r. Tags to ignore in trigger. Event dispatcher name for enter. Ev"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "\"Event\" refers to Blueprint event dispatchers for game interaction systems, not calendar events."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -2682,7 +2463,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for interactive object assets, not contacts."
+          "validation_reason": "Matched 'directory' is a file system path parameter, not contact data."
         }
       ],
       "schema_signals": {
@@ -2865,7 +2646,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Password\" is a UI widget input field type for UI rendering/binding, not actual password management/storage."
+          "validation_reason": "Matched 'Password' refers to the 'isPassword' UI input field type flag for display masking, not credential access."
         }
       ],
       "data_categories": [
@@ -2882,7 +2663,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "\"Password\" is a UI widget type configuration, not credential storage or access."
+          "validation_reason": "Matched 'Password' refers to UI password input field type (display control), not credential access."
         },
         {
           "category": "contacts",
@@ -2897,7 +2678,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" is a file path for widget assets, not contacts."
+          "validation_reason": "Matched 'directory' is a file system path parameter, not contact data."
         }
       ],
       "schema_signals": {
@@ -2974,19 +2755,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nt. Replicated movement mode. Location quantization level. Spatially"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
@@ -2999,7 +2767,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "\"role\" is the network replication role (Authority/Proxy), not organizational role."
+          "validation_reason": "Matched 'role' refers to network roles (simulated proxy, autonomous proxy), not organizational roles."
         }
       ],
       "schema_signals": {
@@ -3009,7 +2777,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:2f4c3ff514b947830940a6c96da3e96b238b30b1528087c5bccd81e7c78db9e2"
     },
     {
@@ -3076,7 +2844,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"spawn\" means instantiating player pawns at respawn points, not arbitrary code execution."
+          "validation_reason": "Matched 'spawn' refers to spawn points and respawn mechanics, not code execution."
         }
       ],
       "data_categories": [
@@ -3093,20 +2861,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"Directory\" is a file path for game framework assets, not contacts."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "awnConditions usePlayerStarts location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
+          "validation_reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
         },
         {
           "category": "org_structure",
@@ -3121,7 +2876,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "\"team\" is a game match team for competitive gameplay, not organizational structure."
+          "validation_reason": "Matched 'team' refers to multiplayer game teams, not organizational structure."
         }
       ],
       "schema_signals": {
@@ -3189,7 +2944,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"Travel URL\" is for game level transitions within the engine, not external network requests."
+          "validation_reason": "Matched 'URL' refers to Unreal 'Travel URL' (internal level loading), not external network endpoints."
         },
         {
           "capability": "secrets_access",
@@ -3321,19 +3076,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "distance. Name of the volume. Location of the volume. Extent of the"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -3346,7 +3088,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"label\" is a UI display label for data layers, not project task/issue tracking."
+          "validation_reason": "Matched 'label' refers to display labels for game engine data layers, not project metadata."
         }
       ],
       "schema_signals": {
@@ -3356,7 +3098,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c0fc015cc593383bc7a56073b97f9043dc8431725c9303d66217317a43e35e19"
     },
     {
@@ -3398,21 +3140,7 @@
         "volumeType"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "lumeName volumePath actorPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3420,7 +3148,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:c57ab29a6851df4e3de2fe5882f43387ca17b7e9fd51781d3d75ff85d434a4f8"
     },
     {
@@ -3488,24 +3216,10 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"endPoint\" is a 3D coordinate for pathfinding destination, not a network endpoint/URL."
+          "validation_reason": "Matched 'endPoint' refers to navigation path endpoints (x,y,z coordinates), not network endpoints."
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "xtent x y z obstacleAreaClass location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3513,7 +3227,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:0f19501256a4237fe9db2445ae374e2ee11aa3d2b4ee59f4f587e27b9f6696fe"
     },
     {
@@ -3575,21 +3289,7 @@
         "width"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "e componentName blueprintPath location x y z rotation pitch yaw roll"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -3597,7 +3297,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:f7a6082efe7a547e06c9a3fbd6adf8fb99454b3f9f1e698bda6905f351c42afd"
     }
   ],
@@ -3617,22 +3317,10 @@
         "tool_count": 5,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "medium"
-      },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
         "tool_count": 20,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 18,
         "confidence": "high"
       },
       "public_data": {
@@ -3689,7 +3377,8 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "Base claims for network_egress are false positives; combo does not apply without a genuine egress capability."
     },
     {
       "id": "exec_with_secret_access",
@@ -3701,7 +3390,8 @@
         "secrets_access"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "Base code_execution claims are false positives; combo does not apply without genuine code execution capability."
     },
     {
       "id": "read_and_exfil",
@@ -3714,7 +3404,8 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "Combo references 'file_read' capability which is not present in claims; network_egress base claims are false positives."
     }
   ],
   "injection_findings": [],
@@ -3737,13 +3428,11 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "communications_metadata",
       "contacts",
       "credentials_secrets",
       "files_documents",
-      "location",
       "org_structure",
       "project_metadata",
       "public_data"
@@ -3754,199 +3443,195 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 23,
-      "false_positive": 47,
-      "needs_source": 3,
+      "confirmed": 4,
+      "false_positive": 46,
+      "needs_source": 1,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::manage_tools::project_metadata",
-        "reason": "\"status\" refers to tool status (enabled/disabled state), not project task tracking."
-      },
-      {
-        "id": "data::manage_asset::calendar",
-        "reason": "\"event\" is a parameter name in Material graph node systems (event listeners/dispatchers), not calendar events."
+        "reason": "Matched 'status' refers to tool operational state (enabled/disabled), not project management metadata."
       },
       {
         "id": "data::manage_asset::contacts",
-        "reason": "\"directory\" is a file path parameter for asset locations, not a contacts directory."
-      },
-      {
-        "id": "data::manage_blueprint::calendar",
-        "reason": "\"event\" refers to Blueprint event nodes/dispatchers in the visual programming system, not calendar events."
+        "reason": "Matched 'directory' is a file system path parameter for asset location, not contact/roster data."
       },
       {
         "id": "cap::control_actor::code_execution",
-        "reason": "\"Spawn\" means instantiating game actor objects, not executing arbitrary code or shell commands."
+        "reason": "Spawning game actors means instantiating game objects, not executing arbitrary code."
       },
       {
         "id": "data::control_editor::contacts",
-        "reason": "\"directory\" is a file path for assets, not a contacts/address book directory."
+        "reason": "Matched 'directory' is a file system path, not contact data."
       },
       {
         "id": "data::manage_level::contacts",
-        "reason": "\"Directory\" is a file path for level asset management, not contacts."
+        "reason": "Matched 'Directory' refers to asset file paths, not contact information."
       },
       {
         "id": "data::build_environment::contacts",
-        "reason": "\"directory\" is a file path for mesh/material assets, not contacts."
+        "reason": "Matched 'directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::build_environment::public_data",
-        "reason": "\"count\" is a numeric parameter for spawn quantity or triangle limits, not public aggregate statistics."
+        "reason": "Matched 'count' is a technical parameter for landscape component quantities, not public aggregate statistics."
       },
       {
         "id": "data::manage_input::contacts",
-        "reason": "\"directory\" is a file path for asset storage, not contacts."
+        "reason": "Matched 'directory' is a file system path, not contact data."
       },
       {
         "id": "data::inspect::contacts",
-        "reason": "\"directory\" is a file output path, not a contacts directory."
+        "reason": "Matched 'directory' is a file system output path, not contact data."
       },
       {
         "id": "data::manage_audio::contacts",
-        "reason": "\"Directory\" is for asset creation paths, not contacts."
+        "reason": "Matched 'Directory' refers to asset directory paths, not contact information."
       },
       {
         "id": "data::manage_behavior_tree::project_metadata",
-        "reason": "\"task\" refers to Behavior Tree task node types, not project management tasks."
+        "reason": "Matched 'task' refers to behavior tree task nodes (AI nodes), not project management tasks."
       },
       {
         "id": "cap::manage_lighting::code_execution",
-        "reason": "\"Spawn\" means instantiating light actor objects in the scene, not executing arbitrary code."
+        "reason": "Spawning lights means creating game light objects, not executing code."
       },
       {
         "id": "data::manage_performance::contacts",
-        "reason": "\"directory\" is a file/output directory path, not contacts."
+        "reason": "Matched 'directory' is a file system output path, not contact data."
       },
       {
         "id": "data::manage_geometry::contacts",
-        "reason": "\"directory\" is a file path for mesh asset creation, not contacts."
+        "reason": "Matched 'directory' is a file system output path, not contact data."
       },
       {
         "id": "data::manage_geometry::public_data",
-        "reason": "\"count\" is a mesh simplification parameter (triangle count target), not public aggregate statistics."
+        "reason": "Matched 'count' refers to target triangle count for mesh optimization, not public aggregate data."
       },
       {
         "id": "data::manage_skeleton::contacts",
-        "reason": "\"directory\" is a file path for skeletal mesh assets, not contacts."
+        "reason": "Matched 'directory' is a file system output path, not contact data."
       },
       {
         "id": "data::manage_material_authoring::contacts",
-        "reason": "\"Directory\" is a file path for material asset creation, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_texture::contacts",
-        "reason": "\"Directory\" is a file path for texture assets, not contacts."
-      },
-      {
-        "id": "data::manage_effect::calendar",
-        "reason": "\"event\" refers to particle system event names or Blueprint event dispatchers, not calendar events."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_effect::public_data",
-        "reason": "\"count\" is particle spawn count or loop count configuration, not public aggregate statistics."
+        "reason": "Matched 'count' refers to particle spawn rate and loop counts, not public aggregate statistics."
       },
       {
         "id": "data::manage_gas::contacts",
-        "reason": "\"Directory\" is a file path for gameplay ability system assets, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_gas::project_metadata",
-        "reason": "\"task\" refers to ability task types/classes in the gameplay system, not project management."
+        "reason": "Matched 'task' refers to ability system task types (game mechanics), not project metadata."
       },
       {
         "id": "data::manage_gas::public_data",
-        "reason": "\"count\" is a stacking configuration limit, not public aggregate data."
+        "reason": "Matched 'count' is a technical parameter for ability stacking limits, not public aggregate data."
       },
       {
         "id": "cap::manage_character::secrets_access",
-        "reason": "\"vault\" refers to the game mechanic of vaulting over obstacles, not credential vaults."
+        "reason": "Matched 'vault' refers to parkour/platforming vault mechanics, not credential vaults."
       },
       {
         "id": "data::manage_character::credentials_secrets",
-        "reason": "\"vault\" is a character movement mechanic (obstacle vaulting), not credential storage."
+        "reason": "Matched 'vault' refers to game character parkour mechanics, not credential storage."
       },
       {
         "id": "data::manage_character::contacts",
-        "reason": "\"Directory\" is a file path for character blueprint assets, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "cap::manage_combat::code_execution",
-        "reason": "\"Shell\" refers to weapon shell casings ejection mechanics, not shell command execution."
+        "reason": "Matched 'Shell' refers to bullet shell ejection mechanics, not command shell execution."
       },
       {
         "id": "data::manage_combat::files_documents",
-        "reason": "\"attachment\" refers to weapon socket attachment points, not file/document attachments."
+        "reason": "Matched 'attachment' refers to weapon attachment sockets/points, not file attachments."
       },
       {
         "id": "data::manage_combat::contacts",
-        "reason": "\"Directory\" is a file path for weapon asset creation, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_ai::contacts",
-        "reason": "\"Directory\" is a file path for AI controller/behavior tree assets, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_ai::project_metadata",
-        "reason": "\"Task\" refers to Behavior Tree task node types, not project management items."
+        "reason": "Matched 'Task' refers to AI behavior tree task node types, not project management tasks."
       },
       {
         "id": "data::manage_ai::org_structure",
-        "reason": "\"Team\" is a game team identifier for AI perception/affiliation, not organizational structure."
+        "reason": "Matched 'Team' refers to multiplayer game team identifiers, not organizational structure."
       },
       {
         "id": "data::manage_inventory::contacts",
-        "reason": "\"Directory\" is a file path for inventory system assets, not contacts."
-      },
-      {
-        "id": "data::manage_interaction::calendar",
-        "reason": "\"Event\" refers to Blueprint event dispatchers for game interaction systems, not calendar events."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_interaction::contacts",
-        "reason": "\"directory\" is a file path for interactive object assets, not contacts."
+        "reason": "Matched 'directory' is a file system path parameter, not contact data."
       },
       {
         "id": "cap::manage_widget_authoring::secrets_access",
-        "reason": "\"Password\" is a UI widget input field type for UI rendering/binding, not actual password management/storage."
+        "reason": "Matched 'Password' refers to the 'isPassword' UI input field type flag for display masking, not credential access."
       },
       {
         "id": "data::manage_widget_authoring::credentials_secrets",
-        "reason": "\"Password\" is a UI widget type configuration, not credential storage or access."
+        "reason": "Matched 'Password' refers to UI password input field type (display control), not credential access."
       },
       {
         "id": "data::manage_widget_authoring::contacts",
-        "reason": "\"directory\" is a file path for widget assets, not contacts."
+        "reason": "Matched 'directory' is a file system path parameter, not contact data."
       },
       {
         "id": "data::manage_networking::org_structure",
-        "reason": "\"role\" is the network replication role (Authority/Proxy), not organizational role."
+        "reason": "Matched 'role' refers to network roles (simulated proxy, autonomous proxy), not organizational roles."
       },
       {
         "id": "cap::manage_game_framework::code_execution",
-        "reason": "\"spawn\" means instantiating player pawns at respawn points, not arbitrary code execution."
+        "reason": "Matched 'spawn' refers to spawn points and respawn mechanics, not code execution."
       },
       {
         "id": "data::manage_game_framework::contacts",
-        "reason": "\"Directory\" is a file path for game framework assets, not contacts."
+        "reason": "Matched 'Directory' is a file system path for asset creation, not contact data."
       },
       {
         "id": "data::manage_game_framework::org_structure",
-        "reason": "\"team\" is a game match team for competitive gameplay, not organizational structure."
+        "reason": "Matched 'team' refers to multiplayer game teams, not organizational structure."
       },
       {
         "id": "cap::manage_sessions::network_egress",
-        "reason": "\"Travel URL\" is for game level transitions within the engine, not external network requests."
+        "reason": "Matched 'URL' refers to Unreal 'Travel URL' (internal level loading), not external network endpoints."
       },
       {
         "id": "data::manage_level_structure::project_metadata",
-        "reason": "\"label\" is a UI display label for data layers, not project task/issue tracking."
+        "reason": "Matched 'label' refers to display labels for game engine data layers, not project metadata."
       },
       {
         "id": "cap::manage_navigation::network_egress",
-        "reason": "\"endPoint\" is a 3D coordinate for pathfinding destination, not a network endpoint/URL."
+        "reason": "Matched 'endPoint' refers to navigation path endpoints (x,y,z coordinates), not network endpoints."
+      },
+      {
+        "id": "combo::exfil_chain",
+        "reason": "Base claims for network_egress are false positives; combo does not apply without a genuine egress capability."
+      },
+      {
+        "id": "combo::exec_with_secret_access",
+        "reason": "Base code_execution claims are false positives; combo does not apply without genuine code execution capability."
+      },
+      {
+        "id": "combo::read_and_exfil",
+        "reason": "Combo references 'file_read' capability which is not present in claims; network_egress base claims are false positives."
       }
     ]
   }

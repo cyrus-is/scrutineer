@@ -217,7 +217,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "The matched word 'message' refers to a rule diagnostic message field (error/warning text from a linter), not user communications or email content."
+          "validation_reason": "The matched 'message' is a field in a linting rule's data structure (message: string), not a communication or email message."
         },
         {
           "category": "project_metadata",
@@ -232,7 +232,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'issue' is used as generic English ('to address this issue') in documentation prose, not referring to project tickets or task metadata."
+          "validation_reason": "The matched 'issue' is generic English ('To address this issue...') referring to a problem being solved, not a project management issue or ticket."
         }
       ],
       "schema_signals": {
@@ -267,7 +267,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The match on 'node-fetch' is the package name itself listed in a category description; the tool catalogs packages rather than performing network egress."
+          "validation_reason": "The matched 'fetch' appears in 'node-fetch' (a package name being listed), not as evidence the tool itself performs network requests."
         }
       ],
       "data_categories": [
@@ -284,7 +284,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "The word 'presence' is used as generic English ('the presence of packages below') meaning existence, not a communication system feature."
+          "validation_reason": "The matched 'presence' means 'existence' in context ('The presence of packages below'), not user-presence or communications metadata."
         },
         {
           "category": "project_metadata",
@@ -299,7 +299,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'project' is used generically to mean a codebase or development project, not a project management system or metadata."
+          "validation_reason": "The matched 'project' is generic instructional text ('in your project'), not reference to project management metadata."
         }
       ],
       "schema_signals": {
@@ -336,7 +336,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Same as claim 3: the tool documents package categories (including 'node-fetch'), not performing network operations itself."
+          "validation_reason": "Same as claim #3: 'fetch' is a package name (node-fetch) being listed, not evidence of tool network capability."
         }
       ],
       "data_categories": [
@@ -353,7 +353,7 @@
           },
           "rationale": "Not the message bodies, but the social graph and channel structure.",
           "validated_out": true,
-          "validation_reason": "Same as claim 4: 'presence' is generic English for existence in a description, not a communications feature."
+          "validation_reason": "Same as claim #4: 'presence' means 'existence', not communications metadata capability."
         },
         {
           "category": "project_metadata",
@@ -368,7 +368,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Same as claim 5: 'project' is a generic development term, not project management metadata."
+          "validation_reason": "Same as claim #5: 'project' is generic instructional text, not project metadata access."
         }
       ],
       "schema_signals": {
@@ -508,7 +508,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "The combination depends on communications_content and network_egress signals that are demonstrably false; the toxic pattern does not hold."
+      "validation_reason": "The combination rests on unconfirmed base findings; the underlying signals (communications_content and network_egress) are false positives, invalidating the toxic pairing."
     }
   ],
   "injection_findings": [],
@@ -549,39 +549,39 @@
     "validated_out": [
       {
         "id": "data::get_rule_info::communications_content",
-        "reason": "The matched word 'message' refers to a rule diagnostic message field (error/warning text from a linter), not user communications or email content."
+        "reason": "The matched 'message' is a field in a linting rule's data structure (message: string), not a communication or email message."
       },
       {
         "id": "data::get_rule_info::project_metadata",
-        "reason": "The word 'issue' is used as generic English ('to address this issue') in documentation prose, not referring to project tickets or task metadata."
+        "reason": "The matched 'issue' is generic English ('To address this issue...') referring to a problem being solved, not a project management issue or ticket."
       },
       {
         "id": "cap::get_similar_packages::network_egress",
-        "reason": "The match on 'node-fetch' is the package name itself listed in a category description; the tool catalogs packages rather than performing network egress."
+        "reason": "The matched 'fetch' appears in 'node-fetch' (a package name being listed), not as evidence the tool itself performs network requests."
       },
       {
         "id": "data::get_similar_packages::communications_metadata",
-        "reason": "The word 'presence' is used as generic English ('the presence of packages below') meaning existence, not a communication system feature."
+        "reason": "The matched 'presence' means 'existence' in context ('The presence of packages below'), not user-presence or communications metadata."
       },
       {
         "id": "data::get_similar_packages::project_metadata",
-        "reason": "The word 'project' is used generically to mean a codebase or development project, not a project management system or metadata."
+        "reason": "The matched 'project' is generic instructional text ('in your project'), not reference to project management metadata."
       },
       {
         "id": "cap::get_packages_by_package_name::network_egress",
-        "reason": "Same as claim 3: the tool documents package categories (including 'node-fetch'), not performing network operations itself."
+        "reason": "Same as claim #3: 'fetch' is a package name (node-fetch) being listed, not evidence of tool network capability."
       },
       {
         "id": "data::get_packages_by_package_name::communications_metadata",
-        "reason": "Same as claim 4: 'presence' is generic English for existence in a description, not a communications feature."
+        "reason": "Same as claim #4: 'presence' means 'existence', not communications metadata capability."
       },
       {
         "id": "data::get_packages_by_package_name::project_metadata",
-        "reason": "Same as claim 5: 'project' is a generic development term, not project management metadata."
+        "reason": "Same as claim #5: 'project' is generic instructional text, not project metadata access."
       },
       {
         "id": "combo::read_and_exfil",
-        "reason": "The combination depends on communications_content and network_egress signals that are demonstrably false; the toxic pattern does not hold."
+        "reason": "The combination rests on unconfirmed base findings; the underlying signals (communications_content and network_egress) are false positives, invalidating the toxic pairing."
       }
     ]
   }

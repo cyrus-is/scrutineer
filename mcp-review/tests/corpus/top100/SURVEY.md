@@ -7,7 +7,7 @@ _Snapshot 2026-05-26. Source: official MCP registry; ranked by GitHub stars of t
 - **0 of 100 can rate SAFE as distributed.** Every server installs via an unpinned package runner (`npx -y` / `uvx`), so the code that actually runs can't be bound to anything you reviewed.
 - **35 of 100 are handed live credentials** via environment variables.
 - **35 of 100 hit a hard BLOCK trigger** — an unpinned artifact handed a live credential: a mutable package you can't bind to reviewed code, holding a real secret.
-- **21 of the 54 servers whose tool surface we captured can touch SENSITIVE or HIGHLY_SENSITIVE data** (file/message contents, secrets, PII). (The other 46 couldn't be booted without real credentials/args → data sensitivity UNKNOWN.)
+- **20 of the 54 servers whose tool surface we captured can touch SENSITIVE or HIGHLY_SENSITIVE data** (file/message contents, secrets, PII). (The other 46 couldn't be booted without real credentials/args → data sensitivity UNKNOWN.)
 - **6 of 54 captured servers expose a read+egress / secrets+egress capability combination** worth a source review. These are *flagged, not blocked* — for many it's inherent to the job (a browser fetches URLs; an SSH client transfers files). Flags: read_and_exfil (5), exfil_chain (3), remote_controlled_fs_mutation (1).
 - Posture split: **35 BLOCK / 65 CAUTION / 0 SAFE**. Tool surface captured for 54/100.
 
@@ -29,7 +29,7 @@ Posture is the *derived supply-chain posture* (see methodology); Flags are capab
 | 10 | [serena-agent](https://github.com/oraios/serena) | 24648 | uvx | — | UNKNOWN | CAUTION | — |
 | 11 | [figma-developer](https://github.com/GLips/Figma-Context-MCP) | 14881 | npx | yes | UNKNOWN | BLOCK | — |
 | 12 | [praisonai](https://github.com/MervinPraison/PraisonAI) | 7973 | uvx | — | UNKNOWN | CAUTION | — |
-| 13 | [firecrawl](https://github.com/firecrawl/firecrawl-mcp-server) | 6387 | npx | yes | SENSITIVE | BLOCK | — |
+| 13 | [firecrawl](https://github.com/firecrawl/firecrawl-mcp-server) | 6387 | npx | yes | MINIMAL | BLOCK | — |
 | 14 | [airweave-mcp-search](https://github.com/airweave-ai/airweave) | 6360 | npx | yes | MINIMAL | BLOCK | — |
 | 15 | [claude-code-explorer](https://github.com/nirholas/claude-code) | 6294 | npx | — | UNKNOWN | CAUTION | — |
 | 16 | [desktop-commander](https://github.com/wonderwhy-er/DesktopCommanderMCP) | 6077 | npx | — | UNKNOWN | CAUTION | — |
@@ -62,7 +62,7 @@ Posture is the *derived supply-chain posture* (see methodology); Flags are capab
 | 43 | [blitz](https://github.com/blitzdotdev/blitz-mac) | 1669 | npx | — | UNKNOWN | CAUTION | — |
 | 44 | [kubernetes](https://github.com/containers/kubernetes-mcp-server) | 1623 | npx | — | UNKNOWN | CAUTION | — |
 | 45 | [mcp-gitlab](https://github.com/zereight/gitlab-mcp) | 1585 | npx | yes | HIGHLY_SENSITIVE | BLOCK | exfil_chain, read_and_exfil |
-| 46 | [jshook](https://github.com/vmoranv/jshookmcp) | 1540 | npx | — | MINIMAL | CAUTION | — |
+| 46 | [jshook](https://github.com/vmoranv/jshookmcp) | 1540 | npx | — | LIMITED | CAUTION | — |
 | 47 | [autots](https://github.com/winedarksea/AutoTS) | 1411 | uvx | — | MINIMAL | CAUTION | — |
 | 48 | [nx](https://github.com/nrwl/nx-console) | 1406 | npx | — | MINIMAL | CAUTION | — |
 | 49 | [nx-2](https://github.com/nrwl/nx-console) | 1406 | npx | — | MINIMAL | CAUTION | — |
@@ -82,7 +82,7 @@ Posture is the *derived supply-chain posture* (see methodology); Flags are capab
 | 63 | [figma-mcp-go](https://github.com/vkhanhqui/figma-mcp-go) | 964 | npx | — | SENSITIVE | CAUTION | — |
 | 64 | [mcp-neo4j-aura-manager](https://github.com/neo4j-contrib/mcp-neo4j) | 949 | uvx | yes | MINIMAL | BLOCK | — |
 | 65 | [mcp-neo4j-cypher](https://github.com/neo4j-contrib/mcp-neo4j) | 949 | uvx | yes | UNKNOWN | BLOCK | — |
-| 66 | [mcp-neo4j-data-modeling](https://github.com/neo4j-contrib/mcp-neo4j) | 949 | uvx | — | LIMITED | CAUTION | — |
+| 66 | [mcp-neo4j-data-modeling](https://github.com/neo4j-contrib/mcp-neo4j) | 949 | uvx | — | MINIMAL | CAUTION | — |
 | 67 | [mcp-neo4j-memory](https://github.com/neo4j-contrib/mcp-neo4j) | 949 | uvx | yes | UNKNOWN | BLOCK | — |
 | 68 | [token-savior](https://github.com/Mibayy/token-savior) | 909 | uvx | yes | UNKNOWN | BLOCK | — |
 | 69 | [octocode](https://github.com/bgauryy/octocode-mcp) | 847 | npx | yes | HIGHLY_SENSITIVE | BLOCK | — |
@@ -224,14 +224,14 @@ That's a statement about *verifiability*, not about any server's intentions.
 - Config-only servers (capture failed) get a provenance posture but `UNKNOWN` data
   sensitivity — absence of a tool surface is *unknown*, not *minimal*.
 
-## Manual-review corrections
+## Calibration note
 
-Three residual semantic FPs that Pass-4 missed were removed in human review
-(documented + auditable in `survey_build.py`): `unreal-engine`'s `location` (3D actor
-x/y/z coordinates, not geographic), `mcp-neo4j-data-modeling`'s `location` (a data-model
-column literally named "location"), and `token-optimizer`'s `calendar` (cache
-cron/scheduling, not calendar data). `location`→3D and `schedule`→`calendar` are a known
-calibration long-tail tracked for a follow-up release.
+The deterministic scanner is recall-first and over-fires on purpose; the agentic
+Pass-4 validator plus a manual review of every SENSITIVE+ rating clean the residue.
+Two false-positive *classes* this survey surfaced were fixed at the source rather than
+suppressed per-server: `health`→system health-checks read as *medical* data and
+`token`→LLM/crypto tokens read as *credentials* (v1.6.3), and `location`→3D/screen
+coordinates and `event`/`schedule`→*calendar* (v1.6.4). The ratings here are post-fix.
 
 ## Reproduce
 

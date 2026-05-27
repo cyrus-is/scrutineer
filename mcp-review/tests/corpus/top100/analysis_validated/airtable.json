@@ -115,7 +115,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+          "validation_reason": "Matched token 'total' refers to the maxRecords parameter limit, not a data classification or public data handling capability."
         }
       ],
       "schema_signals": {
@@ -155,7 +155,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+          "validation_reason": "Matched token 'total' refers to the maxRecords parameter limit, not a data classification or public data handling capability."
         }
       ],
       "schema_signals": {
@@ -473,7 +473,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched phrase 'file content' describes the input parameter (base64-encoded content you provide), not a capability to read files."
+          "validation_reason": "The tool accepts 'file content' as an input parameter (for uploading), not reading files; this is inverse of the file_read capability."
         },
         {
           "capability": "network_egress",
@@ -519,7 +519,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched token 'public' refers to 'public URL' as an upload method (publicly accessible URLs), not data being public or open."
+          "validation_reason": "Phrase 'public URL' is a reference to one optional method of specifying file sources, not evidence that the tool handles or classifies data as public."
         }
       ],
       "schema_signals": {
@@ -618,19 +618,19 @@
     "validated_out": [
       {
         "id": "data::list_records::public_data",
-        "reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+        "reason": "Matched token 'total' refers to the maxRecords parameter limit, not a data classification or public data handling capability."
       },
       {
         "id": "data::search_records::public_data",
-        "reason": "The matched token 'total' appears in 'maximum total number of records' \u2014 describing parameter limits, not data classification."
+        "reason": "Matched token 'total' refers to the maxRecords parameter limit, not a data classification or public data handling capability."
       },
       {
         "id": "cap::upload_attachment::file_read",
-        "reason": "The matched phrase 'file content' describes the input parameter (base64-encoded content you provide), not a capability to read files."
+        "reason": "The tool accepts 'file content' as an input parameter (for uploading), not reading files; this is inverse of the file_read capability."
       },
       {
         "id": "data::upload_attachment::public_data",
-        "reason": "The matched token 'public' refers to 'public URL' as an upload method (publicly accessible URLs), not data being public or open."
+        "reason": "Phrase 'public URL' is a reference to one optional method of specifying file sources, not evidence that the tool handles or classifies data as public."
       }
     ]
   }

@@ -577,19 +577,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ies pattern priority strategy schedule scheduleId dependencies acces"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -610,7 +597,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:f2e471617ed23d9b0445f1943c647a2561c71221ea266e6b15126c850eb35a3a"
     },
     {
@@ -1429,19 +1416,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "aching strategies (TTL, ETag, Event-based, LRU, Size-based)\n- Int"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1462,7 +1436,7 @@
       },
       "injection_signals": [],
       "max_severity": "HIGH",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:c3181e6744d20db6ba93826969e74defed77d7059e768dab06289b33c0bc499f"
     },
     {
@@ -3065,19 +3039,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ration schedulerType taskName schedule command user workingDirectory"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -3988,12 +3949,6 @@
         "tool_count": 16,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "high"
-      },
       "files_documents": {
         "label": "File & document contents",
         "tier": "high",
@@ -4076,7 +4031,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",

@@ -1409,19 +1409,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "sumer \u2014 this acknowledges the event today.) ID of the idle teamma"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1455,7 +1442,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:a5e8d0d9a4e9c6b3b0e22d77f52558d185e2ad75802852dc61acdfb2b6328b2d"
     },
     {
@@ -4868,19 +4855,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "BitQ quantized index status \u2014 availability, vector count, compression ra"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -4914,7 +4888,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:0ad3baf5a9e487de9649c0e30952edf7b5a123e87f44c9ef2c3bf38f27e31a2c"
     },
     {
@@ -8313,19 +8287,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Get ruvllm-wasm availability and initialization status. Us"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -8346,7 +8307,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c6951107d39e0441803bdced9b0dc785545a3333d503072a5f5873e8d9f04a95"
     },
     {
@@ -9793,19 +9754,6 @@
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ross turns. Polls the session event log up to maxWaitMs (default"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -9903,19 +9851,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "tch the full server-persisted event log of a managed cloud-agent"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -9938,7 +9873,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:4514934ff678183c0ddaa464064ca13852871aa131d037ec84c778cd4fbcad43"
     },
     {
@@ -10408,19 +10343,6 @@
       "candidate_capabilities": [],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "Retrieve the autopilot event log. Shows enable/disable eve"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -10441,7 +10363,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:59b16f7d0495a1ce2feeed2a61f2ef215bf334d4a60061fd6710bdea91deb5f9"
     },
     {
@@ -10767,12 +10689,6 @@
         "tool_count": 12,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 6,
-        "confidence": "medium"
-      },
       "source_code": {
         "label": "Source code & repository contents",
         "tier": "critical",
@@ -10884,7 +10800,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "contacts",
       "credentials_secrets",

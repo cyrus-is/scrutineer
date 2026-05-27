@@ -99,9 +99,7 @@
             "snippet": ", package managers, and basic shell tools. SSH host - alias from"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "The matched 'shell' refers to inspecting shell tool availability on the system, not executing shell commands; the tool inspects remote capabilities, not executes code."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -116,7 +114,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "privateKeyPath is a required auth parameter, not a data category the tool processes or returns."
         },
         {
           "category": "source_code",
@@ -131,22 +131,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "The matched 'repo' is part of a documentation example path (C:\\\\repo\\\\file.txt), not indicating the tool processes source code."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "remote session support, tmux availability, package managers, and basic"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "The matched 'availability' refers to tmux availability (whether the tool is present), not calendar/scheduling data."
+          "validation_reason": "'repo' appears only in a Windows path example (C:\\\\repo\\\\file.txt), not evidence the tool handles source code."
         },
         {
           "category": "contacts",
@@ -161,7 +146,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The matched 'connections' refers to network connection pooling, not address books or contact data."
+          "validation_reason": "'connections' refers to pooled SSH connections (connection pooling), not address books or rosters."
         },
         {
           "category": "system_state",
@@ -174,7 +159,9 @@
             "pattern": "\\b(process[\\s_-]?list|running[\\s_-]?process|hostname|system[\\s_-]?info|env[\\s_-]?(var|dump)|ps\\s|netstat)\\b",
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
-          "rationale": "Host fingerprinting and often an indirect path to secrets."
+          "rationale": "Host fingerprinting and often an indirect path to secrets.",
+          "validated_out": true,
+          "validation_reason": "hostname is an input parameter (host to connect to), not system_state data the tool returns."
         }
       ],
       "schema_signals": {
@@ -219,8 +206,7 @@
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "The matched 'exec' appears in reference to another tool (ssh-session-exec), not in the tool's own capability; this tool only opens a session."
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -235,7 +221,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "privateKeyPath is an auth parameter, not credential data handled by the tool."
         },
         {
           "category": "source_code",
@@ -250,7 +238,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "The matched 'repo' is a documentation example path, not indicating source code access."
+          "validation_reason": "'repo' in a path example only; tool does not interact with source code."
         },
         {
           "category": "contacts",
@@ -265,7 +253,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The matched 'connections' refers to network connection pooling."
+          "validation_reason": "'connections' refers to pooled SSH connections, not contacts/directory data."
         },
         {
           "category": "system_state",
@@ -279,7 +267,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname is a connection parameter, not system state data."
         },
         {
           "category": "project_metadata",
@@ -294,7 +283,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The 'label' is just a session naming/identifier parameter, not project management metadata."
+          "validation_reason": "'label' is a session naming parameter (Optional session label), not project metadata retrieval."
         }
       ],
       "schema_signals": {
@@ -354,7 +343,8 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "needs_source": true
         },
         {
           "category": "source_code",
@@ -369,7 +359,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example only; tool executes commands but does not specifically handle source code."
         },
         {
           "category": "contacts",
@@ -384,7 +374,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' refers to connection pooling, not contacts."
         },
         {
           "category": "system_state",
@@ -398,7 +388,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname is a parameter, not system state returned by the tool."
         }
       ],
       "schema_signals": {
@@ -450,7 +441,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to spawning network connections for pooling, not code execution; the tool only reads command output."
+          "validation_reason": "'spawn' in 'spawn separate pooled connections' refers to connection pooling, not code execution."
         }
       ],
       "data_categories": [
@@ -465,7 +456,8 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "needs_source": true
         },
         {
           "category": "source_code",
@@ -480,7 +472,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool reads arbitrary command output, not specifically source code."
         },
         {
           "category": "contacts",
@@ -495,7 +487,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in connection pooling context, not contacts."
         },
         {
           "category": "system_state",
@@ -509,7 +501,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname parameter; no system state data category indicated."
         }
       ],
       "schema_signals": {
@@ -556,7 +549,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; closing a session does not execute code."
+          "validation_reason": "'spawn' in pooling context; closing a session does not execute code."
         }
       ],
       "data_categories": [
@@ -571,7 +564,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool closes sessions and removes directories; does not handle credential data."
         },
         {
           "category": "source_code",
@@ -586,7 +581,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool does not interact with code."
         },
         {
           "category": "contacts",
@@ -601,7 +596,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The matched 'directory' refers to a filesystem directory being removed, not contacts."
+          "validation_reason": "'directory' in 'remote session directory' is a filesystem path, not address book or contact directory."
         },
         {
           "category": "system_state",
@@ -616,7 +611,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "Closing a session does not access or return system state data."
+          "validation_reason": "hostname parameter; no system state data."
         }
       ],
       "schema_signals": {
@@ -661,7 +656,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; garbage-collecting sessions does not execute code."
+          "validation_reason": "'spawn' in connection pooling context; garbage collection does not execute code."
         }
       ],
       "data_categories": [
@@ -676,7 +671,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool removes expired sessions; does not handle credentials."
         },
         {
           "category": "source_code",
@@ -691,7 +688,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool does not interact with code."
         },
         {
           "category": "contacts",
@@ -706,7 +703,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -721,7 +718,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "GC of sessions does not necessarily access system state."
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -779,7 +776,8 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "needs_source": true
         },
         {
           "category": "source_code",
@@ -794,7 +792,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool executes commands but does not specifically target source code."
         },
         {
           "category": "contacts",
@@ -809,7 +807,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -823,7 +821,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -874,7 +873,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; reading files does not execute code."
+          "validation_reason": "'spawn' in pooling context; reading file lines does not execute code."
         },
         {
           "capability": "file_read",
@@ -918,9 +917,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "contacts",
@@ -935,7 +932,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -949,7 +946,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname parameter; tool does not return system state (process lists, env dumps, etc.)."
         }
       ],
       "schema_signals": {
@@ -1000,7 +998,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; editing files does not execute code."
+          "validation_reason": "'spawn' in pooling context; editing file blocks does not execute code."
         }
       ],
       "data_categories": [
@@ -1028,9 +1026,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "contacts",
@@ -1045,7 +1041,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1060,7 +1056,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "File editing does not necessarily access or return system state."
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -1110,7 +1106,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; searching files does not execute code."
+          "validation_reason": "'spawn' in pooling context; grep search does not execute code."
         }
       ],
       "data_categories": [
@@ -1138,9 +1134,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "contacts",
@@ -1155,7 +1149,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1169,7 +1163,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -1216,7 +1211,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; writing files does not execute code."
+          "validation_reason": "'spawn' in pooling context; writing file chunks does not execute code."
         }
       ],
       "data_categories": [
@@ -1231,7 +1226,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool writes/appends to files; does not read or exfiltrate credentials."
         },
         {
           "category": "source_code",
@@ -1246,7 +1243,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool writes data but does not inherently handle source code."
         },
         {
           "category": "contacts",
@@ -1261,7 +1258,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1276,7 +1273,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "File writing does not necessarily access or return system state data."
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -1325,7 +1322,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; uploading files does not execute code."
+          "validation_reason": "'spawn' in pooling context; uploading a file does not execute code."
         },
         {
           "capability": "network_egress",
@@ -1356,7 +1353,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool uploads local files; does not access or return remote credentials."
         },
         {
           "category": "source_code",
@@ -1371,7 +1370,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool uploads files but does not specifically handle source code."
         },
         {
           "category": "files_documents",
@@ -1384,7 +1383,8 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "ault). Used by ssh-upload/ssh-download. Absolute local file path or"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "needs_source": true
         },
         {
           "category": "contacts",
@@ -1399,7 +1399,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1414,7 +1414,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "File uploading does not access or return system state."
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -1464,7 +1464,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; downloading files does not execute code."
+          "validation_reason": "'spawn' in pooling context; downloading a file does not execute code."
         },
         {
           "capability": "network_egress",
@@ -1508,9 +1508,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "\"windows\" for paths like C:\\\\repo\\\\file.txt. Default: auto SSH"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "files_documents",
@@ -1538,7 +1536,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1552,7 +1550,8 @@
             "snippet": "- alias from ~/.ssh/config or hostname/IP SSH username (optional if"
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "hostname parameter."
         }
       ],
       "schema_signals": {
@@ -1600,7 +1599,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'spawn' refers to connection pooling; verifying checksums does not execute code."
+          "validation_reason": "'spawn' in pooling context; checksum verification does not execute code."
         }
       ],
       "data_categories": [
@@ -1615,7 +1614,9 @@
             "pattern": "\\b(secret|credential|api[\\s_-]?key|password|keychain|vault|private[\\s_-]?key)\\b",
             "snippet": "in ~/.ssh/config) Path to SSH private key (optional) SSH port (default:"
           },
-          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream."
+          "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
+          "validated_out": true,
+          "validation_reason": "Tool verifies checksums only; does not read or expose credential data."
         },
         {
           "category": "source_code",
@@ -1630,7 +1631,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "Matched text is a documentation example path."
+          "validation_reason": "'repo' in path example; tool verifies hashes, not source code content."
         },
         {
           "category": "contacts",
@@ -1645,7 +1646,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'connections' refers to network pooling."
+          "validation_reason": "'connections' in pooling context."
         },
         {
           "category": "system_state",
@@ -1660,7 +1661,7 @@
           },
           "rationale": "Host fingerprinting and often an indirect path to secrets.",
           "validated_out": true,
-          "validation_reason": "Checksum verification does not access or return system state."
+          "validation_reason": "hostname parameter; tool does not return system state data."
         }
       ],
       "schema_signals": {
@@ -1693,12 +1694,6 @@
         "label": "Source code & repository contents",
         "tier": "critical",
         "tool_count": 14,
-        "confidence": "medium"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 1,
         "confidence": "medium"
       },
       "contacts": {
@@ -1742,7 +1737,8 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "needs_source": true
     },
     {
       "id": "exec_with_secret_access",
@@ -1753,7 +1749,8 @@
         "code_execution",
         "secrets_access"
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "needs_source": true
     },
     {
       "id": "read_and_exfil",
@@ -1787,7 +1784,6 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "contacts",
       "credentials_secrets",
       "files_documents",
@@ -1801,203 +1797,235 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 25,
-      "false_positive": 48,
+      "confirmed": 16,
+      "false_positive": 56,
       "needs_source": 7,
       "unreviewed": 0
     },
     "validated_out": [
       {
-        "id": "cap::ssh-capabilities::code_execution",
-        "reason": "The matched 'shell' refers to inspecting shell tool availability on the system, not executing shell commands; the tool inspects remote capabilities, not executes code."
+        "id": "data::ssh-capabilities::credentials_secrets",
+        "reason": "privateKeyPath is a required auth parameter, not a data category the tool processes or returns."
       },
       {
         "id": "data::ssh-capabilities::source_code",
-        "reason": "The matched 'repo' is part of a documentation example path (C:\\\\repo\\\\file.txt), not indicating the tool processes source code."
-      },
-      {
-        "id": "data::ssh-capabilities::calendar",
-        "reason": "The matched 'availability' refers to tmux availability (whether the tool is present), not calendar/scheduling data."
+        "reason": "'repo' appears only in a Windows path example (C:\\\\repo\\\\file.txt), not evidence the tool handles source code."
       },
       {
         "id": "data::ssh-capabilities::contacts",
-        "reason": "The matched 'connections' refers to network connection pooling, not address books or contact data."
+        "reason": "'connections' refers to pooled SSH connections (connection pooling), not address books or rosters."
       },
       {
-        "id": "cap::ssh-session-open::code_execution",
-        "reason": "The matched 'exec' appears in reference to another tool (ssh-session-exec), not in the tool's own capability; this tool only opens a session."
+        "id": "data::ssh-capabilities::system_state",
+        "reason": "hostname is an input parameter (host to connect to), not system_state data the tool returns."
+      },
+      {
+        "id": "data::ssh-session-open::credentials_secrets",
+        "reason": "privateKeyPath is an auth parameter, not credential data handled by the tool."
       },
       {
         "id": "data::ssh-session-open::source_code",
-        "reason": "The matched 'repo' is a documentation example path, not indicating source code access."
+        "reason": "'repo' in a path example only; tool does not interact with source code."
       },
       {
         "id": "data::ssh-session-open::contacts",
-        "reason": "The matched 'connections' refers to network connection pooling."
+        "reason": "'connections' refers to pooled SSH connections, not contacts/directory data."
+      },
+      {
+        "id": "data::ssh-session-open::system_state",
+        "reason": "hostname is a connection parameter, not system state data."
       },
       {
         "id": "data::ssh-session-open::project_metadata",
-        "reason": "The 'label' is just a session naming/identifier parameter, not project management metadata."
+        "reason": "'label' is a session naming parameter (Optional session label), not project metadata retrieval."
       },
       {
         "id": "data::ssh-session-exec::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example only; tool executes commands but does not specifically handle source code."
       },
       {
         "id": "data::ssh-session-exec::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' refers to connection pooling, not contacts."
+      },
+      {
+        "id": "data::ssh-session-exec::system_state",
+        "reason": "hostname is a parameter, not system state returned by the tool."
       },
       {
         "id": "cap::ssh-session-read::code_execution",
-        "reason": "The matched 'spawn' refers to spawning network connections for pooling, not code execution; the tool only reads command output."
+        "reason": "'spawn' in 'spawn separate pooled connections' refers to connection pooling, not code execution."
       },
       {
         "id": "data::ssh-session-read::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool reads arbitrary command output, not specifically source code."
       },
       {
         "id": "data::ssh-session-read::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in connection pooling context, not contacts."
+      },
+      {
+        "id": "data::ssh-session-read::system_state",
+        "reason": "hostname parameter; no system state data category indicated."
       },
       {
         "id": "cap::ssh-session-close::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; closing a session does not execute code."
+        "reason": "'spawn' in pooling context; closing a session does not execute code."
+      },
+      {
+        "id": "data::ssh-session-close::credentials_secrets",
+        "reason": "Tool closes sessions and removes directories; does not handle credential data."
       },
       {
         "id": "data::ssh-session-close::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool does not interact with code."
       },
       {
         "id": "data::ssh-session-close::contacts",
-        "reason": "The matched 'directory' refers to a filesystem directory being removed, not contacts."
+        "reason": "'directory' in 'remote session directory' is a filesystem path, not address book or contact directory."
       },
       {
         "id": "data::ssh-session-close::system_state",
-        "reason": "Closing a session does not access or return system state data."
+        "reason": "hostname parameter; no system state data."
       },
       {
         "id": "cap::ssh-session-gc::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; garbage-collecting sessions does not execute code."
+        "reason": "'spawn' in connection pooling context; garbage collection does not execute code."
+      },
+      {
+        "id": "data::ssh-session-gc::credentials_secrets",
+        "reason": "Tool removes expired sessions; does not handle credentials."
       },
       {
         "id": "data::ssh-session-gc::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool does not interact with code."
       },
       {
         "id": "data::ssh-session-gc::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
       },
       {
         "id": "data::ssh-session-gc::system_state",
-        "reason": "GC of sessions does not necessarily access system state."
+        "reason": "hostname parameter."
       },
       {
         "id": "data::remote-ssh::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool executes commands but does not specifically target source code."
       },
       {
         "id": "data::remote-ssh::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
+      },
+      {
+        "id": "data::remote-ssh::system_state",
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-read-lines::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; reading files does not execute code."
-      },
-      {
-        "id": "data::ssh-read-lines::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'spawn' in pooling context; reading file lines does not execute code."
       },
       {
         "id": "data::ssh-read-lines::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
+      },
+      {
+        "id": "data::ssh-read-lines::system_state",
+        "reason": "hostname parameter; tool does not return system state (process lists, env dumps, etc.)."
       },
       {
         "id": "cap::ssh-edit-block::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; editing files does not execute code."
-      },
-      {
-        "id": "data::ssh-edit-block::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'spawn' in pooling context; editing file blocks does not execute code."
       },
       {
         "id": "data::ssh-edit-block::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
       },
       {
         "id": "data::ssh-edit-block::system_state",
-        "reason": "File editing does not necessarily access or return system state."
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-search-code::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; searching files does not execute code."
-      },
-      {
-        "id": "data::ssh-search-code::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'spawn' in pooling context; grep search does not execute code."
       },
       {
         "id": "data::ssh-search-code::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
+      },
+      {
+        "id": "data::ssh-search-code::system_state",
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-write-chunk::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; writing files does not execute code."
+        "reason": "'spawn' in pooling context; writing file chunks does not execute code."
+      },
+      {
+        "id": "data::ssh-write-chunk::credentials_secrets",
+        "reason": "Tool writes/appends to files; does not read or exfiltrate credentials."
       },
       {
         "id": "data::ssh-write-chunk::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool writes data but does not inherently handle source code."
       },
       {
         "id": "data::ssh-write-chunk::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
       },
       {
         "id": "data::ssh-write-chunk::system_state",
-        "reason": "File writing does not necessarily access or return system state data."
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-upload::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; uploading files does not execute code."
+        "reason": "'spawn' in pooling context; uploading a file does not execute code."
+      },
+      {
+        "id": "data::ssh-upload::credentials_secrets",
+        "reason": "Tool uploads local files; does not access or return remote credentials."
       },
       {
         "id": "data::ssh-upload::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool uploads files but does not specifically handle source code."
       },
       {
         "id": "data::ssh-upload::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
       },
       {
         "id": "data::ssh-upload::system_state",
-        "reason": "File uploading does not access or return system state."
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-download::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; downloading files does not execute code."
-      },
-      {
-        "id": "data::ssh-download::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'spawn' in pooling context; downloading a file does not execute code."
       },
       {
         "id": "data::ssh-download::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
+      },
+      {
+        "id": "data::ssh-download::system_state",
+        "reason": "hostname parameter."
       },
       {
         "id": "cap::ssh-verify::code_execution",
-        "reason": "The matched 'spawn' refers to connection pooling; verifying checksums does not execute code."
+        "reason": "'spawn' in pooling context; checksum verification does not execute code."
+      },
+      {
+        "id": "data::ssh-verify::credentials_secrets",
+        "reason": "Tool verifies checksums only; does not read or expose credential data."
       },
       {
         "id": "data::ssh-verify::source_code",
-        "reason": "Matched text is a documentation example path."
+        "reason": "'repo' in path example; tool verifies hashes, not source code content."
       },
       {
         "id": "data::ssh-verify::contacts",
-        "reason": "Matched 'connections' refers to network pooling."
+        "reason": "'connections' in pooling context."
       },
       {
         "id": "data::ssh-verify::system_state",
-        "reason": "Checksum verification does not access or return system state."
+        "reason": "hostname parameter; tool does not return system state data."
       }
     ]
   }

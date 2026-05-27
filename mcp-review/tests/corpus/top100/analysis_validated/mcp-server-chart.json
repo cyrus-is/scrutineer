@@ -208,7 +208,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"label\" refers to data field labels (e.g., \"GDP\"), not project management metadata like issue/task labels."
+          "validation_reason": "\"label\" refers to data series/axis labels for geographic visualization (e.g., \"GDP\"), not project tracking metadata."
         }
       ],
       "schema_signals": {
@@ -398,7 +398,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"project\" is used as an illustrative example use-case (project completion %), not indicating the tool processes project metadata."
+          "validation_reason": "\"project\" is only a usage example; the tool is a generic percentage visualizer that takes a numeric value, not project metadata."
         }
       ],
       "schema_signals": {
@@ -514,9 +514,9 @@
           "confidence": "medium",
           "evidence": {
             "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": ", if you can determine that a location may appear in multiple areas,"
+            "matched": "latitude",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "their detailed data, such as latitude and longitude, location photo"
           },
           "rationale": "Physical tracking risk."
         }
@@ -576,9 +576,9 @@
           "confidence": "medium",
           "evidence": {
             "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "te a point map to display the location and distribution of point dat"
+            "matched": "latitude",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "their detailed data, such as latitude and longitude, location photo"
           },
           "rationale": "Physical tracking risk."
         }
@@ -645,7 +645,7 @@
           },
           "rationale": "Direct financial exposure and a regulated data class.",
           "validated_out": true,
-          "validation_reason": "\"Payment\" appears only as example data in a generic e-commerce flow; the tool is a general-purpose flow visualization, not a financial processing tool."
+          "validation_reason": "\"Payment\" is just one example node in a generic flow visualization tool; the tool handles any sequential flow, not specifically financial data."
         }
       ],
       "schema_signals": {
@@ -735,7 +735,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"label\" is a generic parameter field name for set data, not project management metadata."
+          "validation_reason": "\"label\" is a visualization parameter for data series naming, not project metadata."
         }
       ],
       "schema_signals": {
@@ -803,7 +803,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"total\" is a calculation field name in the data schema; the tool is generic and can visualize any sequential cumulative data, not specifically public data."
+          "validation_reason": "\"total\" is a data field name; the tool handles financial flows regardless of whether data is public or private."
         }
       ],
       "schema_signals": {
@@ -974,23 +974,23 @@
     "validated_out": [
       {
         "id": "data::generate_district_map::project_metadata",
-        "reason": "\"label\" refers to data field labels (e.g., \"GDP\"), not project management metadata like issue/task labels."
+        "reason": "\"label\" refers to data series/axis labels for geographic visualization (e.g., \"GDP\"), not project tracking metadata."
       },
       {
         "id": "data::generate_liquid_chart::project_metadata",
-        "reason": "\"project\" is used as an illustrative example use-case (project completion %), not indicating the tool processes project metadata."
+        "reason": "\"project\" is only a usage example; the tool is a generic percentage visualizer that takes a numeric value, not project metadata."
       },
       {
         "id": "data::generate_sankey_chart::financial",
-        "reason": "\"Payment\" appears only as example data in a generic e-commerce flow; the tool is a general-purpose flow visualization, not a financial processing tool."
+        "reason": "\"Payment\" is just one example node in a generic flow visualization tool; the tool handles any sequential flow, not specifically financial data."
       },
       {
         "id": "data::generate_venn_chart::project_metadata",
-        "reason": "\"label\" is a generic parameter field name for set data, not project management metadata."
+        "reason": "\"label\" is a visualization parameter for data series naming, not project metadata."
       },
       {
         "id": "data::generate_waterfall_chart::public_data",
-        "reason": "\"total\" is a calculation field name in the data schema; the tool is generic and can visualize any sequential cumulative data, not specifically public data."
+        "reason": "\"total\" is a data field name; the tool handles financial flows regardless of whether data is public or private."
       }
     ]
   }

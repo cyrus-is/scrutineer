@@ -242,23 +242,7 @@
         "instruction"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "e the visual characteristics, location, text content, or functionali"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "The matched 'location' refers to screen position/coordinates of page elements, not geographic location data; different semantic domain."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -266,7 +250,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:bf6efe848182172d073eab10227861667159475c703ef1a8a87c835151ec38e8"
     },
     {
@@ -308,7 +292,9 @@
             "snippet": "url browserbase stagehand get url"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The matched 'url' refers to retrieving the current page URL from browser state, not initiating network egress; no outbound network calls occur."
         }
       ],
       "data_categories": [],
@@ -345,7 +331,8 @@
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "The matched 'Execute' means executing a task/goal through browser automation, not executing arbitrary code or shell commands."
         }
       ],
       "data_categories": [
@@ -362,7 +349,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched 'task' refers to the work task/goal the tool completes, not project management metadata (issues, sprints, boards)."
+          "validation_reason": "The matched 'task' is just the generic action the tool performs; it does not indicate the tool processes project metadata, issues, or tickets as data."
         }
       ],
       "schema_signals": {
@@ -381,19 +368,12 @@
     "surface_assessed": true,
     "tiers_present": [
       "critical",
-      "high",
       "medium"
     ],
     "categories": {
       "credentials_secrets": {
         "label": "Secrets, tokens & credentials",
         "tier": "critical",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
       },
@@ -415,8 +395,7 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "exec_with_secret_access",
@@ -428,7 +407,8 @@
         "secrets_access"
       ],
       "confidence": "medium",
-      "needs_source": true
+      "validated_out": true,
+      "validation_reason": "The code_execution component is false_positive (tool does task automation, not code execution), so the toxic combination does not hold."
     }
   ],
   "injection_findings": [],
@@ -452,7 +432,6 @@
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "credentials_secrets",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",
@@ -462,18 +441,26 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 4,
-      "false_positive": 2,
-      "needs_source": 3,
+      "false_positive": 4,
+      "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
-        "id": "data::browserbase_stagehand_observe::location",
-        "reason": "The matched 'location' refers to screen position/coordinates of page elements, not geographic location data; different semantic domain."
+        "id": "cap::browserbase_stagehand_get_url::network_egress",
+        "reason": "The matched 'url' refers to retrieving the current page URL from browser state, not initiating network egress; no outbound network calls occur."
+      },
+      {
+        "id": "cap::browserbase_stagehand_agent::code_execution",
+        "reason": "The matched 'Execute' means executing a task/goal through browser automation, not executing arbitrary code or shell commands."
       },
       {
         "id": "data::browserbase_stagehand_agent::project_metadata",
-        "reason": "The matched 'task' refers to the work task/goal the tool completes, not project management metadata (issues, sprints, boards)."
+        "reason": "The matched 'task' is just the generic action the tool performs; it does not indicate the tool processes project metadata, issues, or tickets as data."
+      },
+      {
+        "id": "combo::exec_with_secret_access",
+        "reason": "The code_execution component is false_positive (tool does task automation, not code execution), so the toxic combination does not hold."
       }
     ]
   }

@@ -170,7 +170,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "\"directory\" refers to a filesystem directory (app bundle), not an address book or contacts directory."
+          "validation_reason": "The matched 'directory' refers to a file system directory (e.g., '.app directory'), not an address book or contacts directory."
         }
       ],
       "schema_signals": {
@@ -232,23 +232,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "tes mobile click on screen at coordinates"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "\"coordinates\" refers to screen pixel positions (x,y), not GPS or geolocation data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -256,7 +240,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:06e1f541d21eb0bd357908e6ba0b95c5b057bb843e2764c1d52bb664e4df1a40"
     },
     {
@@ -269,23 +253,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "ap on the screen at given x,y coordinates. The device identifier to use"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "\"coordinates\" refers to screen pixel positions, not location/GPS data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -293,7 +261,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:bff13da90045a7a4bc3f99909b73b7142d9ede81e20f7fb4bc78edac4bb9cdd8"
     },
     {
@@ -307,23 +275,7 @@
         "y"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "obile long press on screen at coordinates"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "\"coordinates\" refers to screen pixel positions, not location/geolocation data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -331,7 +283,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:2b33eabbf267a3199ea2afde25f7a252c8bfbbdbad9c5fd91755d0f601061f85"
     },
     {
@@ -343,21 +295,6 @@
       ],
       "candidate_capabilities": [],
       "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "coordinates",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "elements on screen and their coordinates, with display text or accessi"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "\"coordinates\" refers to UI element positions on screen, not GPS or location data."
-        },
         {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
@@ -371,7 +308,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"label\" refers to UI accessibility labels (for screen readers), not project management labels/tags; tool has no special metadata access."
+          "validation_reason": "The matched 'label' refers to UI accessibility labels (VoiceOver, aria-label), not project management labels or metadata."
         }
       ],
       "schema_signals": {
@@ -381,7 +318,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:b1ad3cd740707b8c33b81a6ae9561c6592aee48f60a4e8238b1f7bfaa5af6d19"
     },
     {
@@ -657,12 +594,6 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "project_metadata": {
         "label": "Project / task / status metadata",
         "tier": "medium",
@@ -693,7 +624,6 @@
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
       "contacts",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",
@@ -703,34 +633,18 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 1,
-      "false_positive": 6,
+      "false_positive": 2,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::mobile_install_app::contacts",
-        "reason": "\"directory\" refers to a filesystem directory (app bundle), not an address book or contacts directory."
-      },
-      {
-        "id": "data::mobile_click_on_screen_at_coordinates::location",
-        "reason": "\"coordinates\" refers to screen pixel positions (x,y), not GPS or geolocation data."
-      },
-      {
-        "id": "data::mobile_double_tap_on_screen::location",
-        "reason": "\"coordinates\" refers to screen pixel positions, not location/GPS data."
-      },
-      {
-        "id": "data::mobile_long_press_on_screen_at_coordinates::location",
-        "reason": "\"coordinates\" refers to screen pixel positions, not location/geolocation data."
-      },
-      {
-        "id": "data::mobile_list_elements_on_screen::location",
-        "reason": "\"coordinates\" refers to UI element positions on screen, not GPS or location data."
+        "reason": "The matched 'directory' refers to a file system directory (e.g., '.app directory'), not an address book or contacts directory."
       },
       {
         "id": "data::mobile_list_elements_on_screen::project_metadata",
-        "reason": "\"label\" refers to UI accessibility labels (for screen readers), not project management labels/tags; tool has no special metadata access."
+        "reason": "The matched 'label' refers to UI accessibility labels (VoiceOver, aria-label), not project management labels or metadata."
       }
     ]
   }

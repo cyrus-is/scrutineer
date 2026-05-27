@@ -142,7 +142,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' refers to filesystem directory path for matching, not a contacts/address-book directory."
+          "validation_reason": "Matched 'Directory' refers to filesystem directory path parameter, not address books or contact directories."
         }
       ],
       "schema_signals": {
@@ -212,8 +212,7 @@
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'Token' appears in 'token efficiency' context referring to API quota costs, not credential access in files."
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -256,7 +255,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' refers to filesystem directory type parameter, not contacts directory."
+          "validation_reason": "Matched 'directory' in 'download directory' refers to filesystem directories, not contact records."
         }
       ],
       "schema_signals": {
@@ -323,7 +322,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' is the file path parameter for repo structure, not contacts data."
+          "validation_reason": "Matched 'Directory' is a filesystem directory path, not a contacts resource."
         }
       ],
       "schema_signals": {
@@ -360,9 +359,7 @@
             "snippet": "ode\n  - githubGetFileContent: Read files\n  - githubSearchPullRequests:"
           },
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Evidence shows 'Read files' but references githubGetFileContent as downstream tool; search tool itself returns repository metadata only."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -431,8 +428,7 @@
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'Token' in 'token expensive' refers to API token cost accounting, not accessing secrets in PR content."
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -512,7 +508,7 @@
           "rationale": "Raw query access bypasses application-level authorization and tenant scoping; injection in a tool parameter reaches the data directly.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'SQL' appears in context of searching for generated SQL code patterns, not accessing databases."
+          "validation_reason": "Matched 'SQL' appears in context of searching for SQL-containing code files, not actual database access."
         }
       ],
       "data_categories": [
@@ -529,7 +525,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "'Thread' refers to ripgrep thread-count performance parameter, not message threads or communications."
+          "validation_reason": "Matched 'Thread' refers to threading/concurrency concepts, not message threads or communications."
         },
         {
           "category": "contacts",
@@ -544,7 +540,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' is the root directory parameter for file search scope, not contacts data."
+          "validation_reason": "Matched 'directory' in 'Root directory' is a filesystem path, not contact data."
         },
         {
           "category": "org_structure",
@@ -559,7 +555,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "'Workspace' in examples is a generic directory path name, not organizational structure metadata."
+          "validation_reason": "Matched 'workspace' in example path '/workspace/src' is a filesystem directory name, not organizational hierarchy."
         },
         {
           "category": "public_data",
@@ -622,7 +618,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' is filesystem directory structure display, not contacts/roster data."
+          "validation_reason": "Matched 'directory' in 'View directory structure' refers to filesystem directories."
         },
         {
           "category": "org_structure",
@@ -637,7 +633,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "'Workspace' in examples is a literal directory path, not organizational hierarchy."
+          "validation_reason": "Matched 'workspace' in example path is a filesystem directory component, not org chart data."
         }
       ],
       "schema_signals": {
@@ -674,8 +670,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "r noise (node_modules, dist, .git)\n  - Time: '7d', '2h', '30m'"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "needs_source": true
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "contacts",
@@ -690,7 +685,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "'Directory' is the file search scope parameter, not contacts directory."
+          "validation_reason": "Matched 'directory' in 'Starting directory' parameter refers to filesystem path."
         },
         {
           "category": "org_structure",
@@ -705,7 +700,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "'Workspace' in example is a directory path name, not org structure metadata."
+          "validation_reason": "Matched 'workspace' in example path is a filesystem directory, not organizational data."
         }
       ],
       "schema_signals": {
@@ -759,8 +754,7 @@
           },
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "'Token' in 'token efficiency' refers to API quota optimization, not credential access capability."
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -791,21 +785,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "- localSearchCode: Found file location\n  - lspGotoDefinition: Locate"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "'Location' refers to source code location (file path/line number), not geographic or personal location data."
-        },
-        {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
@@ -818,7 +797,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "'Workspace' in example path is a directory name, not organizational structure data."
+          "validation_reason": "Matched 'workspace' in example path '/workspace/src/services/user.ts' is a filesystem directory component."
         }
       ],
       "schema_signals": {
@@ -857,25 +836,10 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'Uri' parameter is a local file identifier (LSP), not network egress\u2014LSP operates locally."
+          "validation_reason": "Parameter 'uri' in LSP context refers to file:// URIs for local code analysis, not network endpoints."
         }
       ],
       "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nt plus top path:line:column; location content is empty; use first f"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "'Location' in output refers to source code location (file:line:column), not geographic data."
-        },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
@@ -897,7 +861,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:d202ebb9902e0d5e8a2d0f17cb2b30964d5dc212d06a020a13086525876adbcb"
     },
     {
@@ -926,26 +890,10 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'Uri' is local LSP file identifier parameter; no network access occurs."
+          "validation_reason": "Parameter 'uri' refers to local file URIs in LSP workflow, not network calls."
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "Definition: Jump to reference location\n  - localGetFileContent: Read"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "'Location' refers to source code location references, not geographic/personal location data."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -953,7 +901,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:2136224b168af04ba811895f8cc40631c224b0f1b43c79e63cc9a5a720e00c21"
     },
     {
@@ -982,7 +930,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "'Uri' parameter is local file identifier for LSP; tool operates entirely locally."
+          "validation_reason": "Parameter 'uri' references local file URIs for local code analysis via LSP."
         }
       ],
       "data_categories": [],
@@ -1020,9 +968,7 @@
             "snippet": "ion\n  - githubGetFileContent: Read source files\n  </toTool>\n  <vsGitHub>\n  -"
           },
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Evidence 'Read source files' references githubGetFileContent as downstream tool; packageSearch returns package metadata only."
+          "suppressed": false
         },
         {
           "capability": "network_egress",
@@ -1118,12 +1064,6 @@
         "tier": "medium",
         "tool_count": 4,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "medium"
       }
     }
   },
@@ -1137,8 +1077,7 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "read_and_exfil",
@@ -1150,8 +1089,7 @@
         "communications_content",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     }
   ],
   "injection_findings": [],
@@ -1177,7 +1115,6 @@
       "communications_content",
       "contacts",
       "files_documents",
-      "location",
       "org_structure",
       "project_metadata",
       "public_data",
@@ -1189,103 +1126,71 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 21,
-      "false_positive": 23,
+      "confirmed": 26,
+      "false_positive": 15,
       "needs_source": 3,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::githubSearchCode::contacts",
-        "reason": "'Directory' refers to filesystem directory path for matching, not a contacts/address-book directory."
-      },
-      {
-        "id": "cap::githubGetFileContent::secrets_access",
-        "reason": "'Token' appears in 'token efficiency' context referring to API quota costs, not credential access in files."
+        "reason": "Matched 'Directory' refers to filesystem directory path parameter, not address books or contact directories."
       },
       {
         "id": "data::githubGetFileContent::contacts",
-        "reason": "'Directory' refers to filesystem directory type parameter, not contacts directory."
+        "reason": "Matched 'directory' in 'download directory' refers to filesystem directories, not contact records."
       },
       {
         "id": "data::githubViewRepoStructure::contacts",
-        "reason": "'Directory' is the file path parameter for repo structure, not contacts data."
-      },
-      {
-        "id": "cap::githubSearchRepositories::file_read",
-        "reason": "Evidence shows 'Read files' but references githubGetFileContent as downstream tool; search tool itself returns repository metadata only."
-      },
-      {
-        "id": "cap::githubSearchPullRequests::secrets_access",
-        "reason": "'Token' in 'token expensive' refers to API token cost accounting, not accessing secrets in PR content."
+        "reason": "Matched 'Directory' is a filesystem directory path, not a contacts resource."
       },
       {
         "id": "cap::localSearchCode::database_access",
-        "reason": "'SQL' appears in context of searching for generated SQL code patterns, not accessing databases."
+        "reason": "Matched 'SQL' appears in context of searching for SQL-containing code files, not actual database access."
       },
       {
         "id": "data::localSearchCode::communications_content",
-        "reason": "'Thread' refers to ripgrep thread-count performance parameter, not message threads or communications."
+        "reason": "Matched 'Thread' refers to threading/concurrency concepts, not message threads or communications."
       },
       {
         "id": "data::localSearchCode::contacts",
-        "reason": "'Directory' is the root directory parameter for file search scope, not contacts data."
+        "reason": "Matched 'directory' in 'Root directory' is a filesystem path, not contact data."
       },
       {
         "id": "data::localSearchCode::org_structure",
-        "reason": "'Workspace' in examples is a generic directory path name, not organizational structure metadata."
+        "reason": "Matched 'workspace' in example path '/workspace/src' is a filesystem directory name, not organizational hierarchy."
       },
       {
         "id": "data::localViewStructure::contacts",
-        "reason": "'Directory' is filesystem directory structure display, not contacts/roster data."
+        "reason": "Matched 'directory' in 'View directory structure' refers to filesystem directories."
       },
       {
         "id": "data::localViewStructure::org_structure",
-        "reason": "'Workspace' in examples is a literal directory path, not organizational hierarchy."
+        "reason": "Matched 'workspace' in example path is a filesystem directory component, not org chart data."
       },
       {
         "id": "data::localFindFiles::contacts",
-        "reason": "'Directory' is the file search scope parameter, not contacts directory."
+        "reason": "Matched 'directory' in 'Starting directory' parameter refers to filesystem path."
       },
       {
         "id": "data::localFindFiles::org_structure",
-        "reason": "'Workspace' in example is a directory path name, not org structure metadata."
-      },
-      {
-        "id": "cap::localGetFileContent::secrets_access",
-        "reason": "'Token' in 'token efficiency' refers to API quota optimization, not credential access capability."
-      },
-      {
-        "id": "data::localGetFileContent::location",
-        "reason": "'Location' refers to source code location (file path/line number), not geographic or personal location data."
+        "reason": "Matched 'workspace' in example path is a filesystem directory, not organizational data."
       },
       {
         "id": "data::localGetFileContent::org_structure",
-        "reason": "'Workspace' in example path is a directory name, not organizational structure data."
+        "reason": "Matched 'workspace' in example path '/workspace/src/services/user.ts' is a filesystem directory component."
       },
       {
         "id": "cap::lspGotoDefinition::network_egress",
-        "reason": "'Uri' parameter is a local file identifier (LSP), not network egress\u2014LSP operates locally."
-      },
-      {
-        "id": "data::lspGotoDefinition::location",
-        "reason": "'Location' in output refers to source code location (file:line:column), not geographic data."
+        "reason": "Parameter 'uri' in LSP context refers to file:// URIs for local code analysis, not network endpoints."
       },
       {
         "id": "cap::lspFindReferences::network_egress",
-        "reason": "'Uri' is local LSP file identifier parameter; no network access occurs."
-      },
-      {
-        "id": "data::lspFindReferences::location",
-        "reason": "'Location' refers to source code location references, not geographic/personal location data."
+        "reason": "Parameter 'uri' refers to local file URIs in LSP workflow, not network calls."
       },
       {
         "id": "cap::lspCallHierarchy::network_egress",
-        "reason": "'Uri' parameter is local file identifier for LSP; tool operates entirely locally."
-      },
-      {
-        "id": "cap::packageSearch::file_read",
-        "reason": "Evidence 'Read source files' references githubGetFileContent as downstream tool; packageSearch returns package metadata only."
+        "reason": "Parameter 'uri' references local file URIs for local code analysis via LSP."
       }
     ]
   }

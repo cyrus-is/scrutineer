@@ -144,21 +144,7 @@
         "componentName"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ng props, ref methods, types, event detail parameters, and CSS pa"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -166,7 +152,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:4a67609489887a75bb92fec94b83e6e8b5804311569f8faf023331083a5460eb"
     },
     {
@@ -182,19 +168,6 @@
       ],
       "candidate_capabilities": [],
       "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "the library \u2014 setup, styling, event handling, SSR, slots, i18n.\nD"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
         {
           "category": "public_data",
           "label": "Public / aggregate data",
@@ -216,7 +189,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:d9643913f8e9d192c19baaca2e6e2c07469f933190b9921d105f824de2b85b36"
     },
     {
@@ -294,12 +267,6 @@
         "tool_count": 1,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 2,
-        "confidence": "medium"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
@@ -308,11 +275,10 @@
       }
     },
     "unconfirmed_higher_categories": [
-      "calendar",
       "contacts",
       "project_metadata"
     ],
-    "note": "Rating reflects high-confidence matches; calendar, contacts, project_metadata matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    "note": "Rating reflects high-confidence matches; contacts, project_metadata matched only in prose (medium confidence) and would raise the rating if confirmed in review."
   },
   "toxic_combinations": [],
   "injection_findings": [],
@@ -335,7 +301,6 @@
     },
     "data_sensitivity_rating": "MINIMAL",
     "data_categories_touched": [
-      "calendar",
       "contacts",
       "project_metadata",
       "public_data"

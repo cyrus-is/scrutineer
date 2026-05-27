@@ -110,7 +110,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'project' in 'new project ideas' is colloquial English (meaning potential initiatives), not an indicator that the tool processes project metadata; the tool's actual parameters (depth, idea_text) and purpose (research whether an idea exists) don't involve project management data."
+          "validation_reason": "The word 'project' in 'new project ideas' refers to proposed product concepts, not project management metadata (tickets, boards, milestones, sprints); the skill checks market saturation and idea novelty with no integration to project management systems or structured project data."
         }
       ],
       "schema_signals": {
@@ -176,7 +176,7 @@
     "validated_out": [
       {
         "id": "data::idea_check::project_metadata",
-        "reason": "The word 'project' in 'new project ideas' is colloquial English (meaning potential initiatives), not an indicator that the tool processes project metadata; the tool's actual parameters (depth, idea_text) and purpose (research whether an idea exists) don't involve project management data."
+        "reason": "The word 'project' in 'new project ideas' refers to proposed product concepts, not project management metadata (tickets, boards, milestones, sprints); the skill checks market saturation and idea novelty with no integration to project management systems or structured project data."
       }
     ]
   }

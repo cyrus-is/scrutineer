@@ -242,21 +242,7 @@
         "instruction"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "e the visual characteristics, location, text content, or functionali"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -264,7 +250,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:bf6efe848182172d073eab10227861667159475c703ef1a8a87c835151ec38e8"
     },
     {
@@ -376,19 +362,12 @@
     "surface_assessed": true,
     "tiers_present": [
       "critical",
-      "high",
       "medium"
     ],
     "categories": {
       "credentials_secrets": {
         "label": "Secrets, tokens & credentials",
         "tier": "critical",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
       },
@@ -445,7 +424,6 @@
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "credentials_secrets",
-      "location",
       "project_metadata"
     ],
     "weakest_runtime_binding": "none",

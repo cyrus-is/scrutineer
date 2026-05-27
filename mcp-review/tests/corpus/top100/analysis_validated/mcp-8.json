@@ -111,7 +111,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"status\" refers to wallet/action status (price, history, list), not project/task tracking metadata."
+          "validation_reason": "Matched 'status' refers to wallet account status (current balance/actions), not project task/milestone metadata."
         },
         {
           "category": "public_data",
@@ -126,7 +126,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"total session spending\" is the user's own spending data, not aggregated public statistics."
+          "validation_reason": "Matched 'total session spending' is user-specific financial data, not public aggregate or summary statistics."
         }
       ],
       "schema_signals": {
@@ -170,7 +170,7 @@
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
           "validated_out": true,
-          "validation_reason": "Tool is an AI model-calling interface, not a communications platform; matched on tool name, not actual message/email access."
+          "validation_reason": "Tool name 'chat' refers to LLM API interface for task assistance, not storage or retrieval of user communications/messages."
         },
         {
           "category": "personal_identifiers",
@@ -185,7 +185,7 @@
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "\"routing_profile\" is a model routing configuration parameter, not a user profile containing PII."
+          "validation_reason": "Matched 'profile' is a routing/configuration parameter for model selection, not user personal data."
         },
         {
           "category": "project_metadata",
@@ -200,7 +200,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"task\" refers to task types the model handles (e.g., coding tasks), not project/sprint metadata."
+          "validation_reason": "Matched 'task' refers to the use-case (getting AI opinions), not access to project tasks, tickets, or milestones."
         },
         {
           "category": "org_structure",
@@ -215,7 +215,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "\"role\" parameter is for LLM system-prompt roles, not organizational charts or reporting lines."
+          "validation_reason": "Matched 'role' in system prompt context refers to message role (user/assistant), not organizational hierarchy or department data."
         }
       ],
       "schema_signals": {
@@ -276,7 +276,8 @@
             "snippet": "tion: base64-encoded image or URL Agent identifier for budget t"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [],
@@ -318,7 +319,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool returns a CDN URL for download by the user; this is output delivery, not the tool making outbound egress requests."
+          "validation_reason": "Matched 'download' is an instruction to the caller about handling the returned CDN URL, not the tool's network behavior."
         }
       ],
       "data_categories": [
@@ -335,7 +336,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "Tool generates music output; \"download\" is user downloading generated content, not tool accessing/reading documents."
+          "validation_reason": "Tool generates output files; matched 'download' refers to caller retrieval of generated output, not file/document access capability."
         },
         {
           "category": "project_metadata",
@@ -350,7 +351,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"epic\" appears in example prompt text (\"epic orchestral film score\"), not actual project metadata."
+          "validation_reason": "Matched 'epic' is a descriptive adjective in example music prompts, not a reference to project management epics/tasks."
         }
       ],
       "schema_signals": {
@@ -408,7 +409,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"token-priced upstream\" refers to pricing mechanism (token credits), not access to secret credentials."
+          "validation_reason": "Matched 'token-priced' refers to upstream billing model, not credential or secret access."
         }
       ],
       "data_categories": [
@@ -438,7 +439,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"total wall-time\" is a time metric, not aggregated public data or summary statistics."
+          "validation_reason": "Matched 'total' in 'total wall-time' describes timing duration, not public or aggregate data."
         }
       ],
       "schema_signals": {
@@ -494,7 +495,7 @@
           },
           "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
           "validated_out": true,
-          "validation_reason": "\"drive\" is a verb meaning \"control/operate\" (drive Seedance video), not access to file systems or documents."
+          "validation_reason": "Matched 'drive' is a verb meaning 'operate/control', not file system or document access."
         },
         {
           "category": "project_metadata",
@@ -509,7 +510,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"status\" refers to enrollment operation status, not project issues/tickets/milestones."
+          "validation_reason": "Matched 'status' refers to API action polling enrollment status, not project task or milestone status."
         },
         {
           "category": "public_data",
@@ -524,7 +525,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "\"Public HTTPS URL\" describes a requirement for the input image, not public aggregate data handling."
+          "validation_reason": "'Public HTTPS URL' is an input requirement constraint, not indication the tool works with public aggregates or datasets."
         }
       ],
       "schema_signals": {
@@ -614,8 +615,7 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "company\", \"tweet\", \"github\", \"pdf\".\n\nFull request/response shap"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
-          "needs_source": true
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         }
       ],
       "schema_signals": {
@@ -671,7 +671,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"token\" refers to blockchain tokens/assets (e.g., token_id for DEX pairs), not secret credentials."
+          "validation_reason": "Matched 'token' in URL path is a cryptocurrency/market token ID, not credential or authentication token."
         }
       ],
       "data_categories": [
@@ -701,7 +701,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"status\" is a query filter parameter for market status, not project management metadata."
+          "validation_reason": "Matched 'status' is a market status filter (open/closed/resolved), not project task or milestone status."
         }
       ],
       "schema_signals": {
@@ -787,7 +787,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "\"token\" refers to cryptocurrency tokens/assets, not access to secret credentials or API keys."
+          "validation_reason": "Matched 'token' parameter refers to cryptocurrency tokens/assets, not credentials or API secrets."
         }
       ],
       "data_categories": [
@@ -803,8 +803,7 @@
             "snippet": "a from DexScreener. FREE - no payment required.\n\nUse for:\n- Token p"
           },
           "rationale": "Direct financial exposure and a regulated data class.",
-          "validated_out": true,
-          "validation_reason": "\"payment\" appears in \"FREE - no payment required\"; indicates no payment, not financial data handling."
+          "needs_source": true
         }
       ],
       "schema_signals": {
@@ -874,7 +873,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "\"Prefer local tools for normal repo work\" is a usage recommendation, not evidence that the tool accesses source code."
+          "validation_reason": "Matched 'repo' is a recommendation to avoid using this tool for repo work, not indication the tool accesses repositories."
         },
         {
           "category": "project_metadata",
@@ -889,7 +888,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "\"status\" refers to sandbox execution status, not project issues/tickets/milestones."
+          "validation_reason": "Matched 'status' in 'sandbox/status' API action refers to sandbox operation status, not project metadata."
         }
       ],
       "schema_signals": {
@@ -955,8 +954,7 @@
             "snippet": "POST body: { to, task, from, voice?, max_duration?,"
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "validated_out": true,
-          "validation_reason": "\"task\" parameter is the voice call instruction/prompt, not project metadata."
+          "needs_source": true
         }
       ],
       "schema_signals": {
@@ -1026,7 +1024,8 @@
             "snippet": "unified search, and Surf-1.5 chat with citations.\n\nPricing (set"
           },
           "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "Matched 'chat' is a query interface for crypto data, not storage or retrieval of user communications/messages."
         }
       ],
       "schema_signals": {
@@ -1110,8 +1109,7 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "high",
-      "needs_source": true
+      "confidence": "high"
     },
     {
       "id": "exec_with_secret_access",
@@ -1122,8 +1120,7 @@
         "code_execution",
         "secrets_access"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     },
     {
       "id": "read_and_exfil",
@@ -1174,95 +1171,91 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 16,
-      "false_positive": 21,
-      "needs_source": 5,
+      "confirmed": 18,
+      "false_positive": 20,
+      "needs_source": 4,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "data::blockrun_wallet::project_metadata",
-        "reason": "\"status\" refers to wallet/action status (price, history, list), not project/task tracking metadata."
+        "reason": "Matched 'status' refers to wallet account status (current balance/actions), not project task/milestone metadata."
       },
       {
         "id": "data::blockrun_wallet::public_data",
-        "reason": "\"total session spending\" is the user's own spending data, not aggregated public statistics."
+        "reason": "Matched 'total session spending' is user-specific financial data, not public aggregate or summary statistics."
       },
       {
         "id": "data::blockrun_chat::communications_content",
-        "reason": "Tool is an AI model-calling interface, not a communications platform; matched on tool name, not actual message/email access."
+        "reason": "Tool name 'chat' refers to LLM API interface for task assistance, not storage or retrieval of user communications/messages."
       },
       {
         "id": "data::blockrun_chat::personal_identifiers",
-        "reason": "\"routing_profile\" is a model routing configuration parameter, not a user profile containing PII."
+        "reason": "Matched 'profile' is a routing/configuration parameter for model selection, not user personal data."
       },
       {
         "id": "data::blockrun_chat::project_metadata",
-        "reason": "\"task\" refers to task types the model handles (e.g., coding tasks), not project/sprint metadata."
+        "reason": "Matched 'task' refers to the use-case (getting AI opinions), not access to project tasks, tickets, or milestones."
       },
       {
         "id": "data::blockrun_chat::org_structure",
-        "reason": "\"role\" parameter is for LLM system-prompt roles, not organizational charts or reporting lines."
+        "reason": "Matched 'role' in system prompt context refers to message role (user/assistant), not organizational hierarchy or department data."
       },
       {
         "id": "cap::blockrun_music::network_egress",
-        "reason": "Tool returns a CDN URL for download by the user; this is output delivery, not the tool making outbound egress requests."
+        "reason": "Matched 'download' is an instruction to the caller about handling the returned CDN URL, not the tool's network behavior."
       },
       {
         "id": "data::blockrun_music::files_documents",
-        "reason": "Tool generates music output; \"download\" is user downloading generated content, not tool accessing/reading documents."
+        "reason": "Tool generates output files; matched 'download' refers to caller retrieval of generated output, not file/document access capability."
       },
       {
         "id": "data::blockrun_music::project_metadata",
-        "reason": "\"epic\" appears in example prompt text (\"epic orchestral film score\"), not actual project metadata."
+        "reason": "Matched 'epic' is a descriptive adjective in example music prompts, not a reference to project management epics/tasks."
       },
       {
         "id": "cap::blockrun_video::secrets_access",
-        "reason": "\"token-priced upstream\" refers to pricing mechanism (token credits), not access to secret credentials."
+        "reason": "Matched 'token-priced' refers to upstream billing model, not credential or secret access."
       },
       {
         "id": "data::blockrun_video::public_data",
-        "reason": "\"total wall-time\" is a time metric, not aggregated public data or summary statistics."
+        "reason": "Matched 'total' in 'total wall-time' describes timing duration, not public or aggregate data."
       },
       {
         "id": "data::blockrun_realface::files_documents",
-        "reason": "\"drive\" is a verb meaning \"control/operate\" (drive Seedance video), not access to file systems or documents."
+        "reason": "Matched 'drive' is a verb meaning 'operate/control', not file system or document access."
       },
       {
         "id": "data::blockrun_realface::project_metadata",
-        "reason": "\"status\" refers to enrollment operation status, not project issues/tickets/milestones."
+        "reason": "Matched 'status' refers to API action polling enrollment status, not project task or milestone status."
       },
       {
         "id": "data::blockrun_realface::public_data",
-        "reason": "\"Public HTTPS URL\" describes a requirement for the input image, not public aggregate data handling."
+        "reason": "'Public HTTPS URL' is an input requirement constraint, not indication the tool works with public aggregates or datasets."
       },
       {
         "id": "cap::blockrun_markets::secrets_access",
-        "reason": "\"token\" refers to blockchain tokens/assets (e.g., token_id for DEX pairs), not secret credentials."
+        "reason": "Matched 'token' in URL path is a cryptocurrency/market token ID, not credential or authentication token."
       },
       {
         "id": "data::blockrun_markets::project_metadata",
-        "reason": "\"status\" is a query filter parameter for market status, not project management metadata."
+        "reason": "Matched 'status' is a market status filter (open/closed/resolved), not project task or milestone status."
       },
       {
         "id": "cap::blockrun_dex::secrets_access",
-        "reason": "\"token\" refers to cryptocurrency tokens/assets, not access to secret credentials or API keys."
-      },
-      {
-        "id": "data::blockrun_dex::financial",
-        "reason": "\"payment\" appears in \"FREE - no payment required\"; indicates no payment, not financial data handling."
+        "reason": "Matched 'token' parameter refers to cryptocurrency tokens/assets, not credentials or API secrets."
       },
       {
         "id": "data::blockrun_modal::source_code",
-        "reason": "\"Prefer local tools for normal repo work\" is a usage recommendation, not evidence that the tool accesses source code."
+        "reason": "Matched 'repo' is a recommendation to avoid using this tool for repo work, not indication the tool accesses repositories."
       },
       {
         "id": "data::blockrun_modal::project_metadata",
-        "reason": "\"status\" refers to sandbox execution status, not project issues/tickets/milestones."
+        "reason": "Matched 'status' in 'sandbox/status' API action refers to sandbox operation status, not project metadata."
       },
       {
-        "id": "data::blockrun_phone::project_metadata",
-        "reason": "\"task\" parameter is the voice call instruction/prompt, not project metadata."
+        "id": "data::blockrun_surf::communications_content",
+        "reason": "Matched 'chat' is a query interface for crypto data, not storage or retrieval of user communications/messages."
       }
     ]
   }

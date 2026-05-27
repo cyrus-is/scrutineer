@@ -94,7 +94,9 @@
             "snippet": "fetch_doc on the best result URL or the library's documentatio"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The tool returns URLs in search results; it does not make network calls itself. Returns of URLs to be used by other tools is not egress capability."
         }
       ],
       "data_categories": [
@@ -111,7 +113,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "The matched 'repo' refers to library names used as search parameters (e.g., 'vercel/nextjs'), not source code access; tool searches indexed documentation, not repositories."
+          "validation_reason": "The 'repo' match is about specifying library names using owner/repo convention (e.g., 'vercel/next'), not accessing source code repositories."
         }
       ],
       "schema_signals": {
@@ -190,7 +192,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to filesystem/URL path navigation ('parent directory'), not a contacts directory; technical jargon mismatch with intended data category."
+          "validation_reason": "The 'directory' match refers to URL directory path navigation, not a contacts/address-book directory."
         }
       ],
       "schema_signals": {
@@ -280,19 +282,23 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 3,
-      "false_positive": 2,
+      "confirmed": 2,
+      "false_positive": 3,
       "needs_source": 2,
       "unreviewed": 0
     },
     "validated_out": [
       {
+        "id": "cap::search_docs::network_egress",
+        "reason": "The tool returns URLs in search results; it does not make network calls itself. Returns of URLs to be used by other tools is not egress capability."
+      },
+      {
         "id": "data::search_docs::source_code",
-        "reason": "The matched 'repo' refers to library names used as search parameters (e.g., 'vercel/nextjs'), not source code access; tool searches indexed documentation, not repositories."
+        "reason": "The 'repo' match is about specifying library names using owner/repo convention (e.g., 'vercel/next'), not accessing source code repositories."
       },
       {
         "id": "data::fetch_doc::contacts",
-        "reason": "Matched 'directory' refers to filesystem/URL path navigation ('parent directory'), not a contacts directory; technical jargon mismatch with intended data category."
+        "reason": "The 'directory' match refers to URL directory path navigation, not a contacts/address-book directory."
       }
     ]
   }

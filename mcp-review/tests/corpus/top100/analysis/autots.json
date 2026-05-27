@@ -551,21 +551,7 @@
         "tune"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "forecast_event_risk forecast event risk"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -573,7 +559,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:a73ae8de1f49e487e3ce6bf981451fc47fe27a0343f3c959b99521b99ebbc0f8"
     },
     {
@@ -585,21 +571,7 @@
         "format"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "get_event_risk_results get event risk results"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -607,7 +579,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:549599ec24081c9d07d07072111bf20a9e595a2cb3ea0eddf947fbc949f37e9f"
     },
     {
@@ -618,21 +590,7 @@
         "event_risk_id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "plot_event_risk plot event risk"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -640,7 +598,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:ce88c836d86e66825b952fed2b6185afb8d19c13b6cb681e8d0345ac1daaf339"
     },
     {
@@ -748,12 +706,6 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "high"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "high"
       }
     },
     "unconfirmed_higher_categories": [
@@ -794,7 +746,6 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "credentials_secrets",
       "personal_identifiers"
     ],

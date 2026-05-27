@@ -124,7 +124,7 @@
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The pattern matched 'content' in 'Read the content from an URL' \u2014 but in context, this is web content, not file content; the tool reads from URLs only and has no file-access capability."
+          "validation_reason": "Pattern matched 'content' in a URL-reading context, but the tool is explicitly web_url_read with only a url parameter; 'content' refers to fetched webpage content, not local file access."
         },
         {
           "capability": "network_egress",
@@ -173,7 +173,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "The exfil path requires both file_read and network_egress; since file_read is false_positive, this combination does not hold."
+      "validation_reason": "The combination requires both file_read and network_egress; file_read is a false positive match, so the exfiltration path does not exist in this tool."
     }
   ],
   "injection_findings": [],
@@ -210,11 +210,11 @@
     "validated_out": [
       {
         "id": "cap::web_url_read::file_read",
-        "reason": "The pattern matched 'content' in 'Read the content from an URL' \u2014 but in context, this is web content, not file content; the tool reads from URLs only and has no file-access capability."
+        "reason": "Pattern matched 'content' in a URL-reading context, but the tool is explicitly web_url_read with only a url parameter; 'content' refers to fetched webpage content, not local file access."
       },
       {
         "id": "combo::read_and_exfil",
-        "reason": "The exfil path requires both file_read and network_egress; since file_read is false_positive, this combination does not hold."
+        "reason": "The combination requires both file_read and network_egress; file_read is a false positive match, so the exfiltration path does not exist in this tool."
       }
     ]
   }

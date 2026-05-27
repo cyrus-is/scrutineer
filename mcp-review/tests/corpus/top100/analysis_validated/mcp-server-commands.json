@@ -110,7 +110,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' from 'Current working directory' (a filesystem path parameter), not a contacts/address directory; tool has no capability to access contacts."
+          "validation_reason": "Matched token 'directory' refers to 'current working directory' (filesystem parameter), not an address book or contacts directory; false match on homonym."
         }
       ],
       "schema_signals": {
@@ -166,7 +166,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' from 'Current working directory' (filesystem parameter), not contacts; tool inherently has no contacts data access."
+          "validation_reason": "Matched token 'directory' refers to 'current working directory' (filesystem parameter), not an address book or contacts directory; false match on homonym."
         }
       ],
       "schema_signals": {
@@ -234,11 +234,11 @@
     "validated_out": [
       {
         "id": "data::run_command::contacts",
-        "reason": "Matched 'directory' from 'Current working directory' (a filesystem path parameter), not a contacts/address directory; tool has no capability to access contacts."
+        "reason": "Matched token 'directory' refers to 'current working directory' (filesystem parameter), not an address book or contacts directory; false match on homonym."
       },
       {
         "id": "data::run_script::contacts",
-        "reason": "Matched 'directory' from 'Current working directory' (filesystem parameter), not contacts; tool inherently has no contacts data access."
+        "reason": "Matched token 'directory' refers to 'current working directory' (filesystem parameter), not an address book or contacts directory; false match on homonym."
       }
     ]
   }

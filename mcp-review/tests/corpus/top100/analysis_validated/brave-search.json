@@ -124,7 +124,9 @@
             "snippet": "with title, description, and URL.\n    \n    When the \"results_f"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The matched 'URL' token describes the return format of search results, not arbitrary network egress capability."
         }
       ],
       "data_categories": [
@@ -139,22 +141,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched 'repository' refers only to documentation (Goggles repository docs), not to the tool handling or returning source code."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "Location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": ", or current topics\n        - Location-based queries (restaurants, b"
-          },
-          "rationale": "Physical tracking risk."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "public_data",
@@ -216,7 +203,9 @@
             "snippet": "The parameter supports both a url where the Goggle is hosted or"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The 'url' match refers to a Goggles parameter format, not arbitrary network egress capability."
         }
       ],
       "data_categories": [
@@ -231,22 +220,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched 'repository' refers to Goggles documentation only; tool does not process or return source code."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "API provides enrichments for location search results. Access to thi"
-          },
-          "rationale": "Physical tracking risk."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "public_data",
@@ -302,7 +276,9 @@
             "snippet": "o-related results with title, url, description, duration, and t"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The 'url' match describes the return format (title, url, description), not network egress capability."
         }
       ],
       "data_categories": [
@@ -357,7 +333,9 @@
             "snippet": "image.title](image.properties.url)).\n The user's search query."
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The 'url' match is in a markdown image format example, describing display format, not egress."
         }
       ],
       "data_categories": [
@@ -417,7 +395,9 @@
             "snippet": "s-related results with title, url, and description. Some result"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "The 'url' match describes the return format (title, url, description), not arbitrary network egress."
         }
       ],
       "data_categories": [
@@ -432,9 +412,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched 'repository' is documentation reference only; tool returns news articles, not source code."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "public_data",
@@ -543,9 +521,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "details, refer to the Goggles repository (i.e., https://github.com/bra"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "Matched 'repository' is documentation reference; tool retrieves general web content, not source repositories."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "location",
@@ -555,7 +531,7 @@
           "evidence": {
             "zone": "description",
             "matched": "latitude",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "ttribute of the response. The latitude of the client's geographical"
           },
           "rationale": "Physical tracking risk."
@@ -624,7 +600,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Matched 'token' is an optional user-provided input parameter for geolocation refinement, not system credential/secret access."
+          "validation_reason": "The 'token' match refers to an optional geolocation token parameter, not credential/secret access."
         }
       ],
       "data_categories": [
@@ -649,7 +625,7 @@
           "evidence": {
             "zone": "param_name",
             "matched": "latitude",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
             "snippet": "query radius count latitude longitude location country se"
           },
           "rationale": "Physical tracking risk."
@@ -694,16 +670,16 @@
         "tool_count": 4,
         "confidence": "medium"
       },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
         "tool_count": 7,
+        "confidence": "high"
+      },
+      "location": {
+        "label": "Location data",
+        "tier": "high",
+        "tool_count": 2,
         "confidence": "high"
       },
       "contacts": {
@@ -730,7 +706,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "Chain depends on false-positive secrets_access claim; brave_place_search does not access credentials, only uses optional user-provided geolocation token."
+      "validation_reason": "No confirmed secrets_access exists across these tools; only brave_llm_context has confirmed network_egress but no credential access."
     }
   ],
   "injection_findings": [],
@@ -764,35 +740,39 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 18,
-      "false_positive": 6,
+      "confirmed": 15,
+      "false_positive": 7,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
-        "id": "data::brave_web_search::source_code",
-        "reason": "Matched 'repository' refers only to documentation (Goggles repository docs), not to the tool handling or returning source code."
+        "id": "cap::brave_web_search::network_egress",
+        "reason": "The matched 'URL' token describes the return format of search results, not arbitrary network egress capability."
       },
       {
-        "id": "data::brave_local_search::source_code",
-        "reason": "Matched 'repository' refers to Goggles documentation only; tool does not process or return source code."
+        "id": "cap::brave_local_search::network_egress",
+        "reason": "The 'url' match refers to a Goggles parameter format, not arbitrary network egress capability."
       },
       {
-        "id": "data::brave_news_search::source_code",
-        "reason": "Matched 'repository' is documentation reference only; tool returns news articles, not source code."
+        "id": "cap::brave_video_search::network_egress",
+        "reason": "The 'url' match describes the return format (title, url, description), not network egress capability."
       },
       {
-        "id": "data::brave_llm_context::source_code",
-        "reason": "Matched 'repository' is documentation reference; tool retrieves general web content, not source repositories."
+        "id": "cap::brave_image_search::network_egress",
+        "reason": "The 'url' match is in a markdown image format example, describing display format, not egress."
+      },
+      {
+        "id": "cap::brave_news_search::network_egress",
+        "reason": "The 'url' match describes the return format (title, url, description), not arbitrary network egress."
       },
       {
         "id": "cap::brave_place_search::secrets_access",
-        "reason": "Matched 'token' is an optional user-provided input parameter for geolocation refinement, not system credential/secret access."
+        "reason": "The 'token' match refers to an optional geolocation token parameter, not credential/secret access."
       },
       {
         "id": "combo::exfil_chain",
-        "reason": "Chain depends on false-positive secrets_access claim; brave_place_search does not access credentials, only uses optional user-provided geolocation token."
+        "reason": "No confirmed secrets_access exists across these tools; only brave_llm_context has confirmed network_egress but no credential access."
       }
     ]
   }

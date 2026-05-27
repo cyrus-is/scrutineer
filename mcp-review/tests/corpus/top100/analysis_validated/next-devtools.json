@@ -126,7 +126,9 @@
             "snippet": "drag: Perform drag and drop\n- upload_file: Upload files\n- list_tools: L"
           },
           "rationale": "Write access lets a server plant files, overwrite configs, or stage a later code-execution path.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "upload_file refers to uploading files to a web form/application, not writing to the system filesystem."
         },
         {
           "capability": "network_egress",
@@ -159,7 +161,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "Matched 'status' refers to HTTP status codes in browser context, not project management status."
+          "validation_reason": "Matched 'status' refers to HTTP status codes in browser diagnostics, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -196,7 +198,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' in 'working directory' is filesystem/git terminology, not contacts or address directory."
+          "validation_reason": "Matched 'directory' refers to a git working directory (filesystem), not a contacts/address book directory."
         },
         {
           "category": "project_metadata",
@@ -314,9 +316,7 @@
             "snippet": "is tool, use 'nextjs_call' to execute specific tools.\n\n[IMPORTANT]"
           },
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "Matched 'execute' refers to executing tools via nextjs_call (a different tool), not code execution within nextjs_index itself; nextjs_index is only for discovery."
+          "suppressed": false
         },
         {
           "capability": "network_egress",
@@ -332,7 +332,8 @@
             "snippet": "mponents\n   - \"Update the API endpoint\" \u2192 Query current routes and d"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -462,7 +463,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' in 'working directory' is git/filesystem terminology, not contacts or address directory."
+          "validation_reason": "Matched 'directory' in 'working directory' refers to filesystem, not a contacts/address book directory."
         },
         {
           "category": "project_metadata",
@@ -567,27 +568,27 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 13,
+      "confirmed": 12,
       "false_positive": 4,
-      "needs_source": 1,
+      "needs_source": 2,
       "unreviewed": 0
     },
     "validated_out": [
       {
+        "id": "cap::browser_eval::file_write",
+        "reason": "upload_file refers to uploading files to a web form/application, not writing to the system filesystem."
+      },
+      {
         "id": "data::browser_eval::project_metadata",
-        "reason": "Matched 'status' refers to HTTP status codes in browser context, not project management status."
+        "reason": "Matched 'status' refers to HTTP status codes in browser diagnostics, not project management metadata."
       },
       {
         "id": "data::enable_cache_components::contacts",
-        "reason": "Matched 'directory' in 'working directory' is filesystem/git terminology, not contacts or address directory."
-      },
-      {
-        "id": "cap::nextjs_index::code_execution",
-        "reason": "Matched 'execute' refers to executing tools via nextjs_call (a different tool), not code execution within nextjs_index itself; nextjs_index is only for discovery."
+        "reason": "Matched 'directory' refers to a git working directory (filesystem), not a contacts/address book directory."
       },
       {
         "id": "data::upgrade_nextjs_16::contacts",
-        "reason": "Matched 'directory' in 'working directory' is git/filesystem terminology, not contacts or address directory."
+        "reason": "Matched 'directory' in 'working directory' refers to filesystem, not a contacts/address book directory."
       }
     ]
   }

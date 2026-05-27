@@ -1898,19 +1898,6 @@
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ids reviewer ids labels state event remove source branch squash d"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -4171,19 +4158,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "event",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "ate labels milestone id state event weight issue type"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -4204,7 +4178,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:01dc1db333216d1ecaf07d0e8c91ef1ba79a685b4ab1b3defdc14cfeb67a4f8d"
     },
     {
@@ -6478,12 +6452,6 @@
         "tool_count": 3,
         "confidence": "high"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 2,
-        "confidence": "high"
-      },
       "public_data": {
         "label": "Public / aggregate data",
         "tier": "low",
@@ -6543,7 +6511,6 @@
     },
     "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "communications_metadata",
       "contacts",

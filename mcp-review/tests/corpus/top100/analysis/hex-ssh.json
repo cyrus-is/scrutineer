@@ -130,19 +130,6 @@
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "availability",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "remote session support, tmux availability, package managers, and basic"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability."
-        },
-        {
           "category": "contacts",
           "label": "Contacts & address book",
           "tier": "high",
@@ -1592,12 +1579,6 @@
         "tool_count": 14,
         "confidence": "medium"
       },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "medium"
-      },
       "contacts": {
         "label": "Contacts & address book",
         "tier": "high",
@@ -1684,7 +1665,6 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "contacts",
       "credentials_secrets",
       "files_documents",

@@ -94,7 +94,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The word 'fetch' refers to retrieving sample code for display, not making outbound network calls; the tool returns local Kotlin sample strings."
+          "validation_reason": "\"fetch\" refers to retrieving a code sample from the tool's internal database, not making external network calls."
         }
       ],
       "data_categories": [],
@@ -149,7 +149,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'project' describes the context the tool helps with, not a data category it processes; tool returns static Gradle/manifest snippets, not project metadata."
+          "validation_reason": "\"project\" is a domain context (Android project setup) not project management metadata (issues, sprints, tracking)."
         }
       ],
       "schema_signals": {
@@ -253,7 +253,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'status' describes output information (platform support status), not input the tool processes; tool takes no parameters and returns roadmap data."
+          "validation_reason": "\"status\" refers to technical platform support status (Android/iOS/KMP readiness), not project task/milestone tracking."
         }
       ],
       "schema_signals": {
@@ -381,7 +381,8 @@
             "snippet": "preview link. Accepts a model URL, a SceneView code snippet, or"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "needs_source": true
         }
       ],
       "data_categories": [
@@ -437,7 +438,9 @@
             "snippet": "alize 3D shapes. Public HTTPS URL to a .glb or .gltf model. If"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false
+          "suppressed": false,
+          "validated_out": true,
+          "validation_reason": "Tool generates self-contained HTML artifacts; accepts URLs as parameters but does not make network egress calls itself."
         }
       ],
       "data_categories": [
@@ -454,7 +457,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched 'label' parameter in a 3D visualization context refers to text labels for display (e.g., object annotations), not project management metadata."
+          "validation_reason": "\"label\" parameter (if present) is for labeling 3D hotspots/visualization elements, not project management metadata."
         },
         {
           "category": "public_data",
@@ -546,7 +549,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'issue' refers to technical problems (model-not-showing, crash), not project management issues or tickets."
+          "validation_reason": "\"issue\" means technical problem/bug category (model visibility, AR crashes), not project tracking issues/tickets."
         }
       ],
       "schema_signals": {
@@ -598,7 +601,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The word 'status' describes output information returned (platform support status), not project metadata the tool processes."
+          "validation_reason": "\"status\" refers to technical platform support status, not project management tracking metadata."
         }
       ],
       "schema_signals": {
@@ -716,7 +719,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched word 'count' in 'polygon count' is a technical 3D model metric, not aggregate/summary public data statistics."
+          "validation_reason": "\"polygon count\" is a technical metric, not aggregate statistics; the guide is static reference material, not aggregated data."
         }
       ],
       "schema_signals": {
@@ -837,7 +840,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The word 'directory' refers to filesystem path context, not a contacts or address book directory."
+          "validation_reason": "\"directory\" refers to file system working directory, not a contact/address book or personnel directory."
         },
         {
           "category": "project_metadata",
@@ -863,9 +866,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "st 30 source files and 500 KB total, never writes to disk. Use th"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "The word 'total' in '500 KB total' is a size measurement, not aggregate or summary statistics of public data."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -937,8 +938,7 @@
         "secrets_access",
         "network_egress"
       ],
-      "confidence": "medium",
-      "needs_source": true
+      "confidence": "medium"
     }
   ],
   "injection_findings": [],
@@ -981,39 +981,39 @@
     "validated_out": [
       {
         "id": "cap::get_sample::network_egress",
-        "reason": "The word 'fetch' refers to retrieving sample code for display, not making outbound network calls; the tool returns local Kotlin sample strings."
+        "reason": "\"fetch\" refers to retrieving a code sample from the tool's internal database, not making external network calls."
       },
       {
         "id": "data::get_setup::project_metadata",
-        "reason": "The word 'project' describes the context the tool helps with, not a data category it processes; tool returns static Gradle/manifest snippets, not project metadata."
+        "reason": "\"project\" is a domain context (Android project setup) not project management metadata (issues, sprints, tracking)."
       },
       {
         "id": "data::get_platform_roadmap::project_metadata",
-        "reason": "The word 'status' describes output information (platform support status), not input the tool processes; tool takes no parameters and returns roadmap data."
+        "reason": "\"status\" refers to technical platform support status (Android/iOS/KMP readiness), not project task/milestone tracking."
+      },
+      {
+        "id": "cap::create_3d_artifact::network_egress",
+        "reason": "Tool generates self-contained HTML artifacts; accepts URLs as parameters but does not make network egress calls itself."
       },
       {
         "id": "data::create_3d_artifact::project_metadata",
-        "reason": "The matched 'label' parameter in a 3D visualization context refers to text labels for display (e.g., object annotations), not project management metadata."
+        "reason": "\"label\" parameter (if present) is for labeling 3D hotspots/visualization elements, not project management metadata."
       },
       {
         "id": "data::debug_issue::project_metadata",
-        "reason": "The word 'issue' refers to technical problems (model-not-showing, crash), not project management issues or tickets."
+        "reason": "\"issue\" means technical problem/bug category (model visibility, AR crashes), not project tracking issues/tickets."
       },
       {
         "id": "data::list_platforms::project_metadata",
-        "reason": "The word 'status' describes output information returned (platform support status), not project metadata the tool processes."
+        "reason": "\"status\" refers to technical platform support status, not project management tracking metadata."
       },
       {
         "id": "data::get_model_optimization_guide::public_data",
-        "reason": "The matched word 'count' in 'polygon count' is a technical 3D model metric, not aggregate/summary public data statistics."
+        "reason": "\"polygon count\" is a technical metric, not aggregate statistics; the guide is static reference material, not aggregated data."
       },
       {
         "id": "data::analyze_project::contacts",
-        "reason": "The word 'directory' refers to filesystem path context, not a contacts or address book directory."
-      },
-      {
-        "id": "data::analyze_project::public_data",
-        "reason": "The word 'total' in '500 KB total' is a size measurement, not aggregate or summary statistics of public data."
+        "reason": "\"directory\" refers to file system working directory, not a contact/address book or personnel directory."
       }
     ]
   }

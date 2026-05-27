@@ -760,19 +760,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "- localSearchCode: Found file location\n  - lspGotoDefinition: Locate"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "org_structure",
           "label": "Org / team structure",
           "tier": "medium",
@@ -825,19 +812,6 @@
       ],
       "data_categories": [
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "nt plus top path:line:column; location content is empty; use first f"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -858,7 +832,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "low",
       "digest": "sha256:d202ebb9902e0d5e8a2d0f17cb2b30964d5dc212d06a020a13086525876adbcb"
     },
     {
@@ -888,21 +862,7 @@
           "suppressed": false
         }
       ],
-      "data_categories": [
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "Definition: Jump to reference location\n  - localGetFileContent: Read"
-          },
-          "rationale": "Physical tracking risk."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -910,7 +870,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:2136224b168af04ba811895f8cc40631c224b0f1b43c79e63cc9a5a720e00c21"
     },
     {
@@ -1071,12 +1031,6 @@
         "tier": "medium",
         "tool_count": 4,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 3,
-        "confidence": "medium"
       }
     }
   },
@@ -1128,7 +1082,6 @@
       "communications_content",
       "contacts",
       "files_documents",
-      "location",
       "org_structure",
       "project_metadata",
       "public_data",

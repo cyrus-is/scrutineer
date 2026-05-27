@@ -147,20 +147,8 @@
             "snippet": "tention maxAge lockdown proxy profile name saveChanges"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
-          "needs_source": true
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "rification removeBase64Images location country languages storeInCach"
-          },
-          "rationale": "Physical tracking risk."
+          "validated_out": true,
+          "validation_reason": "In web scraping context, `profile` refers to browser profile configuration (cookies, preferences), not personally identifiable information."
         },
         {
           "category": "project_metadata",
@@ -175,7 +163,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched 'task' is used as a general word ('any task where you need...'), not indicating project management data handling."
+          "validation_reason": "The matched word 'task' appears in generic English usage ('any task where you need to understand'), not as a data category the tool collects."
         }
       ],
       "schema_signals": {
@@ -277,9 +265,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "words in the URL | `allinurl:git firecrawl`\n| `intitle:` | Onl"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "The matched 'git' is in a search operator example (inurl:git), not evidence of source code handling capabilities."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "personal_identifiers",
@@ -293,20 +279,8 @@
             "snippet": "tention maxAge lockdown proxy profile name saveChanges enterprise"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
-          "needs_source": true
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "query limit tbs filter location includeDomains excludeDomains"
-          },
-          "rationale": "Physical tracking risk."
+          "validated_out": true,
+          "validation_reason": "The 'profile' parameter shown in evidence does not appear in the actual parameter list; snippet is contaminated from another tool."
         },
         {
           "category": "public_data",
@@ -319,9 +293,7 @@
             "pattern": "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b",
             "snippet": "latest research papers on AI published in 2023.\"\n**Sources:** web, i"
           },
-          "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "validated_out": true,
-          "validation_reason": "The matched 'published' is part of an example use case sentence, not indicating special public-data categorization."
+          "rationale": "Already public or non-identifying \u2014 minimal exposure."
         }
       ],
       "schema_signals": {
@@ -364,7 +336,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'url' does not appear in the actual parameter list [missingContent, querySuggestions, rating, searchId, valuableSources]."
+          "validation_reason": "Tool parameters are [missingContent, querySuggestions, rating, searchId, valuableSources]\u2014no `url` param; evidence snippet is output fields, not inputs."
         }
       ],
       "data_categories": [
@@ -381,7 +353,7 @@
           },
           "rationale": "Reveals headcount, hierarchy, and reporting relationships.",
           "validated_out": true,
-          "validation_reason": "The matched 'team' appears in billing-limit context ('per team, per UTC day'), not organizational structure handling."
+          "validation_reason": "The 'team' reference is about billing/account caps in the feedback API, not data collected or exposed by the tool."
         },
         {
           "category": "public_data",
@@ -396,7 +368,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched 'aggregate' means combining feedback across teams, not processing aggregated data."
+          "validation_reason": "The word 'aggregate' refers to metric aggregation for billing, not aggregation of public data by the tool."
         }
       ],
       "schema_signals": {
@@ -465,7 +437,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The matched 'token' in 'token overflow' refers to LLM processing tokens, not API credentials or secrets."
+          "validation_reason": "The matched 'token' in 'token overflow' refers to API token consumption during processing, not credential/secret access."
         }
       ],
       "data_categories": [
@@ -481,20 +453,8 @@
             "snippet": "tention maxAge lockdown proxy profile name saveChanges"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
-          "needs_source": true
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "rification removeBase64Images location country languages storeInCach"
-          },
-          "rationale": "Physical tracking risk."
+          "validated_out": true,
+          "validation_reason": "The `profile` parameter refers to browser profile configuration, not collection of personal identifiers."
         },
         {
           "category": "project_metadata",
@@ -509,7 +469,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched 'status' refers to operational job status ('status checking'), not project metadata."
+          "validation_reason": "The matched 'status' refers to operation/job status checking, not project management metadata."
         }
       ],
       "schema_signals": {
@@ -546,7 +506,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The tool checks crawl job status (operational state), not project management metadata."
+          "validation_reason": "Tool checks technical crawl operation status, not project/task management metadata."
         }
       ],
       "schema_signals": {
@@ -624,7 +584,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The matched 'status' refers to job state ('completed' or 'failed'), not project metadata."
+          "validation_reason": "The matched 'status' refers to polling job completion status, not project metadata."
         }
       ],
       "schema_signals": {
@@ -659,7 +619,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "This tool checks operational job status, not project management data."
+          "validation_reason": "Tool checks agent job operation status, not project management data."
         }
       ],
       "schema_signals": {
@@ -713,7 +673,8 @@
             "snippet": "ttl activityTtl streamWebView profile name saveChanges"
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "The `profile` parameter is a browser profile configuration, not a collection of personal identifiers."
         },
         {
           "category": "public_data",
@@ -728,7 +689,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched 'Total' is just English text in 'Total session lifetime', not indicating data categorization."
+          "validation_reason": "The matched 'Total' is part of 'ttl' (time-to-live) parameter description, not indicating public data collection."
         }
       ],
       "schema_signals": {
@@ -781,9 +742,7 @@
             "snippet": "fill element\n- `agent-browser get text @e1` \u2014 Get text content\n- `ag"
           },
           "rationale": "Reading file contents is the most common SOURCE half of an exfiltration chain \u2014 pair it with any network_egress tool and the server can read a secret/config/document and send it out. Modelling read as a capability is what lets the read-then-send toxic combination fire.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "The 'get text' command reads DOM text content, not filesystem files."
+          "suppressed": false
         },
         {
           "capability": "network_egress",
@@ -856,7 +815,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The 'status' parameter filters sessions by operational state (active/idle), not project metadata."
+          "validation_reason": "Tool filters sessions by technical status (active/inactive), not project metadata."
         }
       ],
       "schema_signals": {
@@ -998,19 +957,6 @@
           "rationale": "Documents routinely contain secrets, PII, and proprietary material."
         },
         {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "geTracking); setting waitFor, location, mobile, or a non-basic/auto"
-          },
-          "rationale": "Physical tracking risk."
-        },
-        {
           "category": "public_data",
           "label": "Public / aggregate data",
           "tier": "low",
@@ -1023,7 +969,7 @@
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
           "validated_out": true,
-          "validation_reason": "The matched 'public' appears in example context ('don't want to host it on the public web'), not indicating public-data handling."
+          "validation_reason": "The matched 'public' refers to the deployment context (avoid hosting files publicly), not the type of data the tool processes."
         }
       ],
       "schema_signals": {
@@ -1073,9 +1019,7 @@
             "pattern": "\\b(message|email|e-mail|mail|dm|chat|conversation|thread|inbox|reply)\\b",
             "snippet": "}],\n      \"notification\": { \"email\": { \"enabled\": true, \"recipie"
           },
-          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom.",
-          "validated_out": true,
-          "validation_reason": "Email notifications are outbound messaging, not processing/handling communication content itself."
+          "rationale": "Full text of private communications \u2014 the actual content, not just who talked to whom."
         },
         {
           "category": "source_code",
@@ -1088,24 +1032,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "check produces a unified text diff of the page's markdown. No ex"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "The 'diff' is a unified text diff of page markdown changes, not source code."
-        },
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "dy. Required fields: `name`, `schedule` (with `cron` or `text`), and"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "The 'schedule' field defines cron/text-based recurrence, not calendar event data."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         }
       ],
       "schema_signals": {
@@ -1185,21 +1112,6 @@
       ],
       "data_categories": [
         {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "atus` (\"active\" | \"paused\"), `schedule`, `targets`, `webhook`, `noti"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "The 'schedule' field controls recurring execution, not calendar/event handling."
-        },
-        {
           "category": "project_metadata",
           "label": "Project / task / status metadata",
           "tier": "medium",
@@ -1212,7 +1124,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The 'status' field toggles monitor state (active/paused), not project metadata."
+          "validation_reason": "The matched 'status' is a monitor operation state (active/paused), not project management metadata."
         }
       ],
       "schema_signals": {
@@ -1222,7 +1134,7 @@
       },
       "injection_signals": [],
       "max_severity": "MEDIUM",
-      "data_tier": "high",
+      "data_tier": "medium",
       "digest": "sha256:c6b3893924d029fee62236a0e7d76379bb6b9ea4943caad881164d945631f61c"
     },
     {
@@ -1233,23 +1145,7 @@
         "id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "delete a monitor and stop its schedule. This cannot be undone.\n\n**Us"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Stopping a schedule is operational control, not calendar data handling."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1257,7 +1153,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:f7f5c0717ccfeda1d02e92d1362c98919f29a71fba028bdb14cc9047d9ab6286"
     },
     {
@@ -1268,23 +1164,7 @@
         "id"
       ],
       "candidate_capabilities": [],
-      "data_categories": [
-        {
-          "category": "calendar",
-          "label": "Calendar & schedule",
-          "tier": "high",
-          "confidence": "medium",
-          "evidence": {
-            "zone": "description",
-            "matched": "schedule",
-            "pattern": "\\b(calendar|event|meeting|schedule|availability|appointment|invite)\\b",
-            "snippet": "mediately, outside its normal schedule. Returns the queued check.\n\n*"
-          },
-          "rationale": "Reveals who you meet, when, and movements/availability.",
-          "validated_out": true,
-          "validation_reason": "Running outside normal schedule is operational triggering, not calendar data handling."
-        }
-      ],
+      "data_categories": [],
       "schema_signals": {
         "power_params": [],
         "destructive_flags": [],
@@ -1292,7 +1172,7 @@
       },
       "injection_signals": [],
       "max_severity": null,
-      "data_tier": "high",
+      "data_tier": null,
       "digest": "sha256:16cf386b5beebcbb3cd42b855e38669e3044284854263f4037c00625cac862c3"
     },
     {
@@ -1342,9 +1222,7 @@
             "snippet": "Increase `limit` (max 100) to fetch fewer pages.\n\n**Usage Example"
           },
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
-          "suppressed": false,
-          "validated_out": true,
-          "validation_reason": "The 'fetch' refers to retrieving stored check results, not making outbound network calls."
+          "suppressed": false
         }
       ],
       "data_categories": [
@@ -1359,9 +1237,7 @@
             "pattern": "\\b(source[\\s_-]?code|repository|repo|codebase|commit|diff|pull[\\s_-]?request|blame|git)\\b",
             "snippet": "single check with page-level diff results. Filter `pageStatus`"
           },
-          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "The 'diff' shows page-level changes, not source code modifications."
+          "rationale": "Proprietary logic, embedded secrets, and architecture all live in source."
         },
         {
           "category": "project_metadata",
@@ -1376,7 +1252,7 @@
           },
           "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
           "validated_out": true,
-          "validation_reason": "The 'status' field indicates page state (same/new/changed/removed), not project metadata."
+          "validation_reason": "The 'status' field indicates page change status (same/new/changed/removed), not project management metadata."
         }
       ],
       "schema_signals": {
@@ -1402,12 +1278,6 @@
     "categories": {
       "personal_identifiers": {
         "label": "Personal identifiers (PII)",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "high"
-      },
-      "location": {
-        "label": "Location data",
         "tier": "high",
         "tool_count": 4,
         "confidence": "high"
@@ -1453,12 +1323,6 @@
         "tier": "critical",
         "tool_count": 1,
         "confidence": "medium"
-      },
-      "calendar": {
-        "label": "Calendar & schedule",
-        "tier": "high",
-        "tool_count": 4,
-        "confidence": "medium"
       }
     },
     "unconfirmed_higher_categories": [
@@ -1479,8 +1343,7 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "validated_out": true,
-      "validation_reason": "The secrets_access leg is not confirmed; network_egress alone does not create exfil risk without confirmed credential access."
+      "needs_source": true
     },
     {
       "id": "exec_with_secret_access",
@@ -1492,8 +1355,7 @@
         "secrets_access"
       ],
       "confidence": "medium",
-      "validated_out": true,
-      "validation_reason": "The secrets_access leg is not confirmed; code_execution without credential access does not form this toxic pattern."
+      "needs_source": true
     },
     {
       "id": "read_and_exfil",
@@ -1506,8 +1368,7 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "validated_out": true,
-      "validation_reason": "The communications_content leg is not confirmed; file_read + network_egress without message handling does not match this pattern."
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -1530,11 +1391,9 @@
     },
     "data_sensitivity_rating": "SENSITIVE",
     "data_categories_touched": [
-      "calendar",
       "communications_content",
       "files_documents",
       "financial",
-      "location",
       "org_structure",
       "personal_identifiers",
       "project_metadata",
@@ -1547,123 +1406,83 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 18,
-      "false_positive": 28,
-      "needs_source": 4,
+      "confirmed": 21,
+      "false_positive": 18,
+      "needs_source": 3,
       "unreviewed": 0
     },
     "validated_out": [
       {
+        "id": "data::firecrawl_scrape::personal_identifiers",
+        "reason": "In web scraping context, `profile` refers to browser profile configuration (cookies, preferences), not personally identifiable information."
+      },
+      {
         "id": "data::firecrawl_scrape::project_metadata",
-        "reason": "The matched 'task' is used as a general word ('any task where you need...'), not indicating project management data handling."
+        "reason": "The matched word 'task' appears in generic English usage ('any task where you need to understand'), not as a data category the tool collects."
       },
       {
-        "id": "data::firecrawl_search::source_code",
-        "reason": "The matched 'git' is in a search operator example (inurl:git), not evidence of source code handling capabilities."
-      },
-      {
-        "id": "data::firecrawl_search::public_data",
-        "reason": "The matched 'published' is part of an example use case sentence, not indicating special public-data categorization."
+        "id": "data::firecrawl_search::personal_identifiers",
+        "reason": "The 'profile' parameter shown in evidence does not appear in the actual parameter list; snippet is contaminated from another tool."
       },
       {
         "id": "cap::firecrawl_search_feedback::network_egress",
-        "reason": "The matched 'url' does not appear in the actual parameter list [missingContent, querySuggestions, rating, searchId, valuableSources]."
+        "reason": "Tool parameters are [missingContent, querySuggestions, rating, searchId, valuableSources]\u2014no `url` param; evidence snippet is output fields, not inputs."
       },
       {
         "id": "data::firecrawl_search_feedback::org_structure",
-        "reason": "The matched 'team' appears in billing-limit context ('per team, per UTC day'), not organizational structure handling."
+        "reason": "The 'team' reference is about billing/account caps in the feedback API, not data collected or exposed by the tool."
       },
       {
         "id": "data::firecrawl_search_feedback::public_data",
-        "reason": "The matched 'aggregate' means combining feedback across teams, not processing aggregated data."
+        "reason": "The word 'aggregate' refers to metric aggregation for billing, not aggregation of public data by the tool."
       },
       {
         "id": "cap::firecrawl_crawl::secrets_access",
-        "reason": "The matched 'token' in 'token overflow' refers to LLM processing tokens, not API credentials or secrets."
+        "reason": "The matched 'token' in 'token overflow' refers to API token consumption during processing, not credential/secret access."
+      },
+      {
+        "id": "data::firecrawl_crawl::personal_identifiers",
+        "reason": "The `profile` parameter refers to browser profile configuration, not collection of personal identifiers."
       },
       {
         "id": "data::firecrawl_crawl::project_metadata",
-        "reason": "The matched 'status' refers to operational job status ('status checking'), not project metadata."
+        "reason": "The matched 'status' refers to operation/job status checking, not project management metadata."
       },
       {
         "id": "data::firecrawl_check_crawl_status::project_metadata",
-        "reason": "The tool checks crawl job status (operational state), not project management metadata."
+        "reason": "Tool checks technical crawl operation status, not project/task management metadata."
       },
       {
         "id": "data::firecrawl_agent::project_metadata",
-        "reason": "The matched 'status' refers to job state ('completed' or 'failed'), not project metadata."
+        "reason": "The matched 'status' refers to polling job completion status, not project metadata."
       },
       {
         "id": "data::firecrawl_agent_status::project_metadata",
-        "reason": "This tool checks operational job status, not project management data."
+        "reason": "Tool checks agent job operation status, not project management data."
+      },
+      {
+        "id": "data::firecrawl_browser_create::personal_identifiers",
+        "reason": "The `profile` parameter is a browser profile configuration, not a collection of personal identifiers."
       },
       {
         "id": "data::firecrawl_browser_create::public_data",
-        "reason": "The matched 'Total' is just English text in 'Total session lifetime', not indicating data categorization."
-      },
-      {
-        "id": "cap::firecrawl_browser_execute::file_read",
-        "reason": "The 'get text' command reads DOM text content, not filesystem files."
+        "reason": "The matched 'Total' is part of 'ttl' (time-to-live) parameter description, not indicating public data collection."
       },
       {
         "id": "data::firecrawl_browser_list::project_metadata",
-        "reason": "The 'status' parameter filters sessions by operational state (active/idle), not project metadata."
+        "reason": "Tool filters sessions by technical status (active/inactive), not project metadata."
       },
       {
         "id": "data::firecrawl_parse::public_data",
-        "reason": "The matched 'public' appears in example context ('don't want to host it on the public web'), not indicating public-data handling."
-      },
-      {
-        "id": "data::firecrawl_monitor_create::communications_content",
-        "reason": "Email notifications are outbound messaging, not processing/handling communication content itself."
-      },
-      {
-        "id": "data::firecrawl_monitor_create::source_code",
-        "reason": "The 'diff' is a unified text diff of page markdown changes, not source code."
-      },
-      {
-        "id": "data::firecrawl_monitor_create::calendar",
-        "reason": "The 'schedule' field defines cron/text-based recurrence, not calendar event data."
-      },
-      {
-        "id": "data::firecrawl_monitor_update::calendar",
-        "reason": "The 'schedule' field controls recurring execution, not calendar/event handling."
+        "reason": "The matched 'public' refers to the deployment context (avoid hosting files publicly), not the type of data the tool processes."
       },
       {
         "id": "data::firecrawl_monitor_update::project_metadata",
-        "reason": "The 'status' field toggles monitor state (active/paused), not project metadata."
-      },
-      {
-        "id": "data::firecrawl_monitor_delete::calendar",
-        "reason": "Stopping a schedule is operational control, not calendar data handling."
-      },
-      {
-        "id": "data::firecrawl_monitor_run::calendar",
-        "reason": "Running outside normal schedule is operational triggering, not calendar data handling."
-      },
-      {
-        "id": "cap::firecrawl_monitor_check::network_egress",
-        "reason": "The 'fetch' refers to retrieving stored check results, not making outbound network calls."
-      },
-      {
-        "id": "data::firecrawl_monitor_check::source_code",
-        "reason": "The 'diff' shows page-level changes, not source code modifications."
+        "reason": "The matched 'status' is a monitor operation state (active/paused), not project management metadata."
       },
       {
         "id": "data::firecrawl_monitor_check::project_metadata",
-        "reason": "The 'status' field indicates page state (same/new/changed/removed), not project metadata."
-      },
-      {
-        "id": "combo::exfil_chain",
-        "reason": "The secrets_access leg is not confirmed; network_egress alone does not create exfil risk without confirmed credential access."
-      },
-      {
-        "id": "combo::exec_with_secret_access",
-        "reason": "The secrets_access leg is not confirmed; code_execution without credential access does not form this toxic pattern."
-      },
-      {
-        "id": "combo::read_and_exfil",
-        "reason": "The communications_content leg is not confirmed; file_read + network_egress without message handling does not match this pattern."
+        "reason": "The 'status' field indicates page change status (same/new/changed/removed), not project management metadata."
       }
     ]
   }

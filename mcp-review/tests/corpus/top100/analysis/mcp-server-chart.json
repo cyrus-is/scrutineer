@@ -510,9 +510,9 @@
           "confidence": "medium",
           "evidence": {
             "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": ", if you can determine that a location may appear in multiple areas,"
+            "matched": "latitude",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "their detailed data, such as latitude and longitude, location photo"
           },
           "rationale": "Physical tracking risk."
         }
@@ -572,9 +572,9 @@
           "confidence": "medium",
           "evidence": {
             "zone": "description",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "te a point map to display the location and distribution of point dat"
+            "matched": "latitude",
+            "pattern": "\\b(gps|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
+            "snippet": "their detailed data, such as latitude and longitude, location photo"
           },
           "rationale": "Physical tracking risk."
         }

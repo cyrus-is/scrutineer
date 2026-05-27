@@ -123,7 +123,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is standard terminology for a note collection, not a credential storage vault."
+          "validation_reason": "In Obsidian terminology, 'vault' means the workspace/note collection, not a secrets repository; matched token is standard domain terminology unrelated to secrets handling."
         }
       ],
       "data_categories": [
@@ -140,7 +140,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; the pattern conflates Obsidian's domain terminology with security vaults."
+          "validation_reason": "'Vault' in Obsidian refers to the workspace, not credential storage; tool reads notes from the note collection, not from secrets vaults."
         },
         {
           "category": "files_documents",
@@ -153,7 +153,9 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "body, full object, structural document map, or a single section. Whi"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "'Document-map' is a technical term for markdown structural representation, not an indicator of reading arbitrary document files or PDFs."
         }
       ],
       "schema_signals": {
@@ -193,7 +195,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+          "validation_reason": "'Vault' is Obsidian standard terminology for the workspace/note collection, not secrets access."
         }
       ],
       "data_categories": [
@@ -210,7 +212,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection, not a credential store."
+          "validation_reason": "'Vault' means workspace in Obsidian context, not credential storage."
         },
         {
           "category": "contacts",
@@ -225,7 +227,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "Matched 'directory' refers to file system directory paths, not a contacts/address-book directory."
+          "validation_reason": "'Directory' in 'vault-relative directory path' refers to filesystem directory structure, not address books or contacts."
         }
       ],
       "schema_signals": {
@@ -260,7 +262,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' refers to the note collection, not secret storage."
+          "validation_reason": "'Vault' is workspace terminology in Obsidian, not secrets access indicator."
         }
       ],
       "data_categories": [
@@ -277,7 +279,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; no credential risk from listing tags across notes."
+          "validation_reason": "'Vault' refers to the Obsidian workspace, standard domain terminology unrelated to credential vaults."
         }
       ],
       "schema_signals": {
@@ -319,7 +321,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is the note collection being searched, not a credential vault."
+          "validation_reason": "'Vault' is Obsidian workspace terminology, not indicating secrets-specific access."
         }
       ],
       "data_categories": [
@@ -336,7 +338,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; searching notes does not indicate credential-specific capability."
+          "validation_reason": "'Vault' is workspace terminology; tool searches note content, not specifically credentials storage."
         }
       ],
       "schema_signals": {
@@ -375,7 +377,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'Vault' (capitalized) is standard terminology for the note storage container, not secrets."
+          "validation_reason": "'Vault' in 'Vault-relative path' is Obsidian workspace terminology, not secrets vault reference."
         }
       ],
       "data_categories": [
@@ -392,7 +394,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'Vault' refers to the note collection; opening a file path does not indicate credential access."
+          "validation_reason": "'Vault' in path context is standard Obsidian workspace terminology, not credential storage."
         }
       ],
       "schema_signals": {
@@ -433,7 +435,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is the note collection, not a credential storage system."
+          "validation_reason": "'Vault' is workspace terminology; tool writes to the note collection, not secrets vaults."
         }
       ],
       "data_categories": [
@@ -450,7 +452,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; writing notes does not inherently risk credential exposure."
+          "validation_reason": "'Vault' means workspace; tool modifies notes in the note collection, not credential vaults."
         },
         {
           "category": "files_documents",
@@ -463,7 +465,9 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "'Document-map' is markdown structural representation format, not document file access indicator."
         }
       ],
       "schema_signals": {
@@ -506,7 +510,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+          "validation_reason": "'Vault' is workspace terminology for the note collection."
         }
       ],
       "data_categories": [
@@ -523,7 +527,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; appending content does not indicate credential handling."
+          "validation_reason": "'Vault' in Obsidian context is workspace terminology, not secrets storage."
         },
         {
           "category": "files_documents",
@@ -536,7 +540,9 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "'Document-map' refers to markdown structure representation, not document files."
         }
       ],
       "schema_signals": {
@@ -578,7 +584,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is the note collection, not credential storage."
+          "validation_reason": "'Vault' is Obsidian workspace terminology."
         }
       ],
       "data_categories": [
@@ -595,7 +601,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; editing sections does not indicate credential-specific access."
+          "validation_reason": "'Vault' is workspace terminology, not credential vault reference."
         },
         {
           "category": "files_documents",
@@ -608,7 +614,9 @@
             "pattern": "\\b(read[\\s_-]?file|get[\\s_-]?file|file[\\s_-]?content|document|attachment|download|drive|spreadsheet|pdf|doc)\\b",
             "snippet": "dian_get_note` with `format: \"document-map\"` to discover available t"
           },
-          "rationale": "Documents routinely contain secrets, PII, and proprietary material."
+          "rationale": "Documents routinely contain secrets, PII, and proprietary material.",
+          "validated_out": true,
+          "validation_reason": "'Document-map' is markdown structural representation format."
         }
       ],
       "schema_signals": {
@@ -646,7 +654,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection, not a secrets storage system."
+          "validation_reason": "'Vault' is workspace terminology in Obsidian."
         }
       ],
       "data_categories": [
@@ -663,7 +671,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; find-and-replace does not indicate credential handling."
+          "validation_reason": "'Vault' refers to workspace, not credentials storage."
         }
       ],
       "schema_signals": {
@@ -703,7 +711,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is the note collection; managing frontmatter is standard note metadata access."
+          "validation_reason": "'Vault' is workspace terminology."
         }
       ],
       "data_categories": [
@@ -720,7 +728,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; frontmatter fields are note metadata, not credentials."
+          "validation_reason": "'Vault' is Obsidian workspace terminology, not credential vault."
         }
       ],
       "schema_signals": {
@@ -760,7 +768,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is the note collection; tag management does not indicate secrets access."
+          "validation_reason": "'Vault' is workspace terminology."
         }
       ],
       "data_categories": [
@@ -777,22 +785,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; tagging operations do not indicate credential handling."
-        },
-        {
-          "category": "location",
-          "label": "Location data",
-          "tier": "high",
-          "confidence": "high",
-          "evidence": {
-            "zone": "param_name",
-            "matched": "location",
-            "pattern": "\\b(location|gps|coordinates|geo[\\s_-]?location|latitude|longitude|whereabouts)\\b",
-            "snippet": "pe period date operation tags location"
-          },
-          "rationale": "Physical tracking risk.",
-          "validated_out": true,
-          "validation_reason": "Matched 'location' parameter specifies tag placement (frontmatter vs inline), not geographic location data."
+          "validation_reason": "'Vault' is workspace terminology for note collection."
         }
       ],
       "schema_signals": {
@@ -829,7 +822,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; deletion capability does not inherently access credentials."
+          "validation_reason": "'Vault' is workspace terminology; tool deletes notes from workspace."
         }
       ],
       "data_categories": [
@@ -846,7 +839,7 @@
           },
           "rationale": "The most sensitive payload \u2014 leaks compromise everything downstream.",
           "validated_out": true,
-          "validation_reason": "Obsidian 'vault' is a note collection; deletion does not indicate credential-specific access."
+          "validation_reason": "'Vault' in Obsidian is workspace terminology, not credential storage reference."
         }
       ],
       "schema_signals": {
@@ -861,7 +854,7 @@
     }
   ],
   "data_profile": {
-    "rating": "SENSITIVE",
+    "rating": "HIGHLY_SENSITIVE",
     "surface_assessed": true,
     "tiers_present": [
       "critical",
@@ -885,18 +878,8 @@
         "tier": "high",
         "tool_count": 1,
         "confidence": "medium"
-      },
-      "location": {
-        "label": "Location data",
-        "tier": "high",
-        "tool_count": 1,
-        "confidence": "high"
       }
-    },
-    "unconfirmed_higher_categories": [
-      "credentials_secrets"
-    ],
-    "note": "Rating reflects high-confidence matches; credentials_secrets matched only in prose (medium confidence) and would raise the rating if confirmed in review."
+    }
   },
   "toxic_combinations": [],
   "injection_findings": [],
@@ -917,12 +900,11 @@
       "LOW": 0,
       "INFO": 1
     },
-    "data_sensitivity_rating": "SENSITIVE",
+    "data_sensitivity_rating": "HIGHLY_SENSITIVE",
     "data_categories_touched": [
       "contacts",
       "credentials_secrets",
-      "files_documents",
-      "location"
+      "files_documents"
     ],
     "weakest_runtime_binding": "none",
     "all_servers_redacted": true
@@ -930,115 +912,127 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 4,
-      "false_positive": 26,
+      "confirmed": 0,
+      "false_positive": 29,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::obsidian_get_note::secrets_access",
-        "reason": "Obsidian 'vault' is standard terminology for a note collection, not a credential storage vault."
+        "reason": "In Obsidian terminology, 'vault' means the workspace/note collection, not a secrets repository; matched token is standard domain terminology unrelated to secrets handling."
       },
       {
         "id": "data::obsidian_get_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; the pattern conflates Obsidian's domain terminology with security vaults."
+        "reason": "'Vault' in Obsidian refers to the workspace, not credential storage; tool reads notes from the note collection, not from secrets vaults."
+      },
+      {
+        "id": "data::obsidian_get_note::files_documents",
+        "reason": "'Document-map' is a technical term for markdown structural representation, not an indicator of reading arbitrary document files or PDFs."
       },
       {
         "id": "cap::obsidian_list_notes::secrets_access",
-        "reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+        "reason": "'Vault' is Obsidian standard terminology for the workspace/note collection, not secrets access."
       },
       {
         "id": "data::obsidian_list_notes::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection, not a credential store."
+        "reason": "'Vault' means workspace in Obsidian context, not credential storage."
       },
       {
         "id": "data::obsidian_list_notes::contacts",
-        "reason": "Matched 'directory' refers to file system directory paths, not a contacts/address-book directory."
+        "reason": "'Directory' in 'vault-relative directory path' refers to filesystem directory structure, not address books or contacts."
       },
       {
         "id": "cap::obsidian_list_tags::secrets_access",
-        "reason": "Obsidian 'vault' refers to the note collection, not secret storage."
+        "reason": "'Vault' is workspace terminology in Obsidian, not secrets access indicator."
       },
       {
         "id": "data::obsidian_list_tags::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; no credential risk from listing tags across notes."
+        "reason": "'Vault' refers to the Obsidian workspace, standard domain terminology unrelated to credential vaults."
       },
       {
         "id": "cap::obsidian_search_notes::secrets_access",
-        "reason": "Obsidian 'vault' is the note collection being searched, not a credential vault."
+        "reason": "'Vault' is Obsidian workspace terminology, not indicating secrets-specific access."
       },
       {
         "id": "data::obsidian_search_notes::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; searching notes does not indicate credential-specific capability."
+        "reason": "'Vault' is workspace terminology; tool searches note content, not specifically credentials storage."
       },
       {
         "id": "cap::obsidian_open_in_ui::secrets_access",
-        "reason": "Obsidian 'Vault' (capitalized) is standard terminology for the note storage container, not secrets."
+        "reason": "'Vault' in 'Vault-relative path' is Obsidian workspace terminology, not secrets vault reference."
       },
       {
         "id": "data::obsidian_open_in_ui::credentials_secrets",
-        "reason": "Obsidian 'Vault' refers to the note collection; opening a file path does not indicate credential access."
+        "reason": "'Vault' in path context is standard Obsidian workspace terminology, not credential storage."
       },
       {
         "id": "cap::obsidian_write_note::secrets_access",
-        "reason": "Obsidian 'vault' is the note collection, not a credential storage system."
+        "reason": "'Vault' is workspace terminology; tool writes to the note collection, not secrets vaults."
       },
       {
         "id": "data::obsidian_write_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; writing notes does not inherently risk credential exposure."
+        "reason": "'Vault' means workspace; tool modifies notes in the note collection, not credential vaults."
+      },
+      {
+        "id": "data::obsidian_write_note::files_documents",
+        "reason": "'Document-map' is markdown structural representation format, not document file access indicator."
       },
       {
         "id": "cap::obsidian_append_to_note::secrets_access",
-        "reason": "Obsidian 'vault' is a note collection, not a secrets vault."
+        "reason": "'Vault' is workspace terminology for the note collection."
       },
       {
         "id": "data::obsidian_append_to_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; appending content does not indicate credential handling."
+        "reason": "'Vault' in Obsidian context is workspace terminology, not secrets storage."
+      },
+      {
+        "id": "data::obsidian_append_to_note::files_documents",
+        "reason": "'Document-map' refers to markdown structure representation, not document files."
       },
       {
         "id": "cap::obsidian_patch_note::secrets_access",
-        "reason": "Obsidian 'vault' is the note collection, not credential storage."
+        "reason": "'Vault' is Obsidian workspace terminology."
       },
       {
         "id": "data::obsidian_patch_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; editing sections does not indicate credential-specific access."
+        "reason": "'Vault' is workspace terminology, not credential vault reference."
+      },
+      {
+        "id": "data::obsidian_patch_note::files_documents",
+        "reason": "'Document-map' is markdown structural representation format."
       },
       {
         "id": "cap::obsidian_replace_in_note::secrets_access",
-        "reason": "Obsidian 'vault' is a note collection, not a secrets storage system."
+        "reason": "'Vault' is workspace terminology in Obsidian."
       },
       {
         "id": "data::obsidian_replace_in_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; find-and-replace does not indicate credential handling."
+        "reason": "'Vault' refers to workspace, not credentials storage."
       },
       {
         "id": "cap::obsidian_manage_frontmatter::secrets_access",
-        "reason": "Obsidian 'vault' is the note collection; managing frontmatter is standard note metadata access."
+        "reason": "'Vault' is workspace terminology."
       },
       {
         "id": "data::obsidian_manage_frontmatter::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; frontmatter fields are note metadata, not credentials."
+        "reason": "'Vault' is Obsidian workspace terminology, not credential vault."
       },
       {
         "id": "cap::obsidian_manage_tags::secrets_access",
-        "reason": "Obsidian 'vault' is the note collection; tag management does not indicate secrets access."
+        "reason": "'Vault' is workspace terminology."
       },
       {
         "id": "data::obsidian_manage_tags::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; tagging operations do not indicate credential handling."
-      },
-      {
-        "id": "data::obsidian_manage_tags::location",
-        "reason": "Matched 'location' parameter specifies tag placement (frontmatter vs inline), not geographic location data."
+        "reason": "'Vault' is workspace terminology for note collection."
       },
       {
         "id": "cap::obsidian_delete_note::secrets_access",
-        "reason": "Obsidian 'vault' is a note collection; deletion capability does not inherently access credentials."
+        "reason": "'Vault' is workspace terminology; tool deletes notes from workspace."
       },
       {
         "id": "data::obsidian_delete_note::credentials_secrets",
-        "reason": "Obsidian 'vault' is a note collection; deletion does not indicate credential-specific access."
+        "reason": "'Vault' in Obsidian is workspace terminology, not credential storage reference."
       }
     ]
   }

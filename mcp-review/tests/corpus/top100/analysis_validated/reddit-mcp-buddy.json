@@ -195,7 +195,8 @@
             "snippet": "the subreddit first (2 calls total). For better efficiency, alwa"
           },
           "rationale": "Already public or non-identifying \u2014 minimal exposure.",
-          "needs_source": true
+          "validated_out": true,
+          "validation_reason": "The matched word 'total' appears in '2 calls total' (referring to API call count), not aggregate data; this is a pattern false alarm despite the tool accessing public posts/comments."
         }
       ],
       "schema_signals": {
@@ -296,10 +297,15 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 3,
-      "false_positive": 0,
-      "needs_source": 1,
+      "false_positive": 1,
+      "needs_source": 0,
       "unreviewed": 0
     },
-    "validated_out": []
+    "validated_out": [
+      {
+        "id": "data::get_post_details::public_data",
+        "reason": "The matched word 'total' appears in '2 calls total' (referring to API call count), not aggregate data; this is a pattern false alarm despite the tool accessing public posts/comments."
+      }
+    ]
   }
 }

@@ -96,7 +96,7 @@
           "rationale": "A tool that makes outbound calls can exfiltrate anything it can read (including the server's own credentials) to an attacker-chosen host.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "The tool returns URLs as part of search results from an indexed documentation database; it does not make outbound network calls itself."
+          "validation_reason": "Tool returns URLs in results but does not make outbound network calls itself; 'URL' is matched in context of what users receive, not network operations performed by search_docs."
         }
       ],
       "data_categories": [
@@ -113,7 +113,7 @@
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
           "validated_out": true,
-          "validation_reason": "The mention of 'repo' (in 'owner/repo') is guidance on query formatting to specify which library's documentation to search, not evidence that the tool returns source code."
+          "validation_reason": "Match on 'repo' appears in query syntax hints (owner/repo format for library selection), not evidence that the tool accesses source code repositories."
         }
       ],
       "schema_signals": {
@@ -164,8 +164,7 @@
             "snippet": "e.g. https://github.com/owner/repo/tree/main/docs) to browse ava"
           },
           "rationale": "Proprietary logic, embedded secrets, and architecture all live in source.",
-          "validated_out": true,
-          "validation_reason": "The tool fetches 'documentation content' (rendered markdown), not source code; the GitHub URL example is just a possible doc location, not evidence of fetching raw source files."
+          "needs_source": true
         },
         {
           "category": "files_documents",
@@ -193,7 +192,7 @@
           },
           "rationale": "Exposes a person's full social/professional graph.",
           "validated_out": true,
-          "validation_reason": "The matched 'directory' refers to file/folder paths and 'table of contents' for documentation, not contact directories."
+          "validation_reason": "Match on 'directory' refers to URL path navigation (parent directory in URL hierarchy), not contact/address directories."
         }
       ],
       "schema_signals": {
@@ -250,8 +249,7 @@
         "network_egress"
       ],
       "confidence": "medium",
-      "validated_out": true,
-      "validation_reason": "Neither tool has file_read capability; fetch_doc only fetches remote documentation via URL, not local files. The read-then-send exfiltration path does not exist with these tools."
+      "needs_source": true
     }
   ],
   "injection_findings": [],
@@ -285,30 +283,22 @@
     "method": "agentic:haiku",
     "counts": {
       "confirmed": 2,
-      "false_positive": 5,
-      "needs_source": 0,
+      "false_positive": 3,
+      "needs_source": 2,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::search_docs::network_egress",
-        "reason": "The tool returns URLs as part of search results from an indexed documentation database; it does not make outbound network calls itself."
+        "reason": "Tool returns URLs in results but does not make outbound network calls itself; 'URL' is matched in context of what users receive, not network operations performed by search_docs."
       },
       {
         "id": "data::search_docs::source_code",
-        "reason": "The mention of 'repo' (in 'owner/repo') is guidance on query formatting to specify which library's documentation to search, not evidence that the tool returns source code."
-      },
-      {
-        "id": "data::fetch_doc::source_code",
-        "reason": "The tool fetches 'documentation content' (rendered markdown), not source code; the GitHub URL example is just a possible doc location, not evidence of fetching raw source files."
+        "reason": "Match on 'repo' appears in query syntax hints (owner/repo format for library selection), not evidence that the tool accesses source code repositories."
       },
       {
         "id": "data::fetch_doc::contacts",
-        "reason": "The matched 'directory' refers to file/folder paths and 'table of contents' for documentation, not contact directories."
-      },
-      {
-        "id": "combo::read_and_exfil",
-        "reason": "Neither tool has file_read capability; fetch_doc only fetches remote documentation via URL, not local files. The read-then-send exfiltration path does not exist with these tools."
+        "reason": "Match on 'directory' refers to URL path navigation (parent directory in URL hierarchy), not contact/address directories."
       }
     ]
   }

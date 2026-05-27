@@ -96,7 +96,7 @@
           "rationale": "A tool that surfaces secrets pairs dangerously with any network_egress tool on the same server \u2014 read-then-send is a complete exfil chain.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Snippet shows 'token matching' refers to text tokenization in search algorithm, not authentication/secret tokens."
+          "validation_reason": "The matched 'token' refers to token-based search algorithm matching, not credential/secret token access; it's about how the search engine segments and matches terms."
         }
       ],
       "data_categories": [],
@@ -131,9 +131,7 @@
             "pattern": "\\b(project|task|issue|ticket|board|milestone|sprint|backlog|status|label|epic)\\b",
             "snippet": "task context preferredDomain autoA"
           },
-          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content.",
-          "validated_out": true,
-          "validation_reason": "Parameter 'task' accepts natural language task descriptions as input for tool routing, not access to project management system metadata."
+          "rationale": "Names, statuses, and structure of work \u2014 identifying but not the underlying content."
         }
       ],
       "schema_signals": {
@@ -206,7 +204,7 @@
           },
           "rationale": "Identifies real people; aggregation enables tracking and de-anonymization.",
           "validated_out": true,
-          "validation_reason": "Context mentions 'base profile tools'\u2014referring to tools in the user's base configuration profile, not personal identifier data."
+          "validation_reason": "The matched 'profile' refers to the user account/tool profile system that manages tool registration, not personal identity data; the tool deactivates tools, does not expose PII."
         }
       ],
       "schema_signals": {
@@ -266,7 +264,7 @@
           "rationale": "A tool that runs arbitrary commands or code is the highest-impact surface an MCP server can expose \u2014 it collapses every other boundary.",
           "suppressed": false,
           "validated_out": true,
-          "validation_reason": "Tool executes only already-activated tools by name, bounded to pre-registered tools; 'Execute' does not mean arbitrary code execution."
+          "validation_reason": "The tool invokes pre-registered/activated tools by name (tool routing), not arbitrary code execution, subprocess spawning, or eval; 'Execute' means 'invoke a tool,' not execute code."
         }
       ],
       "data_categories": [],
@@ -322,7 +320,7 @@
       ],
       "confidence": "medium",
       "validated_out": true,
-      "validation_reason": "Combination depends on both component capabilities being confirmed; both underlying signals are false positives."
+      "validation_reason": "Both contributing signals (secrets_access, code_execution) are false positives; the combination does not hold."
     }
   ],
   "injection_findings": [],
@@ -354,31 +352,27 @@
   "validation": {
     "method": "agentic:haiku",
     "counts": {
-      "confirmed": 0,
-      "false_positive": 5,
+      "confirmed": 1,
+      "false_positive": 4,
       "needs_source": 0,
       "unreviewed": 0
     },
     "validated_out": [
       {
         "id": "cap::search_tools::secrets_access",
-        "reason": "Snippet shows 'token matching' refers to text tokenization in search algorithm, not authentication/secret tokens."
-      },
-      {
-        "id": "data::route_tool::project_metadata",
-        "reason": "Parameter 'task' accepts natural language task descriptions as input for tool routing, not access to project management system metadata."
+        "reason": "The matched 'token' refers to token-based search algorithm matching, not credential/secret token access; it's about how the search engine segments and matches terms."
       },
       {
         "id": "data::deactivate_tools::personal_identifiers",
-        "reason": "Context mentions 'base profile tools'\u2014referring to tools in the user's base configuration profile, not personal identifier data."
+        "reason": "The matched 'profile' refers to the user account/tool profile system that manages tool registration, not personal identity data; the tool deactivates tools, does not expose PII."
       },
       {
         "id": "cap::call_tool::code_execution",
-        "reason": "Tool executes only already-activated tools by name, bounded to pre-registered tools; 'Execute' does not mean arbitrary code execution."
+        "reason": "The tool invokes pre-registered/activated tools by name (tool routing), not arbitrary code execution, subprocess spawning, or eval; 'Execute' means 'invoke a tool,' not execute code."
       },
       {
         "id": "combo::exec_with_secret_access",
-        "reason": "Combination depends on both component capabilities being confirmed; both underlying signals are false positives."
+        "reason": "Both contributing signals (secrets_access, code_execution) are false positives; the combination does not hold."
       }
     ]
   }
