@@ -175,15 +175,38 @@ surfaced two precision bugs in the detector itself — `health` matching system
 tokens as credentials — both fixed in **scrutineer 1.6.3** (the ratings here are
 post-fix). That's the recall-first/precision-second design doing its job, in public.
 
-## What "unpinned" means (and the fix)
+## What "unpinned" means — and why we treat it as a security position
 
-Nearly every server here installs via a package runner (`npx -y` / `uvx`), which
-resolves to **whatever the registry serves at launch** — the running code can't be
-bound to a version you reviewed. This is the *default* install path the ecosystem
-documents, not a unique failing of any one server, and a diligent user can
-materially improve the posture by **pinning a version** (`npx -y pkg@1.2.3`) or
-vendoring the package. The survey measures the **default posture**, because that's
-what most people actually run.
+This is the survey's central call, and the one most likely to draw a "but `latest`
+is good practice" reaction — so here's the reasoning, explicitly.
+
+Pinning isn't about running *old* code. It's about the **audit boundary**: when you
+pin a version (or vendor the package), the code you reviewed is the code that runs.
+With `npx -y pkg` / `uvx pkg` / `@latest`, the code that runs is **whatever the
+registry serves at the moment of launch** — which can change after you've vetted it,
+silently, with no signal, on every run, forever. You re-extend trust to the
+publisher's account + the registry + the network automatically, every time your
+agent starts the server.
+
+For an ordinary library, auto-latest is a reasonable trade — you want the patches.
+For an MCP server it's different: you've handed it **tool access, data access, and
+usually a live credential**, and an agent launches it on your behalf. That's a large
+standing grant being silently re-pointed at unreviewed code. The postmark-mcp
+backdoor is the worked example — v1.0.16 added a line that BCC'd every email to the
+author, and anyone on auto-latest shipped it into their own stack the next time the
+server booted. A pin wouldn't have made the new code safe, but it would have turned a
+silent auto-update into a *decision*.
+
+And "latest" doesn't even mean what people assume. The version-drift check found
+**38 of the 56 captured servers ran a different version than the registry declared**,
+and 4 list their version as literally `latest`. Unpinned isn't "the newest reviewed
+release" — it's "whatever resolved at that millisecond."
+
+The fix is **not** "never update." It's **pin, then bump deliberately** — review the
+diff and move the pin (the same discipline you'd apply to any dependency) — or vendor
+the package. We rate every unpinned server at most CAUTION, never SAFE, for one
+narrow and honest reason: we can't bind the code that runs to anything we reviewed.
+That's a statement about *verifiability*, not about any server's intentions.
 
 ## Limitations
 
