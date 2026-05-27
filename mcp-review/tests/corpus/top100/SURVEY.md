@@ -210,7 +210,7 @@ release" — it's "whatever resolved at that millisecond."
 The fix is **not** "never update." It's **pin, then bump deliberately** — review the
 diff and move the pin (the same discipline you'd apply to any dependency) — or vendor
 the package. We rate every unpinned server at most CAUTION, never SAFE, for one
-narrow and honest reason: we can't bind the code that runs to anything we reviewed.
+reason: we can't bind the code that runs to anything we reviewed.
 That's a statement about *verifiability*, not about any server's intentions.
 
 ## Limitations
