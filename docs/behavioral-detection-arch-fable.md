@@ -3,6 +3,19 @@
 *Design doc. Scope: add runtime/behavioral detection to the MCP auditor. Modifies no existing
 behavior; proposes new, gated modules that sit beside the static analyzer.*
 
+> **Implementation status.** Phases 0–2 are built (`mcp-review/capture_runtime.py`,
+> `basis: "observed"` in `analyze_mcp.py`, the `behavioral_findings:` catalog in
+> `mcp_risk_guidance.yaml`, `mcp-review/tests/test_capture_runtime.py`). Phase 3 (OS-sandboxed
+> side-effect tracer) and Phase 4 (continuous interception proxy) are **not built** and remain
+> proposals — §5's caveats about them still stand.
+>
+> Where the build diverged from this doc: probe calls pass **every** parameter, not just the
+> required ones, because an exfiltration sink is exactly the kind of parameter a server leaves
+> optional. Phase 2 also emits a narrow, canary-backed subset of `capability_divergence` (§2.3's
+> code, listed here under Phase 3) where the evidence is ground truth — a planted secret returning
+> from a tool that declares no secrets capability. The generalized divergence check still needs
+> Phase 3.
+
 The MCP auditor today is a **provenance and capability gate**: it reasons over what a server
 *declares* (config + manifest + description text) and, when source is fetchable, what the source
 *statically contains*. It asserts nothing about what the server *does when it runs*. This document

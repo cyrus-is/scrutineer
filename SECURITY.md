@@ -12,9 +12,10 @@ You'll get an acknowledgement within a few days — best effort; this is solo-ma
 
 ## What's in scope
 
-Scrutineer is a **static** analyzer: by design it never starts an MCP server, calls a tool, executes fetched code, or runs a package manager. The highest-value areas to probe:
+Scrutineer is a **static** analyzer by default: `analyze_mcp.py` never starts an MCP server, calls a tool, executes fetched code, or runs a package manager, and that must stay true. The one component that deliberately executes a server under review is `mcp-review/capture_runtime.py`, which is a separate, opt-in entrypoint gated behind `--run` — the static analyzer never imports it and communicates with it only through a JSON record. The highest-value areas to probe:
 
 - **`mcp-review/fetch_source.py`** — the source-acquisition step. Its extractor must reject zip-slip (`../`), symlinks, hardlinks, absolute paths, and special files, and must never execute a fetched lifecycle/`postinstall` script. (Guarded by `mcp-review/tests/test_fetch_source.py`.)
+- **`mcp-review/capture_runtime.py`** — the behavioral harness. It runs untrusted code on purpose, so its containment is in scope: the child environment must never inherit `os.environ` or receive a real credential (canaries and placeholders only), `HOME` must be redirected to a throwaway directory, and the recording sink must never forward a captured request to its real destination. A path by which the harness executes without `--run`, leaks a live secret into the child, or completes an exfiltration it was meant to record is a vulnerability. (Guarded by `mcp-review/tests/test_capture_runtime.py`.)
 - **Secret handling** — the analyzer must never echo a live secret value into its output or its digests. A credential leaking through a report is in scope.
 - **Analyzer evasion (false negatives)** — a crafted config or `tools/list` that gets a real risk (an exfil chain, tool poisoning, code execution) reported as `SAFE`. These are in scope; routine false *positives* are best filed as normal issues.
 

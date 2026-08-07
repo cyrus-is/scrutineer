@@ -38,6 +38,7 @@ packages = ["scrutineer"]
 "mcp-review/analyze_mcp.py" = "scrutineer/_assets/mcp-review/analyze_mcp.py"
 "mcp-review/fetch_source.py" = "scrutineer/_assets/mcp-review/fetch_source.py"
 "mcp-review/validate_findings.py" = "scrutineer/_assets/mcp-review/validate_findings.py"
+"mcp-review/capture_runtime.py" = "scrutineer/_assets/mcp-review/capture_runtime.py"
 "mcp-review/mcp_risk_guidance.yaml" = "scrutineer/_assets/mcp-review/mcp_risk_guidance.yaml"
 "references/schema.md" = "scrutineer/_assets/references/schema.md"
 

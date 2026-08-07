@@ -32,6 +32,10 @@ It does only what must be deterministic and reproducible:
   9. Reconcile findings against a suppressions file: a suppression matches only
      while its bound digest is unchanged, so an edited server/tool re-enters
      review automatically.
+ 10. Optionally INGEST a behavioral capture (--behavioral) produced by the
+     separate, opt-in capture_runtime.py, folding its basis="observed" findings
+     and capabilities into the same report. This module still never launches a
+     server: the boundary is a JSON file, read exactly like --tools-list.
 
 All judgment — source review, final severity, verdict, whether to suppress —
 belongs to the skill. This tool produces evidence, not verdicts.
@@ -41,6 +45,8 @@ Usage:
     python analyze_mcp.py --tools-list tools.json --server "github mcp"
     python analyze_mcp.py --config cfg.json --tools-list tools.json \\
         --server "github mcp" --suppressions .claude/scrutineer-mcp-suppressions.json
+    python analyze_mcp.py --config cfg.json --server weather \\
+        --behavioral behavioral.json      # fold in an observed-basis capture
 """
 
 import argparse
@@ -190,6 +196,15 @@ def finding(code, severity, category, title, detail, recommendation="", evidence
     return f
 
 
+# Evidence bases, weakest to strongest. "declared" is the server's own metadata
+# (attacker-controlled). "implemented" is a static source read. "observed" is a
+# recording of the server running — it outranks both, the same way SKILL.md
+# already has implemented override declared. This module NEVER produces
+# "observed" itself: it stays static by charter and only ingests a behavioral
+# capture produced by the separate, opt-in capture_runtime.py (--behavioral).
+BASIS_RANK = {"declared": 0, "implemented": 1, "observed": 2}
+
+
 # ---------------------------------------------------------------------------
 # Guidance
 # ---------------------------------------------------------------------------
@@ -222,6 +237,11 @@ class Guidance:
         self._injection_res = [
             re.compile(p, re.IGNORECASE) for p in self.tool_injection.get("patterns", [])
         ]
+        # Behavioral (basis="observed") catalog + probe config. Loaded here so
+        # capture_runtime.py can drive detection from the same tunable file; this
+        # module only reads the catalog to re-render an ingested capture.
+        self.behavioral_findings = self.data.get("behavioral_findings", {})
+        self.probe = self.data.get("behavioral_probe", {})
         sig = self.data.get("tool_schema_signals", {})
         self._power_param_res = [re.compile(p, re.IGNORECASE) for p in sig.get("power_params", [])]
         self._destructive_flag_res = [re.compile(p, re.IGNORECASE) for p in sig.get("destructive_flags", [])]
@@ -238,6 +258,28 @@ class Guidance:
             recommendation=" ".join((spec.get("recommendation", "") or "").split()),
             evidence=evidence,
         )
+
+    def observed(self, code, detail, evidence=None, severity=None,
+                 confidence=None, recommendation=None) -> dict:
+        """Build a behavioral finding from the YAML catalog — the basis="observed"
+        sibling of smell(). severity/confidence may be overridden with a computed
+        value (approval_drift sets severity inline the same way): a manifest_drift
+        that REDEFINED a tool is worse than one that added a tool, and only the
+        emitter knows which happened."""
+        spec = self.behavioral_findings.get(code, {})
+        f = finding(
+            code=code,
+            severity=severity or spec.get("severity", "MEDIUM"),
+            category=spec.get("category", "behavior"),
+            title=spec.get("title", code),
+            detail=detail,
+            recommendation=" ".join(
+                (recommendation if recommendation is not None else spec.get("recommendation", "") or "").split()),
+            evidence=evidence,
+        )
+        f["basis"] = "observed"
+        f["confidence"] = confidence or spec.get("confidence", "high")
+        return f
 
     def is_sensitive_key(self, key: str) -> bool:
         return any(r.search(key) for r in self.sensitive_key_res)
@@ -974,14 +1016,23 @@ def data_profile(tools: list[dict], g: Guidance) -> dict:
 # for the analyzed set. Most meaningful scoped to one server (--server + --tools).
 # ---------------------------------------------------------------------------
 
-def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
+def toxic_combinations(servers: list[dict], tools: list[dict],
+                       observed_capabilities=None) -> list[dict]:
     # Computed over RAW signal presence — deliberately NOT gated on atomic-finding
     # suppression. A toxic combination is a HIGH attack primitive in its own right;
     # suppressing a lesser atomic note (e.g. the INFO "requires a credential")
     # must never silently clear it. If the user accepts a credential requirement,
     # the server can still exfiltrate that credential — the combo stands until
     # addressed on its own terms.
-    cap_set = {c["capability"] for t in tools for c in t["candidate_capabilities"]}
+    #
+    # observed_capabilities (from a capture_runtime.py run, ingested via
+    # --behavioral) are capabilities the server was WATCHED exercising. They join
+    # the capability set and always count as high confidence: the confidence gate
+    # below exists to discount a regex that fired on prose, and a recording is not
+    # a regex. This is what closes the weather-exfil miss — the read half of the
+    # exfil chain fires on proof instead of on metadata that never mentioned it.
+    observed = set(observed_capabilities or ())
+    cap_set = {c["capability"] for t in tools for c in t["candidate_capabilities"]} | observed
     data_set = {d["category"] for t in tools for d in t["data_categories"]}
     config_codes = {f["code"] for s in servers for f in s["findings"]}
 
@@ -997,7 +1048,10 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
     # a HIGH exfil primitive rather than a benign scoped read.
     _PATH_PARAMS = {"path", "file_path", "filepath", "filename", "file", "paths",
                     "dir", "directory", "folder"}  # local-file paths only — not uri/location (URL/geo)
-    arbitrary_read = broad_fs or any(
+    # An OBSERVED file_read is arbitrary by construction: the probe only records it
+    # when a planted decoy canary (~/.ssh/id_rsa, .aws/credentials) came back, which
+    # means the handler reached a path far outside any declared task scope.
+    arbitrary_read = broad_fs or "file_read" in observed or any(
         any(c["capability"] == "file_read" for c in t["candidate_capabilities"])
         and (_PATH_PARAMS & {p.lower() for p in t.get("param_names", [])})
         for t in tools
@@ -1011,6 +1065,8 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
     # signal from minting a deterministic HIGH (and is what kept credentialed API
     # servers from all reading as HIGH exfil chains).
     def _cap_conf(cap):
+        if cap in observed:
+            return "high"      # a recording, not a metadata match
         confs = [c.get("confidence") for t in tools
                  for c in t["candidate_capabilities"] if c["capability"] == cap]
         confs = [c for c in confs if c]
@@ -1033,10 +1089,17 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
 
     combos = []
 
-    def add(cid, severity, title, detail, contributing, confidence="high"):
+    def _basis(*caps):
+        """observed when any contributing capability was recorded at runtime —
+        the strongest basis wins, mirroring implemented-overrides-declared."""
+        return "observed" if any(c in observed for c in caps) else "declared"
+
+    def add(cid, severity, title, detail, contributing, confidence="high",
+            basis="declared"):
         combos.append({
             "id": cid, "severity": severity, "title": title,
             "detail": detail, "contributing": contributing, "confidence": confidence,
+            "basis": basis,
         })
 
     if reads_secrets and egress:
@@ -1056,7 +1119,8 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
             "network calls — a path to exfiltrate them to an attacker-chosen host."
             + note,
             ["secrets_access" if secret_tool else "sensitive_env_required", "network_egress"],
-            confidence="medium" if weak else "high")
+            confidence="medium" if weak else "high",
+            basis=_basis("secrets_access", "network_egress"))
 
     if "code_execution" in cap_set and reads_secrets:
         weak = (not secret_strong) or _cap_conf("code_execution") == "medium"
@@ -1067,7 +1131,8 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
             + ("" if secret_tool else " (Secret access is a required credential, "
                "not a secrets-reading tool — confirm in source.)"),
             ["code_execution", "secrets_access" if secret_tool else "sensitive_env_required"],
-            confidence="medium" if weak else "high")
+            confidence="medium" if weak else "high",
+            basis=_basis("code_execution", "secrets_access"))
 
     if ("file_write" in cap_set or "file_delete" in cap_set) and egress:
         weak = egress_weak or (_cap_conf("file_write") == "medium" and _cap_conf("file_delete") in (None, "medium"))
@@ -1076,7 +1141,8 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
             "The server can write/delete files and make network calls — remote "
             "input can drive destructive or persistence-establishing writes.",
             ["file_write/file_delete", "network_egress"],
-            confidence="medium" if weak else "high")
+            confidence="medium" if weak else "high",
+            basis=_basis("file_write", "file_delete", "network_egress"))
 
     if (reads_files or reads_comms) and egress:
         # HIGH only when the read is arbitrary AND the egress signal is strong;
@@ -1095,6 +1161,10 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
                else "Severity is MEDIUM because the read appears scoped; confirm "
                     "what the read tool can reach and where egress can target.")
         )
+        if "file_read" in observed:
+            detail += (" The read was OBSERVED: a probed call returned the contents "
+                       "of a planted decoy credential file, so this is a recording "
+                       "rather than a capability pairing.")
         contributing = ["file_read" + (" (arbitrary path)" if arbitrary_read else "")]
         if reads_comms:
             contributing.append("communications_content")
@@ -1102,7 +1172,8 @@ def toxic_combinations(servers: list[dict], tools: list[dict]) -> list[dict]:
             contributing.append("broad_filesystem_scope")
         contributing.append("network_egress")
         add("read_and_exfil", sev, title, detail, contributing,
-            confidence="high" if strong else "medium")
+            confidence="high" if strong else "medium",
+            basis=_basis("file_read", "network_egress"))
 
     return combos
 
@@ -1232,6 +1303,52 @@ def approval_drift(servers: list[dict], tools: list[dict], allow: dict) -> list[
 # Suppression reconciliation
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Behavioral capture ingestion (basis="observed")
+#
+# The static charter is preserved by making this a DATA boundary, not a code
+# one: capture_runtime.py is the only thing that launches a server, and it
+# writes a JSON record. This module reads that record the same way it reads a
+# tools/list or an allowlist — it never imports, spawns, or triggers the
+# behavioral module. Absent --behavioral, the block is inert and nothing
+# downstream changes.
+# ---------------------------------------------------------------------------
+
+BEHAVIORAL_SCHEMA = "mcp-review/behavioral@1"
+
+
+def load_behavioral(path: Path | None) -> dict:
+    """Load a capture_runtime.py record. Returns the inert block when absent."""
+    if not path:
+        return {"captured": False}
+    with open(path) as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict):
+        raise ValueError("behavioral record must be a JSON object")
+    schema = data.get("schema")
+    if schema and schema != BEHAVIORAL_SCHEMA:
+        raise ValueError(f"unsupported behavioral schema {schema!r} "
+                         f"(expected {BEHAVIORAL_SCHEMA!r})")
+    block = {
+        "captured": bool(data.get("captured")),
+        "mechanism": data.get("mechanism"),
+        "server": data.get("server"),
+        "session_digest": data.get("session_digest"),
+        "tools_observed": data.get("tools_observed", []),
+        "observed_capabilities": sorted(data.get("observed_capabilities", []) or []),
+        "drift": data.get("drift"),
+        "side_effects": data.get("side_effects"),
+        "coverage": data.get("coverage"),
+        "findings": data.get("findings", []),
+    }
+    # A behavioral finding that lost its basis on the way through would silently
+    # rank as declared in the verdict layer. Stamp it rather than trust the file.
+    for f in block["findings"]:
+        if isinstance(f, dict):
+            f.setdefault("basis", "observed")
+    return block
+
+
 def load_suppressions(path: Path | None) -> list[dict]:
     if not path or not path.exists():
         return []
@@ -1292,6 +1409,9 @@ def main():
     parser.add_argument("--suppressions", help="Path to a suppressions JSON file")
     parser.add_argument("--allowlist", help="Path to a settings.json / .mcp.json whose "
                                             "permission rules are checked for approval drift")
+    parser.add_argument("--behavioral", help="Path to a behavioral capture JSON produced by "
+                                             "capture_runtime.py (basis=observed). This analyzer "
+                                             "never runs a server — it only reads the record.")
     parser.add_argument("--guidance", help="Override path to mcp_risk_guidance.yaml")
     parser.add_argument("--indent", type=int, default=2, help="JSON output indent")
     args = parser.parse_args()
@@ -1340,6 +1460,18 @@ def main():
             if isinstance(tool, dict):
                 tools.append(analyze_tool(tool, args.server, g))
 
+    behavioral = {"captured": False}
+    if args.behavioral:
+        bh_path = Path(args.behavioral)
+        if not bh_path.exists():
+            print(f"Error: behavioral record not found: {bh_path}", file=sys.stderr)
+            sys.exit(1)
+        try:
+            behavioral = load_behavioral(bh_path)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error: behavioral record is unusable: {e}", file=sys.stderr)
+            sys.exit(1)
+
     suppressions = load_suppressions(Path(args.suppressions) if args.suppressions else None)
     recon = reconcile(servers, tools, suppressions)
 
@@ -1357,9 +1489,17 @@ def main():
         sev_counts[c["severity"]] = sev_counts.get(c["severity"], 0) + 1
 
     profile = data_profile(tools, g)
-    combos = toxic_combinations(servers, tools)
+    combos = toxic_combinations(servers, tools, behavioral.get("observed_capabilities"))
     for c in combos:
         sev_counts[c["severity"]] = sev_counts.get(c["severity"], 0) + 1
+
+    # Behavioral findings count like any other active finding. They are never
+    # subject to digest-bound suppression here: a behavioral suppression binds to
+    # the session_digest (server + probe set + observed surface), which is the
+    # capture tool's contract, not this file's.
+    behavioral_findings = behavioral.get("findings", []) if behavioral.get("captured") else []
+    for f in behavioral_findings:
+        sev_counts[f.get("severity", "MEDIUM")] = sev_counts.get(f.get("severity", "MEDIUM"), 0) + 1
 
     # Tool-poisoning / hidden-instruction findings — one per tool with signals.
     inj_sev = g.tool_injection.get("severity", "HIGH")
@@ -1418,13 +1558,14 @@ def main():
         }
 
     out = {
-        "schema": "mcp-review/analysis@3",
+        "schema": "mcp-review/analysis@4",
         "servers": servers,
         "tools": tools,
         "data_profile": profile,
         "toxic_combinations": combos,
         "injection_findings": injection_findings,
         "approval_drift": drift,
+        "behavioral": behavioral,
         "granted": granted,
         "stale_suppressions": recon["stale_suppressions"],
         "summary": {
@@ -1435,6 +1576,8 @@ def main():
             "toxic_combination_count": len(combos),
             "injection_finding_count": len(injection_findings),
             "approval_drift_count": len(drift),
+            "behavioral_captured": bool(behavioral.get("captured")),
+            "behavioral_finding_count": len(behavioral_findings),
             "severity_counts": sev_counts,
             "data_sensitivity_rating": profile["rating"],
             "data_categories_touched": sorted(profile["categories"].keys()),

@@ -421,6 +421,65 @@ check("validator: severity is untouched (suppress-only)", _vcap["severity"] == "
 check("validator: summary counts the false positive",
       _vres["validation"]["counts"]["false_positive"] == 1)
 
+# --- Phase 10: behavioral plumbing (basis="observed", schema@4) ---
+# This module stays static: it never produces an observed finding, it only
+# INGESTS a capture_runtime.py record. These check the plumbing that record
+# flows through.
+
+_bf = G.observed("secret_in_egress", "canary left the process")
+check("behavioral: catalog drives the finding", _bf["severity"] == "HIGH" and _bf["title"])
+check("behavioral: basis + confidence stamped",
+      _bf["basis"] == "observed" and _bf["confidence"] == "high")
+check("behavioral: severity override wins over the catalog",
+      G.observed("manifest_drift", "x", severity="HIGH")["severity"] == "HIGH"
+      and G.observed("manifest_drift", "x")["severity"] == "MEDIUM")
+check("behavioral: observed outranks implemented and declared",
+      A.BASIS_RANK["observed"] > A.BASIS_RANK["implemented"] > A.BASIS_RANK["declared"])
+
+# An observed capability contributes at HIGH confidence — a recording is not a
+# regex, so the prose-match discount must not apply to it.
+_bsrv = [A.analyze_server("s", {"command": "x"}, G)]
+_btool = [A.analyze_tool({"name": "get_weather", "description": "Return the weather.",
+                          "inputSchema": {"type": "object",
+                                          "properties": {"report_url": {"type": "string"}}}}, "s", G)]
+_declared_only = {c["id"] for c in A.toxic_combinations(_bsrv, _btool)}
+check("behavioral: declared-only surface misses the read half",
+      "read_and_exfil" not in _declared_only)
+_with_obs = {c["id"]: c for c in A.toxic_combinations(_bsrv, _btool, ["file_read"])}
+check("behavioral: observed file_read fires read_and_exfil at HIGH",
+      _with_obs.get("read_and_exfil", {}).get("severity") == "HIGH"
+      and _with_obs["read_and_exfil"]["confidence"] == "high")
+check("behavioral: combo records basis=observed",
+      _with_obs["read_and_exfil"]["basis"] == "observed")
+check("behavioral: declared-only combo stays basis=declared",
+      all(c.get("basis") == "declared" for c in A.toxic_combinations(_bsrv, _btool)))
+check("behavioral: observed secrets_access strengthens exfil_chain",
+      {c["id"]: c for c in A.toxic_combinations(_bsrv, _btool, ["secrets_access"])}
+      .get("exfil_chain", {}).get("severity") == "HIGH")
+
+# Ingestion: absent a capture the block is inert; a bad schema is refused loudly.
+check("behavioral: inert without a capture", A.load_behavioral(None) == {"captured": False})
+_tmp = Path(__file__).resolve().parent / "_behavioral_tmp.json"
+try:
+    _tmp.write_text(json.dumps({
+        "schema": "mcp-review/behavioral@1", "captured": True, "mechanism": "stdio_proxy",
+        "observed_capabilities": ["file_read"],
+        "findings": [{"code": "secret_in_egress", "severity": "HIGH", "category": "exfiltration",
+                      "title": "t", "detail": "d"}]}))
+    _loaded = A.load_behavioral(_tmp)
+    check("behavioral: capture ingested", _loaded["captured"] is True
+          and _loaded["observed_capabilities"] == ["file_read"])
+    check("behavioral: ingested finding is stamped observed",
+          _loaded["findings"][0]["basis"] == "observed")
+    _tmp.write_text(json.dumps({"schema": "mcp-review/behavioral@99", "captured": True}))
+    try:
+        A.load_behavioral(_tmp)
+        check("behavioral: unknown schema refused", False)
+    except ValueError:
+        check("behavioral: unknown schema refused", True)
+finally:
+    _tmp.unlink(missing_ok=True)
+
 # --- suppression reconcile / stale exposure ---
 fs_only = [A.analyze_server("filesystem", A.find_server_map(cfg)["filesystem"], G)]
 recon = A.reconcile(fs_only, [],

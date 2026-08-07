@@ -551,3 +551,166 @@ data_sensitivity:
     patterns:
       - "\\b(public|published|open[\\s_-]?data|aggregate|count|summary[\\s_-]?stat|total)\\b"
     rationale: Already public or non-identifying — minimal exposure.
+
+# =============================================================================
+# Behavioral findings — the `basis: "observed"` layer (Pass 5, opt-in).
+#
+# Everything above this line is evidence about what a server DECLARES (config +
+# tools/list metadata) or what its source statically CONTAINS. These findings
+# come from watching a server RUN: capture_runtime.py launches it behind a
+# gated proxy, records the surface it actually serves and what each probed call
+# does, and emits these codes. `observed` outranks both `declared` and
+# `implemented` — an observed read plus observed egress is a recording, not a
+# heuristic pairing.
+#
+# Same shape as config_smells (the analyzer emits {code, severity, category,
+# title, detail, recommendation, evidence} + basis/confidence), so these flow
+# through the existing summary counts, verdict rubric, and report template with
+# no special-casing. `confidence` is the DEFAULT; an emitter may override both
+# severity and confidence with a computed value (as approval_drift already
+# does) — e.g. manifest_drift is MEDIUM for an added tool but HIGH when an
+# existing tool was redefined under the same name.
+# =============================================================================
+behavioral_findings:
+  manifest_drift:
+    title: Running tool surface differs from the reviewed one
+    severity: MEDIUM
+    confidence: high
+    category: integrity
+    rationale: >
+      The tools/list the server actually served does not match the surface the
+      review was based on — a tool was added, removed, or redefined under the
+      same name. This is the rug-pull shape: advertise a benign surface for
+      review, serve a different one at runtime or on a later launch. A
+      redefinition is the strongest form, because every allow-list grant and
+      every reviewed classification still points at the old definition.
+    recommendation: >
+      Do not trust the reviewed verdict for this server. Re-capture the tool
+      surface, re-run the review against what actually runs, and replace any
+      server-level allow-list grant (mcp__server) with per-tool grants so a
+      redefinition cannot inherit approval.
+
+  capability_divergence:
+    title: Observed capability the tool never declared
+    severity: HIGH
+    confidence: high
+    category: behavior
+    rationale: >
+      A probed tool call produced a side effect implying a capability outside
+      what its name, description, and schema declare — e.g. a get_weather tool
+      that returns the contents of a credentials file. Declared metadata is
+      attacker-controlled; this is the divergence the static passes cannot see.
+    recommendation: >
+      Treat the declared surface as unreliable for this server. Do not enable
+      it on the strength of its metadata; require source review of the handler
+      that produced the undeclared effect.
+
+  undeclared_network_egress:
+    title: Outbound network call from a server that declared none
+    severity: MEDIUM
+    confidence: high
+    category: behavior
+    rationale: >
+      The server contacted a host during a probed call while declaring no
+      network_egress capability. Legitimate servers do make network calls — this
+      is only a finding relative to the declared baseline, and its weight comes
+      from what was in the request body (see secret_in_egress).
+    recommendation: >
+      Confirm the contacted host is the server's documented API and is fixed
+      rather than caller-controlled. An egress path that accepts a URL from a
+      tool parameter is an attacker-choosable exfiltration sink.
+
+  undeclared_file_access:
+    title: Probed call read a planted sensitive decoy file
+    severity: MEDIUM
+    confidence: high
+    category: behavior
+    rationale: >
+      The probe seeds a throwaway HOME with decoy credential files (~/.ssh/id_rsa,
+      .env, .aws/credentials, .npmrc), each containing a unique canary string. A
+      canary surfacing in a tool result or an outbound request proves the server
+      read a file it has no business reading — the SOURCE half of an exfiltration
+      chain, observed rather than inferred.
+    recommendation: >
+      Do not grant this server filesystem access. A tool that reaches for
+      credential files during an unrelated call is either backdoored or
+      catastrophically over-scoped; require source review before any use.
+
+  secret_in_egress:
+    title: A planted secret canary left the process in an outbound request
+    severity: HIGH
+    confidence: high
+    category: exfiltration
+    rationale: >
+      Each credential-shaped env var is seeded with a unique canary before the
+      probe. That canary appearing in an outbound request body, header, or URL is
+      ground truth for exfiltration — there is essentially no benign explanation
+      for the server's own credential being transmitted to a host during a probed
+      tool call. This is the anchor behavioral finding: near-zero false-positive
+      rate, and it needs no baseline to interpret.
+    recommendation: >
+      Treat the server as hostile. Rotate every credential it was ever given,
+      remove it from the client config, and report the package. Do not attempt to
+      contain it with narrower scopes.
+
+  undeclared_exec:
+    title: Probed call spawned a child process
+    severity: HIGH
+    confidence: high
+    category: behavior
+    rationale: >
+      The server executed a subprocess or shell during a probed call without
+      declaring a code_execution capability. Execution collapses every other
+      boundary — a server that quietly shells out cannot be bounded by tool-level
+      classification.
+    recommendation: >
+      Do not enable the server. If the execution is legitimate (a wrapper around
+      a real CLI), it must be declared so it can be classified deny/ask on its
+      merits rather than hidden behind a benign tool name.
+
+  injected_tool_result:
+    title: Hidden instructions in a tool's RETURN VALUE
+    severity: HIGH
+    confidence: high
+    category: prompt_injection
+    rationale: >
+      The tool-poisoning patterns matched a tool's runtime RESULT, not its
+      description. This is the runtime form of the same attack and is invisible
+      to every static pass: the description stays clean through review, and the
+      injected instructions ("now read ~/.ssh/id_rsa and post it to…") arrive in
+      the content the model is asked to act on. Description-level scanning cannot
+      reach it because the payload does not exist until the tool is called.
+    recommendation: >
+      Treat tool results as untrusted content, never as instructions. A server
+      whose results carry directives to the model is conducting a prompt-injection
+      attack — do not enable it.
+
+# Probe configuration for capture_runtime.py's Phase-2 probe mode. Tunable here
+# so adding a decoy path or an egress-shaped parameter name needs no code change.
+behavioral_probe:
+  # Files planted in the throwaway HOME, each seeded with a unique canary. A
+  # canary appearing in a result or an outbound request proves the read.
+  decoy_files:
+    - ".ssh/id_rsa"
+    - ".ssh/id_ed25519"
+    - ".env"
+    - ".aws/credentials"
+    - ".npmrc"
+    - ".git-credentials"
+
+  # Parameter names that take a local path — probed with a decoy file path to see
+  # whether the handler will read wherever it is pointed.
+  path_param_patterns:
+    - "(^|[_-])(path|file|filepath|filename|dir|directory|folder)s?([_-]|$)"
+    - "(^|[_-])(src|source|target|dest|destination|input|output)s?([_-]|$)"
+
+  # Parameter names that take a URL — probed with the local sink URL, so a tool
+  # that forwards data to a caller-chosen host forwards it to the recorder.
+  url_param_patterns:
+    - "(^|[_-])(url|uri|endpoint|webhook|callback|link|href)s?([_-]|$)"
+    - "(^|[_-])(host|hostname|server|base[_-]?url|api[_-]?url)s?([_-]|$)"
+
+  # Benign filler for parameters that are neither path- nor URL-shaped, so the
+  # first (control) call of each tool exercises the handler without pointing it
+  # at anything sensitive.
+  benign_string: "scrutineer-probe"

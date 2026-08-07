@@ -7,8 +7,10 @@ description: >
   rating (how much / how sensitive the data it can access is). Use this skill whenever the user says
   /scrutineer-mcp, asks to "review an MCP", "audit an MCP server", "is this MCP safe to install", "what data does
   this MCP access", "check this mcp config", or pastes a claude_desktop_config.json / .mcp.json / tools/list to
-  evaluate. This is NOT an MCP server itself and it does NOT start servers, call tools, or fetch URLs — it is a
-  conservative reviewer that reasons over static evidence.
+  evaluate. This is NOT an MCP server itself. By default it is a conservative reviewer that reasons over static
+  evidence and does NOT start servers, call tools, or fetch URLs. An opt-in behavioral pass (--behavioral)
+  launches the server in an instrumented harness to observe what it actually does — that pass executes untrusted
+  code and runs ONLY when the user explicitly asks for it.
 ---
 
 # /scrutineer-mcp
@@ -38,6 +40,7 @@ A server can be perfectly secure (SAFE) and still want to read every message you
 /scrutineer-mcp --config <path>         # Review a specific config file
 /scrutineer-mcp --tools <path>          # Also consume a tools/list JSON for the tool-surface pass
 /scrutineer-mcp --allowlist <path>      # Also check the client's permission grants for approval drift
+/scrutineer-mcp --behavioral            # Opt in to Pass 5 — RUNS the server to observe what it does
 /scrutineer-mcp --help                  # Show help and stop
 ```
 
@@ -47,6 +50,9 @@ A server can be perfectly secure (SAFE) and still want to read every message you
   for approval drift (see below). Often the same file as `--config`.
 - `--cleanup` (optional): after a Pass-3 source review, delete the fetched source automatically instead of
   prompting (see *Clean up the fetched source*). Use for batch/non-interactive runs.
+- `--behavioral` (optional): opt in to Pass 5. This **launches the server and calls its tools** in an
+  instrumented harness. Never infer it — run it only when the user asks for it in words, and only after
+  telling them what it does (see *Pass 5*). Add `--probe` in that pass for the full canary probe.
 - A bare argument that isn't a flag is treated as a **server name** to scope the review to.
 
 ### Config auto-discovery
@@ -75,7 +81,9 @@ If several exist, ask the user which to review rather than guessing.
 3. **Static-first.** Do NOT start the server, call its tools, or fetch its URLs to do this review.
    Requiring the server to run means the user already executed the thing they're trying to evaluate —
    that defeats the purpose. Pass 1 needs nothing running. Pass 2 needs tool *metadata*, ideally from a
-   capture; Pass 3 needs *source*, read-only.
+   capture; Pass 3 needs *source*, read-only. Passes 1–4 are the review; **Pass 5 (behavioral) is a
+   deliberate, user-requested second opinion, never a default step and never something you decide to add
+   because the static passes were inconclusive.**
 
 ## Pass 1 — Config review (static, no server run)
 
@@ -342,6 +350,84 @@ The bundled `validate_findings.py` runs this pass programmatically — `--run` s
 `--emit-prompt` to drive your own agent — and applies the triage back onto the analysis as a `validation`
 block with an auditable `validated_out` list. In an interactive review, do the same reasoning inline.
 
+## Pass 5 — Behavioral capture (opt-in, `basis: observed`) — RUNS THE SERVER
+
+Everything above reasons about what a server **declares** (config + `tools/list`) or what its source
+**statically contains**. None of it asserts what the server *does when it runs*. This pass adds the third
+evidence basis — **`basis: "observed"`**, which **outranks both `declared` and `implemented`**: an observed
+read plus observed egress is a recording, not a heuristic pairing.
+
+**This pass executes untrusted code. Gate it on the user, not on your own judgment.**
+
+- Run it only when the user explicitly asked for behavioral/dynamic review (`--behavioral`, "actually run
+  it", "probe it").
+- **Never run it to break a tie** in the static passes. An unbindable or closed-source server is capped at
+  CAUTION — that is the answer, not a reason to execute it.
+- Before the first run, state plainly what will happen: the server will be launched and its tools called on
+  this machine. `capture_runtime.py` without `--run` prints an inspectable plan and executes nothing — show
+  that plan rather than describing it from memory.
+
+```bash
+# The plan. Executes nothing.
+mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather --probe
+
+# Phase 1 — capture the running surface and diff it against the reviewed baseline
+mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+  --run --baseline analysis.json --out behavioral.json
+
+# No prior baseline? Launch twice and diff launch 1 against launch 2
+mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+  --run --relaunch --out behavioral.json
+
+# Phase 2 — add the canary probe (calls every tool)
+mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+  --run --probe --out behavioral.json
+
+# Fold the record back into the review. The ANALYZER still never runs anything —
+# it reads the record exactly like a tools/list.
+mcp-review/.venv/bin/python mcp-review/analyze_mcp.py --config .mcp.json --server weather \
+  --tools tools.json --behavioral behavioral.json
+```
+
+What the harness does, and why each part is safe to rely on:
+
+- **Scrubbed environment.** The child never receives `os.environ`. Credential-shaped env keys are replaced
+  with unique **canaries**; a server that exfiltrates during the probe exfiltrates a canary, not a live token.
+  `coverage.env_passed_through` lists any declared value that was passed verbatim — check it.
+- **Throwaway `$HOME`** seeded with **decoy credential files** (`~/.ssh/id_rsa`, `.env`, `.aws/credentials`,
+  `.npmrc`), each carrying its own canary. A canary coming back proves the read.
+- **Recording sink.** Egress is routed to a local recorder that captures the request and **never forwards it
+  onward** — capturing exfiltration must not also perform it.
+
+### The behavioral findings
+
+| Finding | What it proves | How to weigh it |
+|---|---|---|
+| `secret_in_egress` | A planted canary left the process in an outbound request | **The anchor finding.** Ground truth, near-zero FP — a server transmitting its own credential has no benign explanation. Hard BLOCK. |
+| `undeclared_file_access` | A probed call read a planted decoy credential file | The SOURCE half of an exfil chain, observed. HIGH when the contents also egressed. |
+| `injected_tool_result` | Tool-poisoning patterns matched a **return value** | The runtime form of the attack — the description stayed clean through review because the payload doesn't exist until the call. Hard BLOCK when confirmed. |
+| `manifest_drift` | The running `tools/list` ≠ the reviewed one | **Redefinition** (same name, new definition) is HIGH: every grant and classification still points at the name. Added/removed is MEDIUM. |
+| `capability_divergence` | An observed effect implies a capability no tool declares | The declared surface is unreliable for this server; demand source for the handler that produced it. |
+| `undeclared_network_egress` | Outbound calls from a server declaring none | Judged **relative to the declared baseline** — a search server *should* egress. Weight comes from what was in the body. |
+| `undeclared_exec` | A probed call spawned a child process | Execution collapses every other boundary. |
+
+Observed capabilities also feed `toxic_combinations()` at **high confidence**, which is what closes the
+`weather-exfil` blind spot: a server whose metadata never mentions reading files gets `read_and_exfil` at
+HIGH once the read is *recorded* rather than inferred.
+
+### Coverage is the honest limit — report it
+
+A probe only observes the code paths its inputs trigger. **Never present "no behavioral finding" as
+"clean"** — it means "nothing surfaced within what was probed," exactly the way SAFE is already scoped.
+Every record carries a `coverage` block; report what it says, including:
+
+- Which tools were called and which were not (`tools_called` / `tools_not_called`).
+- That trigger-gated behavior (a logic bomb on an input you didn't send) stays dormant and undetected.
+- That without an OS sandbox, egress is seen only from clients honoring proxy env vars or handed the sink
+  URL; HTTPS `CONNECT` records the host but not the body; and a file read whose contents never come back is
+  invisible.
+- If `captured: false`, the capture **failed** — say so. A failed capture is not an absence of findings.
+
 ## Verdict rubric (security axis)
 
 Don't sum smells into a score. The verdict is **hard blockers first, then a two-axis judgment.** Apply in
@@ -369,6 +455,12 @@ order:
   tried to escape the extract dir or smuggled a symlink/hardlink): the artifact actively attacks its reviewer.
 - **`egress_with_sensitive_fs` approval drift** — a network-egress tool is exposed while the client already
   grants filesystem access to sensitive paths (`.env`/`.ssh`/credentials): a live read-then-send exfil path.
+- **`secret_in_egress`** (Pass 5) — a planted canary was transmitted off-process. This is *recorded*
+  exfiltration, not an inferred capability pairing. Tell the user to rotate every credential the server
+  was ever given.
+- **`injected_tool_result`** (Pass 5) — a tool's return value carried hidden instructions to the model.
+- **`capability_divergence`** (Pass 5) where the observed capability is `code_execution` or
+  `secrets_access` — the declared surface is not what runs.
 
 ### Step 2 — If no hard blocker, judge on two axes
 
@@ -385,6 +477,12 @@ A `mutable_install_path` / `remote_endpoint` / closed-source server **cannot be 
 because you can't bind what you reviewed to what runs. Concretely: any server whose `source_artifact_match`
 is `unverifiable` or `unfetchable` is capped at CAUTION; only a `verified` match supports SAFE.
 
+**`manifest_drift` caps the verdict at CAUTION, always.** If the running surface isn't the reviewed surface,
+the review describes something that isn't executing — that is true even when the drift looks benign (a
+version bump). Escalate to **BLOCK** when a drifted tool *gained* a deny-tier capability
+(`code_execution`, `privilege_escalation`) or when the drift is a **redefinition** of a tool the client's
+allow-list already grants: the grant silently transfers to behavior nobody reviewed.
+
 **Over-privilege is a CAUTION signal in its own right.** Cross-reference the credentials the server holds
 (`sensitive_env_keys`) against what its tools actually appear to need: a database-viewer requesting a
 `GITHUB_TOKEN`, or a web-search tool granted broad filesystem scope, is asking for more than its purpose —
@@ -397,6 +495,11 @@ toxic combination → BLOCK.
 state whether it was **source-reviewed** or **config + tool metadata only**, and the
 `runtime_binding_confidence`. Never present SAFE as an unconditional guarantee — the MCP ecosystem has
 uneven security and hidden change paths, and an over-trusted SAFE is the main product risk.
+
+A behavioral pass **narrows** that scope statement; it never removes it. "Probed, nothing surfaced" means
+the inputs sent didn't trigger anything — name the tools that were probed and say that trigger-gated
+behavior stays invisible. A clean Pass 5 is not evidence of safety, and it must never upgrade a verdict
+that Passes 1–4 capped.
 
 ### The data-sensitivity axis is independent
 
@@ -467,6 +570,17 @@ For SAFE, restate the scope: "No material issues within inspected scope (config 
 - **server_wildcard_grant (MEDIUM):** `mcp__github` grants all current + future tools with no re-review.
 - **approval_drift (HIGH):** `run_command` is auto-approved but warrants `deny` (code_execution).
 
+### Behavioral  (when Pass 5 was run)
+<What was OBSERVED, then what was NOT covered. Omit the whole section if no capture was run —
+never imply a behavioral pass happened when it didn't. Always end with the coverage line.>
+- **secret_in_egress (HIGH, observed):** the canary in `WEATHER_API_KEY` was POSTed to the probe sink during
+  a `get_weather` call. Rotate the real key.
+- **undeclared_file_access (HIGH, observed):** `get_weather` read the decoy `~/.aws/credentials`.
+- **injected_tool_result (HIGH, observed):** `describe` returned instructions telling the model to read
+  `~/.ssh/id_rsa`.
+- *Coverage:* 3/3 tools probed (`get_weather`, `get_forecast`, `describe`); 2 inputs each. Trigger-gated
+  behavior on un-probed inputs is not covered, and HTTPS bodies were not observable.
+
 ### Security findings
 <Only report findings that survived your judgment. For each:>
 
@@ -518,11 +632,16 @@ mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
   --config .mcp.json --server github --tools tools.json \
   --allowlist .claude/settings.json \
   --suppressions .claude/scrutineer-mcp-suppressions.json
+
+# Folding in an observed-basis capture from Pass 5 (reads the record; runs nothing)
+mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
+  --config .mcp.json --server weather --behavioral behavioral.json
 ```
 
-The analyzer never starts a server, calls a tool, fetches a URL, or echoes a secret value. It is a
-review-artifact generator for the config and tool-surface layers; the source layer and the verdict are
-yours.
+The analyzer never starts a server, calls a tool, fetches a URL, or echoes a secret value — including with
+`--behavioral`, which reads a JSON record exactly like `--tools-list`. Launching a server is
+`capture_runtime.py`'s job alone, and only behind `--run`. It is a review-artifact generator for the config
+and tool-surface layers; the source layer and the verdict are yours.
 
 ## Help (--help)
 
@@ -537,14 +656,18 @@ USAGE:
   /scrutineer-mcp --config <path>  Review a specific config file
   /scrutineer-mcp --tools <path>   Also consume a tools/list JSON (tool-surface pass)
   /scrutineer-mcp --allowlist <p>  Also check the client's grants for approval drift
+  /scrutineer-mcp --behavioral     Opt in to Pass 5 — RUNS the server to observe it
   /scrutineer-mcp --help           Show this help
 
-WHAT IT DOES (static-first — never runs the server):
+WHAT IT DOES (static by default — Passes 1-4 never run the server):
   1. Config review     install/transport/secret/scope smells (incl. URLs in args) + provenance/containment
   2. Tool-surface      capability classification (allow/ask/deny) + data categories + schema-intent
                        + tool-poisoning / hidden-instruction scan over descriptions
   3. Source review     handler injection, secret handling, exfil paths, obfuscation (when source available)
   4. Self-review       agentic false-positive sweep over the candidate findings (validate_findings.py)
+  5. Behavioral        OPT-IN, EXECUTES THE SERVER (capture_runtime.py): manifest drift vs. the reviewed
+                       surface, canary-proof secret exfiltration, decoy file reads, and prompt injection
+                       in tool RESULTS. Scrubbed env + throwaway HOME + a sink that never forwards.
   +  Toxic combinations (severity/confidence-gated) and approval drift (granted vs. recommended)
 
 REPORTS TWO AXES:

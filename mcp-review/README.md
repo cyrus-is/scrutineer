@@ -22,6 +22,7 @@ is `generate-servicemap`: a static skill plus a runtime Python helper.
 | `analyze_mcp.py` | **Deterministic half.** Parses config + `tools/list`, flags known patterns reproducibly, tags candidate capabilities and data categories (each with the matched-token *evidence* and a *confidence*), scans descriptions for tool-poisoning, emits confidence-gated toxic combinations, and computes stable digests. Produces *evidence, never verdicts*. |
 | `fetch_source.py` | **Safe-acquisition half of Pass 3.** Resolves + downloads source via registry HTTP APIs (or a commit-pinned GitHub tarball), verifies integrity, and extracts with a path-sanitizing extractor. Never invokes npm/pip/git; never executes fetched code. Emits a manifest with `source_artifact_match`. |
 | `validate_findings.py` | **Optional agentic false-positive sweep (Pass 4).** Extracts every candidate finding with its evidence, builds a triage prompt, and applies the result back onto the analysis — suppress-only, auditable. Judgment is agentic (`--run` shells to `claude -p`); the extract/prompt/apply scaffolding is pure and tested. A separate entrypoint, so the analyzer's offline guarantee is untouched. |
+| `capture_runtime.py` | **Optional behavioral capture (Pass 5) — the only piece that RUNS a server.** Launches it behind the stdio handshake and records the surface it actually serves (manifest drift vs. the reviewed baseline), plus, with `--probe`, what each tool call does: canary-seeded credentials, a throwaway `HOME` full of decoy credential files, and a local sink that records egress without forwarding it. Produces `basis: "observed"` findings. Gated behind `--run`; `analyze_mcp.py` never imports it. |
 | `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, runs the Pass-4 self-review, assigns the verdict. Copied to `.claude/commands/scrutineer-mcp.md`. |
 | `mcp_risk_guidance.yaml` | Tunable catalog: config-smell definitions, sensitive-env-key patterns, package-runner/shell lists, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns. |
 
@@ -77,10 +78,26 @@ Safely fetch a server's source for Pass 3 (never runs npm/pip/git, never execute
 .venv/bin/python fetch_source.py --github owner/repo --ref <40-hex-sha> --fetch
 ```
 
+Observe what a server actually *does* (Pass 5 — **this runs the server**, gated behind `--run`):
+
+```bash
+# The plan. Executes nothing.
+.venv/bin/python capture_runtime.py --config .mcp.json --server weather --probe
+
+# Capture the running surface + diff it against the reviewed baseline
+.venv/bin/python capture_runtime.py --config .mcp.json --server weather \
+  --run --baseline analysis.json --out behavioral.json
+
+# Full canary probe, then fold the record back in (the analyzer still runs nothing)
+.venv/bin/python capture_runtime.py --config .mcp.json --server weather --run --probe --out behavioral.json
+.venv/bin/python analyze_mcp.py --config .mcp.json --server weather --behavioral behavioral.json
+```
+
 ## The passes (static-first)
 
-It never starts the server, calls a tool, or fetches a URL. Requiring the server to run would mean you
-already executed the thing you're trying to evaluate.
+Passes 1–4 never start the server, call a tool, or fetch a URL. Requiring the server to run would mean you
+already executed the thing you're trying to evaluate. Pass 5 is the deliberate exception — opt-in, gated,
+and never part of the default review.
 
 1. **Config review** — parse the `mcpServers` map; flag shell wrappers, on-the-fly package-runner installs,
    unpinned/mutable sources, non-HTTPS remotes, credentials-in-URL, sensitive-credential requirements, and
@@ -111,6 +128,24 @@ already executed the thing you're trying to evaluate.
    web-search param) — **suppress-only and auditable** (each removal carries a reason), never able to
    escalate. Run it via `validate_findings.py` (`--run` shells to a model; `--emit-prompt` to drive your own)
    or do the same reasoning inline as Pass 4 of the skill.
+5. **Behavioral capture (optional, opt-in — RUNS the server)** — the `basis: "observed"` layer, and the only
+   pass that answers *what does it actually do?* rather than *what does it claim?* `capture_runtime.py`
+   launches the server behind the stdio handshake and:
+   - diffs the `tools/list` it actually serves against the reviewed baseline (`--baseline`) or against a
+     second launch (`--relaunch`) — **`manifest_drift`**, the rug-pull the static pass can only make
+     "detectable on re-review". A redefinition (same name, new definition) is escalated to HIGH;
+   - scans tool **return values** for the tool-poisoning patterns — **`injected_tool_result`**, the runtime
+     form of the attack, invisible statically because the payload doesn't exist until the call;
+   - with `--probe`, calls every tool twice (benign, then probe inputs) with each credential-shaped env var
+     seeded with a unique **canary**, a throwaway `HOME` full of **decoy credential files**, and egress
+     routed to a local sink that records but **never forwards**. A canary surfacing in an outbound request is
+     **`secret_in_egress`** — ground truth for exfiltration, with essentially no benign explanation; a decoy
+     canary coming back is **`undeclared_file_access`**.
+
+   Observed capabilities feed `toxic_combinations()` at high confidence, which closes the `weather-exfil`
+   blind spot: a server whose metadata never mentions file access gets `read_and_exfil` at HIGH once the read
+   is *recorded* rather than inferred. Every record carries a `coverage` block — a probe only sees the paths
+   its inputs trigger, so **absence of findings is never reported as clean**.
 
 Two cross-cutting evidence layers feed the verdict:
 
