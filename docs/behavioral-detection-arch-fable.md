@@ -6,8 +6,18 @@ behavior; proposes new, gated modules that sit beside the static analyzer.*
 > **Implementation status.** Phases 0–2 are built (`mcp-review/capture_runtime.py`,
 > `basis: "observed"` in `analyze_mcp.py`, the `behavioral_findings:` catalog in
 > `mcp_risk_guidance.yaml`, `mcp-review/tests/test_capture_runtime.py`). Phase 3 (OS-sandboxed
-> side-effect tracer) and Phase 4 (continuous interception proxy) are **not built** and remain
-> proposals — §5's caveats about them still stand.
+> side-effect tracer) is **not built** and is next in line on this same audit track — §5's
+> caveats about it still stand.
+>
+> **Phase 4 is a different animal, not a next step.** Phases 0–3 are all one-shot,
+> pre-install audit work — the same shape as everything else `/scrutineer-mcp` does. Phase 4
+> (continuous interception proxy) is a standing *production* component: it stays attached to a
+> server after install and watches real traffic. That's a different problem (an MCP IDS/gateway,
+> not an auditor), a different trust model (it sits in the request path), and a different
+> maintenance burden (it's infra, not a one-shot check). Treat it as a **future-feature-at-best
+> idea, not a committed phase** — it should not be picked up under this design doc's momentum
+> without a separate decision to build a runtime product. §5's caveats about it still stand if
+> that decision is ever made.
 >
 > Where the build diverged from this doc: probe calls pass **every** parameter, not just the
 > required ones, because an exfiltration sink is exactly the kind of parameter a server leaves
@@ -298,19 +308,26 @@ Sizes: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week+.
   and *say so* in the report (coverage honesty).
 - Tests: assert a `get_weather` fixture that opens `~/.aws/credentials` yields `capability_divergence`.
 
-### Phase 4 — Continuous interception proxy (runtime IDS) · **L**
-*The only mechanism that catches trigger-gated behavior; an ops component, ship last / optional.*
+---
+
+### Phase 4 (NOT on the audit roadmap) — Continuous interception proxy (runtime IDS) · **L**
+*A different product, not a next phase. The only mechanism that catches trigger-gated behavior —
+but that's because it's an always-on ops component watching real production traffic, not a
+one-shot pre-install check. Future-feature-at-best; needs its own build decision, not inherited
+momentum from Phases 0–3.*
 - Transparent stdio + HTTP MCP proxy: `proxy(upstream_cmd, baseline, policy) -> stream` with a
   per-call hook `on_tool_call(name, args, result, effects)` that diffs against the reviewed baseline
   and emits behavioral findings on drift / injected results, optionally *enforcing* (refuse a call
   that trips a deny rule).
-- Positioned as "MCP IDS," documented as distinct from the pre-install audit. Out of scope for the
-  one-shot `/scrutineer-mcp` flow but the natural end state.
+- Positioned as "MCP IDS," documented as distinct from the pre-install audit — a different trust
+  model (sits in the request path) and a different maintenance burden (infra, not a check) from
+  everything else in this doc.
 
 **Sequencing rationale:** Phase 0 is a hard prerequisite (everything writes into its schema). Phase 1
 is the MVP — maximum gap-closure per line, no sandbox needed. Phase 2 adds the anchor high-confidence
-signal. Phase 3 generalizes side effects. Phase 4 is the optional runtime product. A coding agent can
-stop after any phase with a coherent, shippable increment.
+signal. Phase 3 generalizes side effects. **Phases 0–3 are the audit track and a coding agent can
+stop after any of them with a coherent, shippable increment. Phase 4 is out of that sequence
+entirely** — it's listed here for completeness, not as where the track leads.
 
 ---
 
