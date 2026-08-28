@@ -1,0 +1,453 @@
+# Advisory-derived Swift/iOS investigations shared by the security and peer
+# review generators. Raw third-party patches are deliberately not vendored;
+# immutable commit URLs, patch hashes, and semantic transformations retain the
+# evidence without redistributing source under this repository's MIT license.
+
+schema_version: "1.0.0"
+language: "swift"
+
+source_snapshot:
+  advisory_database_repository: "https://github.com/github/advisory-database"
+  advisory_database_commit: "6e1af5dc39883b8a684f6483b728fd18c5808859"
+  advisory_database_commit_date: "2026-08-28T06:32:52Z"
+  advisory_database_license: "CC-BY-4.0"
+  github_reviewed_swifturl_records: 62
+  active_fixed_swifturl_records: 56
+  affected_repository_fix_linked_records: 40
+  included_fix_records: 9
+  coverage_note: >-
+    GitHub's OSV records identify package ecosystems, not runtime platforms.
+    SwiftURL is a Swift Package Manager ecosystem and is not an iOS label. This
+    corpus includes inspected production Swift fixes with evidenced iOS or
+    portable-Apple applicability, plus reviewed iOS Swift fixes found in
+    non-Swift monorepo ecosystems. Missing or non-Swift upstream fixes do not
+    become speculative patterns.
+
+selection_policy:
+  github_reviewed_only: true
+  exclude_withdrawn: true
+  require_fixed_version: true
+  require_resolved_fix: true
+  require_production_swift_hunk: true
+  accepted_platform_classes:
+    - "ios-app"
+    - "ios-first-library"
+    - "apple-cross-platform"
+    - "portable-swift"
+
+fixes:
+  - advisory_id: "GHSA-9m44-rr2w-ppp7"
+    package: "swift-crypto"
+    source_repository: "apple/swift-crypto"
+    fixed_versions: ["4.3.1"]
+    platform_class: "apple-cross-platform"
+    resolution: "official-release-diff"
+    ios_evidence: "The advisory's HPKE proof of concept explicitly exercises the vulnerable path on iOS."
+    fix_commits:
+      - url: "https://github.com/apple/swift-crypto/commit/bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84"
+        patch_sha256: "61b88c9ef8101b436b399cd67ab05d87b9500841d0f0086eeda36b52b4ec9606"
+        production_files:
+          - "Sources/Crypto/KEM/BoringSSL/XWing_boring.swift"
+
+  - advisory_id: "GHSA-88q6-jcjg-hvmw"
+    package: "github.com/beatt83/jose-swift"
+    source_repository: "beatt83/jose-swift"
+    fixed_versions: ["6.0.2"]
+    platform_class: "ios-first-library"
+    resolution: "advisory-reference"
+    ios_evidence: "The Swift package and repository identify iOS as a supported client platform."
+    fix_commits:
+      - url: "https://github.com/beatt83/jose-swift/commit/13e5ae6f23ef1487b0dad72540eff414272bd7ca"
+        patch_sha256: "ca325f744159ba95869675fe6dea811bda1447740d97c623af6f853ea11ea1f3"
+        production_files:
+          - "Sources/JSONWebSignature/JWS+Verify.swift"
+          - "Sources/JSONWebToken/JWT+Verification.swift"
+          - "Sources/JSONWebToken/Validators/SigningAlgorithmBlackListValidator.swift"
+
+  - advisory_id: "GHSA-r3fr-7m74-q7g2"
+    package: "CocoaMQTT"
+    source_repository: "emqx/CocoaMQTT"
+    fixed_versions: ["2.2.2"]
+    platform_class: "ios-first-library"
+    resolution: "advisory-reference"
+    ios_evidence: "CocoaMQTT is distributed as an iOS and macOS MQTT client library."
+    fix_commits:
+      - url: "https://github.com/emqx/CocoaMQTT/commit/010bca6f61b97d726252f61641d331a2bf82b338"
+        patch_sha256: "b2f438660848234db67fa3124bc1fde5512ab3fa5d80e9a8ea1b9cdd9201c01e"
+        production_files:
+          - "Source/CocoaMQTTReader.swift"
+          - "Source/FramePublish.swift"
+          - "Source/FrameAuth.swift"
+          - "Source/FrameDisconnect.swift"
+
+  - advisory_id: "GHSA-jq43-q8mx-r7mq"
+    package: "github.com/migueldeicaza/SwiftTerm"
+    source_repository: "migueldeicaza/SwiftTerm"
+    fixed_versions: ["1.2.0"]
+    platform_class: "apple-cross-platform"
+    resolution: "advisory-reference"
+    ios_evidence: "SwiftTerm supplies terminal views for iOS and macOS."
+    fix_commits:
+      - url: "https://github.com/migueldeicaza/SwiftTerm/commit/a94e6b24d24ce9680ad79884992e1dff8e150a31"
+        patch_sha256: "644a4872c00db82b36c8d57f7d2b51c9ff0c5aba6ee9bfbceb581def638397f6"
+        production_files:
+          - "Sources/SwiftTerm/Terminal.swift"
+
+  - advisory_id: "GHSA-w8xv-rwgf-4fwh"
+    package: "github.com/apple/swift-asn1"
+    source_repository: "apple/swift-asn1"
+    fixed_versions: ["1.3.1"]
+    platform_class: "portable-swift"
+    resolution: "advisory-reference"
+    ios_evidence: "The parser is portable Swift used by Apple-platform TLS and certificate code."
+    fix_commits:
+      - url: "https://github.com/apple/swift-asn1/commit/ae33e5941bb88d88538d0a6b19ca0b01e6c76dcf"
+        patch_sha256: "c71ee9650592ae6f25e16ec75eb76403fa45b25d64b1a68107b451db0b665722"
+        production_files:
+          - "Sources/SwiftASN1/DER.swift"
+          - "Sources/SwiftASN1/Basic ASN1 Types/ASN1Integer.swift"
+          - "Sources/SwiftASN1/Basic ASN1 Types/ASN1OctetString.swift"
+
+  - advisory_id: "GHSA-5844-q3fc-56rh"
+    package: "github.com/pubnub/swift"
+    source_repository: "pubnub/swift"
+    fixed_versions: ["6.2.0"]
+    platform_class: "ios-first-library"
+    resolution: "official-release-diff"
+    ios_evidence: "The advisory explicitly covers the PubNub iOS Swift SDK."
+    fix_commits:
+      - url: "https://github.com/pubnub/swift/commit/56c86877d8a0dd50ae981905837940341ead89af"
+        patch_sha256: "2588e73d5e894dfd2d35a05f70faf1b797b62af02e79ef758d3820c9dcab0f6b"
+        production_files:
+          - "Sources/PubNub/Helpers/Crypto/Cryptors/AESCBCCryptor.swift"
+          - "Sources/PubNub/Helpers/Crypto/Miscellaneous/CryptorVector.swift"
+
+  - advisory_id: "GHSA-c2cc-3569-6jh2"
+    package: "github.com/weichsel/ZIPFoundation"
+    source_repository: "weichsel/ZIPFoundation"
+    fixed_versions: ["0.9.18"]
+    platform_class: "apple-cross-platform"
+    resolution: "official-release-fix-series"
+    ios_evidence: "ZIPFoundation's package and podspec support iOS."
+    fix_commits:
+      - url: "https://github.com/weichsel/ZIPFoundation/commit/f000f30f5c79f7e1f124c255bd1c2518b6124703"
+        patch_sha256: "7b1449fd36251bdfa4363cb338fc0d116ec3ba825f90ffb6cc9c94f6bb001b53"
+        production_files:
+          - "Sources/ZIPFoundation/FileManager+ZIP.swift"
+      - url: "https://github.com/weichsel/ZIPFoundation/commit/4b24bdfa92cbcfdac482373a4a8a059d611150c8"
+        patch_sha256: "cee46b434b8fce9900107cef5d6a9c2d186fcf0120195b0b94245e2fa720776b"
+        production_files:
+          - "Sources/ZIPFoundation/Archive+Reading.swift"
+          - "Sources/ZIPFoundation/Archive.swift"
+
+  - advisory_id: "GHSA-4p4f-fc8q-84m3"
+    package: "openclaw"
+    source_repository: "openclaw/openclaw"
+    fixed_versions: ["2026.4.2"]
+    platform_class: "ios-app"
+    resolution: "advisory-reference"
+    ios_evidence: "The fix is confined to production Swift under apps/ios."
+    fix_commits:
+      - url: "https://github.com/openclaw/openclaw/commit/49d08382a90f71dabe2877b3f6729ad85f808d57"
+        patch_sha256: "4f132490123ecc9eb7b6375cce23819a2672a7ccbfdbec70ec232d596bb29b7c"
+        production_files:
+          - "apps/ios/Sources/Model/NodeAppModel+Canvas.swift"
+          - "apps/ios/Sources/Screen/ScreenController.swift"
+          - "apps/ios/Sources/Screen/ScreenWebView.swift"
+
+  - advisory_id: "GHSA-pv58-549p-qh99"
+    package: "openclaw"
+    source_repository: "openclaw/openclaw"
+    fixed_versions: ["2026.2.14"]
+    platform_class: "ios-app"
+    resolution: "advisory-reference"
+    ios_evidence: "The cross-client fix includes production Swift in the native iOS gateway connection path."
+    fix_commits:
+      - url: "https://github.com/openclaw/openclaw/commit/d583782ee322a6faa1fe87ae52455e0d349de586"
+        patch_sha256: "2b5d73f792c68c553d5bfdc298863d98404eaf9e926ec268a4431a538291c95b"
+        production_files:
+          - "apps/ios/Sources/Gateway/GatewayConnectionController.swift"
+          - "apps/ios/Sources/Gateway/GatewayServiceResolver.swift"
+
+patterns:
+  - id: "swift-ffi-fixed-buffer-length"
+    title: "Unchecked Swift buffer length at a native API boundary"
+    vulnerable_pattern: >-
+      Attacker-controlled `Data` reaches `withUnsafeBytes`, `baseAddress`, or an
+      `Unsafe*Pointer` passed to a C or Objective-C function that assumes a
+      compile-time buffer size, without an exact count check before the handoff.
+    verify: >-
+      Trace the value from an external source to the native declaration; confirm
+      that the callee has no authoritative length parameter or assumes a fixed
+      size, and that no dominating guard enforces that size.
+    safe_when: >-
+      The Swift wrapper rejects every non-exact length before obtaining the
+      pointer, or the native callee receives and validates an authoritative
+      length before any read or write.
+    secure_alternative: >-
+      Add an exact `guard data.count == expectedLength else { throw ... }`
+      before entering `withUnsafeBytes`, and fail closed with a typed error.
+    evidence: ["GHSA-9m44-rr2w-ppp7"]
+    security_review:
+      enabled: true
+      owasp: "M4:2024 Insufficient Input/Output Validation"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "correctness"
+      severity: "issue"
+      failure_mode: "A short or oversized buffer can cause an out-of-bounds native read/write, crash, or memory disclosure despite otherwise safe Swift."
+
+  - id: "swift-jwt-algorithm-verification"
+    title: "JWT verification accepts a missing or `none` algorithm"
+    vulnerable_pattern: >-
+      JWT/JWS verification accepts a missing `alg`, treats `alg=none` as valid by
+      default, accepts `none` together with signature bytes, or chooses the
+      verification algorithm solely from the untrusted token header.
+    verify: >-
+      Follow the token through the actual verification call and its default
+      validators; confirm that the caller does not enforce the expected
+      algorithm and that the decoded claims affect authentication or authorization.
+    safe_when: >-
+      An explicit allowlist requires the expected asymmetric or MAC algorithm,
+      rejects missing/`none` values and contradictory signature state, and the
+      signature is verified before claims are trusted.
+    secure_alternative: >-
+      Require an application-controlled algorithm allowlist, reject missing and
+      `none` algorithms by default, reject `alg=none` when any signature is
+      present, and verify before consuming claims.
+    evidence: ["GHSA-88q6-jcjg-hvmw"]
+    security_review:
+      enabled: true
+      owasp: "M3:2024 Insecure Authentication/Authorization"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "correctness"
+      severity: "issue"
+      failure_mode: "A forged unsigned token can be treated as verified and grant the attacker the victim's identity or privileges."
+
+  - id: "swift-untrusted-parser-trap"
+    title: "Untrusted parser input reaches a Swift trap"
+    vulnerable_pattern: >-
+      Network, file, certificate, or protocol bytes can reach
+      `preconditionFailure`, `fatalError`, a force unwrap, or an unchecked array
+      subscript/range because the parser assumes an internal state or minimum length.
+    verify: >-
+      Demonstrate the attacker-controlled byte sequence and confirm that ordinary
+      malformed input, rather than a programmer-only invariant, reaches the trap.
+    safe_when: >-
+      The trapping operation is dominated by complete bounds and state validation,
+      or the input is constructed exclusively inside the trusted process and cannot
+      cross a serialization boundary.
+    secure_alternative: >-
+      Convert malformed-input paths to typed thrown errors or failable parsing;
+      compute end offsets safely, guard them against `count`, and regression-test
+      empty, truncated, oversized, and protocol-invalid inputs.
+    evidence: ["GHSA-r3fr-7m74-q7g2", "GHSA-w8xv-rwgf-4fwh"]
+    security_review:
+      enabled: false
+    peer_review:
+      enabled: true
+      lens: "production-reliability"
+      severity: "issue"
+      failure_mode: "Malformed remote input terminates the app or connection instead of producing a recoverable parse error."
+
+  - id: "swift-protocol-parser-fail-closed"
+    title: "Protocol parser resumes after an invalid frame"
+    vulnerable_pattern: >-
+      A failed frame initializer, unknown frame type, invalid protocol-version
+      combination, or partial payload is logged and processing then resumes on
+      the same connection or dispatches partially initialized state.
+    verify: >-
+      Trace every parse-failure branch and confirm whether it disconnects/throws
+      before another read or delegate callback; check version-specific empty-field
+      rules rather than assuming one layout for every protocol version.
+    safe_when: >-
+      The protocol explicitly defines recoverable resynchronization and the code
+      proves a new trusted frame boundary before processing continues.
+    secure_alternative: >-
+      Centralize protocol-error handling, stop dispatch immediately, close or
+      reset the connection safely, and validate version-specific invariants before
+      slicing or force-unwrapping fields.
+    evidence: ["GHSA-r3fr-7m74-q7g2"]
+    security_review:
+      enabled: false
+    peer_review:
+      enabled: true
+      lens: "correctness"
+      severity: "issue"
+      failure_mode: "The parser can crash, desynchronize the stream, or deliver invalid state after malformed network input."
+
+  - id: "swift-terminal-control-sequence-reflection"
+    title: "Terminal control state is reflected back to an untrusted host"
+    vulnerable_pattern: >-
+      A terminal emulator stores attacker-controlled title or malformed control
+      sequence content and later includes that content in a device-status/control
+      response sent back to the terminal host or injected into an input stream.
+    verify: >-
+      Trace remote terminal bytes into stored UI/control state and then into
+      `sendResponse`, keyboard input, paste, or command-line data without treating
+      escape/control bytes as hostile.
+    safe_when: >-
+      The response is a fixed protocol constant, omits attacker-controlled state,
+      or a protocol-correct encoder proves that control bytes cannot become input.
+    secure_alternative: >-
+      Do not echo terminal titles or invalid control payloads in responses; return
+      the minimal constant response required by the protocol and keep display
+      state separate from host-bound input.
+    evidence: ["GHSA-jq43-q8mx-r7mq"]
+    security_review:
+      enabled: true
+      owasp: "M4:2024 Insufficient Input/Output Validation"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "correctness"
+      severity: "issue"
+      failure_mode: "A malicious terminal stream can replay stored escape content as user input and cause unintended command execution."
+
+  - id: "swift-archive-entry-containment"
+    title: "Archive entry escapes its extraction root"
+    vulnerable_pattern: >-
+      An archive member path is appended to a destination `URL`, or checked only
+      with a lexical `absoluteString.hasPrefix`, without rejecting absolute paths,
+      parent traversal, repeated separators, and path-component boundary tricks.
+    verify: >-
+      Follow the decoded archive name through every normalization step to the file
+      creation call and test `../`, absolute paths, doubled separators, prefix
+      siblings such as `/safe2`, and platform-specific separators.
+    safe_when: >-
+      The implementation rejects dangerous components before creation and proves
+      the standardized destination remains a descendant of the extraction root
+      using path components rather than an unbounded string prefix.
+    secure_alternative: >-
+      Reject absolute and parent components, normalize separators and the final
+      file URL, then enforce a component-boundary containment check immediately
+      before opening or creating the file.
+    evidence: ["GHSA-c2cc-3569-6jh2"]
+    security_review:
+      enabled: true
+      owasp: "M4:2024 Insufficient Input/Output Validation"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "data-integrity"
+      severity: "issue"
+      failure_mode: "A crafted archive can overwrite files outside the user-selected destination."
+
+  - id: "swift-archive-symlink-containment"
+    title: "Archive extraction follows an escaping symlink"
+    vulnerable_pattern: >-
+      Archive extraction creates or follows symlink entries without proving that
+      their target and every traversed path component remain inside the extraction
+      root, or it allows symlinks by default for untrusted archives.
+    verify: >-
+      Test absolute and relative link targets, links through a pre-existing
+      intermediate symlink, link-then-file ordering, and time-of-check/time-of-use
+      replacement before the final write.
+    safe_when: >-
+      Symlinks are rejected for untrusted archives, or descriptor-relative/no-follow
+      operations and per-component checks prevent both target escape and symlink hops.
+    secure_alternative: >-
+      Reject symlink entries by default; if required, resolve relative targets from
+      the link parent, enforce root containment, and create descendants without
+      following attacker-controlled intermediate symlinks.
+    evidence: ["GHSA-c2cc-3569-6jh2"]
+    security_review:
+      enabled: true
+      owasp: "M4:2024 Insufficient Input/Output Validation"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "data-integrity"
+      severity: "issue"
+      failure_mode: "A crafted archive symlink redirects later writes outside the extraction directory."
+
+  - id: "swift-cbc-random-iv"
+    title: "CBC encryption reuses a fixed or predictable IV"
+    vulnerable_pattern: >-
+      New AES-CBC encryption uses a static IV such as a string literal, makes
+      random IVs an opt-in/disabled option, uses non-cryptographic randomness, or
+      ignores the return status from `SecRandomCopyBytes`/`CCRandomGenerateBytes`.
+    verify: >-
+      Confirm this is encryption rather than legacy-only decryption, the mode is
+      CBC, and the IV can repeat or be predicted for messages under the same key.
+    safe_when: >-
+      A fresh block-sized IV comes from the platform CSPRNG for every encryption,
+      RNG failure aborts encryption, and the IV is stored alongside the ciphertext;
+      deterministic nonce derivation is used only by a construction that specifies it.
+    secure_alternative: >-
+      Make the recommended/default encryptor generate a fresh IV with
+      `SecRandomCopyBytes` or `CCRandomGenerateBytes`, check success, and confine
+      fixed-IV behavior to explicit legacy decryption compatibility.
+    evidence: ["GHSA-5844-q3fc-56rh"]
+    security_review:
+      enabled: true
+      owasp: "M10:2024 Insufficient Cryptography"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "correctness"
+      severity: "issue"
+      failure_mode: "Repeated IVs leak plaintext relationships and make otherwise correct CBC encryption insecure."
+
+  - id: "ios-webview-bridge-exact-trust"
+    title: "WKWebView bridge grants native capability to a broad page set"
+    vulnerable_pattern: >-
+      A `WKScriptMessageHandler` dispatches privileged native actions after only
+      checking that the page is local-network, uses HTTP(S), has an allowlisted
+      scheme/host, or was reached through generic navigation; trust survives later
+      navigation or is not bound to the exact capability-backed document.
+    verify: >-
+      Trace every navigation path and message callback; compare the message frame's
+      effective origin/document with the exact URL or capability provisioned by
+      trusted native code, including redirects, subframes, fragments, ports, paths,
+      and state reset on navigation.
+    safe_when: >-
+      The handler exposes no privileged action, or dispatch requires an exact
+      normalized trusted document/capability established out of band and that trust
+      is cleared by every generic navigation.
+    secure_alternative: >-
+      Default bridge trust to false, grant it only on an authenticated/capability
+      navigation, normalize scheme and host while preserving security-relevant
+      port/path/query, validate at message dispatch, and clear trust on all other loads.
+    evidence: ["GHSA-4p4f-fc8q-84m3"]
+    security_review:
+      enabled: true
+      owasp: "M8:2024 Security Misconfiguration"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "architecture"
+      severity: "issue"
+      failure_mode: "A generic or attacker-controlled web page can invoke native agent, credential, filesystem, or device actions."
+
+  - id: "ios-discovery-metadata-trust"
+    title: "Unauthenticated discovery metadata controls routing or TLS trust"
+    vulnerable_pattern: >-
+      Bonjour/mDNS TXT fields choose a host, port, or certificate fingerprint,
+      override a previously stored pin, or trigger automatic connection to a newly
+      discovered service without explicit user trust.
+    verify: >-
+      Separate authenticated data from discovery hints; trace TXT values into URL
+      construction, TLS challenge handling, pin storage/precedence, TOFU, and
+      autoconnect selection.
+    safe_when: >-
+      Routing uses the resolved SRV plus A/AAAA endpoint, stored pins always win,
+      first trust requires explicit user intent or authenticated discovery, and
+      automatic reconnection is limited to a previously trusted stable identity.
+    secure_alternative: >-
+      Treat TXT records as display hints only, resolve the advertised service for
+      routing, never accept a discovered fingerprint over a stored pin, make TOFU
+      explicit, and require an existing trust record before autoconnect.
+    evidence: ["GHSA-pv58-549p-qh99"]
+    security_review:
+      enabled: true
+      owasp: "M5:2024 Insecure Communication"
+      severity_if_found: "HIGH"
+    peer_review:
+      enabled: true
+      lens: "architecture"
+      severity: "issue"
+      failure_mode: "An attacker on the local network can steer the app to an attacker endpoint and replace or bypass TLS identity."

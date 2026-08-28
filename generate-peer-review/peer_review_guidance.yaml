@@ -687,8 +687,10 @@ mobile:
     name: iOS (Swift/SwiftUI)
     detect_files:
       - "**/*.swift"
+      - "**/*.xcodeproj/project.pbxproj"
+      - "**/*.xcworkspace/contents.xcworkspacedata"
       - "**/project.yml"
-      - "**/*.pbxproj"
+      - "**/Package.swift"
     detect_content:
       - "import SwiftUI"
       - "import UIKit"

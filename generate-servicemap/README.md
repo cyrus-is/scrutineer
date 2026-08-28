@@ -39,7 +39,7 @@ From Claude Code in your repo:
 
 ## What it produces
 
-A `servicemap.json` (schema v1.0.0) containing:
+A `servicemap.json` (schema v1.1.0) containing:
 
 - **Components**: services, apps, libraries, infrastructure modules, CI/CD pipelines, data stores, external dependencies — each with language, framework, endpoints, auth/authz detail, env vars, container config, observability surface, and confidence scores
 - **Connections**: every inter-component relationship (HTTP, gRPC, database, queue, pub/sub, etc.) with protocol details, auth requirements, and confidence

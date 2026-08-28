@@ -1,0 +1,3172 @@
+{
+  "schemaVersion": "1.0.0",
+  "source": {
+    "repository": "https://github.com/github/advisory-database",
+    "commit": "6e1af5dc39883b8a684f6483b728fd18c5808859",
+    "commitDate": "2026-08-28T06:32:52Z",
+    "license": "CC-BY-4.0"
+  },
+  "scope": {
+    "githubReviewedOnly": true,
+    "withdrawnExcluded": true,
+    "fixedVersionRequired": true,
+    "candidateRule": "fixed SwiftURL affected range OR a reviewed advisory that explicitly identifies iOS and has a verified production Swift fix in a native iOS target",
+    "coverageCaveat": "GitHub OSV records do not encode runtime platform. This is an auditable candidate inventory, not a complete census of every iOS vulnerability."
+  },
+  "statistics": {
+    "candidateRecords": 58,
+    "swiftEcosystemRecords": 56,
+    "verifiedNativeIosSwiftFixRecords": 2,
+    "dispositions": {
+      "fix-linked-not-promoted": 36,
+      "other-repository-fix-only": 1,
+      "promoted-pattern-evidence": 9,
+      "unresolved-fix-link": 12
+    }
+  },
+  "records": [
+    {
+      "id": "GHSA-239c-6cv2-wwx8",
+      "aliases": [
+        "CVE-2022-1642"
+      ],
+      "published": "2023-06-07T16:07:36Z",
+      "modified": "2023-06-07T16:07:36Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-704"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-corelibs-foundation",
+          "fixedVersions": [
+            "5.6.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-corelibs-foundation/commit/b541491f73b39007a38f3ff5a0cbe89d09ef1614",
+          "kind": "commit",
+          "repository": "apple/swift-corelibs-foundation",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-2jx2-qcm4-rf9h",
+      "aliases": [
+        "CVE-2021-36153"
+      ],
+      "published": "2023-06-09T19:32:18Z",
+      "modified": "2023-06-09T19:32:18Z",
+      "severity": "HIGH",
+      "cwes": [],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/grpc/grpc-swift",
+          "fixedVersions": [
+            "1.2.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-39g5-644c-qwcg",
+      "aliases": [],
+      "published": "2026-05-07T01:43:31Z",
+      "modified": "2026-05-07T01:43:31Z",
+      "severity": "LOW",
+      "cwes": [
+        "CWE-20"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/container",
+          "fixedVersions": [
+            "0.12.3"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-3mwq-h3g6-ffhm",
+      "aliases": [
+        "CVE-2023-44386"
+      ],
+      "published": "2023-10-05T20:55:58Z",
+      "modified": "2024-02-09T00:31:39Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-231"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.84.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/090464a654b03148b139a81f8f5ac63b0856f6f3",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-4hfh-fch3-5q7p",
+      "aliases": [
+        "CVE-2026-27120"
+      ],
+      "published": "2026-02-19T19:40:08Z",
+      "modified": "2026-04-22T16:24:14Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-75",
+        "CWE-79",
+        "CWE-87"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/leaf-kit",
+          "fixedVersions": [
+            "1.4.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/leaf-kit/commit/8919e39476c3a4ba05c28b71546bb9195f87ef34",
+          "kind": "commit",
+          "repository": "vapor/leaf-kit",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-4p4f-fc8q-84m3",
+      "aliases": [
+        "CVE-2026-41398"
+      ],
+      "published": "2026-04-07T18:15:03Z",
+      "modified": "2026-04-28T18:22:08Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-284"
+      ],
+      "selectionBasis": [
+        "verified-native-ios-swift-fix"
+      ],
+      "affected": [
+        {
+          "ecosystem": "npm",
+          "name": "openclaw",
+          "fixedVersions": [
+            "2026.4.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/openclaw/openclaw/commit/49d08382a90f71dabe2877b3f6729ad85f808d57",
+          "kind": "commit",
+          "repository": "openclaw/openclaw",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "openclaw/openclaw",
+        "platformClass": "ios-app",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/openclaw/openclaw/commit/49d08382a90f71dabe2877b3f6729ad85f808d57",
+            "patchSha256": "4f132490123ecc9eb7b6375cce23819a2672a7ccbfdbec70ec232d596bb29b7c",
+            "productionFiles": [
+              "apps/ios/Sources/Model/NodeAppModel+Canvas.swift",
+              "apps/ios/Sources/Screen/ScreenController.swift",
+              "apps/ios/Sources/Screen/ScreenWebView.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "ios-webview-bridge-exact-trust"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-4px2-pw77-vc85",
+      "aliases": [
+        "CVE-2026-28898"
+      ],
+      "published": "2026-06-12T15:08:16Z",
+      "modified": "2026-07-15T21:23:10Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-116",
+        "CWE-444"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.44.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/61d1b44f6e4e118792be1cff88ee2bc0267c6f9a",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-4rhq-vq24-88gw",
+      "aliases": [
+        "CVE-2021-36154"
+      ],
+      "published": "2023-05-22T20:29:44Z",
+      "modified": "2023-05-22T20:29:44Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-674"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/grpc/grpc-swift",
+          "fixedVersions": [
+            "1.2.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-5844-q3fc-56rh",
+      "aliases": [
+        "CVE-2023-26154"
+      ],
+      "published": "2023-12-06T06:30:20Z",
+      "modified": "2025-07-22T15:14:55Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-331"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Go",
+          "name": "github.com/pubnub/go",
+          "fixedVersions": [
+            "0.0.0-20231016150651-428517fef5b9"
+          ]
+        },
+        {
+          "ecosystem": "Go",
+          "name": "github.com/pubnub/go/v5",
+          "fixedVersions": [
+            "5.0.4-0.20231016150651-428517fef5b9"
+          ]
+        },
+        {
+          "ecosystem": "Go",
+          "name": "github.com/pubnub/go/v6",
+          "fixedVersions": [
+            "6.1.1-0.20231016150651-428517fef5b9"
+          ]
+        },
+        {
+          "ecosystem": "Go",
+          "name": "github.com/pubnub/go/v7",
+          "fixedVersions": [
+            "7.2.0"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.pubnub:pubnub",
+          "fixedVersions": []
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.pubnub:pubnub-kotlin",
+          "fixedVersions": [
+            "7.7.0"
+          ]
+        },
+        {
+          "ecosystem": "NuGet",
+          "name": "Pubnub",
+          "fixedVersions": [
+            "6.19.0"
+          ]
+        },
+        {
+          "ecosystem": "Packagist",
+          "name": "pubnub/pubnub",
+          "fixedVersions": [
+            "6.1.0"
+          ]
+        },
+        {
+          "ecosystem": "Pub",
+          "name": "pubnub",
+          "fixedVersions": [
+            "4.3.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "pubnub",
+          "fixedVersions": [
+            "7.3.0"
+          ]
+        },
+        {
+          "ecosystem": "RubyGems",
+          "name": "pubnub",
+          "fixedVersions": [
+            "5.3.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pubnub/swift",
+          "fixedVersions": [
+            "6.2.0"
+          ]
+        },
+        {
+          "ecosystem": "crates.io",
+          "name": "pubnub",
+          "fixedVersions": [
+            "0.4.0"
+          ]
+        },
+        {
+          "ecosystem": "npm",
+          "name": "pubnub",
+          "fixedVersions": [
+            "7.4.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pubnub/go/commit/428517fef5b901db7275d9f5a75eda89a4c28e08",
+          "kind": "commit",
+          "repository": "pubnub/go",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/pubnub/javascript/commit/fb6cd0417cbb4ba87ea2d5d86a9c94774447e119",
+          "kind": "commit",
+          "repository": "pubnub/javascript",
+          "inAffectedRepository": false
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "pubnub/swift",
+        "platformClass": "ios-first-library",
+        "resolution": "official-release-diff",
+        "commits": [
+          {
+            "url": "https://github.com/pubnub/swift/commit/56c86877d8a0dd50ae981905837940341ead89af",
+            "patchSha256": "2588e73d5e894dfd2d35a05f70faf1b797b62af02e79ef758d3820c9dcab0f6b",
+            "productionFiles": [
+              "Sources/PubNub/Helpers/Crypto/Cryptors/AESCBCCryptor.swift",
+              "Sources/PubNub/Helpers/Crypto/Miscellaneous/CryptorVector.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-cbc-random-iv"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-5c9c-6x87-f9vm",
+      "aliases": [
+        "CVE-2022-4899"
+      ],
+      "published": "2023-03-31T21:30:37Z",
+      "modified": "2026-02-27T21:48:26Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-400"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "PyPI",
+          "name": "zstd",
+          "fixedVersions": [
+            "1.5.4.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/facebook/zstd",
+          "fixedVersions": [
+            "1.5.4"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/facebook/zstd/pull/3220",
+          "kind": "pull",
+          "repository": "facebook/zstd",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/sergey-dryabzhinsky/python-zstd/commit/c8a619aebdbd6b838fbfef6e19325a70f631a4c6",
+          "kind": "commit",
+          "repository": "sergey-dryabzhinsky/python-zstd",
+          "inAffectedRepository": false
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-6jj5-j4j8-8473",
+      "aliases": [
+        "CVE-2026-28499"
+      ],
+      "published": "2026-03-16T16:22:56Z",
+      "modified": "2026-05-07T13:24:10Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-116",
+        "CWE-79",
+        "CWE-80"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/leaf-kit",
+          "fixedVersions": [
+            "1.14.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/leaf-kit/commit/6044b844caa858a0c5f2505ac166f5a057c990dc",
+          "kind": "commit",
+          "repository": "vapor/leaf-kit",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-6ph5-fww6-vfwv",
+      "aliases": [
+        "CVE-2026-28975"
+      ],
+      "published": "2026-06-12T15:08:04Z",
+      "modified": "2026-06-12T15:08:04Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-409",
+        "CWE-770"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-extras",
+          "fixedVersions": [
+            "1.34.1"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-773g-x274-8qmf",
+      "aliases": [
+        "CVE-2022-3252"
+      ],
+      "published": "2023-06-07T16:05:48Z",
+      "modified": "2023-06-07T16:05:48Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-835"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-extras",
+          "fixedVersions": [
+            "1.14.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-extras",
+          "fixedVersions": [
+            "1.10.3"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-extras",
+          "fixedVersions": [
+            "1.9.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-extras/pull/177",
+          "kind": "pull",
+          "repository": "apple/swift-nio-extras",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio-extras/pull/177/commits/359015de2c49e426c27b1d25dbf599b08a9d3ee6",
+          "kind": "pull",
+          "repository": "apple/swift-nio-extras",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-7fj7-39wj-c64f",
+      "aliases": [
+        "CVE-2022-3215"
+      ],
+      "published": "2023-06-07T16:01:53Z",
+      "modified": "2023-06-07T16:01:53Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-113",
+        "CWE-74"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.42.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.39.1"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.29.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio/commit/a16e2f54a25b2af217044e5168997009a505930f",
+          "kind": "commit",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-84m3-f99p-cqx5",
+      "aliases": [
+        "CVE-2025-30405"
+      ],
+      "published": "2025-08-08T00:30:26Z",
+      "modified": "2026-05-07T13:24:36Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-190"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/0830af8207240df8d7f35b984cdf8bc35d74fa73",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-88q6-jcjg-hvmw",
+      "aliases": [],
+      "published": "2026-01-09T19:39:30Z",
+      "modified": "2026-03-25T20:10:46Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-327"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/beatt83/jose-swift",
+          "fixedVersions": [
+            "6.0.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/beatt83/jose-swift/commit/13e5ae6f23ef1487b0dad72540eff414272bd7ca",
+          "kind": "commit",
+          "repository": "beatt83/jose-swift",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/beatt83/jose-swift/pull/62",
+          "kind": "pull",
+          "repository": "beatt83/jose-swift",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "beatt83/jose-swift",
+        "platformClass": "ios-first-library",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/beatt83/jose-swift/commit/13e5ae6f23ef1487b0dad72540eff414272bd7ca",
+            "patchSha256": "ca325f744159ba95869675fe6dea811bda1447740d97c623af6f853ea11ea1f3",
+            "productionFiles": [
+              "Sources/JSONWebSignature/JWS+Verify.swift",
+              "Sources/JSONWebToken/JWT+Verification.swift",
+              "Sources/JSONWebToken/Validators/SigningAlgorithmBlackListValidator.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-jwt-algorithm-verification"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-9cfh-vx93-84vv",
+      "aliases": [
+        "CVE-2023-31136"
+      ],
+      "published": "2023-05-10T19:20:16Z",
+      "modified": "2023-05-10T19:20:16Z",
+      "severity": "LOW",
+      "cwes": [
+        "CWE-522"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/postgres-nio",
+          "fixedVersions": [
+            "1.14.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio/pull/2419",
+          "kind": "pull",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/vapor/postgres-nio/commit/2df54bc94607f44584ae6ffa74e3cd754fffafc7",
+          "kind": "commit",
+          "repository": "vapor/postgres-nio",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-9m39-3mf3-xwch",
+      "aliases": [
+        "CVE-2025-54949"
+      ],
+      "published": "2025-08-08T00:30:26Z",
+      "modified": "2026-05-07T13:25:19Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-122"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/ede82493dae6d2d43f8c424e7be4721abe5242be",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-9m44-rr2w-ppp7",
+      "aliases": [
+        "CVE-2026-28815"
+      ],
+      "published": "2026-04-03T03:39:38Z",
+      "modified": "2026-04-03T03:39:38Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-787"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "swift-crypto",
+          "fixedVersions": [
+            "4.3.1"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": {
+        "sourceRepository": "apple/swift-crypto",
+        "platformClass": "apple-cross-platform",
+        "resolution": "official-release-diff",
+        "commits": [
+          {
+            "url": "https://github.com/apple/swift-crypto/commit/bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+            "patchSha256": "61b88c9ef8101b436b399cd67ab05d87b9500841d0f0086eeda36b52b4ec9606",
+            "productionFiles": [
+              "Sources/Crypto/KEM/BoringSSL/XWing_boring.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-ffi-fixed-buffer-length"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-c2cc-3569-6jh2",
+      "aliases": [
+        "CVE-2023-39138"
+      ],
+      "published": "2023-08-31T00:30:17Z",
+      "modified": "2024-02-09T00:32:41Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-22"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/weichsel/ZIPFoundation",
+          "fixedVersions": [
+            "0.9.18"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": {
+        "sourceRepository": "weichsel/ZIPFoundation",
+        "platformClass": "apple-cross-platform",
+        "resolution": "official-release-fix-series",
+        "commits": [
+          {
+            "url": "https://github.com/weichsel/ZIPFoundation/commit/f000f30f5c79f7e1f124c255bd1c2518b6124703",
+            "patchSha256": "7b1449fd36251bdfa4363cb338fc0d116ec3ba825f90ffb6cc9c94f6bb001b53",
+            "productionFiles": [
+              "Sources/ZIPFoundation/FileManager+ZIP.swift"
+            ]
+          },
+          {
+            "url": "https://github.com/weichsel/ZIPFoundation/commit/4b24bdfa92cbcfdac482373a4a8a059d611150c8",
+            "patchSha256": "cee46b434b8fce9900107cef5d6a9c2d186fcf0120195b0b94245e2fa720776b",
+            "productionFiles": [
+              "Sources/ZIPFoundation/Archive+Reading.swift",
+              "Sources/ZIPFoundation/Archive.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-archive-entry-containment",
+        "swift-archive-symlink-containment"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-ccw9-q5h2-8c2w",
+      "aliases": [
+        "CVE-2022-24666"
+      ],
+      "published": "2023-05-18T17:30:44Z",
+      "modified": "2023-06-19T17:01:31Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-130"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.19.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/93215774aa7d223a5ad5aa0b80453375d669fa8f",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-cq3j-qj2h-6rv3",
+      "aliases": [
+        "CVE-2026-20613"
+      ],
+      "published": "2026-01-22T22:30:05Z",
+      "modified": "2026-01-22T22:30:05Z",
+      "severity": "LOW",
+      "cwes": [
+        "CWE-22"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/container",
+          "fixedVersions": [
+            "0.8.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/containerization",
+          "fixedVersions": [
+            "0.21.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/containerization/commit/3e93416b9a6d7b4c25fff7e9dea22a9ca687ee52",
+          "kind": "commit",
+          "repository": "apple/containerization",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-cq87-8r7h-962v",
+      "aliases": [
+        "CVE-2026-28970"
+      ],
+      "published": "2026-06-12T15:07:01Z",
+      "modified": "2026-06-12T15:07:01Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-93"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.100.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-f9hx-c6jf-3qxm",
+      "aliases": [
+        "CVE-2025-54950"
+      ],
+      "published": "2025-08-08T00:30:26Z",
+      "modified": "2026-05-07T13:25:46Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-125"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/b6b7a16df5e7852d976d8c34c8a7e9a1b6f7d005",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/pytorch/executorch/commit/fb03b6f85596a8f954d97929075335255b6a58d4",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-frg3-gpcx-968f",
+      "aliases": [
+        "CVE-2019-8849"
+      ],
+      "published": "2022-05-24T17:04:41Z",
+      "modified": "2025-08-04T14:23:36Z",
+      "severity": "CRITICAL",
+      "cwes": [],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-ssl",
+          "fixedVersions": [
+            "2.4.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-ssl/commit/109faef770994e71b6bafcc015e2e96b88a4af8c",
+          "kind": "commit",
+          "repository": "apple/swift-nio-ssl",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-gcj9-jj38-hwmc",
+      "aliases": [
+        "CVE-2021-21328"
+      ],
+      "published": "2023-06-09T19:31:47Z",
+      "modified": "2023-06-09T19:31:47Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-400"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.40.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/e3aa712508db2854ac0ab905696c65fd88fa7e23",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-h952-963h-rv99",
+      "aliases": [
+        "CVE-2025-30402"
+      ],
+      "published": "2025-07-11T18:30:34Z",
+      "modified": "2026-05-07T13:26:08Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-122"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0-rc1"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0-rc1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/93b1a0c15f7eda49b2bc46b5b4c49557b4e9810f",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-hg88-v3cw-3qrh",
+      "aliases": [
+        "CVE-2026-47121"
+      ],
+      "published": "2026-05-29T19:45:04Z",
+      "modified": "2026-07-21T13:52:01Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-22",
+        "CWE-59"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/sparkle-project/Sparkle",
+          "fixedVersions": [
+            "2.9.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/sparkle-project/Sparkle/commit/fe7b718d0736f3e139e374e26fbca96f29e13bf0",
+          "kind": "commit",
+          "repository": "sparkle-project/Sparkle",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-hj95-mhgf-jxc4",
+      "aliases": [
+        "CVE-2025-30404"
+      ],
+      "published": "2025-08-08T00:30:26Z",
+      "modified": "2026-05-07T13:26:28Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-190"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/d158236b1dc84539c1b16843bc74054c9dcba006",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-jq43-q8mx-r7mq",
+      "aliases": [
+        "CVE-2022-23465"
+      ],
+      "published": "2023-07-14T21:58:43Z",
+      "modified": "2024-02-09T00:34:39Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-94"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/migueldeicaza/SwiftTerm",
+          "fixedVersions": [
+            "1.2.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/migueldeicaza/SwiftTerm/commit/a94e6b24d24ce9680ad79884992e1dff8e150a31",
+          "kind": "commit",
+          "repository": "migueldeicaza/SwiftTerm",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "migueldeicaza/SwiftTerm",
+        "platformClass": "apple-cross-platform",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/migueldeicaza/SwiftTerm/commit/a94e6b24d24ce9680ad79884992e1dff8e150a31",
+            "patchSha256": "644a4872c00db82b36c8d57f7d2b51c9ff0c5aba6ee9bfbceb581def638397f6",
+            "productionFiles": [
+              "Sources/SwiftTerm/Terminal.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-terminal-control-sequence-reflection"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-mgc4-wqv7-4pxm",
+      "aliases": [],
+      "published": "2023-05-18T17:29:43Z",
+      "modified": "2023-05-18T17:29:43Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-444"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "1.14.2"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.13.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio/commit/8da5c5a4e6c5084c296b9f39dc54f00be146e0fa",
+          "kind": "commit",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio/commit/bfde40cac8eca25ce021552513b20ee23fc6e306",
+          "kind": "commit",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio/commit/df9390006bce7da1b6273f804d3acbbfdfcc6154",
+          "kind": "commit",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio/commit/f94b22b506e3557cb1b325534fa9bbcd39c90246",
+          "kind": "commit",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio/pull/1387",
+          "kind": "pull",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio/pull/1388",
+          "kind": "pull",
+          "repository": "apple/swift-nio",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-mvpq-2v8x-ww6g",
+      "aliases": [
+        "CVE-2026-23886"
+      ],
+      "published": "2026-01-21T01:05:09Z",
+      "modified": "2026-01-21T01:05:09Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-20"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-otel/swift-otel",
+          "fixedVersions": [
+            "1.0.4"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-otel/swift-w3c-trace-context",
+          "fixedVersions": [
+            "1.0.0-beta.5"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/swift-otel/swift-w3c-trace-context/commit/5da9b143ba6046734de3fa51dafea28290174e4e",
+          "kind": "commit",
+          "repository": "swift-otel/swift-w3c-trace-context",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-pc9j-5v36-2mww",
+      "aliases": [],
+      "published": "2026-01-08T22:12:15Z",
+      "modified": "2026-01-08T22:12:15Z",
+      "severity": "LOW",
+      "cwes": [
+        "CWE-20"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/awslabs/aws-sdk-swift",
+          "fixedVersions": [
+            "1.5.79"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-pgfx-g6rc-8cjv",
+      "aliases": [
+        "CVE-2022-24668"
+      ],
+      "published": "2023-05-18T17:32:00Z",
+      "modified": "2023-06-19T16:50:37Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-241"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.19.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/000ca94f9de92c95b9ac85d44600b7b0fe25a3e5",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-pqwh-c2f3-vxmq",
+      "aliases": [
+        "CVE-2021-32742"
+      ],
+      "published": "2023-06-09T19:31:54Z",
+      "modified": "2023-06-09T19:31:54Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-502"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.47.2"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-pv58-549p-qh99",
+      "aliases": [
+        "CVE-2026-26327"
+      ],
+      "published": "2026-02-18T00:33:35Z",
+      "modified": "2026-02-20T16:45:30Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-345"
+      ],
+      "selectionBasis": [
+        "verified-native-ios-swift-fix"
+      ],
+      "affected": [
+        {
+          "ecosystem": "npm",
+          "name": "openclaw",
+          "fixedVersions": [
+            "2026.2.14"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/openclaw/openclaw/commit/d583782ee322a6faa1fe87ae52455e0d349de586",
+          "kind": "commit",
+          "repository": "openclaw/openclaw",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "openclaw/openclaw",
+        "platformClass": "ios-app",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/openclaw/openclaw/commit/d583782ee322a6faa1fe87ae52455e0d349de586",
+            "patchSha256": "2b5d73f792c68c553d5bfdc298863d98404eaf9e926ec268a4431a538291c95b",
+            "productionFiles": [
+              "apps/ios/Sources/Gateway/GatewayConnectionController.swift",
+              "apps/ios/Sources/Gateway/GatewayServiceResolver.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "ios-discovery-metadata-trust"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-q36x-r5x4-h4q6",
+      "aliases": [
+        "CVE-2022-0618"
+      ],
+      "published": "2023-06-09T19:32:49Z",
+      "modified": "2024-02-09T00:33:54Z",
+      "severity": "HIGH",
+      "cwes": [],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.20"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/ac2a5afce3dbb6795b4f78ec3f19726dc28f5617",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-q3g2-m552-3r9c",
+      "aliases": [
+        "CVE-2026-64785"
+      ],
+      "published": "2026-07-24T21:52:10Z",
+      "modified": "2026-07-24T21:52:10Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-113",
+        "CWE-444"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "swift-nio-http2",
+          "fixedVersions": [
+            "1.45.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/45bdf670248be5f16ec0340e125dca285536f0fb",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/48bfd9067d7d1d15c4789440127a0cf36222ea43",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-qppj-fm5r-hxr3",
+      "aliases": [
+        "CVE-2023-44487"
+      ],
+      "published": "2023-10-10T21:28:24Z",
+      "modified": "2026-05-13T15:25:08Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-400"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Go",
+          "name": "golang.org/x/net",
+          "fixedVersions": [
+            "0.17.0"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.typesafe.akka:akka-http-core",
+          "fixedVersions": [
+            "10.5.3"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.typesafe.akka:akka-http-core_2.11",
+          "fixedVersions": []
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.typesafe.akka:akka-http-core_2.12",
+          "fixedVersions": [
+            "10.5.3"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "com.typesafe.akka:akka-http-core_2.13",
+          "fixedVersions": [
+            "10.5.3"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat.embed:tomcat-embed-core",
+          "fixedVersions": [
+            "11.0.0-M12"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat.embed:tomcat-embed-core",
+          "fixedVersions": [
+            "10.1.14"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat.embed:tomcat-embed-core",
+          "fixedVersions": [
+            "9.0.81"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat.embed:tomcat-embed-core",
+          "fixedVersions": [
+            "8.5.94"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat:tomcat-coyote",
+          "fixedVersions": [
+            "11.0.0-M12"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat:tomcat-coyote",
+          "fixedVersions": [
+            "10.1.14"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat:tomcat-coyote",
+          "fixedVersions": [
+            "9.0.81"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.apache.tomcat:tomcat-coyote",
+          "fixedVersions": [
+            "8.5.94"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-common",
+          "fixedVersions": [
+            "9.4.53"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-common",
+          "fixedVersions": [
+            "10.0.17"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-common",
+          "fixedVersions": [
+            "11.0.17"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-server",
+          "fixedVersions": [
+            "9.4.53"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-server",
+          "fixedVersions": [
+            "10.0.17"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:http2-server",
+          "fixedVersions": [
+            "11.0.17"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:jetty-http2-common",
+          "fixedVersions": [
+            "12.0.2"
+          ]
+        },
+        {
+          "ecosystem": "Maven",
+          "name": "org.eclipse.jetty.http2:jetty-http2-server",
+          "fixedVersions": [
+            "12.0.2"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.28.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/akka/akka-http/pull/4324",
+          "kind": "pull",
+          "repository": "akka/akka-http",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/akka/akka-http/pull/4325",
+          "kind": "pull",
+          "repository": "akka/akka-http",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/apache/httpd-site/pull/10",
+          "kind": "pull",
+          "repository": "apache/httpd-site",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/apache/tomcat/commit/944332bb15bd2f3bf76ec2caeb1ff0a58a3bc628",
+          "kind": "commit",
+          "repository": "apache/tomcat",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/apache/trafficserver/pull/10564",
+          "kind": "pull",
+          "repository": "apache/trafficserver",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/envoyproxy/envoy/pull/30055",
+          "kind": "pull",
+          "repository": "envoyproxy/envoy",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/facebook/proxygen/pull/466",
+          "kind": "pull",
+          "repository": "facebook/proxygen",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/grpc/grpc-go/pull/6703",
+          "kind": "pull",
+          "repository": "grpc/grpc-go",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/h2o/h2o/pull/3291",
+          "kind": "pull",
+          "repository": "h2o/h2o",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/kazu-yamamoto/http2/commit/f61d41a502bd0f60eb24e1ce14edc7b6df6722a1",
+          "kind": "commit",
+          "repository": "kazu-yamamoto/http2",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/kubernetes/kubernetes/pull/121120",
+          "kind": "pull",
+          "repository": "kubernetes/kubernetes",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/line/armeria/pull/5232",
+          "kind": "pull",
+          "repository": "line/armeria",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/linkerd/website/pull/1695/commits/4b9c6836471bc8270ab48aae6fd2181bc73fd632",
+          "kind": "pull",
+          "repository": "linkerd/website",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/microsoft/CBL-Mariner/pull/6381",
+          "kind": "pull",
+          "repository": "microsoft/CBL-Mariner",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/netty/netty/commit/58f75f665aa81a8cbcf6ffa74820042a285c5e61",
+          "kind": "commit",
+          "repository": "netty/netty",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/nghttp2/nghttp2/pull/1961",
+          "kind": "pull",
+          "repository": "nghttp2/nghttp2",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/nodejs/node/pull/50121",
+          "kind": "pull",
+          "repository": "nodejs/node",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/projectcontour/contour/pull/5826",
+          "kind": "pull",
+          "repository": "projectcontour/contour",
+          "inAffectedRepository": false
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "other-repository-fix-only"
+    },
+    {
+      "id": "GHSA-qvxg-wjxc-r4gg",
+      "aliases": [
+        "CVE-2022-31019"
+      ],
+      "published": "2023-06-07T16:11:16Z",
+      "modified": "2023-06-07T16:11:16Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-120",
+        "CWE-121",
+        "CWE-674"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.61.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/6c63226a4ab82ce53730eb1afb9ca63866fcf033",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-r3fr-7m74-q7g2",
+      "aliases": [
+        "CVE-2026-30867"
+      ],
+      "published": "2026-04-03T21:33:58Z",
+      "modified": "2026-04-03T21:33:58Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-617"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "CocoaMQTT",
+          "fixedVersions": [
+            "2.2.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/emqx/CocoaMQTT/commit/010bca6f61b97d726252f61641d331a2bf82b338",
+          "kind": "commit",
+          "repository": "emqx/CocoaMQTT",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/emqx/CocoaMQTT/pull/659",
+          "kind": "pull",
+          "repository": "emqx/CocoaMQTT",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "emqx/CocoaMQTT",
+        "platformClass": "ios-first-library",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/emqx/CocoaMQTT/commit/010bca6f61b97d726252f61641d331a2bf82b338",
+            "patchSha256": "b2f438660848234db67fa3124bc1fde5512ab3fa5d80e9a8ea1b9cdd9201c01e",
+            "productionFiles": [
+              "Source/CocoaMQTTReader.swift",
+              "Source/FramePublish.swift",
+              "Source/FrameAuth.swift",
+              "Source/FrameDisconnect.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-protocol-parser-fail-closed",
+        "swift-untrusted-parser-trap"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-r3rc-9hpw-54v9",
+      "aliases": [
+        "CVE-2026-43671"
+      ],
+      "published": "2026-06-12T15:07:23Z",
+      "modified": "2026-06-12T15:07:23Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-787"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.100.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-r6r4-5pr8-gjcp",
+      "aliases": [
+        "CVE-2024-21631"
+      ],
+      "published": "2024-01-03T21:44:35Z",
+      "modified": "2024-02-09T00:29:14Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-1104",
+        "CWE-190"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.90.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/6db3d917b5ce5024a84eb265ef65691383305d70",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-r6ww-5963-7r95",
+      "aliases": [
+        "CVE-2022-24777"
+      ],
+      "published": "2023-06-09T19:33:16Z",
+      "modified": "2024-02-09T00:34:17Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-617"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/grpc/grpc-swift",
+          "fixedVersions": [
+            "1.7.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/grpc/grpc-swift/commit/858f977f2a51fca2292f384cf7a108dc2e73a3bd",
+          "kind": "commit",
+          "repository": "grpc/grpc-swift",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-rj37-6j9x-74q6",
+      "aliases": [
+        "CVE-2026-28980"
+      ],
+      "published": "2026-06-12T15:07:53Z",
+      "modified": "2026-06-12T15:07:53Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio",
+          "fixedVersions": [
+            "2.100.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-rv3x-xq3r-8j9h",
+      "aliases": [
+        "CVE-2021-37634"
+      ],
+      "published": "2023-06-09T19:32:32Z",
+      "modified": "2023-06-09T19:32:32Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/leaf-kit",
+          "fixedVersions": [
+            "1.3.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-rxmj-hg9v-vp3p",
+      "aliases": [
+        "CVE-2021-36155"
+      ],
+      "published": "2023-06-09T19:32:11Z",
+      "modified": "2023-06-09T19:32:11Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-120",
+        "CWE-770"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/grpc/grpc-swift",
+          "fixedVersions": [
+            "1.2.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    },
+    {
+      "id": "GHSA-v3r5-pjpm-mwgq",
+      "aliases": [
+        "CVE-2023-0040"
+      ],
+      "published": "2023-06-07T15:52:55Z",
+      "modified": "2023-06-07T15:52:55Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-74",
+        "CWE-93"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-server/async-http-client",
+          "fixedVersions": [
+            "1.13.2"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-server/async-http-client",
+          "fixedVersions": [
+            "1.12.1"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-server/async-http-client",
+          "fixedVersions": [
+            "1.9.1"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-server/async-http-client",
+          "fixedVersions": [
+            "1.4.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/swift-server/async-http-client/commit/7f05a8da46cc2a4ab43218722298b81ac7a08031",
+          "kind": "commit",
+          "repository": "swift-server/async-http-client",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-vcvg-xgr8-p5gq",
+      "aliases": [
+        "CVE-2020-15230"
+      ],
+      "published": "2023-06-09T19:31:32Z",
+      "modified": "2023-06-09T19:31:32Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-22"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.29.4"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/cf1651f7ff76515593f4d8ca6e6e15d2247fe255",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/vapor/vapor/pull/2500",
+          "kind": "pull",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-vj2m-9f5j-mpr5",
+      "aliases": [
+        "CVE-2022-31005"
+      ],
+      "published": "2023-06-07T16:26:25Z",
+      "modified": "2023-06-07T16:26:25Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-190"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/vapor/vapor",
+          "fixedVersions": [
+            "4.60.3"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/vapor/vapor/commit/953a349b539b3e0d3653585c8ffb50c427986df1",
+          "kind": "commit",
+          "repository": "vapor/vapor",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-vxvm-qww3-2fh7",
+      "aliases": [
+        "CVE-2021-32050"
+      ],
+      "published": "2023-08-29T18:31:53Z",
+      "modified": "2025-11-03T21:30:53Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-200",
+        "CWE-532"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Packagist",
+          "name": "mongodb/mongodb",
+          "fixedVersions": [
+            "1.9.2"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/mongodb/mongo-swift-driver",
+          "fixedVersions": [
+            "1.1.1"
+          ]
+        },
+        {
+          "ecosystem": "npm",
+          "name": "mongodb",
+          "fixedVersions": [
+            "3.6.10"
+          ]
+        },
+        {
+          "ecosystem": "npm",
+          "name": "mongodb",
+          "fixedVersions": [
+            "4.17.0"
+          ]
+        },
+        {
+          "ecosystem": "npm",
+          "name": "mongodb",
+          "fixedVersions": [
+            "5.8.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/mongodb/mongo-php-driver/commit/4495de8313c0d313e4dde906fc7aedf998ee3748",
+          "kind": "commit",
+          "repository": "mongodb/mongo-php-driver",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/mongodb/mongo-php-driver/pull/1235",
+          "kind": "pull",
+          "repository": "mongodb/mongo-php-driver",
+          "inAffectedRepository": false
+        },
+        {
+          "url": "https://github.com/mongodb/mongo-swift-driver/pull/643",
+          "kind": "pull",
+          "repository": "mongodb/mongo-swift-driver",
+          "inAffectedRepository": true
+        },
+        {
+          "url": "https://github.com/mongodb/node-mongodb-native/commit/8c8b4c3b8c55f10fb96f63d3bbfa5d408b4ed7d0",
+          "kind": "commit",
+          "repository": "mongodb/node-mongodb-native",
+          "inAffectedRepository": false
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-w3f6-pc54-gfw7",
+      "aliases": [
+        "CVE-2022-24667"
+      ],
+      "published": "2023-05-18T17:28:39Z",
+      "modified": "2023-06-19T16:55:05Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-190"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.19.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-nio-http2/commit/56c60a29b1207a731be62fb68cc98246942145ed",
+          "kind": "commit",
+          "repository": "apple/swift-nio-http2",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-w8xv-rwgf-4fwh",
+      "aliases": [
+        "CVE-2025-0343"
+      ],
+      "published": "2025-01-14T16:32:07Z",
+      "modified": "2025-01-15T15:26:01Z",
+      "severity": "LOW",
+      "cwes": [
+        "CWE-228"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-asn1",
+          "fixedVersions": [
+            "1.3.1"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/apple/swift-asn1/commit/ae33e5941bb88d88538d0a6b19ca0b01e6c76dcf",
+          "kind": "commit",
+          "repository": "apple/swift-asn1",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": {
+        "sourceRepository": "apple/swift-asn1",
+        "platformClass": "portable-swift",
+        "resolution": "advisory-reference",
+        "commits": [
+          {
+            "url": "https://github.com/apple/swift-asn1/commit/ae33e5941bb88d88538d0a6b19ca0b01e6c76dcf",
+            "patchSha256": "c71ee9650592ae6f25e16ec75eb76403fa45b25d64b1a68107b451db0b665722",
+            "productionFiles": [
+              "Sources/SwiftASN1/DER.swift",
+              "Sources/SwiftASN1/Basic ASN1 Types/ASN1Integer.swift",
+              "Sources/SwiftASN1/Basic ASN1 Types/ASN1OctetString.swift"
+            ]
+          }
+        ]
+      },
+      "patternIds": [
+        "swift-untrusted-parser-trap"
+      ],
+      "disposition": "promoted-pattern-evidence"
+    },
+    {
+      "id": "GHSA-wc9m-r3v6-9p5h",
+      "aliases": [
+        "CVE-2025-0509"
+      ],
+      "published": "2025-02-04T21:32:28Z",
+      "modified": "2025-02-04T23:18:58Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-552"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/sparkle-project/Sparkle",
+          "fixedVersions": [
+            "2.6.4"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/sparkle-project/Sparkle/pull/2550",
+          "kind": "pull",
+          "repository": "sparkle-project/Sparkle",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-whx6-m9j4-w2m2",
+      "aliases": [
+        "CVE-2024-25713"
+      ],
+      "published": "2024-02-29T03:33:18Z",
+      "modified": "2025-11-05T00:31:17Z",
+      "severity": "HIGH",
+      "cwes": [
+        "CWE-94"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/ibireme/yyjson",
+          "fixedVersions": [
+            "0.9.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/ibireme/yyjson/commit/0eca326fe57aeeb866e6f04c9ef9ea9f8343157e",
+          "kind": "commit",
+          "repository": "ibireme/yyjson",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-x768-cvr2-345r",
+      "aliases": [
+        "CVE-2024-28867"
+      ],
+      "published": "2024-03-29T19:05:26Z",
+      "modified": "2024-03-29T19:05:26Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-74"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/swift-server/swift-prometheus",
+          "fixedVersions": [
+            "2.0.0-alpha.2"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/swift-server/swift-prometheus/commit/bfcd4bbfabe11aae4b035424ee9724582e288501",
+          "kind": "commit",
+          "repository": "swift-server/swift-prometheus",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-xc7w-r669-48pf",
+      "aliases": [
+        "CVE-2025-54951"
+      ],
+      "published": "2025-08-08T00:30:26Z",
+      "modified": "2026-05-07T13:26:50Z",
+      "severity": "CRITICAL",
+      "cwes": [
+        "CWE-122"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "Maven",
+          "name": "org.pytorch:executorch-android",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "PyPI",
+          "name": "executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        },
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/pytorch/executorch",
+          "fixedVersions": [
+            "0.7.0"
+          ]
+        }
+      ],
+      "fixReferences": [
+        {
+          "url": "https://github.com/pytorch/executorch/commit/cea9b23aa8ff78aff92829a466da97461cc7930c",
+          "kind": "commit",
+          "repository": "pytorch/executorch",
+          "inAffectedRepository": true
+        }
+      ],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "fix-linked-not-promoted"
+    },
+    {
+      "id": "GHSA-xvr7-p2c6-j83w",
+      "aliases": [],
+      "published": "2025-08-13T23:54:02Z",
+      "modified": "2025-08-13T23:54:02Z",
+      "severity": "MODERATE",
+      "cwes": [
+        "CWE-405"
+      ],
+      "selectionBasis": [
+        "swift-ecosystem"
+      ],
+      "affected": [
+        {
+          "ecosystem": "SwiftURL",
+          "name": "github.com/apple/swift-nio-http2",
+          "fixedVersions": [
+            "1.38.0"
+          ]
+        }
+      ],
+      "fixReferences": [],
+      "corpusFix": null,
+      "patternIds": [],
+      "disposition": "unresolved-fix-link"
+    }
+  ],
+  "patchFetch": {
+    "requested": 57,
+    "downloaded": 57,
+    "failed": 0,
+    "promotedHashMismatches": 0,
+    "results": [
+      {
+        "advisoryId": "GHSA-239c-6cv2-wwx8",
+        "url": "https://github.com/apple/swift-corelibs-foundation/commit/b541491f73b39007a38f3ff5a0cbe89d09ef1614",
+        "status": "downloaded",
+        "patchSha256": "4022a4bcd3a57cf4d0e9b2818c509920e0f169ae724f789976a762a6c6cd48a5",
+        "cacheFile": "GHSA-239c-6cv2-wwx8-25751487e999e1b6.patch"
+      },
+      {
+        "advisoryId": "GHSA-3mwq-h3g6-ffhm",
+        "url": "https://github.com/vapor/vapor/commit/090464a654b03148b139a81f8f5ac63b0856f6f3",
+        "status": "downloaded",
+        "patchSha256": "54b3ee61aac881fe1b1551d2af0d5a3587dcb3a18c4cef86f7aba82a63dececf",
+        "cacheFile": "GHSA-3mwq-h3g6-ffhm-d0f23a94e0504ad2.patch"
+      },
+      {
+        "advisoryId": "GHSA-4hfh-fch3-5q7p",
+        "url": "https://github.com/vapor/leaf-kit/commit/8919e39476c3a4ba05c28b71546bb9195f87ef34",
+        "status": "downloaded",
+        "patchSha256": "3d81094165efb2ca71606e3326a35333082a4e14b88a979be72feb8f7dcbad19",
+        "cacheFile": "GHSA-4hfh-fch3-5q7p-167fd6e6e960e6c8.patch"
+      },
+      {
+        "advisoryId": "GHSA-4p4f-fc8q-84m3",
+        "url": "https://github.com/openclaw/openclaw/commit/49d08382a90f71dabe2877b3f6729ad85f808d57",
+        "expectedPatchSha256": "4f132490123ecc9eb7b6375cce23819a2672a7ccbfdbec70ec232d596bb29b7c",
+        "status": "downloaded",
+        "patchSha256": "4f132490123ecc9eb7b6375cce23819a2672a7ccbfdbec70ec232d596bb29b7c",
+        "cacheFile": "GHSA-4p4f-fc8q-84m3-eb1fed2913aee85b.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-4px2-pw77-vc85",
+        "url": "https://github.com/apple/swift-nio-http2/commit/61d1b44f6e4e118792be1cff88ee2bc0267c6f9a",
+        "status": "downloaded",
+        "patchSha256": "1d93cab7c4ab7189c6111c61e34249fe87c22f9776c6a27bfc36f1205f3c47c7",
+        "cacheFile": "GHSA-4px2-pw77-vc85-82c62fcec9af9185.patch"
+      },
+      {
+        "advisoryId": "GHSA-5844-q3fc-56rh",
+        "url": "https://github.com/pubnub/swift/commit/56c86877d8a0dd50ae981905837940341ead89af",
+        "expectedPatchSha256": "2588e73d5e894dfd2d35a05f70faf1b797b62af02e79ef758d3820c9dcab0f6b",
+        "status": "downloaded",
+        "patchSha256": "2588e73d5e894dfd2d35a05f70faf1b797b62af02e79ef758d3820c9dcab0f6b",
+        "cacheFile": "GHSA-5844-q3fc-56rh-31d813eb488a9d46.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-5c9c-6x87-f9vm",
+        "url": "https://github.com/facebook/zstd/pull/3220",
+        "status": "downloaded",
+        "patchSha256": "bf4c33df8ac247791531f91457b701dec4624f1b26930f65b6eb10babffc1703",
+        "cacheFile": "GHSA-5c9c-6x87-f9vm-312199aafb8ac621.patch"
+      },
+      {
+        "advisoryId": "GHSA-6jj5-j4j8-8473",
+        "url": "https://github.com/vapor/leaf-kit/commit/6044b844caa858a0c5f2505ac166f5a057c990dc",
+        "status": "downloaded",
+        "patchSha256": "e1ac47299290af3ab1a302607ad495982986b0e675ad0e5a68819f8a093d46f6",
+        "cacheFile": "GHSA-6jj5-j4j8-8473-684e10a02a3adbc4.patch"
+      },
+      {
+        "advisoryId": "GHSA-773g-x274-8qmf",
+        "url": "https://github.com/apple/swift-nio-extras/pull/177",
+        "status": "downloaded",
+        "patchSha256": "4e15d586809303c70bc0d87f10673f41864a54f56293e2a0b114b7e86e959fbe",
+        "cacheFile": "GHSA-773g-x274-8qmf-6282fe78a6db2a3c.patch"
+      },
+      {
+        "advisoryId": "GHSA-773g-x274-8qmf",
+        "url": "https://github.com/apple/swift-nio-extras/pull/177/commits/359015de2c49e426c27b1d25dbf599b08a9d3ee6",
+        "status": "downloaded",
+        "patchSha256": "4e15d586809303c70bc0d87f10673f41864a54f56293e2a0b114b7e86e959fbe",
+        "cacheFile": "GHSA-773g-x274-8qmf-a7fa285c431aba0d.patch"
+      },
+      {
+        "advisoryId": "GHSA-7fj7-39wj-c64f",
+        "url": "https://github.com/apple/swift-nio/commit/a16e2f54a25b2af217044e5168997009a505930f",
+        "status": "downloaded",
+        "patchSha256": "457fb6d99bf5654c58f164cd2fe80dcee2ce77b65e03307b6e5f7c79a49a13e0",
+        "cacheFile": "GHSA-7fj7-39wj-c64f-ef2c2a302c61ebf8.patch"
+      },
+      {
+        "advisoryId": "GHSA-84m3-f99p-cqx5",
+        "url": "https://github.com/pytorch/executorch/commit/0830af8207240df8d7f35b984cdf8bc35d74fa73",
+        "status": "downloaded",
+        "patchSha256": "b970d1c749a3bfd961c54906417eecafe3ae99dcccfe308dbc4ab18d31659507",
+        "cacheFile": "GHSA-84m3-f99p-cqx5-3de05780f097677f.patch"
+      },
+      {
+        "advisoryId": "GHSA-88q6-jcjg-hvmw",
+        "url": "https://github.com/beatt83/jose-swift/commit/13e5ae6f23ef1487b0dad72540eff414272bd7ca",
+        "expectedPatchSha256": "ca325f744159ba95869675fe6dea811bda1447740d97c623af6f853ea11ea1f3",
+        "status": "downloaded",
+        "patchSha256": "ca325f744159ba95869675fe6dea811bda1447740d97c623af6f853ea11ea1f3",
+        "cacheFile": "GHSA-88q6-jcjg-hvmw-0ac5595661a6573c.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-88q6-jcjg-hvmw",
+        "url": "https://github.com/beatt83/jose-swift/pull/62",
+        "status": "downloaded",
+        "patchSha256": "e1b0b4f8a52b4859546241ea4f5740d43f151b6a9eb42ecf4696a6ddc500d8f7",
+        "cacheFile": "GHSA-88q6-jcjg-hvmw-2d2e96d56b9a838d.patch"
+      },
+      {
+        "advisoryId": "GHSA-9cfh-vx93-84vv",
+        "url": "https://github.com/vapor/postgres-nio/commit/2df54bc94607f44584ae6ffa74e3cd754fffafc7",
+        "status": "downloaded",
+        "patchSha256": "cd35a64441b6cdf7cf375e7c871aafdc24c46cb5a03a84c12e69613cde445ff3",
+        "cacheFile": "GHSA-9cfh-vx93-84vv-6700664ff929587c.patch"
+      },
+      {
+        "advisoryId": "GHSA-9m39-3mf3-xwch",
+        "url": "https://github.com/pytorch/executorch/commit/ede82493dae6d2d43f8c424e7be4721abe5242be",
+        "status": "downloaded",
+        "patchSha256": "8c883aee3d1b7dbd352fce140ce634f2fceb3ecbe805c9725d0e98189502bc0c",
+        "cacheFile": "GHSA-9m39-3mf3-xwch-a8fcf3f1b0aeafed.patch"
+      },
+      {
+        "advisoryId": "GHSA-9m44-rr2w-ppp7",
+        "url": "https://github.com/apple/swift-crypto/commit/bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+        "expectedPatchSha256": "61b88c9ef8101b436b399cd67ab05d87b9500841d0f0086eeda36b52b4ec9606",
+        "status": "downloaded",
+        "patchSha256": "61b88c9ef8101b436b399cd67ab05d87b9500841d0f0086eeda36b52b4ec9606",
+        "cacheFile": "GHSA-9m44-rr2w-ppp7-cdf53c721c84aa87.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-c2cc-3569-6jh2",
+        "url": "https://github.com/weichsel/ZIPFoundation/commit/4b24bdfa92cbcfdac482373a4a8a059d611150c8",
+        "expectedPatchSha256": "cee46b434b8fce9900107cef5d6a9c2d186fcf0120195b0b94245e2fa720776b",
+        "status": "downloaded",
+        "patchSha256": "cee46b434b8fce9900107cef5d6a9c2d186fcf0120195b0b94245e2fa720776b",
+        "cacheFile": "GHSA-c2cc-3569-6jh2-3a62e43b62c1e645.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-c2cc-3569-6jh2",
+        "url": "https://github.com/weichsel/ZIPFoundation/commit/f000f30f5c79f7e1f124c255bd1c2518b6124703",
+        "expectedPatchSha256": "7b1449fd36251bdfa4363cb338fc0d116ec3ba825f90ffb6cc9c94f6bb001b53",
+        "status": "downloaded",
+        "patchSha256": "7b1449fd36251bdfa4363cb338fc0d116ec3ba825f90ffb6cc9c94f6bb001b53",
+        "cacheFile": "GHSA-c2cc-3569-6jh2-a8b8186ffdfd3443.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-ccw9-q5h2-8c2w",
+        "url": "https://github.com/apple/swift-nio-http2/commit/93215774aa7d223a5ad5aa0b80453375d669fa8f",
+        "status": "downloaded",
+        "patchSha256": "db1064a09785283d8e2178204645276c861e71f72469fa4e9ac75c3634bbf82f",
+        "cacheFile": "GHSA-ccw9-q5h2-8c2w-2f357963ffa349f0.patch"
+      },
+      {
+        "advisoryId": "GHSA-cq3j-qj2h-6rv3",
+        "url": "https://github.com/apple/containerization/commit/3e93416b9a6d7b4c25fff7e9dea22a9ca687ee52",
+        "status": "downloaded",
+        "patchSha256": "c38c64b4588aa1c65d7319ae414ae651551c0edc5ad505886360495b00d23136",
+        "cacheFile": "GHSA-cq3j-qj2h-6rv3-e1fad67896ad2b69.patch"
+      },
+      {
+        "advisoryId": "GHSA-f9hx-c6jf-3qxm",
+        "url": "https://github.com/pytorch/executorch/commit/b6b7a16df5e7852d976d8c34c8a7e9a1b6f7d005",
+        "status": "downloaded",
+        "patchSha256": "b1eb5aad0c27b4b5a069f6f1752e44a6c1236a9a421cc2447740ccfeec9698e5",
+        "cacheFile": "GHSA-f9hx-c6jf-3qxm-f5cf7ab62c6c1eca.patch"
+      },
+      {
+        "advisoryId": "GHSA-f9hx-c6jf-3qxm",
+        "url": "https://github.com/pytorch/executorch/commit/fb03b6f85596a8f954d97929075335255b6a58d4",
+        "status": "downloaded",
+        "patchSha256": "1ead36814f1da898f50f85bc93c1c05d33823745c59834356e154e9a6ad997cf",
+        "cacheFile": "GHSA-f9hx-c6jf-3qxm-bb3d62f684778c44.patch"
+      },
+      {
+        "advisoryId": "GHSA-frg3-gpcx-968f",
+        "url": "https://github.com/apple/swift-nio-ssl/commit/109faef770994e71b6bafcc015e2e96b88a4af8c",
+        "status": "downloaded",
+        "patchSha256": "f6cf3ceb9e34b6560a7eee7a653afe4ee0a5f4836ab6ed2708c152e65e3c1720",
+        "cacheFile": "GHSA-frg3-gpcx-968f-5c874d210b8f4630.patch"
+      },
+      {
+        "advisoryId": "GHSA-gcj9-jj38-hwmc",
+        "url": "https://github.com/vapor/vapor/commit/e3aa712508db2854ac0ab905696c65fd88fa7e23",
+        "status": "downloaded",
+        "patchSha256": "a4998e2bf240373ac972d48fbc6863a86d89f839d1ceffc184baa65a78b7238e",
+        "cacheFile": "GHSA-gcj9-jj38-hwmc-a34cc75abdf2b872.patch"
+      },
+      {
+        "advisoryId": "GHSA-h952-963h-rv99",
+        "url": "https://github.com/pytorch/executorch/commit/93b1a0c15f7eda49b2bc46b5b4c49557b4e9810f",
+        "status": "downloaded",
+        "patchSha256": "5b85422edcf949bd6b8ba3a43532466df5161ca3a719093ccf933db665af4934",
+        "cacheFile": "GHSA-h952-963h-rv99-da57ecee68a0be73.patch"
+      },
+      {
+        "advisoryId": "GHSA-hg88-v3cw-3qrh",
+        "url": "https://github.com/sparkle-project/Sparkle/commit/fe7b718d0736f3e139e374e26fbca96f29e13bf0",
+        "status": "downloaded",
+        "patchSha256": "2906eca40795766b99752a418facd81f4067d3920293fff0805e142de0ed28f5",
+        "cacheFile": "GHSA-hg88-v3cw-3qrh-fe12b3b6b1c03cff.patch"
+      },
+      {
+        "advisoryId": "GHSA-hj95-mhgf-jxc4",
+        "url": "https://github.com/pytorch/executorch/commit/d158236b1dc84539c1b16843bc74054c9dcba006",
+        "status": "downloaded",
+        "patchSha256": "0202091c2f4aae236c30bfd1b89177324e7eea506a7e0ca1e6d6c87fd38babd8",
+        "cacheFile": "GHSA-hj95-mhgf-jxc4-ab69bd39f3473c3b.patch"
+      },
+      {
+        "advisoryId": "GHSA-jq43-q8mx-r7mq",
+        "url": "https://github.com/migueldeicaza/SwiftTerm/commit/a94e6b24d24ce9680ad79884992e1dff8e150a31",
+        "expectedPatchSha256": "644a4872c00db82b36c8d57f7d2b51c9ff0c5aba6ee9bfbceb581def638397f6",
+        "status": "downloaded",
+        "patchSha256": "644a4872c00db82b36c8d57f7d2b51c9ff0c5aba6ee9bfbceb581def638397f6",
+        "cacheFile": "GHSA-jq43-q8mx-r7mq-b38d7042c2fd8deb.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/commit/8da5c5a4e6c5084c296b9f39dc54f00be146e0fa",
+        "status": "downloaded",
+        "patchSha256": "b2717e8c4b3fb8df97fbb424ca10551264d8be9fd71499ffd13457cd58536bcc",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-cf1a687d9c3b22b8.patch"
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/commit/bfde40cac8eca25ce021552513b20ee23fc6e306",
+        "status": "downloaded",
+        "patchSha256": "d4e902786733a68a51d09f8e865cf99919d44abcbd19bc9b1b31fe59d6ec41d8",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-227fa3fc1a5df220.patch"
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/commit/df9390006bce7da1b6273f804d3acbbfdfcc6154",
+        "status": "downloaded",
+        "patchSha256": "cbb4b1b5b13744e6d6f7fcdecbd000056322762d0d8bd228276bcc0d82032619",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-02af9a90952aee5e.patch"
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/commit/f94b22b506e3557cb1b325534fa9bbcd39c90246",
+        "status": "downloaded",
+        "patchSha256": "2411990edb3b1aef612212c0fe9f177e9106d1a6ce86f2e7a8e8251d5612fc72",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-9d3d79cb601a19f2.patch"
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/pull/1387",
+        "status": "downloaded",
+        "patchSha256": "2411990edb3b1aef612212c0fe9f177e9106d1a6ce86f2e7a8e8251d5612fc72",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-554cc8e41d919afc.patch"
+      },
+      {
+        "advisoryId": "GHSA-mgc4-wqv7-4pxm",
+        "url": "https://github.com/apple/swift-nio/pull/1388",
+        "status": "downloaded",
+        "patchSha256": "0ac5d9319948753d13d2162681a028ac8a044f901835c9366c720e4d0339f974",
+        "cacheFile": "GHSA-mgc4-wqv7-4pxm-52264e10c69f31f8.patch"
+      },
+      {
+        "advisoryId": "GHSA-mvpq-2v8x-ww6g",
+        "url": "https://github.com/swift-otel/swift-w3c-trace-context/commit/5da9b143ba6046734de3fa51dafea28290174e4e",
+        "status": "downloaded",
+        "patchSha256": "b8eeed6bf39c4835842257aeecee70e30b62a3116bdbb4df5ba01c2dbcedc35c",
+        "cacheFile": "GHSA-mvpq-2v8x-ww6g-217ab2ab91261c6f.patch"
+      },
+      {
+        "advisoryId": "GHSA-pgfx-g6rc-8cjv",
+        "url": "https://github.com/apple/swift-nio-http2/commit/000ca94f9de92c95b9ac85d44600b7b0fe25a3e5",
+        "status": "downloaded",
+        "patchSha256": "ec8cff110c08c64a2637ce8c3c6e66d7faf98589d60215f68effa4f726d1ddd9",
+        "cacheFile": "GHSA-pgfx-g6rc-8cjv-bda4fb56f8292f57.patch"
+      },
+      {
+        "advisoryId": "GHSA-pv58-549p-qh99",
+        "url": "https://github.com/openclaw/openclaw/commit/d583782ee322a6faa1fe87ae52455e0d349de586",
+        "expectedPatchSha256": "2b5d73f792c68c553d5bfdc298863d98404eaf9e926ec268a4431a538291c95b",
+        "status": "downloaded",
+        "patchSha256": "2b5d73f792c68c553d5bfdc298863d98404eaf9e926ec268a4431a538291c95b",
+        "cacheFile": "GHSA-pv58-549p-qh99-fee56e05d51e63df.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-q36x-r5x4-h4q6",
+        "url": "https://github.com/apple/swift-nio-http2/commit/ac2a5afce3dbb6795b4f78ec3f19726dc28f5617",
+        "status": "downloaded",
+        "patchSha256": "10f0b94b701f57c69bef4e62e450ed30cd0c386d339fb8e8f8fa91c54e938639",
+        "cacheFile": "GHSA-q36x-r5x4-h4q6-478d4eeec666c436.patch"
+      },
+      {
+        "advisoryId": "GHSA-q3g2-m552-3r9c",
+        "url": "https://github.com/apple/swift-nio-http2/commit/45bdf670248be5f16ec0340e125dca285536f0fb",
+        "status": "downloaded",
+        "patchSha256": "ae26205f995dc9d3e852eb8649c0ea125bb53f9b92e965f4757eea3e668e613d",
+        "cacheFile": "GHSA-q3g2-m552-3r9c-698a75c60723d4be.patch"
+      },
+      {
+        "advisoryId": "GHSA-q3g2-m552-3r9c",
+        "url": "https://github.com/apple/swift-nio-http2/commit/48bfd9067d7d1d15c4789440127a0cf36222ea43",
+        "status": "downloaded",
+        "patchSha256": "1f0d0e06054b8ab5d9b5cf90d71aa1a31f785d0f8966c3603c1aca2f3b97839f",
+        "cacheFile": "GHSA-q3g2-m552-3r9c-90e4ea99add2750c.patch"
+      },
+      {
+        "advisoryId": "GHSA-qvxg-wjxc-r4gg",
+        "url": "https://github.com/vapor/vapor/commit/6c63226a4ab82ce53730eb1afb9ca63866fcf033",
+        "status": "downloaded",
+        "patchSha256": "50295fd233d44f32ad8669b6f6f73100bcb7711e50cc23a53799705197f3b38a",
+        "cacheFile": "GHSA-qvxg-wjxc-r4gg-560a548e027f0b7d.patch"
+      },
+      {
+        "advisoryId": "GHSA-r3fr-7m74-q7g2",
+        "url": "https://github.com/emqx/CocoaMQTT/commit/010bca6f61b97d726252f61641d331a2bf82b338",
+        "expectedPatchSha256": "b2f438660848234db67fa3124bc1fde5512ab3fa5d80e9a8ea1b9cdd9201c01e",
+        "status": "downloaded",
+        "patchSha256": "b2f438660848234db67fa3124bc1fde5512ab3fa5d80e9a8ea1b9cdd9201c01e",
+        "cacheFile": "GHSA-r3fr-7m74-q7g2-93d5e4753b44082e.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-r3fr-7m74-q7g2",
+        "url": "https://github.com/emqx/CocoaMQTT/pull/659",
+        "status": "downloaded",
+        "patchSha256": "b2f438660848234db67fa3124bc1fde5512ab3fa5d80e9a8ea1b9cdd9201c01e",
+        "cacheFile": "GHSA-r3fr-7m74-q7g2-cbde8ed2dead7b6c.patch"
+      },
+      {
+        "advisoryId": "GHSA-r6r4-5pr8-gjcp",
+        "url": "https://github.com/vapor/vapor/commit/6db3d917b5ce5024a84eb265ef65691383305d70",
+        "status": "downloaded",
+        "patchSha256": "c3a461a64858977bfc2aead7cbaffd42b0784f070b28397af824f37af83c40f0",
+        "cacheFile": "GHSA-r6r4-5pr8-gjcp-0e4bb4229cc22159.patch"
+      },
+      {
+        "advisoryId": "GHSA-r6ww-5963-7r95",
+        "url": "https://github.com/grpc/grpc-swift/commit/858f977f2a51fca2292f384cf7a108dc2e73a3bd",
+        "status": "downloaded",
+        "patchSha256": "a6d006cd2766feed8e0f61c807045a74350b66050db255980846c5bf02b610f8",
+        "cacheFile": "GHSA-r6ww-5963-7r95-9cc934f78264e0b4.patch"
+      },
+      {
+        "advisoryId": "GHSA-v3r5-pjpm-mwgq",
+        "url": "https://github.com/swift-server/async-http-client/commit/7f05a8da46cc2a4ab43218722298b81ac7a08031",
+        "status": "downloaded",
+        "patchSha256": "4e4b5ac615d7a3e9e9206d5fb58c6da06b1087cfb20df929418248312340e214",
+        "cacheFile": "GHSA-v3r5-pjpm-mwgq-9d249ab61cae76a6.patch"
+      },
+      {
+        "advisoryId": "GHSA-vcvg-xgr8-p5gq",
+        "url": "https://github.com/vapor/vapor/commit/cf1651f7ff76515593f4d8ca6e6e15d2247fe255",
+        "status": "downloaded",
+        "patchSha256": "8c49b88c921c31ec20028d5e6b054e27de1172ed869ce22c2feec9f29188f627",
+        "cacheFile": "GHSA-vcvg-xgr8-p5gq-0496c7fc032150f0.patch"
+      },
+      {
+        "advisoryId": "GHSA-vcvg-xgr8-p5gq",
+        "url": "https://github.com/vapor/vapor/pull/2500",
+        "status": "downloaded",
+        "patchSha256": "64e356869bc9b51a43a5c9860606606433b1af73b478116c49c0fba4c7cb0c1d",
+        "cacheFile": "GHSA-vcvg-xgr8-p5gq-d81bde333ede960d.patch"
+      },
+      {
+        "advisoryId": "GHSA-vj2m-9f5j-mpr5",
+        "url": "https://github.com/vapor/vapor/commit/953a349b539b3e0d3653585c8ffb50c427986df1",
+        "status": "downloaded",
+        "patchSha256": "f89bbf2e6148bd2c6f22ba817021ce8a197e1c61f112ac6314a6b34ba25e1c26",
+        "cacheFile": "GHSA-vj2m-9f5j-mpr5-cc9eda0eca5e51e4.patch"
+      },
+      {
+        "advisoryId": "GHSA-vxvm-qww3-2fh7",
+        "url": "https://github.com/mongodb/mongo-swift-driver/pull/643",
+        "status": "downloaded",
+        "patchSha256": "428ae4e4191f05a393b4521f82b6f0a28ff41c30e75331bad1123e1a51a76804",
+        "cacheFile": "GHSA-vxvm-qww3-2fh7-0f51f232429dd0fb.patch"
+      },
+      {
+        "advisoryId": "GHSA-w3f6-pc54-gfw7",
+        "url": "https://github.com/apple/swift-nio-http2/commit/56c60a29b1207a731be62fb68cc98246942145ed",
+        "status": "downloaded",
+        "patchSha256": "7539d9ca4c4dd8abdfff29ab01a07738c858005e564865bc45a202e8b3b9d060",
+        "cacheFile": "GHSA-w3f6-pc54-gfw7-ec1f83dfc9b02d2b.patch"
+      },
+      {
+        "advisoryId": "GHSA-w8xv-rwgf-4fwh",
+        "url": "https://github.com/apple/swift-asn1/commit/ae33e5941bb88d88538d0a6b19ca0b01e6c76dcf",
+        "expectedPatchSha256": "c71ee9650592ae6f25e16ec75eb76403fa45b25d64b1a68107b451db0b665722",
+        "status": "downloaded",
+        "patchSha256": "c71ee9650592ae6f25e16ec75eb76403fa45b25d64b1a68107b451db0b665722",
+        "cacheFile": "GHSA-w8xv-rwgf-4fwh-09bb99a1d6443636.patch",
+        "hashMatchesCorpus": true
+      },
+      {
+        "advisoryId": "GHSA-wc9m-r3v6-9p5h",
+        "url": "https://github.com/sparkle-project/Sparkle/pull/2550",
+        "status": "downloaded",
+        "patchSha256": "ffcbf2f983e5d7d6aaecfe9a11df7214ec05987e2a2321ab5d1b0304d7069140",
+        "cacheFile": "GHSA-wc9m-r3v6-9p5h-d01c11f06cc3d951.patch"
+      },
+      {
+        "advisoryId": "GHSA-whx6-m9j4-w2m2",
+        "url": "https://github.com/ibireme/yyjson/commit/0eca326fe57aeeb866e6f04c9ef9ea9f8343157e",
+        "status": "downloaded",
+        "patchSha256": "19b1af1a47fab5e7b6d382117cfd3db6691f6d9e3fe00654a29b484048668eba",
+        "cacheFile": "GHSA-whx6-m9j4-w2m2-f5e64ffc6da52611.patch"
+      },
+      {
+        "advisoryId": "GHSA-x768-cvr2-345r",
+        "url": "https://github.com/swift-server/swift-prometheus/commit/bfcd4bbfabe11aae4b035424ee9724582e288501",
+        "status": "downloaded",
+        "patchSha256": "1a6d5255d620dfe0afb8b45ec1cde314ac82dc48cc76393101f78b0aa1121ba7",
+        "cacheFile": "GHSA-x768-cvr2-345r-69898ed3a82d7868.patch"
+      },
+      {
+        "advisoryId": "GHSA-xc7w-r669-48pf",
+        "url": "https://github.com/pytorch/executorch/commit/cea9b23aa8ff78aff92829a466da97461cc7930c",
+        "status": "downloaded",
+        "patchSha256": "d94faea9949905e8bce9619536f4758e388ca5cc7325a818454d0f32fa3c07b8",
+        "cacheFile": "GHSA-xc7w-r669-48pf-8b12b4749bd0c010.patch"
+      }
+    ]
+  }
+}

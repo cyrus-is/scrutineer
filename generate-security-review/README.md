@@ -27,7 +27,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ## What It Does
 
 1. **Scans** the repo for languages, frameworks, and infrastructure
-2. **Loads** platform-specific security checklists from `security_guidance.yaml` — each item names a specific vulnerable API/pattern and its secure alternative
+2. **Loads** platform-specific security checklists from `security_guidance.yaml` — each item names a specific vulnerable API/pattern and its secure alternative. Proven iOS/Swift targets also receive validated, fix-derived investigations from `swift_security_patterns.yaml`.
 3. **Optionally reads** `servicemap.json` to discover reviewable components, unauthenticated endpoints, and shared datastores
 4. **Generates** a `/scrutineer-security` skill with four invocation modes:
    - `/scrutineer-security` — review current branch diff vs main
@@ -42,6 +42,8 @@ When `--service-map` is provided, the generated skill gets:
 - **Component lookup table** for full audit mode (Mode 3)
 - **Known unauthenticated endpoints** injected into the universal checklist — makes it easy to spot new unintended public endpoints
 - **Shared datastore flags** — extra scrutiny on tenant scoping for multi-service databases
+- **Scoped iOS evidence** — an app component marked `language: swift` and `platform: ios`
+  corroborates detection only when its declared component path contains local Swift files
 
 Generate a service map first: see `../generate-servicemap/`.
 
@@ -58,10 +60,16 @@ Generate a service map first: see `../generate-servicemap/`.
 
 ## Customizing
 
-Edit `security_guidance.yaml` to add new platforms or checklist items. Each entry needs:
+Edit `security_guidance.yaml` to add new platforms or baseline checklist items. Each entry needs:
 - `detect_files`: glob patterns to identify the platform
 - `detect_content`: regex patterns to confirm (for content-only detection like JWT)
 - `checklist`: specific, actionable security items — not generic advice
+
+Advisory-derived Swift items live in `swift_security_patterns.yaml`. Each pattern records the
+vulnerable invariant, verification steps, safe cases, secure alternative, consumer routing, and
+the GHSA/fixing-commit evidence. The generator validates the complete corpus before using it.
+Use `--swift-patterns PATH` for a replacement corpus or `--no-swift-patterns` to retain only the
+baseline guidance.
 
 ## Options
 
@@ -69,6 +77,8 @@ Edit `security_guidance.yaml` to add new platforms or checklist items. Each entr
 --output, -o        Output path (default: .claude/commands/scrutineer-security.md)
 --service-map, -s   Path to servicemap.json for richer context
 --guidance, -g      Custom guidance YAML path
+--swift-patterns    Custom advisory-derived Swift patterns YAML
+--no-swift-patterns Disable advisory-derived Swift patterns
 --dry-run, -n       Preview without writing
 --force, -f         Overwrite without prompting
 ```

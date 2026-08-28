@@ -693,9 +693,10 @@ mobile:
     name: iOS (Swift/SwiftUI)
     detect_files:
       - "**/*.swift"
-      - "**/*.xcodeproj"
+      - "**/*.xcodeproj/project.pbxproj"
+      - "**/*.xcworkspace/contents.xcworkspacedata"
       - "**/project.yml"
-      - "**/*.pbxproj"
+      - "**/Package.swift"
     detect_content:
       - "import SwiftUI"
       - "import UIKit"
@@ -745,7 +746,7 @@ mobile:
       - id: ios-hardcoded-secrets
         title: Hardcoded secrets in source
         pattern: "API keys, client secrets, or tokens as string literals in Swift files or plists"
-        secure_alternative: "Use Keychain for runtime secrets; use server-side config or build-time injection via xcconfig"
+        secure_alternative: "Keep app-wide credentials and client secrets server-side; store only per-install or per-user runtime credentials in Keychain. Build-time xcconfig injection does not make a value secret once it is in the app binary"
         owasp: "M9:2024 Insecure Data Storage"
         severity_if_found: HIGH
 

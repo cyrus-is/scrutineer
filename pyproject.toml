@@ -32,6 +32,7 @@ packages = ["scrutineer"]
 "generate-peer-review/peer_review_guidance.yaml" = "scrutineer/_assets/generate-peer-review/peer_review_guidance.yaml"
 "generate-security-review/generate.py" = "scrutineer/_assets/generate-security-review/generate.py"
 "generate-security-review/security_guidance.yaml" = "scrutineer/_assets/generate-security-review/security_guidance.yaml"
+"generate-security-review/swift_security_patterns.yaml" = "scrutineer/_assets/generate-security-review/swift_security_patterns.yaml"
 "generate-servicemap/SKILL.md" = "scrutineer/_assets/generate-servicemap/SKILL.md"
 "generate-servicemap/validate_servicemap.py" = "scrutineer/_assets/generate-servicemap/validate_servicemap.py"
 "mcp-review/SKILL.md" = "scrutineer/_assets/mcp-review/SKILL.md"
@@ -51,6 +52,7 @@ include = [
     "mcp-review/",
     "references/",
     "scrutineer-setup/",
+    "tools/build_swift_advisory_manifest.py",
     "README.md",
     "LICENSE*",
 ]

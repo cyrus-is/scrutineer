@@ -62,7 +62,13 @@ Scan the repository structure to identify:
   with an entrypoint, has its own Terraform module that provisions compute (ECS, Lambda, EC2, Cloud Run,
   App Service, etc.), or has its own Kubernetes Deployment manifest.
 - **Apps**: Frontend applications, mobile apps, CLI tools. Distinguished from services by being
-  user-facing rather than API-facing.
+  user-facing rather than API-facing. For native iOS apps, require corroborating evidence rather
+  than treating every Swift package as mobile: look for Swift source plus an iPhoneOS target in
+  `*.xcodeproj/project.pbxproj`, `platform: iOS` in XcodeGen `project.yml`, `.iOS(...)` in
+  `Package.swift`, an iOS deployment target in a podspec, `import UIKit`, `os(iOS)`, or an explicit
+  `apps/ios` source tree. Record native targets as `type: "app"`, `language: "swift"`,
+  `platform: "ios"`, and `framework: "swiftui"` or `"uikit"` when proven. `import SwiftUI`
+  alone is not enough because SwiftUI also supports macOS.
 - **Libraries**: Shared internal packages without their own entrypoint. Look for workspace members,
   internal package references, monorepo package directories.
 - **Infrastructure**: Terraform/OpenTofu/Pulumi/CloudFormation directories. Each module or stack is a
@@ -164,6 +170,28 @@ Work through components one at a time (or in small batches if they're lightweigh
   Datadog APM, Jaeger, Zipkin), metrics endpoints, alerting rules.
 - **Container config**: Dockerfile analysis — base image, exposed ports, build stages, runtime user.
   Docker Compose service definitions if present.
+
+#### Native iOS apps
+
+For every component classified as `platform: "ios"`, also inspect:
+
+- The actual application and extension targets in `project.pbxproj`, XcodeGen/Tuist manifests, or
+  `Package.swift`; do not confuse tests, example apps, checked-out packages, or macOS-only targets
+  with the shipped iOS app.
+- `Info.plist`, entitlements, privacy manifests, URL schemes, associated domains, background modes,
+  Keychain access groups, App Transport Security exceptions, and declared device capabilities.
+- `WKWebView` navigation and script-message bridges, universal/custom-link handlers, pasteboard and
+  share-extension inputs, document/archive import, local-network/Bonjour discovery, notification
+  payloads, and any other untrusted entry point into native code.
+- Credential and private-data storage (Keychain accessibility/access-control settings, files,
+  Core Data/SQLite, caches, logs, backups, and background snapshots) plus logout/data-removal paths.
+- Network trust decisions: URL construction, redirect handling, TLS challenge/pinning state,
+  first-use trust, and whether unauthenticated discovery metadata can influence routing or pins.
+- Swift/C/Objective-C boundaries: `withUnsafeBytes`, unsafe pointers/buffers, CommonCrypto/Security
+  APIs, and whether attacker-controlled lengths are validated before crossing the native boundary.
+- SwiftPM, CocoaPods, Carthage, and binary XCFramework dependencies. Record their actual consumers
+  and target membership; do not crawl `Pods`, `.build`, `DerivedData`, `Carthage`, or
+  `SourcePackages` as first-party components.
 
 ### Infrastructure
 

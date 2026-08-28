@@ -57,7 +57,8 @@ Same scan-and-generate approach, producing `.claude/commands/scrutineer-security
 **Analysis flow:**
 1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
 2. **Universal checklist** — 11 areas including auth, injection, secrets, crypto, rate limiting, dependencies
-3. **Platform-specific checklists** — vulnerability patterns for 25+ platforms with OWASP mapping
+3. **Platform-specific checklists** — vulnerability patterns for 25+ platforms with OWASP mapping;
+   detected iOS/Swift targets also receive investigations derived from inspected GitHub advisory fixes
 4. **Agentic analysis** — input tracing from entry to storage, auth boundary auditing, attack chain reasoning
 
 Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays in your terminal — it does not auto-post to PRs, because security findings may be sensitive.
@@ -229,9 +230,11 @@ The review tools are driven by YAML guidance files:
 
 - **`generate-peer-review/peer_review_guidance.yaml`** — platform detection rules, pre-flight checks, focus areas, and change-type signals for peer review
 - **`generate-security-review/security_guidance.yaml`** — platform detection rules, vulnerability checklists with OWASP mapping, and secure alternatives
+- **`generate-security-review/swift_security_patterns.yaml`** — validated, fix-derived Swift/iOS
+  investigations shared by both generators, with advisory and immutable commit provenance
 - **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns for MCP review
 
-To add a new platform or customize checks for your stack, add entries to these files. The two generators pick them up automatically and self-heal — if they detect a platform in your repo that isn't in the guidance file, they'll flag it and offer to enrich the guidance. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
+To add a new platform or customize checks for your stack, add entries to these files. The two generators pick them up automatically and self-heal — if they detect a platform in your repo that isn't in the guidance file, they'll flag it and offer to enrich the guidance. Swift corpus changes are validated at load time and can be tested with `python tests/test_swift_patterns.py`. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
 
 The service map schema is documented in `references/schema.md`.
 

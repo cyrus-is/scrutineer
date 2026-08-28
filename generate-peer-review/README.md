@@ -28,7 +28,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ## What It Does
 
 1. **Scans** the repo for languages, frameworks, and infrastructure
-2. **Loads** platform-specific pre-flight checks and focus areas from `peer_review_guidance.yaml`
+2. **Loads** platform-specific pre-flight checks and focus areas from `peer_review_guidance.yaml`;
+   proven iOS/Swift targets also receive fix-derived correctness and reliability investigations
+   from the shared `swift_security_patterns.yaml` corpus
 3. **Optionally reads** `servicemap.json` to discover reviewable components (services + apps)
 4. **Generates** a `/scrutineer-code` skill with four invocation modes:
    - `/scrutineer-code` — review current branch diff vs main
@@ -60,7 +62,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ## Service Map Integration
 
 When `--service-map` is provided, the generated skill includes a component lookup table
-enabling Mode 3 (full service/app review). Without it, only Mode 1 and 2 are available.
+enabling Mode 3 (full service/app review). A local app component marked `language: swift` and
+`platform: ios` also corroborates iOS detection. Without a map, only Mode 1 and 2 are available.
 
 Generate a service map first: see `../generate-servicemap/`.
 
@@ -70,6 +73,8 @@ Generate a service map first: see `../generate-servicemap/`.
 --output, -o        Output path (default: .claude/commands/scrutineer-code.md)
 --service-map, -s   Path to servicemap.json for richer context
 --guidance, -g      Custom guidance YAML path
+--swift-patterns    Custom advisory-derived Swift patterns YAML
+--no-swift-patterns Disable advisory-derived Swift patterns
 --dry-run, -n       Preview without writing
 --force, -f         Overwrite without prompting
 ```

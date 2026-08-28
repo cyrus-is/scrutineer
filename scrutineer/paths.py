@@ -34,6 +34,9 @@ _ROOT = toolkit_root()
 # Generators (run as subprocesses) and the two copy-in static skills.
 PEER_GENERATOR = _ROOT / "generate-peer-review" / "generate.py"
 SECURITY_GENERATOR = _ROOT / "generate-security-review" / "generate.py"
+SWIFT_SECURITY_PATTERNS = (
+    _ROOT / "generate-security-review" / "swift_security_patterns.yaml"
+)
 SERVICEMAP_SKILL = _ROOT / "generate-servicemap" / "SKILL.md"
 MCP_SKILL = _ROOT / "mcp-review" / "SKILL.md"
 
@@ -49,5 +52,11 @@ SERVICEMAP_FILE = "servicemap.json"
 
 def missing_assets() -> list[Path]:
     """Return any required asset paths that are not present on disk."""
-    required = [PEER_GENERATOR, SECURITY_GENERATOR, SERVICEMAP_SKILL, MCP_SKILL]
+    required = [
+        PEER_GENERATOR,
+        SECURITY_GENERATOR,
+        SWIFT_SECURITY_PATTERNS,
+        SERVICEMAP_SKILL,
+        MCP_SKILL,
+    ]
     return [p for p in required if not p.exists()]

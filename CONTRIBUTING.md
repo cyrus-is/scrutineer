@@ -53,6 +53,19 @@ your_platform:
 
 Both generators self-heal — if they detect an unknown platform in a repo, they'll flag it. If you see that happen, consider contributing the platform.
 
+### Updating advisory-derived Swift patterns
+
+Fix-derived Swift/iOS investigations live in
+`generate-security-review/swift_security_patterns.yaml` and are projected into both generators.
+Do not copy them into the baseline guidance files. A promoted pattern must cite a reviewed GHSA,
+an immutable fixing commit and patch SHA-256, the changed production `.swift` files, concrete iOS
+applicability, the vulnerable invariant, verification steps, safe cases, and the secure alternative.
+
+Regenerate the evidence manifest from a pinned local checkout of
+`github/advisory-database` using `tools/build_swift_advisory_manifest.py`; see
+`generate-security-review/corpus/README.md`. Patch downloads must finish with no failures or
+promoted-hash mismatches. Run `python tests/test_swift_patterns.py` before submitting.
+
 ### Service map schema
 
 The service map schema is documented in `references/schema.md`. If you're proposing schema changes, update both the reference doc and `generate-servicemap/validate_servicemap.py`.

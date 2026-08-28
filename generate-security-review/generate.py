@@ -19,15 +19,28 @@ Usage:
 """
 
 import argparse
-import fnmatch
 import json
 import os
 import re
 import sys
 import textwrap
 from pathlib import Path
+from typing import ClassVar
 
 import yaml
+
+SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (SOURCE_ROOT / "scrutineer").is_dir():
+    sys.path.insert(0, str(SOURCE_ROOT))
+
+from scrutineer.review_patterns import (
+    PatternValidationError,
+    ios_swift_component_paths,
+    load_swift_patterns,
+    merge_security_patterns,
+    path_matches,
+    service_map_ios_swift_component_paths,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +56,7 @@ class RepoAnalyzer:
     # past `pnpm test --coverage` run) get picked up as Node source files,
     # producing different platform-detection output on developer machines than
     # on a fresh CI clone.
-    SKIP_DIRS = {
+    SKIP_DIRS: ClassVar[set[str]] = {
         # VCS / editor / IDE
         ".git", ".claude", ".idea", ".vscode",
         # JS / TS
@@ -54,7 +67,7 @@ class RepoAnalyzer:
         # Go / Rust / Java
         "vendor", "target", ".gradle",
         # iOS / macOS
-        "Pods", ".build", "DerivedData",
+        "Pods", ".build", "DerivedData", "Carthage", "SourcePackages",
         # Infra
         ".terraform",
     }
@@ -82,7 +95,7 @@ class RepoAnalyzer:
         return [str(f.relative_to(self.repo_path)) for f in self.file_index]
 
     def matches_glob(self, pattern: str) -> list[str]:
-        return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
+        return [rel for rel in self.relative_paths() if path_matches(rel, pattern)]
 
     def file_contains(self, pattern: str, extensions: list[str] | None = None,
                       max_files: int = 50, max_bytes: int = 50_000) -> bool:
@@ -103,15 +116,39 @@ class RepoAnalyzer:
                 continue
         return False
 
-    def detect_platforms(self, guidance: dict) -> dict[str, dict]:
+    def detect_platforms(self, guidance: dict,
+                         service_map_data: dict | None = None) -> dict[str, dict]:
         detected = {}
         rel_paths = self.relative_paths()
         for category_name, platforms in guidance.items():
             for platform_key, platform_data in platforms.items():
+                if platform_key == "ios":
+                    local_paths = ios_swift_component_paths(
+                        self.repo_path,
+                        self.file_index,
+                    )
+                    map_paths = (
+                        service_map_ios_swift_component_paths(
+                            service_map_data,
+                            self.repo_path,
+                            self.file_index,
+                        )
+                        if service_map_data
+                        else []
+                    )
+                    component_paths = sorted(set(local_paths) | set(map_paths))
+                    if component_paths:
+                        detected[platform_key] = {
+                            **platform_data,
+                            "_category": category_name,
+                            "_component_paths": component_paths,
+                        }
+                    continue
+
                 file_match = False
                 for pattern in platform_data.get("detect_files", []):
                     for rel in rel_paths:
-                        if fnmatch.fnmatch(rel, pattern):
+                        if path_matches(rel, pattern):
                             file_match = True
                             break
                     if file_match:
@@ -130,10 +167,13 @@ class RepoAnalyzer:
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
+            if pk == "ios" and pd.get("_component_paths"):
+                component_paths[pk] = list(pd["_component_paths"])
+                continue
             paths = set()
             for pattern in pd.get("detect_files", []):
                 for rel in rel_paths:
-                    if fnmatch.fnmatch(rel, pattern):
+                    if path_matches(rel, pattern):
                         parts = Path(rel).parts
                         if len(parts) >= 2:
                             paths.add(f"{parts[0]}/{parts[1]}")
@@ -419,6 +459,13 @@ class SkillGenerator:
             lines.append(f"- **{item['title']}**: {item['pattern']}")
             lines.append(f"  - *Fix*: {item['secure_alternative']}")
             lines.append(f"  - *OWASP*: {item['owasp']} | *Default severity*: {item['severity_if_found']}")
+            sources = item.get("source_advisories", [])
+            if sources:
+                links = ", ".join(
+                    f"[{source}](https://github.com/advisories/{source})"
+                    for source in sources
+                )
+                lines.append(f"  - *Fix evidence*: {links}")
             lines.append("")
 
         return "\n".join(lines) + "\n"
@@ -507,8 +554,6 @@ class SkillGenerator:
             memory_safe_langs.append("Go")
         if "java" in platform_keys or "kotlin" in platform_keys:
             memory_safe_langs.append("Java/Kotlin")
-        if "swift" in platform_keys:
-            memory_safe_langs.append("Swift")
         if "csharp" in platform_keys:
             memory_safe_langs.append("C#")
 
@@ -519,6 +564,16 @@ class SkillGenerator:
                 f"\n- **Memory safety issues are not applicable to {langs}.** "
                 "Do not report buffer overflows, use-after-free, or similar memory "
                 "safety issues in memory-safe languages."
+            )
+
+        swift_unsafe_note = ""
+        if "ios" in platform_keys:
+            swift_unsafe_note = (
+                "\n- **Safe Swift prevents ordinary C-style memory corruption, but unsafe "
+                "boundaries remain in scope.** Investigate `UnsafePointer`, "
+                "`UnsafeBufferPointer`, `withUnsafeBytes`, C/Objective-C FFI, and "
+                "unchecked arithmetic that controls those operations; do not discard "
+                "a concrete native-boundary exploit merely because the caller is Swift."
             )
 
         xss_safe_frameworks = []
@@ -580,7 +635,7 @@ class SkillGenerator:
             11. **Regex injection** — injecting untrusted content into a regex pattern is
                 not a vulnerability.
             12. **Missing audit logs** — absence of logging is an operational gap, not a
-                security vulnerability.{memory_safe_note}{xss_safe_note}{client_side_note}
+                security vulnerability.{memory_safe_note}{swift_unsafe_note}{xss_safe_note}{client_side_note}
 
             ### Precedent Rules — Calibrate Severity
 
@@ -968,6 +1023,17 @@ def main():
                           help="Disable service-map auto-discovery and run without one")
     parser.add_argument("--guidance", "-g", default=None,
                         help="Path to security guidance YAML (default: bundled security_guidance.yaml)")
+    patterns_group = parser.add_mutually_exclusive_group()
+    patterns_group.add_argument(
+        "--swift-patterns",
+        default=None,
+        help="Path to advisory-derived Swift patterns YAML (default: bundled corpus)",
+    )
+    patterns_group.add_argument(
+        "--no-swift-patterns",
+        action="store_true",
+        help="Disable the bundled advisory-derived Swift patterns",
+    )
     parser.add_argument("--dry-run", "-n", action="store_true",
                         help="Print the generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
@@ -983,6 +1049,21 @@ def main():
 
     print(f"Loading guidance from: {guidance_path}")
     guidance = load_guidance(guidance_path)
+
+    if not args.no_swift_patterns:
+        patterns_path = (
+            Path(args.swift_patterns)
+            if args.swift_patterns
+            else Path(__file__).parent / "swift_security_patterns.yaml"
+        )
+        try:
+            swift_patterns = load_swift_patterns(patterns_path)
+            added = merge_security_patterns(guidance, swift_patterns)
+        except PatternValidationError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+        print(f"Loading Swift advisory patterns from: {patterns_path}")
+        print(f"  {added} security investigations added")
 
     # Resolve service map: explicit --service-map, else auto-discover at repo root,
     # unless --no-service-map opts out. Silent degradation (running without a map
@@ -1016,7 +1097,10 @@ def main():
     analyzer = RepoAnalyzer(str(repo_path))
     print(f"Indexed {len(analyzer.file_index)} files")
 
-    detected = analyzer.detect_platforms(guidance)
+    detected = analyzer.detect_platforms(
+        guidance,
+        service_map.data if service_map else None,
+    )
     if not detected:
         print("\nNo known platforms detected. The generated skill will only "
               "include the universal checklist.")
