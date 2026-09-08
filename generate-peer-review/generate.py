@@ -716,32 +716,67 @@ class SkillGenerator:
         return "\n".join(lines) + "\n"
 
     def _cross_cutting_section(self, cross_cutting: dict | None) -> str:
+        """Universal areas, plus service and client sets behind an explicit gate.
+
+        The block used to be one undifferentiated list introduced as the
+        highest-value part of the review — and most of it assumed an HTTP service.
+        A reviewer who is told that the most important questions are about response
+        envelopes, while reviewing an on-device app with no network surface, learns
+        to skip the section. Gating the inapplicable sets is what makes the
+        applicable ones credible.
+        """
         if not cross_cutting:
             return ""
 
-        areas = cross_cutting.get("focus_areas", [])
-        if not areas:
+        def render(areas: list) -> list[str]:
+            out = []
+            for area in areas:
+                desc = area["description"].strip().replace("\n", " ")
+                why = area.get("why", "").strip().replace("\n", " ")
+                out.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
+                if why:
+                    out.append(f"  - *Why this matters*: {why}")
+                out.append("")
+            return out
+
+        # Back-compatible with the old flat shape.
+        if "focus_areas" in cross_cutting:
+            cross_cutting = {"universal": cross_cutting}
+
+        universal = cross_cutting.get("universal", {}).get("focus_areas", [])
+        if not universal and not any(k in cross_cutting for k in ("service", "client")):
             return ""
 
         lines = [textwrap.dedent("""\
-            ## Cross-Cutting Review (all code, all platforms)
+            ## Cross-Cutting Review
 
-            These are the highest-value focus areas. They catch bugs that platform-specific
-            checklists miss — inconsistencies between code paths, bypass vectors, and
-            assumptions that only surface under adversarial use. Apply these to EVERY review,
-            regardless of platform.
+            These catch what platform checklists miss: inconsistencies between code paths,
+            guarantees that do not guarantee, and assumptions that only surface under
+            unexpected use.
+
+            The universal set applies to every review. The two sets after it are gated —
+            read the gate first and skip the whole set when it does not apply. Forcing a
+            question about response envelopes onto an on-device app produces noise, and a
+            section that produces noise is a section reviewers learn to skim.
 
         """)]
 
-        for area in areas:
-            desc = area["description"].strip().replace("\n", " ")
-            why = area.get("why", "").strip().replace("\n", " ")
-            lines.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
-            if why:
-                lines.append(f"  - *Why this matters*: {why}")
-            lines.append("")
+        if universal:
+            lines.append("### Universal — apply to every review\n")
+            lines.extend(render(universal))
 
-        return "\n".join(lines) + "\n"
+        for key, heading in (("service", "Services and multi-user components"),
+                             ("client", "Client applications")):
+            group = cross_cutting.get(key)
+            if not group or not group.get("focus_areas"):
+                continue
+            gate = group.get("applies_when", "").strip().replace("\n", " ")
+            lines.append(f"### {heading} — conditional\n")
+            if gate:
+                lines.append(f"**Applies when:** {gate}\n")
+            lines.extend(render(group["focus_areas"]))
+
+        return "\n".join(lines)
 
     def _focus_areas_section(self, detected: dict, component_paths: dict) -> str:
         lines = [textwrap.dedent("""\
@@ -812,6 +847,7 @@ class SkillGenerator:
             "api-contract": ("Architecture, Production Reliability", "Backward compatibility with deployed clients, breaking changes, versioning"),
             "dependency-update": ("Production Reliability, Maintainability", "Breaking changes, CVEs, bundle size impact, transitive dependency risks"),
             "config-change": ("Operability, Production Reliability", "Deployment risk, rollback path, environment-specific behavior, secret exposure"),
+            "documented-claim": ("Correctness, Maintainability", "Does the document match the code it describes? Check the direction that matters: every implemented behaviour documented, not just every documented behaviour implemented"),
         }
 
         lines.append("| Change Type | Detected By | Increased Scrutiny |")
