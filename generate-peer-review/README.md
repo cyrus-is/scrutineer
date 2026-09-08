@@ -96,7 +96,15 @@ Two matching gotchas worth knowing before adding a block:
 
 **Backend:** Go, Python, Java, Node.js, Rust, C#, Ruby, PHP
 **Web:** React/Next.js, Vue/Nuxt
-**Mobile:** iOS/macOS (Swift, SwiftUI, SwiftPM), Android (Kotlin)
+**Mobile:** Android (Kotlin)
+**Apple:** Swift (language & concurrency), SwiftUI, CloudKit, Foundation Models (on-device AI),
+Swift Package Manager, Apple app target, macOS app, Swift Testing
+
+The Apple blocks replaced a single `ios` block whose six checks were written for a UIKit app talking
+to a REST API. Three were cut rather than ported: `DispatchQueue.main` misuse is a compile error
+under Swift 6 main-actor isolation, retain cycles are rare in value- and actor-oriented code, and one
+check hardcoded a foreign API's pagination default. The capability blocks use `detect_mode: all`, so
+`cloudkit` means "Swift files **and** they import CloudKit" rather than firing on every Swift repo.
 **Infra:** Terraform, Docker, GitHub Actions
 **API:** OpenAPI/REST, GraphQL
 **Database:** SQL (general)

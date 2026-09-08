@@ -62,6 +62,7 @@ class RepoAnalyzer:
         if not self.repo_path.is_dir():
             raise ValueError(f"Not a directory: {self.repo_path}")
         self._file_index: list[Path] | None = None
+        self._text_cache: dict[str, str | None] = {}
 
     @property
     def file_index(self) -> list[Path]:
@@ -168,8 +169,15 @@ class RepoAnalyzer:
                     need_content = not file_match
                 else:  # "files"
                     need_content = not globs
+                # A block may narrow which extensions its content patterns are
+                # searched in. Without that, a repo whose own files *describe*
+                # a pattern matches it: this repo's guidance YAMLs mention
+                # `import AppKit` and `NSApplicationDelegate` as things to look
+                # for, which was enough to detect a macOS app in a pure Python
+                # repo. Documentation about a platform is not that platform.
+                exts = platform_data.get("detect_content_exts") or self.CONTENT_EXTS
                 content_match = any(
-                    self.file_contains(cp, extensions=self.CONTENT_EXTS)
+                    self.file_contains(cp, extensions=exts)
                     for cp in contents
                 ) if need_content else False
 
@@ -182,24 +190,52 @@ class RepoAnalyzer:
                     detected[platform_key] = {**platform_data, "_category": category_name}
         return detected
 
+    def _file_matches_any(self, rel: str, regexes: list, exts=None) -> bool:
+        """True when the file at `rel` matches one of the compiled patterns."""
+        exts = exts or self.CONTENT_EXTS
+        if rel not in self._text_cache:
+            f = self.repo_path / rel
+            try:
+                if f.suffix not in exts or f.stat().st_size > 2_000_000:
+                    self._text_cache[rel] = None
+                else:
+                    self._text_cache[rel] = f.read_text(errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                self._text_cache[rel] = None
+        text = self._text_cache[rel]
+        return bool(text) and any(r.search(text) for r in regexes)
+
     def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
         # Ordered by how much code each path actually contributes, NOT
         # alphabetically. Callers truncate this list to name a few directories in
         # the generated skill, and an alphabetical sort meant the truncation kept
         # whichever directories sorted first — on a Swift repo that named two
         # single-file app shells and dropped every module holding the code.
+        #
+        # For a `detect_mode: all` block, a path only counts if the files there
+        # actually match the block's content patterns. Otherwise a capability
+        # block ("Swift files AND they import CloudKit") would name every Swift
+        # directory in the repo and send the reviewer to files that have nothing
+        # to do with it — the same wrong-directory failure, one level down.
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
             counts: dict[str, int] = {}
+            scoped = pd.get("detect_mode") == "all" and pd.get("detect_content")
+            regexes = [re.compile(c, re.MULTILINE) for c in pd.get("detect_content", [])] \
+                if scoped else []
+            scope_exts = pd.get("detect_content_exts") or self.CONTENT_EXTS
             # `component_globs` lets a content-gated block still name real
             # directories; falls back to the detection globs.
             for pattern in pd.get("component_globs") or pd.get("detect_files", []):
                 for rel in rel_paths:
-                    if fnmatch.fnmatch(rel, pattern):
-                        parts = Path(rel).parts
-                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
-                        counts[key] = counts.get(key, 0) + 1
+                    if not fnmatch.fnmatch(rel, pattern):
+                        continue
+                    if scoped and not self._file_matches_any(rel, regexes, scope_exts):
+                        continue
+                    parts = Path(rel).parts
+                    key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                    counts[key] = counts.get(key, 0) + 1
             component_paths[pk] = [
                 p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
             ]
