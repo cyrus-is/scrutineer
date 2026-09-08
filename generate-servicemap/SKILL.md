@@ -343,6 +343,35 @@ Every discovery should include a confidence score. Use this calibration:
   service but no entrypoint found.
 - **< 0.3**: Weak signal. Include only if it fills a gap that would otherwise be a stub.
 
+### Required fields the validator enforces
+
+`validate_servicemap.py` rejects a map that omits these. A crawl that follows the prose above
+but not this list produces a map that fails the toolkit's own validator, so check against it
+before writing the file.
+
+**Every component:** `id`, `name`, `type`, `confidence`, `discovery_method`, `last_crawled`,
+`stub`. Non-stub components also need `path`, except `external` ones.
+
+**`type` must be one of:** `service`, `app`, `library`, `infrastructure`, `pipeline`,
+`datastore`, `external`.
+
+**`datastore` additionally requires:** `engine`, `shared`, `consumers`.
+
+**`external` additionally requires:** `vendor`, `category`, `consumers` — and takes no `path`.
+
+**Every connection:** `id`, `source`, `target`, `type`, plus `confidence` and
+`discovery_method`. **`type` must be one of:** `http`, `grpc`, `graphql`, `websocket`,
+`queue`, `pubsub`, `event`, `database`, `cache`, `storage`, `library`, `infrastructure`.
+There is no `sdk` type — a framework dependency is `library`, and a managed data service
+reached through a vendor SDK is `storage` or `database` by what it stores.
+
+**`metadata` requires:** `total_components`, `total_connections`, `total_stubs`,
+`component_counts`, `low_confidence_components`, `shared_datastores`,
+`unauthenticated_public_endpoints`, `unmonitored_services`.
+
+Run `python generate-servicemap/validate_servicemap.py <path>` when you are done. Fix what it
+reports rather than shipping a map that only mostly conforms.
+
 ## Output
 
 The output is a single JSON file conforming to the schema in `references/schema.md`. The JSON should

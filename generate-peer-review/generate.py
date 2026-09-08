@@ -295,6 +295,7 @@ class SkillGenerator:
             self._invocation_section(service_map),
             self._process_section(detected, component_paths, service_map),
             self._verification_section(detected, verification),
+            self._diff_triage_section(service_map),
             self._understand_first_section(),
             self._preflight_section(detected, component_paths),
             self._agentic_analysis_section(),
@@ -412,6 +413,7 @@ class SkillGenerator:
             0. **Verify before judging** — establish what the toolchain already proves, and stop if it is red (see Phase 0)
             1. **Determine mode** — parse arguments (see Invocation Modes above)
             2. **Get the code** — Mode 1: `git diff main...HEAD`, Mode 2: `gh pr diff <number>`, Mode 3: read all files in component directory
+            2b. **Size the diff before reading it** — see Diff Triage below. A review unit you cannot hold is a review you cannot trust.
             3. **Detect platforms** — scan file paths to determine which platform checklists apply:
             {detection_block}
             4. **Understand first** — build a mental model of the code before judging it (see below)
@@ -465,6 +467,26 @@ class SkillGenerator:
 
             **4. If it passes, honour the exclusion list.** It is not advice; it is the set
             of things you now know are absent.
+
+            **5. Record which oracle covers which changed files.** Coverage is not uniform, and
+            an exclusion you apply outside the range of the command that earned it is a guess
+            wearing a proof's clothing. Build this table before judging anything:
+
+            | Changed path | Covered by | Not covered by |
+            |---|---|---|
+
+            Then state plainly: **which changed files no oracle covered at all.** Those are the
+            files where you are reasoning without a net, and findings there deserve more
+            scepticism and more reading of surrounding code — not less.
+
+            **6. Use the toolchain to measure, not only to gate.** A green build answers
+            "does it compile"; the same tools also answer questions the source cannot. When the
+            diff touches build configuration, packaging, or the module graph, read the *produced
+            artefact* rather than the input that was meant to produce it — the merged plist
+            rather than the authored one, the resolved module closure rather than the manifest,
+            the built test bundle rather than the target list. Several classes of defect are
+            invisible in the diff and obvious in the output, and the commands are already
+            installed.
         """))
 
         if not applicable:
@@ -486,6 +508,8 @@ class SkillGenerator:
                     cost = f" *({step['cost']})*" if step.get("cost") else ""
                     lines.append(f"- `{step['cmd']}`{cost}")
                     lines.append(f"  - When: {step['when']}")
+                    if step.get("note"):
+                        lines.append(f"  - Note: {step['note']}")
                 lines.append("")
 
             per_repo = ladder.get("per_repo", [])
@@ -520,6 +544,55 @@ class SkillGenerator:
                 lines.append("")
 
         return "\n".join(lines)
+
+    def _diff_triage_section(self, service_map: "ServiceMapLoader | None") -> str:
+        """Measure the diff before reviewing it, and partition when it is too large.
+
+        Mode 1 assumes a branch diff is a review unit. It is not always: a branch
+        that has drifted, or a release train, can be hundreds of files. Reading
+        that linearly produces a shallow pass that reports nothing useful — and
+        the reviewer cannot tell the difference from the inside.
+        """
+        map_line = (
+            "Partition along the components in the service map — it already names the "
+            "boundaries, and a component is a unit someone can reason about whole."
+            if service_map else
+            "Partition along top-level source directories (module, package, or service "
+            "roots). Run `/scrutineer-servicemap` first if you want the boundaries named "
+            "for you."
+        )
+        return textwrap.dedent(f"""\
+            ## Diff Triage — size the change before reviewing it
+
+            Run this first, before reading any code:
+
+            ```
+            git diff <base>...HEAD --shortstat
+            git diff <base>...HEAD --numstat | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
+            ```
+
+            **Check the base is what you think it is.** `git fetch` first and compare
+            `git rev-parse main origin/main`. A stale local base silently inflates the diff
+            with work that already merged — you end up reviewing other people's landed code
+            and reporting it as this branch's. If they differ, say so and use the remote.
+
+            Then choose by size:
+
+            | Diff size | What to do |
+            |---|---|
+            | **under ~50 files** | Review it as one unit. This is the normal path. |
+            | **50–150 files** | Still one unit, but lead with the second command above and review in descending order of insertions, so the largest surface gets your freshest attention. |
+            | **over ~150 files, or over ~20 commits** | **Do not review it linearly.** Partition it, state the partitions up front, and review each as its own unit with its own verdict. {map_line} |
+
+            When you partition, say so in the output — the reader needs to know whether they
+            are holding one review or several, and which partition each finding came from.
+            Carry Phase 0's results into every partition rather than re-running the build for
+            each one.
+
+            A diff this large is usually also a signal worth reporting on its own: it means the
+            branch has outgrown reviewability, and that is a process finding, not a code one.
+
+        """)
 
     def _understand_first_section(self) -> str:
         return textwrap.dedent("""\
@@ -643,32 +716,67 @@ class SkillGenerator:
         return "\n".join(lines) + "\n"
 
     def _cross_cutting_section(self, cross_cutting: dict | None) -> str:
+        """Universal areas, plus service and client sets behind an explicit gate.
+
+        The block used to be one undifferentiated list introduced as the
+        highest-value part of the review — and most of it assumed an HTTP service.
+        A reviewer who is told that the most important questions are about response
+        envelopes, while reviewing an on-device app with no network surface, learns
+        to skip the section. Gating the inapplicable sets is what makes the
+        applicable ones credible.
+        """
         if not cross_cutting:
             return ""
 
-        areas = cross_cutting.get("focus_areas", [])
-        if not areas:
+        def render(areas: list) -> list[str]:
+            out = []
+            for area in areas:
+                desc = area["description"].strip().replace("\n", " ")
+                why = area.get("why", "").strip().replace("\n", " ")
+                out.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
+                if why:
+                    out.append(f"  - *Why this matters*: {why}")
+                out.append("")
+            return out
+
+        # Back-compatible with the old flat shape.
+        if "focus_areas" in cross_cutting:
+            cross_cutting = {"universal": cross_cutting}
+
+        universal = cross_cutting.get("universal", {}).get("focus_areas", [])
+        if not universal and not any(k in cross_cutting for k in ("service", "client")):
             return ""
 
         lines = [textwrap.dedent("""\
-            ## Cross-Cutting Review (all code, all platforms)
+            ## Cross-Cutting Review
 
-            These are the highest-value focus areas. They catch bugs that platform-specific
-            checklists miss — inconsistencies between code paths, bypass vectors, and
-            assumptions that only surface under adversarial use. Apply these to EVERY review,
-            regardless of platform.
+            These catch what platform checklists miss: inconsistencies between code paths,
+            guarantees that do not guarantee, and assumptions that only surface under
+            unexpected use.
+
+            The universal set applies to every review. The two sets after it are gated —
+            read the gate first and skip the whole set when it does not apply. Forcing a
+            question about response envelopes onto an on-device app produces noise, and a
+            section that produces noise is a section reviewers learn to skim.
 
         """)]
 
-        for area in areas:
-            desc = area["description"].strip().replace("\n", " ")
-            why = area.get("why", "").strip().replace("\n", " ")
-            lines.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
-            if why:
-                lines.append(f"  - *Why this matters*: {why}")
-            lines.append("")
+        if universal:
+            lines.append("### Universal — apply to every review\n")
+            lines.extend(render(universal))
 
-        return "\n".join(lines) + "\n"
+        for key, heading in (("service", "Services and multi-user components"),
+                             ("client", "Client applications")):
+            group = cross_cutting.get(key)
+            if not group or not group.get("focus_areas"):
+                continue
+            gate = group.get("applies_when", "").strip().replace("\n", " ")
+            lines.append(f"### {heading} — conditional\n")
+            if gate:
+                lines.append(f"**Applies when:** {gate}\n")
+            lines.extend(render(group["focus_areas"]))
+
+        return "\n".join(lines)
 
     def _focus_areas_section(self, detected: dict, component_paths: dict) -> str:
         lines = [textwrap.dedent("""\
@@ -739,6 +847,7 @@ class SkillGenerator:
             "api-contract": ("Architecture, Production Reliability", "Backward compatibility with deployed clients, breaking changes, versioning"),
             "dependency-update": ("Production Reliability, Maintainability", "Breaking changes, CVEs, bundle size impact, transitive dependency risks"),
             "config-change": ("Operability, Production Reliability", "Deployment risk, rollback path, environment-specific behavior, secret exposure"),
+            "documented-claim": ("Correctness, Maintainability", "Does the document match the code it describes? Check the direction that matters: every implemented behaviour documented, not just every documented behaviour implemented"),
         }
 
         lines.append("| Change Type | Detected By | Increased Scrutiny |")
@@ -784,7 +893,7 @@ class SkillGenerator:
 
             **PR:** #<number> — <title>  (omit for Mode 1 and 3)
             **Verdict:** APPROVE / APPROVE with concerns / DISCUSS / REQUEST CHANGES
-            **Findings:** N total (X ISSUE, Y CONCERN)
+            **Findings:** N total (X ISSUE, Y CONCERN; Z reported with no check behind them)
             **Components touched:** <list>
             **Change type(s):** <from modifiers, if any>
 
@@ -810,6 +919,7 @@ class SkillGenerator:
 
             - **Lens:** <which of the 8 lenses>
             - **Rating:** ISSUE / CONCERN
+            - **Check:** <the id of the pre-flight check that led you here, or `none`>
             - **Intent:** What the author was trying to accomplish
             - **Risk:** Why this is risky or buggy
             - **Failure mode:** How this will break in production
@@ -830,6 +940,27 @@ class SkillGenerator:
             ```
 
             Do not manufacture findings. If the code is clean, APPROVE it.
+
+            ### Check Performance
+
+            Always include this section, even on a clean review. It is how the checklists get
+            better: a check nobody can see misfiring stays wrong forever. Be blunt — this
+            section is graded on honesty, not on making the tooling look good.
+
+            **False positives** — checks that fired on code they did not actually apply to:
+
+            | Check | Fired on | Why it did not apply |
+            |---|---|---|
+            | <check id> | <file:line, or "6 sites"> | <the specific reason> |
+
+            **Inert** — checks whose platform was detected but which had no applicable code in
+            this diff at all. List the check ids or, where a whole block was inert, the block
+            name and the reason (e.g. "the module abstracts this framework behind a protocol,
+            so its vocabulary never appears").
+
+            **Unnamed** — findings you reported with `Check: none`. For each, say in one line
+            what a check that WOULD have caught it should look for. These are the highest-value
+            additions to the guidance, because they are defects the checklist is currently blind to.
 
             **GitHub issues are opt-in.** Do NOT auto-file GitHub issues for findings.
             Only create issues if the user explicitly asks (e.g., `/scrutineer-code 123 --file-issues`).

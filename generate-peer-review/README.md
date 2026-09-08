@@ -39,6 +39,24 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
    the repo's own gate or the platform's cheap subset *before* judging anything
 6. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
 
+## Cross-cutting: universal, service, client
+
+The cross-cutting block is split three ways. It used to be one list introduced as "the
+highest-value focus areas, apply to EVERY review" — and four of its six items assumed an HTTP
+service with endpoints, response envelopes, billing tiers and other users. On a local-first
+single-user app they were not merely unhelpful, they were literally false, which teaches a
+reviewer to skim the section that claims to matter most.
+
+`universal` is emitted always; `service` and `client` carry an `applies_when` gate that the
+generated skill prints, so a reviewer skips an inapplicable set rather than forcing findings
+out of it.
+
+Two live reviews showed that **the wording, not the question, is what fails to travel**:
+"guard consistency" was the best-performing item in both runs, but only once re-read from
+"endpoint" to "any code path reaching the same resource". The universal set is phrased in
+terms of code paths and resources for that reason; the service set keeps HTTP vocabulary
+where it is genuinely apt.
+
 ## Phase 0: verify before you judge
 
 The generated skill opens by establishing what the toolchain already proves, and converts that into
