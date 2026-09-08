@@ -1650,9 +1650,10 @@ verification:
   platforms:
     swift:
       per_diff:
-        - cmd: "swiftlint lint --strict --quiet <changed .swift files>"
+        - cmd: "swiftlint lint --strict --quiet <changed .swift files INSIDE the config's `included:` paths>"
           when: "a .swiftlint.yml exists and the binary is installed"
           cost: "1-5s"
+          note: "Intersect the changed files with the config's own scope first. Passing a changed file that the repo deliberately excludes reports violations the real gate never sees — a manifest or generated file failing `trailing_comma` is not a finding, it is a file the repo chose not to lint."
         - cmd: "swift build"
           when: "a Package.swift is at the repo root"
           cost: "5-20s incremental"
