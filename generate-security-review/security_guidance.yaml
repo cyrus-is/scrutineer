@@ -34,6 +34,7 @@ backend:
       - "go.mod"
       - "go.sum"
       - "**/*.go"
+      - "*.go"
     detect_content:
       - "^module\\s+"
     checklist:
@@ -129,6 +130,7 @@ backend:
       - "setup.py"
       - "Pipfile"
       - "**/*.py"
+      - "*.py"
     detect_content:
       - "^from\\s+\\w+\\s+import"
     checklist:
@@ -216,6 +218,7 @@ backend:
       - "build.gradle"
       - "build.gradle.kts"
       - "**/*.java"
+      - "*.java"
     detect_content:
       - "^package\\s+[a-z]"
     checklist:
@@ -287,8 +290,11 @@ backend:
     detect_files:
       - "package.json"
       - "**/*.js"
+      - "*.js"
       - "**/*.mjs"
+      - "*.mjs"
       - "**/*.cjs"
+      - "*.cjs"
     detect_content:
       - "\"express\""
       - "\"fastify\""
@@ -364,6 +370,7 @@ backend:
       - "Cargo.toml"
       - "Cargo.lock"
       - "**/*.rs"
+      - "*.rs"
     detect_content:
       - "^\\[package\\]"
     checklist:
@@ -413,8 +420,11 @@ backend:
     name: "C# / .NET"
     detect_files:
       - "**/*.csproj"
+      - "*.csproj"
       - "**/*.sln"
+      - "*.sln"
       - "**/*.cs"
+      - "*.cs"
     detect_content:
       - "^using\\s+System"
       - "<Project Sdk=\"Microsoft"
@@ -467,6 +477,7 @@ backend:
       - "Gemfile"
       - "Gemfile.lock"
       - "**/*.rb"
+      - "*.rb"
       - "Rakefile"
     detect_content:
       - "^gem\\s+['\"]rails['\"]"
@@ -518,6 +529,7 @@ backend:
     detect_files:
       - "composer.json"
       - "**/*.php"
+      - "*.php"
       - "artisan"
     detect_content:
       - "^<\\?php"
@@ -573,7 +585,9 @@ web:
     name: React / Next.js
     detect_files:
       - "**/*.tsx"
+      - "*.tsx"
       - "**/*.jsx"
+      - "*.jsx"
       - "next.config.js"
       - "next.config.mjs"
       - "next.config.ts"
@@ -635,6 +649,7 @@ web:
     name: Vue.js
     detect_files:
       - "**/*.vue"
+      - "*.vue"
       - "nuxt.config.ts"
       - "nuxt.config.js"
     detect_content:
@@ -667,7 +682,9 @@ web:
     detect_files:
       - "angular.json"
       - "**/*.component.ts"
+      - "*.component.ts"
       - "**/*.module.ts"
+      - "*.module.ts"
     detect_content:
       - "\"@angular/core\""
     checklist:
@@ -696,87 +713,17 @@ web:
 # MOBILE PLATFORMS
 # =============================================================================
 mobile:
-  ios:
-    name: iOS (Swift/SwiftUI)
-    detect_files:
-      - "**/*.swift"
-      - "**/*.xcodeproj"
-      - "**/project.yml"
-      - "**/*.pbxproj"
-    detect_content:
-      - "import SwiftUI"
-      - "import UIKit"
-    checklist:
-      - id: ios-keychain-vs-userdefaults
-        title: Sensitive data in UserDefaults
-        pattern: "Tokens, keys, PII stored in `UserDefaults` — plaintext on disk, included in backups"
-        secure_alternative: "Use Keychain Services (`SecItemAdd`/`SecItemCopyMatching`) or a Keychain wrapper"
-        owasp: "M9:2024 Insecure Data Storage"
-        severity_if_found: HIGH
-
-      - id: ios-ats-exception
-        title: App Transport Security exceptions
-        pattern: "`NSAllowsArbitraryLoads = true` or domain-specific ATS exceptions in Info.plist"
-        secure_alternative: "Remove ATS exceptions; ensure all API endpoints use HTTPS with valid certificates"
-        owasp: "M5:2024 Insecure Communication"
-        severity_if_found: MEDIUM
-
-      - id: ios-deeplink-validation
-        title: Deep link parameter injection
-        pattern: "URL scheme or universal link handler that acts on URL parameters without validation"
-        secure_alternative: "Validate and sanitize all URL parameters; prefer universal links (AASA) over custom URL schemes"
-        owasp: "M4:2024 Insufficient Input/Output Validation"
-        severity_if_found: HIGH
-
-      - id: ios-background-snapshot
-        title: Sensitive data in background screenshot
-        pattern: "Sensitive data visible when app enters background — no masking in `applicationDidEnterBackground` or `sceneDidEnterBackground`"
-        secure_alternative: "Overlay a blur/splash screen in `willResignActive` to hide sensitive content from task switcher"
-        owasp: "M9:2024 Insecure Data Storage"
-        severity_if_found: LOW
-
-      - id: ios-clipboard-exposure
-        title: Sensitive data on clipboard
-        pattern: "PII or secrets copied to `UIPasteboard.general` — accessible to all apps"
-        secure_alternative: "Use `UIPasteboard` with `ExpirationDate` or local-only pasteboard"
-        owasp: "M9:2024 Insecure Data Storage"
-        severity_if_found: MEDIUM
-
-      - id: ios-webview-js
-        title: WebView JavaScript bridge exploitation
-        pattern: "`WKWebView` with `javaScriptEnabled` loading untrusted URLs; `addScriptMessageHandler` exposing native APIs"
-        secure_alternative: "Validate loaded URLs against allowlist; minimize APIs exposed via message handlers"
-        owasp: "M4:2024 Insufficient Input/Output Validation"
-        severity_if_found: HIGH
-
-      - id: ios-hardcoded-secrets
-        title: Hardcoded secrets in source
-        pattern: "API keys, client secrets, or tokens as string literals in Swift files or plists"
-        secure_alternative: "Use Keychain for runtime secrets; use server-side config or build-time injection via xcconfig"
-        owasp: "M1:2024 Improper Credential Usage"
-        severity_if_found: HIGH
-
-      - id: ios-biometric-bypass
-        title: Biometric auth bypass
-        pattern: "`LAContext.evaluatePolicy` used as a UI gate without Keychain access control backing — can be bypassed by hooking"
-        secure_alternative: "Store secrets with `kSecAttrAccessControl` + `.biometryCurrentSet` so Keychain enforces biometric"
-        owasp: "M3:2024 Insecure Authentication/Authorization"
-        severity_if_found: HIGH
-
-      - id: ios-pii-logging
-        title: PII in logs
-        pattern: "`print()`, `NSLog()`, or `os_log` with user data (email, phone, tokens, location)"
-        secure_alternative: "Log only non-sensitive identifiers; use `OSLogPrivacy` privacy annotations"
-        owasp: "M9:2024 Insecure Data Storage"
-        severity_if_found: MEDIUM
-
   android:
     name: Android (Kotlin/Java)
     detect_files:
       - "**/build.gradle.kts"
+      - "build.gradle.kts"
       - "**/build.gradle"
+      - "build.gradle"
       - "**/AndroidManifest.xml"
+      - "AndroidManifest.xml"
       - "**/*.kt"
+      - "*.kt"
     detect_content:
       - "android {"
       - "com.android.application"
@@ -879,6 +826,7 @@ mobile:
     detect_files:
       - "pubspec.yaml"
       - "**/*.dart"
+      - "*.dart"
     detect_content:
       - "flutter:"
       - "sdk: flutter"
@@ -905,6 +853,302 @@ mobile:
         severity_if_found: HIGH
 
 # =============================================================================
+# APPLE PLATFORMS
+#
+# Same block taxonomy as peer_review_guidance.yaml, so a repo detects the same
+# surfaces in both skills. The nine original `ios` checks are kept verbatim —
+# they were never the problem — and redistributed to the block that owns the
+# surface each describes.
+# =============================================================================
+apple:
+
+  swift:
+    name: Swift (language & concurrency)
+    detect_files:
+      - '**/*.swift'
+      - '*.swift'
+      - Package.swift
+    checklist:
+      - id: ios-keychain-vs-userdefaults
+        title: Sensitive data in UserDefaults
+        pattern: "Tokens, keys, PII stored in `UserDefaults` — plaintext on disk, included in backups"
+        secure_alternative: "Use Keychain Services (`SecItemAdd`/`SecItemCopyMatching`) or a Keychain wrapper"
+        owasp: "M9:2024 Insecure Data Storage"
+        severity_if_found: HIGH
+
+      - id: ios-hardcoded-secrets
+        title: Hardcoded secrets in source
+        pattern: "API keys, client secrets, or tokens as string literals in Swift files or plists"
+        secure_alternative: "Use Keychain for runtime secrets; use server-side config or build-time injection via xcconfig"
+        owasp: "M1:2024 Improper Credential Usage"
+        severity_if_found: HIGH
+
+      - id: ios-pii-logging
+        title: PII in logs
+        pattern: "`print()`, `NSLog()`, or `os_log` with user data (email, phone, tokens, location)"
+        secure_alternative: "Log only non-sensitive identifiers; use `OSLogPrivacy` privacy annotations"
+        owasp: "M9:2024 Insecure Data Storage"
+        severity_if_found: MEDIUM
+
+      - id: ios-biometric-bypass
+        title: Biometric auth bypass
+        pattern: "`LAContext.evaluatePolicy` used as a UI gate without Keychain access control backing — can be bypassed by hooking"
+        secure_alternative: "Store secrets with `kSecAttrAccessControl` + `.biometryCurrentSet` so Keychain enforces biometric"
+        owasp: "M3:2024 Insecure Authentication/Authorization"
+        severity_if_found: HIGH
+
+      - id: swift-oslog-public-interpolation
+        title: PII interpolated into os_log/Logger without a privacy specifier
+        pattern: "`Logger().info(\"\\(email)\")` or `\\(value, privacy: .public)` where the value is user content, an identifier, a token, a file path containing a username, or a model prompt. String interpolation into `Logger` defaults to private for non-numeric types, but `.public` and `String(describing:)`/`print()` bypass that; `print()` and `NSLog()` are always plaintext and are captured by the unified log."
+        secure_alternative: "Use `Logger` with explicit `privacy: .private` (or `.private(mask: .hash)` when you need correlation). Never `print()`/`NSLog()` user content. For prompts and model output, log token counts and a hash, never the text."
+        owasp: "M6:2024 Inadequate Privacy Controls / MASVS-PRIVACY-3"
+        severity_if_found: MEDIUM
+
+      - id: swift-crypto-misuse
+        title: CryptoKit primitive used unsafely
+        pattern: "`AES.GCM.seal` with a nonce derived from a counter or reused across messages; `SymmetricKey(data:)` built from a string literal, a bundle constant, or a user password without a KDF; `SHA256` used to 'encrypt' or to store a password; `Insecure.*` in a non-legacy path; a key persisted outside the Keychain."
+        secure_alternative: "Let `AES.GCM.seal` generate a fresh nonce per message and never reuse one under the same key. Derive keys with `HKDF`/`PBKDF2` from a high-entropy secret; store keys in the Keychain with an access-control policy, or use `SecureEnclave.P256` where the key never needs to leave the device."
+        owasp: "M10:2024 Insufficient Cryptography / MASVS-CRYPTO-1"
+        severity_if_found: HIGH
+
+      - id: swift-archive-path-traversal
+        title: Untrusted archive or file path expanded without containment
+        pattern: "Zip/tar/`Compression` extraction, or any write to a path built from a name inside an imported file, without normalizing and confirming the resolved path stays inside the destination directory. Look for `appendingPathComponent(entryName)` and `..` unfiltered."
+        secure_alternative: "Resolve the destination with `standardizedFileURL` and reject any entry whose resolved path does not have the destination as a prefix. Cap entry count, per-entry size, and total expanded size (zip bomb), and reject symlink entries."
+        owasp: "M4:2024 Insufficient Input/Output Validation / MASVS-PLATFORM-2"
+        severity_if_found: HIGH
+
+      - id: apple-keychain-accessibility-too-permissive
+        title: Keychain item with a weak or default accessibility class
+        pattern: "`SecItemAdd` without `kSecAttrAccessible`, or with `kSecAttrAccessibleAlways`/`AfterFirstUnlock` for a high-value secret; a secret stored with a syncable (non-`ThisDeviceOnly`) class so it lands in iCloud Keychain and device backups."
+        secure_alternative: "Default to `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`. Use `AfterFirstUnlockThisDeviceOnly` only when background access is genuinely required, and justify it. Add `kSecAttrAccessControl` with `.biometryCurrentSet` for secrets that gate sensitive actions."
+        owasp: "M9:2024 Insecure Data Storage / MASVS-STORAGE-1"
+        severity_if_found: HIGH
+
+      - id: apple-shared-container-holds-secrets
+        title: Secret or PII in a shared App Group / keychain access group
+        pattern: "Tokens, keys, or personal data written to an App Group container (`containerURL(forSecurityApplicationGroupIdentifier:)`) or stored under a `kSecAttrAccessGroup` shared with an extension or a sibling app that does not need it."
+        secure_alternative: "Share the minimum. Keep secrets in the app's own keychain group and pass only derived, short-lived material to an extension. Files in a group container get the group's protection class — set `.completeUnlessOpen`/`.complete` explicitly."
+        owasp: "M9:2024 Insecure Data Storage / MASVS-STORAGE-2"
+        severity_if_found: MEDIUM
+
+      - id: apple-file-protection-not-set
+        title: Sensitive file written without a data protection class
+        pattern: "`Data.write(to:)` / `FileManager.createFile` for user documents, exports, caches of personal data, or a local database, with no `.completeFileProtection` option and no `NSFileProtectionKey` attribute."
+        secure_alternative: "Write with `options: [.completeFileProtection]` (or `.completeUnlessOpen` for files needing background writes) and set the same on the containing directory. Exclude caches of personal data from backup where appropriate."
+        owasp: "M9:2024 Insecure Data Storage / MASVS-STORAGE-1"
+        severity_if_found: MEDIUM
+
+  swiftui:
+    name: SwiftUI
+    detect_mode: all
+    detect_files:
+      - '**/*.swift'
+      - '*.swift'
+    detect_content:
+      - ^import SwiftUI
+    detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
+    component_globs:
+      - App/**/*.swift
+      - Sources/**/*.swift
+      - '**/*View.swift'
+    checklist:
+      - id: ios-background-snapshot
+        title: Sensitive data in background screenshot
+        pattern: "Sensitive data visible when app enters background — no masking in `applicationDidEnterBackground` or `sceneDidEnterBackground`"
+        secure_alternative: "Overlay a blur/splash screen in `willResignActive` to hide sensitive content from task switcher"
+        owasp: "M9:2024 Insecure Data Storage"
+        severity_if_found: LOW
+
+      - id: ios-clipboard-exposure
+        title: Sensitive data on clipboard
+        pattern: "PII or secrets copied to `UIPasteboard.general` — accessible to all apps"
+        secure_alternative: "Use `UIPasteboard` with `ExpirationDate` or local-only pasteboard"
+        owasp: "M9:2024 Insecure Data Storage"
+        severity_if_found: MEDIUM
+
+  apple_app_target:
+    name: Apple app target (project, plists, entitlements)
+    detect_files:
+      - '**/*.pbxproj'
+      - '*.pbxproj'
+      - '*.pbxproj'
+      - project.yml
+      - '**/project.yml'
+      - 'project.yml'
+      - Info.plist
+      - '**/Info.plist'
+      - 'Info.plist'
+      - '**/*.entitlements'
+      - '*.entitlements'
+      - '*.entitlements'
+      - '**/*.xcconfig'
+      - '*.xcconfig'
+      - '*.xcconfig'
+      - '**/PrivacyInfo.xcprivacy'
+      - 'PrivacyInfo.xcprivacy'
+      - PrivacyInfo.xcprivacy
+    checklist:
+      - id: ios-ats-exception
+        title: App Transport Security exceptions
+        pattern: "`NSAllowsArbitraryLoads = true` or domain-specific ATS exceptions in Info.plist"
+        secure_alternative: "Remove ATS exceptions; ensure all API endpoints use HTTPS with valid certificates"
+        owasp: "M5:2024 Insecure Communication"
+        severity_if_found: MEDIUM
+
+      - id: ios-deeplink-validation
+        title: Deep link parameter injection
+        pattern: "URL scheme or universal link handler that acts on URL parameters without validation"
+        secure_alternative: "Validate and sanitize all URL parameters; prefer universal links (AASA) over custom URL schemes"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
+        severity_if_found: HIGH
+
+      - id: ios-webview-js
+        title: WebView JavaScript bridge exploitation
+        pattern: "`WKWebView` with `javaScriptEnabled` loading untrusted URLs; `addScriptMessageHandler` exposing native APIs"
+        secure_alternative: "Validate loaded URLs against allowlist; minimize APIs exposed via message handlers"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
+        severity_if_found: HIGH
+
+      - id: apple-custom-scheme-over-universal-link
+        title: Custom URL scheme used where a universal link is required
+        pattern: "`CFBundleURLTypes` registering a scheme that carries auth codes, tokens, or record identifiers, and an `onOpenURL`/`application(_:open:)` handler that acts on them. Custom schemes can be claimed by any other installed app."
+        secure_alternative: "Use universal links backed by an `apple-app-site-association` file for anything security-relevant; keep custom schemes for non-sensitive entry points only. Validate and authorize every parameter server-side/locally before acting, and never treat scheme arrival as authentication."
+        owasp: "M3:2024 Insecure Authentication/Authorization / MASVS-PLATFORM-3"
+        severity_if_found: HIGH
+
+      - id: apple-privacy-manifest-missing
+        title: Required-reason API used with no PrivacyInfo.xcprivacy declaration
+        pattern: "Use of a required-reason API category — `UserDefaults`, file timestamp APIs (`.contentModificationDate`, `stat`), disk space, `mach_absolute_time`/system boot time, active keyboards — with no `PrivacyInfo.xcprivacy` in the target, or one whose `NSPrivacyAccessedAPITypes` does not list the category and reason. Also: `NSPrivacyTracking` true with an empty `NSPrivacyTrackingDomains`, or vice versa."
+        secure_alternative: "Add `PrivacyInfo.xcprivacy` declaring every accessed API category with a valid reason code, the collected data types, and any tracking domains. Verify third-party SDKs ship their own signed manifests."
+        owasp: "M6:2024 Inadequate Privacy Controls / MASVS-PRIVACY-2"
+        severity_if_found: MEDIUM
+
+  cloudkit:
+    name: CloudKit sync
+    detect_mode: all
+    detect_files:
+      - '**/*.swift'
+      - '*.swift'
+    detect_content:
+      - ^import CloudKit
+      - CKSyncEngine
+      - NSPersistentCloudKitContainer
+    detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
+    component_globs:
+      - Sources/**/*.swift
+      - '**/*Store*/**/*.swift'
+    checklist:
+      - id: ck-user-data-in-public-database
+        title: Personal data written to the CloudKit public database
+        pattern: "`container.publicCloudDatabase` used for anything derived from user content, or a record type that holds user data with no owner scoping. Also: a `CKShare` created with `.publicPermission` above `.none`."
+        secure_alternative: "User data belongs in `privateCloudDatabase` (or `sharedCloudDatabase` for explicit shares). The public database is world-readable by every user of the app; there is no per-user scoping to add later."
+        owasp: "M3:2024 Insecure Authentication/Authorization / MASVS-AUTH-2"
+        severity_if_found: CRITICAL
+
+      - id: ck-account-change-not-purged
+        title: Local cache retained across an iCloud account change
+        pattern: "No `CKAccountChanged` / `NSUbiquityIdentityDidChange` observer, or one that does not tear down the local store, zone state, and change tokens when the account identity changes."
+        secure_alternative: "On account change, drop or re-key the local cache and the sync state before any further read. Bind cached data to the account identity so a mismatch is detectable."
+        owasp: "M9:2024 Insecure Data Storage / MASVS-STORAGE-2"
+        severity_if_found: HIGH
+
+  apple_on_device_ai:
+    name: Apple on-device AI (Foundation Models)
+    detect_mode: all
+    detect_files:
+      - '**/*.swift'
+      - '*.swift'
+    detect_content:
+      - ^import FoundationModels
+      - LanguageModelSession
+      - SystemLanguageModel
+      - PrivateCloudComputeLanguageModel
+      - '@Generable'
+    detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
+    component_globs:
+      - Sources/**/*.swift
+      - App/**/*.swift
+    checklist:
+      - id: afm-prompt-injection-via-document
+        title: Untrusted content reaches model Instructions or a tool-enabled session
+        pattern: "File/network/pasteboard-derived text interpolated into `Instructions { }`, or fed to a session that has write-capable `Tool`s registered. Includes OCR output (`OCRTool`), Spotlight RAG results, and image `Attachment`s — an image can carry instruction text."
+        secure_alternative: "Keep `Instructions` static and developer-authored. Pass untrusted content only as `Prompt`/`Attachment`, fenced and labelled as data. Give tool-enabled sessions read-only tools, or require user confirmation before any tool side effect. Validate every tool argument against ids the user already selected."
+        owasp: "M4:2024 Insufficient Input/Output Validation / MASVS-PLATFORM-2"
+        severity_if_found: HIGH
+
+      - id: afm-offdevice-egress-undisclosed
+        title: Personal data sent off-device via Private Cloud Compute without disclosure or minimization
+        pattern: "`PrivateCloudComputeLanguageModel`, or a `Profile`/`DynamicProfile` branch carrying `.model(...)` to a server model or a third-party `LanguageModel` package, built from the same maximal prompt as the on-device path — with no UI disclosure and no reduced projection of the data."
+        secure_alternative: "Build off-device prompts from a separate, minimized projection. Disclose the boundary at the point of use and record the decision. If a third-party provider package is used, its credentials belong in the Keychain, never in the binary, and its egress is a different disclosure again."
+        owasp: "M6:2024 Inadequate Privacy Controls / MASVS-PRIVACY-1"
+        severity_if_found: HIGH
+
+      - id: afm-model-output-into-sink
+        title: Model output used as code, query, path, URL, or markup
+        pattern: "A generated string passed to a `URL(string:)` that is then fetched, a shell/AppleScript invocation, a file path, a SQL/predicate string, a `WKWebView` `loadHTMLString`, or a deep link — without validation."
+        secure_alternative: "Treat model output as untrusted user input. Constrain with `@Generable` enums/`@Guide` rather than free text wherever the value feeds a sink, and validate against an allowlist before use."
+        owasp: "M4:2024 Insufficient Input/Output Validation / MASVS-CODE-4"
+        severity_if_found: HIGH
+
+  macos_app:
+    name: macOS app
+    detect_mode: any
+    detect_files:
+      - '**/macOS/*.swift'
+      - '**/macOS/**/*.swift'
+      - macOS/*.swift
+    detect_content:
+      - ^import AppKit
+      - NSApplicationDelegate
+      - MACOSX_DEPLOYMENT_TARGET
+      - com\.apple\.security\.app-sandbox
+    detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
+    component_globs:
+      - '**/macOS/*.swift'
+      - '**/macOS/**/*.swift'
+      - '**/*.entitlements'
+    checklist:
+      - id: macos-sandbox-temporary-exception
+        title: App Sandbox temporary-exception entitlement
+        pattern: "Any `com.apple.security.temporary-exception.*` entitlement — `files.absolute-path.read-write`, `mach-lookup.global-name`, `apple-events`, `sbpl` — or `com.apple.security.app-sandbox` set to false in a shipping target."
+        secure_alternative: "Replace absolute-path exceptions with user-selected files plus security-scoped bookmarks. Replace global mach-lookup with an XPC service you own. If an exception is unavoidable, scope it to the single name required and document the justification."
+        owasp: "M8:2024 Security Misconfiguration / MASVS-PLATFORM-1"
+        severity_if_found: HIGH
+
+      - id: macos-hardened-runtime-weakened
+        title: Hardened Runtime exception that re-enables code injection
+        pattern: "`com.apple.security.cs.disable-library-validation`, `.allow-unsigned-executable-memory`, `.allow-dyld-environment-variables`, `.disable-executable-page-protection`, or `.debugger` in a release build's entitlements."
+        secure_alternative: "Remove them. `disable-library-validation` lets any signed-by-anyone dylib load into the process, which defeats the main protection Hardened Runtime provides. If a plug-in architecture needs it, isolate the plug-in host in a separate, minimally-entitled XPC service."
+        owasp: "M8:2024 Security Misconfiguration / MASVS-RESILIENCE-2"
+        severity_if_found: HIGH
+
+      - id: macos-xpc-peer-unverified
+        title: XPC listener accepting connections without verifying the peer
+        pattern: "`NSXPCListener` / `xpc_connection_create_mach_service` whose `shouldAcceptNewConnection` returns true unconditionally — no `setCodeSigningRequirement(_:)`, no audit-token check, and an `exportedInterface` exposing privileged operations."
+        secure_alternative: "Call `setCodeSigningRequirement` with a requirement naming your team identifier and bundle id, validate the peer's audit token, and keep the exported interface as narrow as possible with strict `NSXPCInterface` class allowlists for every argument."
+        owasp: "M3:2024 Insecure Authentication/Authorization / MASVS-PLATFORM-1"
+        severity_if_found: HIGH
+
+  swiftpm:
+    name: Swift Package Manager
+    detect_files:
+      - Package.swift
+      - '**/Package.swift'
+      - 'Package.swift'
+      - Package.resolved
+      - '**/Package.resolved'
+      - 'Package.resolved'
+      - '**/*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved'
+    checklist:
+      - id: spm-supply-chain
+        title: Unpinned, unverified, or build-time-executing dependency
+        pattern: "`.package(url:, branch:)` / `revision:`; a `.binaryTarget` whose `url` changed without its `checksum`; an artifact hosted on a third-party file host; a new `.plugin`/`.macro` target or a dependency that brings one; `Package.resolved` missing from version control for an app; a dependency added from a fork or a personal account."
+        secure_alternative: "Pin to version ranges or exact tags, commit `Package.resolved`, verify binary checksums against the publisher's release, and treat any plugin/macro as build-time arbitrary code execution requiring source review. Prefer packages from the Swift Package Index with a known maintainer, and mirror critical dependencies."
+        owasp: "M2:2024 Inadequate Supply Chain Security / MASVS-CODE-3"
+        severity_if_found: HIGH
+
+# =============================================================================
 # INFRASTRUCTURE & CI/CD
 # =============================================================================
 infrastructure:
@@ -912,7 +1156,9 @@ infrastructure:
     name: Terraform
     detect_files:
       - "**/*.tf"
+      - "*.tf"
       - "**/*.tfvars"
+      - "*.tfvars"
     detect_content:
       - "^resource\\s+\""
       - "^provider\\s+\""
@@ -970,8 +1216,11 @@ infrastructure:
     name: Kubernetes
     detect_files:
       - "**/Chart.yaml"
+      - "Chart.yaml"
       - "**/kustomization.yaml"
+      - "kustomization.yaml"
       - "**/helmfile.yaml"
+      - "helmfile.yaml"
       - "**/k8s/**/*.yaml"
       - "**/kubernetes/**/*.yaml"
       - "**/manifests/**/*.yaml"
@@ -1026,8 +1275,11 @@ infrastructure:
     name: Docker
     detect_files:
       - "**/Dockerfile"
+      - "Dockerfile"
       - "**/Dockerfile.*"
+      - "Dockerfile.*"
       - "**/.dockerignore"
+      - ".dockerignore"
       - "docker-compose*.yml"
       - "docker-compose*.yaml"
     detect_content:
@@ -1144,11 +1396,17 @@ api:
     name: OpenAPI / REST
     detect_files:
       - "**/*openapi*.yaml"
+      - "*openapi*.yaml"
       - "**/*openapi*.yml"
+      - "*openapi*.yml"
       - "**/*openapi*.json"
+      - "*openapi*.json"
       - "**/*swagger*.yaml"
+      - "*swagger*.yaml"
       - "**/*swagger*.yml"
+      - "*swagger*.yml"
       - "**/*swagger*.json"
+      - "*swagger*.json"
     detect_content:
       - "openapi:"
       - "swagger:"
@@ -1185,7 +1443,9 @@ api:
     name: GraphQL
     detect_files:
       - "**/*.graphql"
+      - "*.graphql"
       - "**/*.gql"
+      - "*.gql"
     detect_content:
       - "type Query"
       - "type Mutation"
@@ -1230,8 +1490,11 @@ api:
     name: gRPC / Protocol Buffers
     detect_files:
       - "**/*.proto"
+      - "*.proto"
       - "**/buf.yaml"
+      - "buf.yaml"
       - "**/buf.gen.yaml"
+      - "buf.gen.yaml"
     detect_content:
       - "^syntax = \"proto"
       - "^service\\s+\\w+"
@@ -1265,6 +1528,7 @@ database:
     name: SQL Databases (general)
     detect_files:
       - "**/*.sql"
+      - "*.sql"
       - "**/migrations/*.sql"
     detect_content:
       - "^CREATE TABLE"
@@ -1302,6 +1566,7 @@ database:
     name: MongoDB
     detect_files:
       - "**/*mongo*"
+      - "*mongo*"
     detect_content:
       - "mongoose"
       - "MongoClient"

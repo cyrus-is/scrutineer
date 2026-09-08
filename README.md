@@ -48,7 +48,9 @@ Scans your repo and generates a Claude Code skill (`.claude/commands/scrutineer-
 - **Component review** — full review of an entire service or app directory (requires service map)
 - **Deep repo review** (`--deep`) — trace cross-service flows and surface systemic issues
 
-The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 15+ platforms supported via `peer_review_guidance.yaml`.
+The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 25 platform blocks supported via `peer_review_guidance.yaml`.
+
+It also opens with **Phase 0: verify before you judge** — it runs the repo's own gate script (or the platform's cheap subset), stops if the build is red, and carries forward an *exclusion list* so the review never reports what the compiler and linter already proved absent.
 
 ### generate-security-review
 
@@ -57,7 +59,7 @@ Same scan-and-generate approach, producing `.claude/commands/scrutineer-security
 **Analysis flow:**
 1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
 2. **Universal checklist** — 11 areas including auth, injection, secrets, crypto, rate limiting, dependencies
-3. **Platform-specific checklists** — vulnerability patterns for 25+ platforms with OWASP mapping
+3. **Platform-specific checklists** — vulnerability patterns for 33 platform blocks with OWASP Mobile Top 10 (2024) and MASVS mapping
 4. **Agentic analysis** — input tracing from entry to storage, auth boundary auditing, attack chain reasoning
 
 Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays in your terminal — it does not auto-post to PRs, because security findings may be sensitive.

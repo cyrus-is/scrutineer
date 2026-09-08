@@ -49,7 +49,13 @@ Generate a service map first: see `../generate-servicemap/`.
 
 **Backend:** Go, Python, Java, Node.js, Rust, C#, Ruby, PHP
 **Web:** React/Next.js, Vue/Nuxt, Angular
-**Mobile:** iOS (Swift), Android (Kotlin), React Native, Flutter
+**Mobile:** Android (Kotlin), React Native, Flutter
+**Apple:** Swift (storage, crypto, logging), SwiftUI, CloudKit, Foundation Models, SwiftPM,
+Apple app target, macOS app
+
+OWASP references use the Mobile Top 10 **2024** list, paired with a MASVS control where one applies.
+The nine original iOS checks are unchanged — they were never the problem — and are redistributed to
+the block that owns the surface each describes.
 **Infra:** Terraform, Kubernetes, Docker
 **CI/CD:** GitHub Actions, GitLab CI
 **API:** OpenAPI/REST, GraphQL, gRPC
