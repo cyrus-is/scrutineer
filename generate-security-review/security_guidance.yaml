@@ -1,3 +1,10 @@
+# OWASP references use the Mobile Top 10 **2024** list:
+#   M1 Improper Credential Usage          M6  Inadequate Privacy Controls
+#   M2 Inadequate Supply Chain Security   M7  Insufficient Binary Protections
+#   M3 Insecure Authentication/Authz      M8  Security Misconfiguration
+#   M4 Insufficient Input/Output Valid.   M9  Insecure Data Storage
+#   M5 Insecure Communication             M10 Insufficient Cryptography
+# "Improper Platform Usage" is the 2016 M1 and must not appear here.
 # Security Guidance Reference
 # Platform-specific security checklists for security review skill generation.
 # Each entry contains detection signals and actionable checklist items that
@@ -718,7 +725,7 @@ mobile:
         title: Deep link parameter injection
         pattern: "URL scheme or universal link handler that acts on URL parameters without validation"
         secure_alternative: "Validate and sanitize all URL parameters; prefer universal links (AASA) over custom URL schemes"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
       - id: ios-background-snapshot
@@ -739,21 +746,21 @@ mobile:
         title: WebView JavaScript bridge exploitation
         pattern: "`WKWebView` with `javaScriptEnabled` loading untrusted URLs; `addScriptMessageHandler` exposing native APIs"
         secure_alternative: "Validate loaded URLs against allowlist; minimize APIs exposed via message handlers"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
       - id: ios-hardcoded-secrets
         title: Hardcoded secrets in source
         pattern: "API keys, client secrets, or tokens as string literals in Swift files or plists"
         secure_alternative: "Use Keychain for runtime secrets; use server-side config or build-time injection via xcconfig"
-        owasp: "M9:2024 Insecure Data Storage"
+        owasp: "M1:2024 Improper Credential Usage"
         severity_if_found: HIGH
 
       - id: ios-biometric-bypass
         title: Biometric auth bypass
         pattern: "`LAContext.evaluatePolicy` used as a UI gate without Keychain access control backing — can be bypassed by hooking"
         secure_alternative: "Store secrets with `kSecAttrAccessControl` + `.biometryCurrentSet` so Keychain enforces biometric"
-        owasp: "M3:2024 Insecure Authentication"
+        owasp: "M3:2024 Insecure Authentication/Authorization"
         severity_if_found: HIGH
 
       - id: ios-pii-logging
@@ -785,21 +792,21 @@ mobile:
         title: Exported component without permission
         pattern: "Activity/Service/Receiver with `exported=true` (or missing `exported` on API 31+) and no `permission` attribute"
         secure_alternative: "Set `exported=false` unless external access is required; add `android:permission` for protected components"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M8:2024 Security Misconfiguration"
         severity_if_found: HIGH
 
       - id: android-intent-spoofing
         title: Implicit intent for sensitive operations
         pattern: "Implicit `Intent()` used for internal navigation or to pass sensitive data between components"
         secure_alternative: "Use explicit intents (`Intent(context, TargetActivity::class.java)`) for internal communication"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M8:2024 Security Misconfiguration"
         severity_if_found: MEDIUM
 
       - id: android-pending-intent-mutable
         title: Mutable PendingIntent
         pattern: "`PendingIntent.getActivity/Service/Broadcast` without `FLAG_IMMUTABLE` — receiving app can modify the intent"
         secure_alternative: "Add `PendingIntent.FLAG_IMMUTABLE` unless the intent must be mutable for inline replies etc."
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M8:2024 Security Misconfiguration"
         severity_if_found: MEDIUM
 
       - id: android-cleartext-traffic
@@ -813,7 +820,7 @@ mobile:
         title: WebView JavaScript bridge
         pattern: "`setJavaScriptEnabled(true)` + `addJavascriptInterface()` on WebView loading untrusted content"
         secure_alternative: "Validate loaded URLs; minimize exposed interface methods; use `@JavascriptInterface` annotation"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
       - id: android-backup-exposure
@@ -834,7 +841,7 @@ mobile:
         title: Deep link parameter injection
         pattern: "`<intent-filter>` with `<data>` elements that don't validate URI parameters before navigating or performing actions"
         secure_alternative: "Parse and validate all deep link URI parameters; use Navigation component's safe args"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
   react_native:
@@ -857,14 +864,14 @@ mobile:
         title: Deep link injection
         pattern: "`Linking.addEventListener` handler acts on URL params without validation"
         secure_alternative: "Validate and sanitize all deep link parameters before navigation or action"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
       - id: rn-bridge-exposure
         title: Native bridge method exposure
         pattern: "Native modules exposed to JS via `@ReactMethod` without authorization checks"
         secure_alternative: "Add caller validation in native modules; don't expose filesystem/network/crypto primitives directly"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: MEDIUM
 
   flutter:
@@ -894,7 +901,7 @@ mobile:
         title: WebView XSS
         pattern: "`WebView` widget with `javascriptMode: JavascriptMode.unrestricted` loading user-controlled URLs"
         secure_alternative: "Validate URLs against allowlist; use `NavigationDelegate` to restrict navigation"
-        owasp: "M1:2024 Improper Platform Usage"
+        owasp: "M4:2024 Insufficient Input/Output Validation"
         severity_if_found: HIGH
 
 # =============================================================================

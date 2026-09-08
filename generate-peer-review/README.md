@@ -35,7 +35,51 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
    - `/scrutineer-code 123` — review PR #123 (fetches, diffs, posts findings as comment)
    - `/scrutineer-code <component-name>` — full review of a service/app directory (requires service map)
    - `/scrutineer-code --deep` — deep repo-wide review tracing cross-service flows and systemic issues
-5. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
+5. **Embeds a verification ladder** (`verification:` in the guidance YAML) — a Phase 0 that runs
+   the repo's own gate or the platform's cheap subset *before* judging anything
+6. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
+
+## Phase 0: verify before you judge
+
+The generated skill opens by establishing what the toolchain already proves, and converts that into
+an **exclusion list** the rest of the review must honour. A review that reports a missing `Sendable`
+conformance in code `swift build` accepted under Swift 6 language mode is not merely unhelpful — it
+is confidently wrong, and it spends the reader's trust on the findings that are real.
+
+Phase 0 prefers the **repo's own gate script** (`run-gate.sh`, `scripts/ci.sh`, a `Makefile`
+`check:` target, the merge-gating workflow) over anything inferred: it is the most accurate
+available description of what "correct" means in that repo, and it usually explains why each stage
+exists. If the gate is red, the skill stops — reviewing code that does not build is guesswork, and
+the build failure is the finding.
+
+Ladders live under `verification.platforms.<platform_key>` and carry four things: the commands
+(split into per-diff and per-repo), what each proves (`proves` → the exclusion list), what remains
+unproven (which is where the review's value actually is), and what never to run.
+
+## Detection: `detect_files`, `detect_content`, `detect_mode`
+
+`detect_mode` controls how a platform block's two detection signals combine:
+
+| Mode | Behaviour |
+|---|---|
+| `files` *(default)* | `detect_files` decides. `detect_content` is consulted only when a block declares no `detect_files`. |
+| `all` | **Both** must match — "Swift files AND they import CloudKit". This is what a capability sub-platform needs; without it such a block fires on every repo in the language. |
+| `any` | Either signal detects the platform. Opt-in, and only after validating the patterns. |
+
+`files` is the default deliberately. Under the previous implementation `detect_content` could never
+be reached for a block that declared `detect_files` — which is every block in both guidance files —
+so those patterns have never been evaluated and several are wrong: `go`'s `^module\s+` and `java`'s
+`^package\s+[a-z]` both match modern Swift (`package` is a Swift 5.9 access modifier), and
+promoting them to a fallback detects Go and Java in a pure Swift repo.
+
+Two matching gotchas worth knowing before adding a block:
+
+- **Matching is `fnmatch`, not globstar.** `*` matches `/`, and `**/x` compiles to `.*/x` — "x
+  preceded by at least one slash". A root-level `Package.swift` therefore never matches
+  `**/Package.swift`. **Pair every `**/foo` with a bare `foo`.**
+- **`component_globs`** (optional) sets which paths get named in the generated skill, for blocks
+  whose `detect_files` include single manifest files rather than review surfaces. Paths are ranked
+  by how much code each contributes, so the ones the skill names are the ones that matter.
 
 ## The 8 Evaluation Lenses
 
@@ -52,7 +96,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 **Backend:** Go, Python, Java, Node.js, Rust, C#, Ruby, PHP
 **Web:** React/Next.js, Vue/Nuxt
-**Mobile:** iOS (Swift), Android (Kotlin)
+**Mobile:** iOS/macOS (Swift, SwiftUI, SwiftPM), Android (Kotlin)
 **Infra:** Terraform, Docker, GitHub Actions
 **API:** OpenAPI/REST, GraphQL
 **Database:** SQL (general)
