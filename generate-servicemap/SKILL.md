@@ -59,10 +59,11 @@ Scan the repository structure to identify:
 
 - **Services**: Anything that runs independently. Heuristics: has its own Dockerfile, has a `package.json`
   / `go.mod` / `Cargo.toml` / `pyproject.toml` / `build.gradle` / `pom.xml` / `*.csproj` / `*.sln`
-  with an entrypoint, has its own Terraform module that provisions compute (ECS, Lambda, EC2, Cloud Run,
-  App Service, etc.), or has its own Kubernetes Deployment manifest.
+  / `Package.swift` with an entrypoint, has its own Terraform module that provisions compute (ECS,
+  Lambda, EC2, Cloud Run, App Service, etc.), or has its own Kubernetes Deployment manifest.
 - **Apps**: Frontend applications, mobile apps, CLI tools. Distinguished from services by being
-  user-facing rather than API-facing.
+  user-facing rather than API-facing. Apple platform apps declare themselves with an `*.xcodeproj`
+  or `*.xcworkspace`, or a `Package.swift` with an `.executableTarget`.
 - **Libraries**: Shared internal packages without their own entrypoint. Look for workspace members,
   internal package references, monorepo package directories.
 - **Infrastructure**: Terraform/OpenTofu/Pulumi/CloudFormation directories. Each module or stack is a
@@ -83,6 +84,30 @@ For each component discovered, record:
 
 Write the Phase 1 manifest to memory before proceeding. This is your roadmap for subsequent phases.
 
+### Phase 1a: Ask the Build System Before Inferring
+
+Some toolchains will hand you the component graph exactly, in seconds, for no reasoning cost. When a
+manifest command is available, run it and treat its output as ground truth — a crawl that infers a
+graph the toolchain would have stated is slower, less accurate, and less complete.
+
+| Repo shape | Command | Gives you |
+|---|---|---|
+| `Package.swift` at root | `swift package dump-package` | Every target, its type (`regular` / `test` / `executable`), its dependencies, external package dependencies, and the platform floors — the whole internal module graph as JSON |
+| `*.xcodeproj` / `*.xcworkspace` | `xcodebuild -list -json` | Scheme and target names, which are not derivable from the project name |
+| `package.json` workspaces | `npm query .workspace` / `pnpm -r list --json` | Workspace member packages and their interdependencies |
+| `go.mod` | `go list -deps -json ./...` | Package graph |
+| `Cargo.toml` workspace | `cargo metadata --format-version 1` | Workspace members and the dependency graph |
+
+Record each Swift target as a **library** component (or **app** for an `.executableTarget`), with the
+`dependencies` array from the dump as its outbound `connections` of type `library`, and
+`discovery_method: "swift package dump-package"` at confidence `1.0` — this is a declaration, not an
+inference. Note the platform floors on the package component: they are a deployment constraint that
+downstream reviews need.
+
+A target that is depended on by no test target is worth recording as such. That is frequently
+deliberate (a module that links a framework the test host cannot load), and it is exactly the kind
+of architectural fact a service map exists to make visible.
+
 ### Phase 1b: Fallback Discovery — Unknown or Sparse Stacks
 
 If Phase 1 discovers fewer components than the repository structure suggests (e.g., a large repo with
@@ -92,7 +117,8 @@ heuristics above, run a fallback discovery pass:
 1. **Scan for generic service signals**:
    - Entrypoint files: `main.*`, `app.*`, `server.*`, `Program.cs`, `Startup.cs`, `index.*`
    - Build system files not already matched: `Makefile`, `CMakeLists.txt`, `*.csproj`, `*.sln`,
-     `*.fsproj`, `mix.exs`, `build.zig`, `dune-project`, `*.cabal`, `stack.yaml`
+     `*.fsproj`, `mix.exs`, `build.zig`, `dune-project`, `*.cabal`, `stack.yaml`, `Package.swift`,
+     `*.xcodeproj`, `*.xcworkspace`, `project.yml` (XcodeGen)
    - Port exposure: `EXPOSE` in any Dockerfile, `ports:` in docker-compose, `listen` calls in source
    - HTTP handler patterns: any file registering routes, handlers, or controllers
    - Database connection patterns: connection strings, ORM config, migration directories

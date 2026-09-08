@@ -84,14 +84,35 @@ class RepoAnalyzer:
     def matches_glob(self, pattern: str) -> list[str]:
         return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
 
-    def file_contains(self, pattern: str, extensions: list[str] | None = None,
-                      max_files: int = 50, max_bytes: int = 50_000) -> bool:
+    # Extensions worth grepping for platform signals. Without this filter,
+    # content detection burns its budget on binary assets and generated data
+    # before it reaches source. Documentation extensions are deliberately absent:
+    # a README that mentions `import SwiftUI` must not detect an iOS platform.
+    CONTENT_EXTS = {
+        ".swift", ".m", ".mm", ".h", ".kt", ".java", ".py", ".go", ".rs", ".rb",
+        ".php", ".cs", ".ts", ".tsx", ".js", ".jsx", ".vue",
+        ".yml", ".yaml", ".json", ".toml", ".tf", ".plist", ".entitlements",
+        ".xcconfig", ".xcprivacy", ".pbxproj", ".resolved", ".gradle", ".kts",
+    }
+
+    def file_contains(self, pattern: str, extensions: list[str] | set | None = None,
+                      max_files: int = 5000, max_bytes: int = 2_000_000) -> bool:
+        # The budget used to be 50 files / 50 KB, which on any real repo was
+        # exhausted in the first directory `os.walk` happened to visit. Measured
+        # on a 1071-file Swift repo: `^import CloudKit` (16 real hits),
+        # `^import Testing` (273) and `^import FoundationModels` (13) all
+        # returned False because the walk never reached `Sources/`. Detection
+        # that depends on walk order is not detection.
         regex = re.compile(pattern, re.MULTILINE)
+        exts = set(extensions) if extensions else None
         count = 0
         for f in self.file_index:
-            if extensions and f.suffix not in extensions:
+            if exts is not None and f.suffix not in exts:
                 continue
-            if f.stat().st_size > max_bytes:
+            try:
+                if f.stat().st_size > max_bytes:
+                    continue
+            except OSError:
                 continue
             count += 1
             if count > max_files:
@@ -104,44 +125,100 @@ class RepoAnalyzer:
         return False
 
     def detect_platforms(self, guidance: dict) -> dict[str, dict]:
+        # `detect_mode` controls how detect_files and detect_content combine:
+        #
+        #   "files" (default) — detect_files decides. detect_content is consulted
+        #                       ONLY when a block declares no detect_files. This
+        #                       is the historical behaviour, kept as the default
+        #                       deliberately: because the old code could never
+        #                       reach detect_content for a block that had
+        #                       detect_files, those patterns have never once been
+        #                       evaluated, and several are wrong. `go`'s
+        #                       `^module\s+` and `java`'s `^package\s+[a-z]` both
+        #                       match modern Swift source (`package` is a Swift
+        #                       5.9 access modifier), so promoting them to an
+        #                       OR-fallback detects Go and Java in a pure Swift
+        #                       repo. Opt a block in only after validating its
+        #                       patterns against a real repo.
+        #
+        #   "all"             — BOTH must match. This is what a sub-platform
+        #                       needs: "Swift files AND they import CloudKit" is
+        #                       not expressible otherwise, and without it every
+        #                       capability sub-block fires on every Swift repo.
+        #
+        #   "any"             — either signal detects the platform. Opt-in.
         detected = {}
         rel_paths = self.relative_paths()
         for category_name, platforms in guidance.items():
             for platform_key, platform_data in platforms.items():
-                file_match = False
-                for pattern in platform_data.get("detect_files", []):
-                    for rel in rel_paths:
-                        if fnmatch.fnmatch(rel, pattern):
-                            file_match = True
-                            break
-                    if file_match:
-                        break
-                content_match = False
-                if not platform_data.get("detect_files"):
-                    for cp in platform_data.get("detect_content", []):
-                        if self.file_contains(cp):
-                            content_match = True
-                            break
-                if file_match or content_match:
+                globs = platform_data.get("detect_files", [])
+                contents = platform_data.get("detect_content", [])
+                mode = platform_data.get("detect_mode", "files")
+
+                file_match = any(
+                    fnmatch.fnmatch(rel, pattern)
+                    for pattern in globs
+                    for rel in rel_paths
+                )
+
+                # Only pay for a content scan when it can still change the answer.
+                if not contents:
+                    need_content = False
+                elif mode == "all":
+                    need_content = file_match
+                elif mode == "any":
+                    need_content = not file_match
+                else:  # "files"
+                    need_content = not globs
+                content_match = any(
+                    self.file_contains(cp, extensions=self.CONTENT_EXTS)
+                    for cp in contents
+                ) if need_content else False
+
+                if mode == "all":
+                    hit = bool(globs) and file_match and bool(contents) and content_match
+                else:
+                    hit = file_match or content_match
+
+                if hit:
                     detected[platform_key] = {**platform_data, "_category": category_name}
         return detected
 
     def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
+        # Ordered by how much code each path actually contributes, NOT
+        # alphabetically. Callers truncate this list to name a few directories in
+        # the generated skill, and an alphabetical sort meant the truncation kept
+        # whichever directories sorted first — on a Swift repo that named two
+        # single-file app shells and dropped every module holding the code.
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
-            paths = set()
-            for pattern in pd.get("detect_files", []):
+            counts: dict[str, int] = {}
+            # `component_globs` lets a content-gated block still name real
+            # directories; falls back to the detection globs.
+            for pattern in pd.get("component_globs") or pd.get("detect_files", []):
                 for rel in rel_paths:
                     if fnmatch.fnmatch(rel, pattern):
                         parts = Path(rel).parts
-                        if len(parts) >= 2:
-                            paths.add(f"{parts[0]}/{parts[1]}")
-                        elif len(parts) == 1:
-                            paths.add(parts[0])
-            component_paths[pk] = sorted(paths)
+                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                        counts[key] = counts.get(key, 0) + 1
+            component_paths[pk] = [
+                p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            ]
         return component_paths
 
+
+
+def format_paths(paths: list[str], limit: int = 6) -> str:
+    """Render component paths for the skill, saying so when the list is trimmed.
+
+    Paths arrive ranked by how much code each contributes. Silently truncating
+    told the reviewer to check three directories as though they were the whole
+    surface; naming the overflow keeps the omission visible.
+    """
+    shown = "`, `".join(paths[:limit])
+    extra = len(paths) - limit
+    return f"`{shown}`" + (f", and {extra} more" if extra > 0 else "")
 
 # ---------------------------------------------------------------------------
 # Service Map Loader
@@ -301,8 +378,7 @@ class SkillGenerator:
         for key, data in detected.items():
             paths = component_paths.get(key, [])
             if paths:
-                path_str = "`, `".join(paths[:5])
-                detection_rules.append(f"   - `{path_str}` → **{data['name']}**")
+                detection_rules.append(f"   - {format_paths(paths)} → **{data['name']}**")
             else:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
@@ -406,8 +482,7 @@ class SkillGenerator:
         checklist_items = data.get("checklist", [])
 
         if paths:
-            path_str = "`, `".join(paths[:5])
-            trigger = f"When reviewing `{path_str}`:"
+            trigger = f"When reviewing {format_paths(paths)}:"
         else:
             trigger = f"When reviewing {name}-related code:"
 

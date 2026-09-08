@@ -82,11 +82,35 @@ class RepoAnalyzer:
     def matches_glob(self, pattern: str) -> list[str]:
         return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
 
-    def file_contains(self, pattern: str, max_files: int = 50, max_bytes: int = 50_000) -> bool:
+    # Extensions worth grepping for platform signals. Without this filter,
+    # content detection burns its budget on binary assets and generated data
+    # before it reaches source. Documentation extensions are deliberately absent:
+    # a README that mentions `import SwiftUI` must not detect an iOS platform.
+    CONTENT_EXTS = {
+        ".swift", ".m", ".mm", ".h", ".kt", ".java", ".py", ".go", ".rs", ".rb",
+        ".php", ".cs", ".ts", ".tsx", ".js", ".jsx", ".vue",
+        ".yml", ".yaml", ".json", ".toml", ".tf", ".plist", ".entitlements",
+        ".xcconfig", ".xcprivacy", ".pbxproj", ".resolved", ".gradle", ".kts",
+    }
+
+    def file_contains(self, pattern: str, extensions: list[str] | set | None = None,
+                      max_files: int = 5000, max_bytes: int = 2_000_000) -> bool:
+        # The budget used to be 50 files / 50 KB, which on any real repo was
+        # exhausted in the first directory `os.walk` happened to visit. Measured
+        # on a 1071-file Swift repo: `^import CloudKit` (16 real hits),
+        # `^import Testing` (273) and `^import FoundationModels` (13) all
+        # returned False because the walk never reached `Sources/`. Detection
+        # that depends on walk order is not detection.
         regex = re.compile(pattern, re.MULTILINE)
+        exts = set(extensions) if extensions else None
         count = 0
         for f in self.file_index:
-            if f.stat().st_size > max_bytes:
+            if exts is not None and f.suffix not in exts:
+                continue
+            try:
+                if f.stat().st_size > max_bytes:
+                    continue
+            except OSError:
                 continue
             count += 1
             if count > max_files:
@@ -99,44 +123,100 @@ class RepoAnalyzer:
         return False
 
     def detect_platforms(self, guidance: dict) -> dict[str, dict]:
+        # `detect_mode` controls how detect_files and detect_content combine:
+        #
+        #   "files" (default) — detect_files decides. detect_content is consulted
+        #                       ONLY when a block declares no detect_files. This
+        #                       is the historical behaviour, kept as the default
+        #                       deliberately: because the old code could never
+        #                       reach detect_content for a block that had
+        #                       detect_files, those patterns have never once been
+        #                       evaluated, and several are wrong. `go`'s
+        #                       `^module\s+` and `java`'s `^package\s+[a-z]` both
+        #                       match modern Swift source (`package` is a Swift
+        #                       5.9 access modifier), so promoting them to an
+        #                       OR-fallback detects Go and Java in a pure Swift
+        #                       repo. Opt a block in only after validating its
+        #                       patterns against a real repo.
+        #
+        #   "all"             — BOTH must match. This is what a sub-platform
+        #                       needs: "Swift files AND they import CloudKit" is
+        #                       not expressible otherwise, and without it every
+        #                       capability sub-block fires on every Swift repo.
+        #
+        #   "any"             — either signal detects the platform. Opt-in.
         detected = {}
         rel_paths = self.relative_paths()
         for category_name, platforms in guidance.items():
             for platform_key, platform_data in platforms.items():
-                file_match = False
-                for pattern in platform_data.get("detect_files", []):
-                    for rel in rel_paths:
-                        if fnmatch.fnmatch(rel, pattern):
-                            file_match = True
-                            break
-                    if file_match:
-                        break
-                content_match = False
-                if not platform_data.get("detect_files"):
-                    for cp in platform_data.get("detect_content", []):
-                        if self.file_contains(cp):
-                            content_match = True
-                            break
-                if file_match or content_match:
+                globs = platform_data.get("detect_files", [])
+                contents = platform_data.get("detect_content", [])
+                mode = platform_data.get("detect_mode", "files")
+
+                file_match = any(
+                    fnmatch.fnmatch(rel, pattern)
+                    for pattern in globs
+                    for rel in rel_paths
+                )
+
+                # Only pay for a content scan when it can still change the answer.
+                if not contents:
+                    need_content = False
+                elif mode == "all":
+                    need_content = file_match
+                elif mode == "any":
+                    need_content = not file_match
+                else:  # "files"
+                    need_content = not globs
+                content_match = any(
+                    self.file_contains(cp, extensions=self.CONTENT_EXTS)
+                    for cp in contents
+                ) if need_content else False
+
+                if mode == "all":
+                    hit = bool(globs) and file_match and bool(contents) and content_match
+                else:
+                    hit = file_match or content_match
+
+                if hit:
                     detected[platform_key] = {**platform_data, "_category": category_name}
         return detected
 
-    def map_component_paths(self, detected: dict) -> dict[str, list[str]]:
+    def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
+        # Ordered by how much code each path actually contributes, NOT
+        # alphabetically. Callers truncate this list to name a few directories in
+        # the generated skill, and an alphabetical sort meant the truncation kept
+        # whichever directories sorted first — on a Swift repo that named two
+        # single-file app shells and dropped every module holding the code.
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
-            paths = set()
-            for pattern in pd.get("detect_files", []):
+            counts: dict[str, int] = {}
+            # `component_globs` lets a content-gated block still name real
+            # directories; falls back to the detection globs.
+            for pattern in pd.get("component_globs") or pd.get("detect_files", []):
                 for rel in rel_paths:
                     if fnmatch.fnmatch(rel, pattern):
                         parts = Path(rel).parts
-                        if len(parts) >= 2:
-                            paths.add(f"{parts[0]}/{parts[1]}")
-                        elif len(parts) == 1:
-                            paths.add(parts[0])
-            component_paths[pk] = sorted(paths)
+                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                        counts[key] = counts.get(key, 0) + 1
+            component_paths[pk] = [
+                p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            ]
         return component_paths
 
+
+
+def format_paths(paths: list[str], limit: int = 6) -> str:
+    """Render component paths for the skill, saying so when the list is trimmed.
+
+    Paths arrive ranked by how much code each contributes. Silently truncating
+    told the reviewer to check three directories as though they were the whole
+    surface; naming the overflow keeps the omission visible.
+    """
+    shown = "`, `".join(paths[:limit])
+    extra = len(paths) - limit
+    return f"`{shown}`" + (f", and {extra} more" if extra > 0 else "")
 
 # ---------------------------------------------------------------------------
 # Service Map Loader
@@ -171,12 +251,14 @@ class SkillGenerator:
     def generate(self, detected: dict, component_paths: dict,
                  all_known_platforms: list[str],
                  service_map: ServiceMapLoader | None = None,
-                 cross_cutting: dict | None = None) -> str:
+                 cross_cutting: dict | None = None,
+                 verification: dict | None = None) -> str:
         sections = [
             self._header(),
             self._help_section(),
             self._invocation_section(service_map),
             self._process_section(detected, component_paths, service_map),
+            self._verification_section(detected, verification),
             self._understand_first_section(),
             self._preflight_section(detected, component_paths),
             self._agentic_analysis_section(),
@@ -283,8 +365,7 @@ class SkillGenerator:
         for key, data in detected.items():
             paths = component_paths.get(key, [])
             if paths:
-                path_str = "`, `".join(paths[:5])
-                detection_rules.append(f"   - `{path_str}` → **{data['name']}**")
+                detection_rules.append(f"   - {format_paths(paths)} → **{data['name']}**")
             else:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
@@ -292,6 +373,7 @@ class SkillGenerator:
         return textwrap.dedent(f"""\
             ## Process
 
+            0. **Verify before judging** — establish what the toolchain already proves, and stop if it is red (see Phase 0)
             1. **Determine mode** — parse arguments (see Invocation Modes above)
             2. **Get the code** — Mode 1: `git diff main...HEAD`, Mode 2: `gh pr diff <number>`, Mode 3: read all files in component directory
             3. **Detect platforms** — scan file paths to determine which platform checklists apply:
@@ -304,6 +386,104 @@ class SkillGenerator:
             9. **Post findings** — Mode 2: `gh pr comment <number>` with structured output. Mode 1 and 3: output to terminal.
 
         """)
+
+    def _verification_section(self, detected: dict, verification: dict | None) -> str:
+        """Phase 0 — what the toolchain proves, so the review stops re-deriving it.
+
+        Emitted only for detected platforms that have a ladder. A repo whose
+        platforms have none still gets the gate-discovery step, which is the
+        part that generalises: the repo's own gate script is a better
+        description of "correct here" than anything this file can infer.
+        """
+        if not verification:
+            return ""
+
+        gates = verification.get("gate_candidates", [])
+        ladders = verification.get("platforms", {})
+        applicable = [(k, ladders[k]) for k in detected if k in ladders]
+
+        lines = [textwrap.dedent("""\
+            ## Phase 0: Verify Before You Judge
+
+            Before reading a single line for review, establish what the toolchain already
+            proves. Everything it proves, you must not re-derive — and must not report. A
+            finding the compiler already refuted is worse than no finding: it is confidently
+            wrong, and it spends the reader's trust on the findings that are real.
+
+            **1. Find the repo's own gate.** Look for:
+        """)]
+        for g in gates:
+            note = f" — {g['note']}" if g.get("note") else ""
+            lines.append(f"   - `{g['path']}`{note}")
+        lines.append(textwrap.dedent("""
+            If one exists, READ IT FIRST. It is the most accurate available description of
+            this repo's definition of correct, it usually explains *why* each stage exists,
+            and it encodes constraints no generated checklist knows about. Run it when the
+            review is repo- or component-scoped.
+
+            **2. Otherwise compose the cheap subset** for the platforms in the diff, below.
+
+            **3. If anything fails, STOP.** Report the failure verbatim, name the first
+            failing stage, and do not continue to semantic review — reviewing code that does
+            not build is guesswork, and the build failure is the finding.
+
+            **4. If it passes, honour the exclusion list.** It is not advice; it is the set
+            of things you now know are absent.
+        """))
+
+        if not applicable:
+            lines.append(textwrap.dedent("""
+                No verification ladder is defined for the platforms detected in this repo.
+                Establish one from the gate script or CI workflow above, run it, and record
+                what it proves before continuing.
+            """))
+            return "\n".join(lines)
+
+        for key, ladder in applicable:
+            name = detected[key]["name"]
+            lines.append(f"\n### {name} — commands\n")
+
+            per_diff = ladder.get("per_diff", [])
+            if per_diff:
+                lines.append("**Per-diff (always, before judging — target under ~60s):**\n")
+                for step in per_diff:
+                    cost = f" *({step['cost']})*" if step.get("cost") else ""
+                    lines.append(f"- `{step['cmd']}`{cost}")
+                    lines.append(f"  - When: {step['when']}")
+                lines.append("")
+
+            per_repo = ladder.get("per_repo", [])
+            if per_repo:
+                lines.append("**Per-repo / per-PR (on request, or when the diff is large or touches the package graph):**\n")
+                for step in per_repo:
+                    lines.append(f"- `{step['cmd']}`")
+                    lines.append(f"  - When: {step['when']}")
+                lines.append("")
+
+            proves = ladder.get("proves", [])
+            if proves:
+                lines.append(f"**{name} — exclusion list.** When these pass, do NOT report:\n")
+                lines.append("| Proved green | Therefore do NOT report |")
+                lines.append("|---|---|")
+                for p in proves:
+                    lines.append(f"| `{p['green']}` | {p['excludes']} |")
+                lines.append("")
+
+            unproven = ladder.get("still_unproven", [])
+            if unproven:
+                lines.append("**What the toolchain still does not prove** — this is where the review's value is:\n")
+                for u in unproven:
+                    lines.append(f"- {u}")
+                lines.append("")
+
+            never = ladder.get("never_run", [])
+            if never:
+                lines.append("**Do not run:**\n")
+                for n in never:
+                    lines.append(f"- `{n['what']}` — {n['why']}")
+                lines.append("")
+
+        return "\n".join(lines)
 
     def _understand_first_section(self) -> str:
         return textwrap.dedent("""\
@@ -412,9 +592,8 @@ class SkillGenerator:
                 name = platform_data["name"]
 
                 if paths:
-                    path_str = "`, `".join(paths[:3])
                     lines.append(f"### {name}\n")
-                    lines.append(f"When reviewing `{path_str}`:\n")
+                    lines.append(f"When reviewing {format_paths(paths)}:\n")
                 else:
                     lines.append(f"### {name}\n")
 
@@ -529,7 +708,11 @@ class SkillGenerator:
         lines.append("| Change Type | Detected By | Increased Scrutiny |")
         lines.append("|---|---|---|")
         for ct, patterns in all_signals.items():
-            pattern_str = ", ".join(f"`{p}`" for p in patterns[:4])
+            # Every pattern, not the first four. This table exists to be matched
+            # against a diff; a truncated list is a silent miss, and truncating
+            # an alphabetically sorted list drops whichever patterns happen to
+            # sort late — which is how `Info.plist` and `pyproject.toml` fell off.
+            pattern_str = ", ".join(f"`{p}`" for p in patterns)
             label, scrutiny = modifier_map.get(ct, (ct, "Review carefully"))
             lines.append(f"| **{ct.replace('-', ' ').title()}** | {pattern_str} | {label}: {scrutiny} |")
         lines.append("")
@@ -928,6 +1111,7 @@ def main():
 
     # Extract cross-cutting focus areas (not platform-specific)
     cross_cutting = guidance.pop("cross_cutting", None)
+    verification = guidance.pop("verification", None)
     if cross_cutting:
         cc_count = len(cross_cutting.get("focus_areas", []))
         print(f"  {cc_count} cross-cutting focus areas loaded")
@@ -947,7 +1131,8 @@ def main():
 
     # Generate
     generator = SkillGenerator()
-    skill_content = generator.generate(detected, component_paths, all_known, service_map, cross_cutting)
+    skill_content = generator.generate(detected, component_paths, all_known, service_map,
+                                       cross_cutting, verification)
 
     if args.dry_run:
         print("\n" + "=" * 72)

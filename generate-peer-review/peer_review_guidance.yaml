@@ -685,13 +685,24 @@ web:
 mobile:
   ios:
     name: iOS (Swift/SwiftUI)
+    # NOTE: matching is fnmatch, which is NOT globstar — `*` matches `/`, and
+    # `**/x` compiles to `.*/x`, meaning "x preceded by at least one slash". A
+    # root-level file therefore never matches a `**/` pattern. Pair every
+    # `**/foo` with a bare `foo`, or the pattern silently matches nothing.
     detect_files:
       - "**/*.swift"
+      - "*.swift"
+      - "Package.swift"
       - "**/project.yml"
       - "**/*.pbxproj"
     detect_content:
-      - "import SwiftUI"
-      - "import UIKit"
+      - "^import SwiftUI"
+      - "^import UIKit"
+      - "^import SwiftData"
+    # Directories named in the generated skill. Excludes the manifest and
+    # project files above, which are single files rather than review surfaces.
+    component_globs:
+      - "**/*.swift"
     preflight_checks:
       - id: ios-dismiss-before-async
         title: Sheet dismiss before async completion
@@ -760,7 +771,21 @@ mobile:
 
     change_type_signals:
       - type: config-change
-        patterns: ["**/project.yml", "**/Info.plist", "**/*.entitlements"]
+        patterns:
+          - "**/project.yml"
+          - "**/Info.plist"
+          - "**/*.entitlements"
+          - "**/*.xcconfig"
+          - "**/*.pbxproj"
+          - "**/*.xcscheme"
+          - "**/PrivacyInfo.xcprivacy"
+          - "PrivacyInfo.xcprivacy"
+      # The package manifest is a dependency change AND an architecture change:
+      # it carries the external dependency list, the module graph, and the
+      # platform floor. A wrong target dependency or a raised floor can fail at
+      # link or dyld time in a target that still compiles on its own.
+      - type: dependency-update
+        patterns: ["Package.swift", "**/Package.swift", "Package.resolved", "**/Package.resolved", "**/Podfile", "**/Podfile.lock"]
 
   android:
     name: Android (Kotlin/Java)
@@ -1163,3 +1188,97 @@ cross_cutting:
       why: >
         A multi-step flow created a parent record before the batch operation.
         When the batch failed, the parent was orphaned with no linked entities.
+
+# =============================================================================
+# VERIFICATION — "Phase 0: verify before you judge"
+#
+# Everything the toolchain proves, the review must not re-derive and must not
+# report. A review that flags a data race in code `swift build` accepted under
+# Swift 6 language mode is not merely unhelpful — it is confidently wrong, and
+# it spends the reviewer's trust. Phase 0 converts toolchain output into an
+# explicit exclusion list for the rest of the review.
+#
+# Keyed by the same platform keys as the blocks above; only the detected
+# platforms' ladders are emitted into the generated skill.
+# =============================================================================
+verification:
+  gate_candidates:
+    - path: "run-gate.sh"
+    - path: "scripts/gate.sh"
+    - path: "scripts/ci.sh"
+    - path: "bin/ci"
+    - path: "Makefile"
+      note: "a `check:` or `ci:` target"
+    - path: "justfile"
+      note: "a `check` recipe"
+    - path: ".github/workflows/"
+      note: "the workflow that actually gates merge"
+
+  platforms:
+    ios:
+      per_diff:
+        - cmd: "swiftlint lint --strict --quiet <changed .swift files>"
+          when: "a .swiftlint.yml exists and the binary is installed"
+          cost: "1-5s"
+        - cmd: "swift build"
+          when: "a Package.swift is at the repo root"
+          cost: "5-20s incremental"
+        - cmd: "xcodebuild -scheme <scheme> -destination 'platform=macOS' build"
+          when: "the diff touches Package.swift, an .xcconfig, a plist, or an .entitlements — the files `swift build` cannot validate"
+          cost: "30s-3min"
+      per_repo:
+        - cmd: "the repo's own gate script, verbatim"
+          when: "one exists — it is this repo's definition of green, and it encodes rules no checklist can"
+        - cmd: "swift test"
+          when: "reviewing a whole component, or the diff changes behaviour under test"
+        - cmd: "xcodebuild -scheme <scheme> -destination 'id=<concrete simulator UDID>' build test"
+          when: "the change could behave differently at the app target's deployment target"
+        - cmd: "swift package diagnose-api-breaking-changes <merge-base>"
+          when: "the package declares products: and the diff touches public API"
+      proves:
+        - green: "swift build (Swift 6 language mode)"
+          excludes: "missing `Sendable` conformance, actor-isolation violations, missing `await`, main-actor UI violations, and use of API above the *package's* platform floor. Do not report any of these."
+        - green: "swiftlint --strict"
+          excludes: "force try/cast/unwrap, IUO, unowned capture, unused capture lists, weak delegates, naming, line length, and every other style finding."
+        - green: "swift-format lint --strict"
+          excludes: "formatting of any kind."
+        - green: "swift test"
+          excludes: "doubt that the asserted behaviour holds — on the host OS only."
+      still_unproven:
+        - "Invariants across an `await` suspension point. `@MainActor` serialises execution, not transactions: a check-then-act straddling a suspension can interleave."
+        - "Behaviour at a lower deployment target. `swift test` does NOT enforce the deployment target — only `xcodebuild -destination` does. A package with a newer platform floor still passes `swift test` on an older host."
+        - "Whether a symbol above the app target's floor is weak-linked correctly, which fails at dyld time, not compile time."
+        - "CloudKit conflict, partial-failure, and offline paths."
+        - "What the user actually sees when an operation fails."
+        - "Whether the assertions in the passing tests are worth anything."
+      never_run:
+        - what: "xcodebuild -analyze"
+          why: "the clang static analyzer does not analyse Swift at all — a slow build for zero findings."
+        - what: "periphery scan"
+          why: "not by default. On a SwiftPM library every `public` declaration is legitimately unreferenced within the package; without careful retain flags the output is pure noise."
+        - what: "swift test --sanitize=thread"
+          why: "not automatically — 3-10x slower, and under Swift 6 most races are already compile-prevented. Propose it only when the diff touches `@unchecked Sendable`, `nonisolated(unsafe)`, a continuation, or C/ObjC interop."
+
+    python:
+      per_diff:
+        - cmd: "ruff check <changed files>"
+          when: "a ruff config exists in pyproject.toml or ruff.toml"
+          cost: "<1s"
+        - cmd: "mypy <changed files>"
+          when: "the project is typed and mypy is configured"
+          cost: "5-30s"
+      per_repo:
+        - cmd: "the repo's own gate script, verbatim"
+          when: "one exists"
+        - cmd: "pytest"
+          when: "reviewing a whole component"
+      proves:
+        - green: "ruff check"
+          excludes: "unused imports, unused variables, undefined names, mutable default arguments, bare `except:`, and every other lint-visible pattern. Do not report them."
+        - green: "mypy"
+          excludes: "type mismatches and most None-handling errors on annotated code."
+      still_unproven:
+        - "Whether an exception handler recovers or merely silences."
+        - "Whether an async function blocks the event loop — `ruff` sees the call, not the runtime cost."
+        - "Whether a migration is reversible."
+      never_run: []
