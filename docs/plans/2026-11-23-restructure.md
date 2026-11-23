@@ -156,7 +156,7 @@ These come after the phases above. They aren't scheduled yet.
 - **Fetch:**
   - CISA's public KEV JSON feed, filtered on `dateAdded` to the window;
   - the windows overlap on purpose: `day` means the last 48 hours, and `week` means the last 8 days. `dateAdded` is a date with no time or timezone, and the feed can publish late, so an exact 24-hour or 7-day cutoff would drop entries that land near the boundary. (Cyrus, 2026-11-23)
-  - the overlap means back-to-back runs can see an entry twice. A scheduled job de-duplicates by CVE ID against what it has already reported, for example the open issues it filed;
+  - the overlap means back-to-back runs can see an entry twice. That's intended. If the repo is still exposed, it's still on fire, so every run reports it again (Cyrus, 2026-11-23);
   - each entry carries the CVE, vendor and product, the required action, a due date, and whether ransomware campaigns use it.
 - **Map each CVE to code with OSV** (osv.dev): the affected ecosystems, packages and version ranges.
   - Query OSV by the CVE ID only, and do the matching locally. The repo's dependency list never leaves the machine.
@@ -169,7 +169,10 @@ These come after the phases above. They aren't scheduled yet.
 - **Output:**
   - findings in the findings contract (P1), each carrying KEV's required action, due date and ransomware flag;
   - a coverage statement naming which lockfiles and ecosystems were read, so silence never reads as "not vulnerable".
-- **Running it:** a CLI subcommand, plus a `/vld8-onfire` skill for the reachability pass. It could also run as a daily CI job that opens an issue when a hit appears, skipping CVEs it has already filed.
+- **Running it:** a CLI subcommand, plus a `/vld8-onfire` skill for the reachability pass. It could also run as a daily CI job:
+  - one issue per CVE, updated on every run while the repo is still exposed, never skipped and never duplicated;
+  - closed automatically when a run finds the fix in place;
+  - open issues are re-checked on every run, even after their KEV entry ages out of the window, so an old fire doesn't go quiet just because it's no longer new.
 - **Be honest about what's new here.** Dependabot and OSV-Scanner already flag dependency CVEs. vld8's additions are:
   - KEV prioritization: exploited now, with due dates;
   - the reachability verdict;
