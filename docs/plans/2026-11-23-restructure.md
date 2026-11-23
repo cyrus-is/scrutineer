@@ -151,6 +151,32 @@ These come after the phases above. They aren't scheduled yet.
 
   It is most useful after P4, once coverage is broad enough that a miss points at a real gap rather than a known one.
 
+**`vld8 onfire day|week`** (Cyrus, 2026-11-23). Pull every entry added to CISA's Known Exploited Vulnerabilities (KEV) catalog in the last day or week, and scan your repo to see whether you're exposed. KEV lists vulnerabilities being exploited in the wild right now, so it's the short list to act on first.
+
+- **Fetch:**
+  - CISA's public KEV JSON feed, filtered on `dateAdded` to the window;
+  - each entry carries the CVE, vendor and product, the required action, a due date, and whether ransomware campaigns use it.
+- **Map each CVE to code with OSV** (osv.dev): the affected ecosystems, packages and version ranges.
+  - Query OSV by the CVE ID only, and do the matching locally. The repo's dependency list never leaves the machine.
+- **Match deterministically, in a script, not by the model.** This is the MCP reviewer's pattern: evidence in Python, judgment in the skill. Compare against:
+  - resolved versions in the repo's lockfiles (package-lock, pnpm and yarn locks, poetry/uv locks, go.sum, Cargo.lock, NuGet and Maven files, composer.lock);
+  - container base images;
+  - products named in IaC and in the service map's infrastructure and datastores.
+- **Verdict per entry:** affected version present, not present, or can't tell. "Can't tell" covers, for example, no lockfile, or a CVE OSV hasn't mapped. Many KEV entries are appliances, operating systems or browsers with no package mapping. Those are listed as not applicable to this repo's code. If the service map shows you run that product, they go in a "check your infrastructure" section instead.
+- **Reachability pass for hits:** the security lens, scoped to the vulnerable package. Is the affected function, config or feature actually used? This separates "patch today" from "patch, but it isn't reachable".
+- **Output:**
+  - findings in the findings contract (P1), each carrying KEV's required action, due date and ransomware flag;
+  - a coverage statement naming which lockfiles and ecosystems were read, so silence never reads as "not vulnerable".
+- **Running it:** a CLI subcommand, plus a `/vld8-onfire` skill for the reachability pass. It could also run as a daily CI job that opens an issue when a hit appears.
+- **Be honest about what's new here.** Dependabot and OSV-Scanner already flag dependency CVEs. vld8's additions are:
+  - KEV prioritization: exploited now, with due dates;
+  - the reachability verdict;
+  - coverage beyond lockfiles, into base images, IaC and the service map's infrastructure.
+- **Depends on:**
+  - P1, for the findings contract;
+  - P4's package roots and manifest parsing, for lockfile discovery in monorepos;
+  - P5, if the service map's infrastructure inventory is going to drive the infrastructure section.
+
 ## 8. Alternatives considered
 
 1. **Keep generate-time skills and keep patching.** Rejected. Every review pays for every detected platform. Guidance improvements need a reinstall in every repo. The output can't feed validation. And the coverage audit showed the detection faults are structural, not a list of misses.
