@@ -1013,7 +1013,7 @@ apple:
         title: Manifest platform floor diverges from the app target's deployment target
         pattern: "`platforms:` in `Package.swift` versus `IPHONEOS_DEPLOYMENT_TARGET` / `MACOSX_DEPLOYMENT_TARGET` in an `.xcconfig` or the `.pbxproj`. SwiftPM cannot read an xcconfig, so these are two independent one-way sources of truth."
         failure_mode: "The package compiles new-OS-only API because its floor allows it; the app target links it at a lower floor and either fails to link or crashes at `dlopen` on an older OS. Raising one and forgetting the other is a silent, staged failure that appears only on real devices."
-        fix: "Change both in the same commit, and add a gate stage that greps both files and hard-fails on drift (gauntlet's `run-gate.sh` has exactly this stage — copy it)."
+        fix: "Change both in the same commit, and add a gate stage that greps both files and hard-fails on drift (a gate script with this stage is a few lines of shell)."
         lens: production-reliability
         severity: issue
 
@@ -1306,7 +1306,7 @@ apple:
         title: Test muted, skipped, or never run
         pattern: "`.disabled(\"…\")` with no bug reference or with an empty string; `withKnownIssue` around a test that has been failing since it was written; a commented-out `@Test`; a `.tags` filter that excludes a test from every configured run; and — outside Swift Testing — `skipped = \"YES\"` on a test in an `.xcscheme`, which runs under `swift test` but never under `xcodebuild test`."
         failure_mode: "The suite reports green while the case is not executing. The scheme-skip variant is the nastiest: the test genuinely runs in one command and silently never runs in the other, so local and CI disagree without either being red."
-        fix: "Every `.disabled`/`withKnownIssue` needs a `.bug(\"…\")` trait or an issue link and an owner. Prefer deleting a permanently-muted test over leaving it as decoration. Add a gate stage that greps `.xcscheme` for `skipped = \"YES\"` (gauntlet's `run-gate.sh` already has one — copy it)."
+        fix: "Every `.disabled`/`withKnownIssue` needs a `.bug(\"…\")` trait or an issue link and an owner. Prefer deleting a permanently-muted test over leaving it as decoration. Add a gate stage that greps `.xcscheme` for `skipped = \"YES\"` (a one-line grep in the repo's gate script)."
         lens: maintainability
         severity: issue
     focus_areas:
@@ -1408,10 +1408,16 @@ infrastructure:
 
   docker:
     name: Docker
+    # Kept identical in both guidance files; `**/` also matches the repo root. compose.yaml is Compose's current default name.
     detect_files:
       - "**/Dockerfile"
-      - "Dockerfile"
-      - "docker-compose*.yml"
+      - "**/Dockerfile.*"
+      - "**/*.Dockerfile"
+      - "**/.dockerignore"
+      - "**/docker-compose*.yml"
+      - "**/docker-compose*.yaml"
+      - "**/compose.yml"
+      - "**/compose.yaml"
     detect_content:
       - "^FROM\\s+"
     preflight_checks:
@@ -1446,8 +1452,12 @@ infrastructure:
 
   github_actions:
     name: GitHub Actions
+    # Kept identical in both guidance files; `**/` also matches the repo root.
     detect_files:
       - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - ".github/actions/**/*.yml"
+      - ".github/actions/**/*.yaml"
     detect_content:
       - "^on:"
       - "runs-on:"
@@ -1487,11 +1497,14 @@ infrastructure:
 api:
   openapi:
     name: OpenAPI / REST
+    # Kept identical in both guidance files; `**/` also matches the repo root.
     detect_files:
       - "**/*openapi*.yaml"
-      - "*openapi*.yaml"
+      - "**/*openapi*.yml"
+      - "**/*openapi*.json"
       - "**/*swagger*.yaml"
-      - "*swagger*.yaml"
+      - "**/*swagger*.yml"
+      - "**/*swagger*.json"
     detect_content:
       - "openapi:"
     preflight_checks:
@@ -1868,7 +1881,7 @@ verification:
           when: "the diff touches Package.swift, an .xcconfig, a plist, or an .entitlements — the files `swift build` cannot validate"
           cost: "30s-3min"
       per_repo:
-        - cmd: "the repo's own gate script, verbatim"
+        - cmd: "<the repo's own gate script, run verbatim>"
           when: "one exists — it is this repo's definition of green, and it encodes rules no checklist can"
         - cmd: "swift test"
           when: "reviewing a whole component, or the diff changes behaviour under test"
@@ -1909,7 +1922,7 @@ verification:
           when: "the project is typed and mypy is configured"
           cost: "5-30s"
       per_repo:
-        - cmd: "the repo's own gate script, verbatim"
+        - cmd: "<the repo's own gate script, run verbatim>"
           when: "one exists"
         - cmd: "pytest"
           when: "reviewing a whole component"

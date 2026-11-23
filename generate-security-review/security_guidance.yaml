@@ -1283,15 +1283,16 @@ infrastructure:
 
   docker:
     name: Docker
+    # Kept identical in both guidance files; `**/` also matches the repo root. compose.yaml is Compose's current default name.
     detect_files:
       - "**/Dockerfile"
-      - "Dockerfile"
       - "**/Dockerfile.*"
-      - "Dockerfile.*"
+      - "**/*.Dockerfile"
       - "**/.dockerignore"
-      - ".dockerignore"
-      - "docker-compose*.yml"
-      - "docker-compose*.yaml"
+      - "**/docker-compose*.yml"
+      - "**/docker-compose*.yaml"
+      - "**/compose.yml"
+      - "**/compose.yaml"
     detect_content:
       - "^FROM\\s+"
     checklist:
@@ -1325,10 +1326,12 @@ infrastructure:
 
   github_actions:
     name: GitHub Actions
+    # Kept identical in both guidance files; `**/` also matches the repo root.
     detect_files:
       - ".github/workflows/*.yml"
       - ".github/workflows/*.yaml"
       - ".github/actions/**/*.yml"
+      - ".github/actions/**/*.yaml"
     detect_content:
       - "^on:"
       - "runs-on:"
@@ -1404,19 +1407,14 @@ infrastructure:
 api:
   openapi:
     name: OpenAPI / REST
+    # Kept identical in both guidance files; `**/` also matches the repo root.
     detect_files:
       - "**/*openapi*.yaml"
-      - "*openapi*.yaml"
       - "**/*openapi*.yml"
-      - "*openapi*.yml"
       - "**/*openapi*.json"
-      - "*openapi*.json"
       - "**/*swagger*.yaml"
-      - "*swagger*.yaml"
       - "**/*swagger*.yml"
-      - "*swagger*.yml"
       - "**/*swagger*.json"
-      - "*swagger*.json"
     detect_content:
       - "openapi:"
       - "swagger:"
@@ -1574,13 +1572,17 @@ database:
 
   mongodb:
     name: MongoDB
-    detect_files:
-      - "**/*mongo*"
-      - "*mongo*"
+    # Detected from source only. A `*mongo*` filename glob matched a logo image
+    # (and this repo's own guidance), firing two CRITICAL items in repos with no
+    # MongoDB at all.
+    detect_files: []
+    detect_content_exts: [".py", ".go", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".java", ".kt", ".scala", ".rb", ".php", ".cs", ".rs", ".swift", ".ex", ".exs", ".dart"]
     detect_content:
       - "mongoose"
       - "MongoClient"
-      - "mongodb://"
+      - "mongodb(\\+srv)?://"
+      - "\\bpymongo\\b"
+      - "go\\.mongodb\\.org/mongo-driver"
     checklist:
       - id: mongo-injection
         title: NoSQL injection

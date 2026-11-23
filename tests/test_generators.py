@@ -36,12 +36,14 @@ def check(name: str, cond) -> None:
     _results.append((name, bool(cond)))
 
 
-def make_repo(base: Path, name: str, files: dict[str, str]) -> Path:
+def make_repo(base: Path, name: str, files: dict[str, str], git: bool = True) -> Path:
     repo = base / name
     for rel, text in files.items():
         p = repo / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text)
+    if not git:
+        return repo
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
     subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
     subprocess.run(
@@ -99,7 +101,23 @@ def fixtures(base: Path) -> dict[str, tuple[Path, Path | None]]:
     esm_jwt = make_repo(base, "esm-jwt", {  # auth in .mjs source, which content scans skipped
         "src/auth.mjs": "export const check = (t) => jwt.verify(t, key);\n",
     })
+    ignored = make_repo(base, "ignored", {  # gitignored build output must not detect anything
+        ".gitignore": "build/\n.open-next/\n",
+        "src/index.ts": "export const x = 1;\n",
+        "build/generated.py": "print('build output')\n",
+        ".open-next/server.go": "package main\n",
+    })
+    not_git = make_repo(base, "not-git", {"main.go": "package main\n"}, git=False)
+    infra = make_repo(base, "infra", {  # current Compose and workflow names; a logo named mongo
+        "compose.yaml": "services: {}\n",
+        ".github/workflows/ci.yaml": "on: push\n",
+        "assets/logos/mongodb.png": "not an image\n",
+        "web/App.tsx": "export const App = () => null;\n",
+    })
     return {
+        "ignored": (ignored, None),
+        "not-git": (not_git, None),
+        "infra": (infra, None),
         "ts-only": (ts_only, None),
         "go-only": (go_only, None),
         "polyglot": (polyglot, polyglot / "servicemap.json"),
@@ -214,6 +232,27 @@ def main() -> int:
     check("peer: no Phase 0 pointer when the guidance defines no verification",
           "see Phase 0" not in no_phase0 and "## Phase 0" not in no_phase0)
     check_rendering("peer/no-verification", no_phase0)
+
+    # The index is what git would commit: gitignored output detects nothing.
+    for g in GENERATORS:
+        text = outputs[(g, "ignored")]
+        check(f"{g}/ignored: gitignored build/ and .open-next/ files detect nothing",
+              not detection_line(text, "Python") and not detection_line(text, "Go")
+              and "build/" not in text.split("## Phase 1")[0])
+        check(f"{g}/not-git: a directory outside git still gets detection",
+              detection_line(outputs[(g, "not-git")], "Go"))
+        infra = outputs[(g, "infra")]
+        check(f"{g}/infra: compose.yaml detects Docker", detection_line(infra, "Docker"))
+        check(f"{g}/infra: .github/workflows/*.yaml detects GitHub Actions",
+              detection_line(infra, "GitHub Actions"))
+        check(f"{g}/empty: Mode 4 says there is no service map rather than '0 components'",
+              "No service map was available" in outputs[(g, "empty")]
+              and "Repo has 0 reviewable components" not in outputs[(g, "empty")])
+    sec_infra = outputs[("security", "infra")]
+    check("security/infra: a file named mongodb.png does not detect MongoDB",
+          not detection_line(sec_infra, "MongoDB"))
+    check("security/infra: the browser-code auth note carves out server code",
+          "missing auth there IS reportable" in sec_infra)
 
     # Content detection reads source, not config or docs, and reaches .mjs.
     for name, want in (("auth-docs", False), ("esm-jwt", True)):

@@ -25,6 +25,7 @@ import itertools
 import json
 import os
 import re
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -111,18 +112,56 @@ class RepoAnalyzer:
         self._file_index: list[Path] | None = None
         self._text_cache: dict[str, str | None] = {}
 
+    # Third-party trees that are sometimes committed. Skipped even in the git
+    # index; everything else that git tracks is the repo's own code.
+    TRACKED_SKIP_DIRS = {"node_modules", "bower_components", "Pods", "Carthage"}
+
     @property
     def file_index(self) -> list[Path]:
         if self._file_index is None:
-            # Sort directories and files so traversal order is deterministic
-            # across filesystems. Without this, output (and any drift-detection
-            # gates downstream) differs between macOS APFS, Linux ext4, etc.
-            self._file_index = []
-            for root, dirs, files in os.walk(self.repo_path):
-                dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
-                for f in sorted(files):
-                    self._file_index.append(Path(root) / f)
+            self._file_index = self._git_index()
+            if self._file_index is None:
+                self._file_index = self._walk_index()
         return self._file_index
+
+    def _git_index(self) -> list[Path] | None:
+        """Tracked plus untracked-but-not-ignored files, or None outside a git repo.
+
+        Walking the working tree let gitignored build output, worktree caches,
+        vendored SAM builds and scratch folders decide which platforms a repo
+        has and which directories the skill names (written into a file meant to
+        be committed), and read gitignored secret- and PII-bearing files along
+        the way. What git would commit is what the review is about. A
+        top-level `vendor/` (Go, PHP, Ruby) is third-party by convention; a
+        nested one is often first-party, so only the top level is skipped.
+        """
+        try:
+            out = subprocess.run(
+                ["git", "-C", str(self.repo_path), "ls-files", "-z",
+                 "--cached", "--others", "--exclude-standard"],
+                capture_output=True, check=True, timeout=120,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            return None
+        files = []
+        for rel in sorted(set(p for p in out.decode("utf-8", "surrogateescape").split("\0") if p)):
+            parts = Path(rel).parts
+            if parts[0] == "vendor" or any(p in self.TRACKED_SKIP_DIRS for p in parts[:-1]):
+                continue
+            f = self.repo_path / rel
+            if f.is_file():
+                files.append(f)
+        return files
+
+    def _walk_index(self) -> list[Path]:
+        # Outside git, fall back to a walk with a name denylist. Sorted so the
+        # order is deterministic across filesystems.
+        files = []
+        for root, dirs, names in os.walk(self.repo_path):
+            dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
+            for f in sorted(names):
+                files.append(Path(root) / f)
+        return files
 
     def relative_paths(self) -> list[str]:
         return [str(f.relative_to(self.repo_path)) for f in self.file_index]
@@ -415,7 +454,9 @@ class SkillGenerator:
             comprehensive reviews of an entire component.
 
             Process:
-            1. Identify the component directory from the service map (see table below).
+            1. Identify the component directory: from the component table below when this skill has
+               one (it is generated from the service map); otherwise from the directory the user
+               named. `/scrutineer-servicemap` plus a reinstall adds the table.
             2. Read all source files in that directory.
             3. Apply pre-flight checks, focus areas, and all 8 lenses.
             4. Report findings in the same format as PR review, but without the PR metadata.
@@ -1056,13 +1097,25 @@ class SkillGenerator:
             top = sorted(conn_counts.items(), key=lambda x: -x[1])[:5]
             flow_hints = "\n".join(f"   - `{k}` ({v} connections)" for k, v in top)
 
-        if component_count <= 20:
+        if service_map is None:
+            components_line = (
+                "**No service map was available when this skill was generated.** Before tracing "
+                "flows, inventory the deployable components yourself (entry points, manifests, "
+                "IaC, CI pipelines), or run `/scrutineer-servicemap` and reinstall with `--force`."
+            )
+            scale_note = (
+                "Size the work from that inventory: one agent for a handful of components; for a "
+                "large repo, dispatch sub-agents, one per investigation area."
+            )
+        elif component_count <= 20:
+            components_line = f"**Repo has {component_count} reviewable components.**"
             scale_note = (
                 "**Small repo (≤20 components): Single-agent deep review.** Read the service map, "
                 "then read source files as needed to trace flows. You have enough context. "
                 "Prioritize depth on the most complex and highest-risk areas."
             )
         else:
+            components_line = f"**Repo has {component_count} reviewable components.**"
             scale_note = (
                 "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the "
                 "Agent tool — one per investigation area. Each sub-agent gets a fresh context and "
@@ -1090,7 +1143,7 @@ class SkillGenerator:
 
             ### Adaptive Execution Strategy
 
-            **Repo has {component_count} reviewable components.**
+            {components_line}
 
             {scale_note}
 
@@ -1207,7 +1260,7 @@ class SkillGenerator:
             <Things one service does well that others should adopt>
             ```
 
-        """, component_count=component_count, flow_heading=flow_heading, flow_hints=flow_hints, scale_note=scale_note)
+        """, component_count=component_count, components_line=components_line, flow_heading=flow_heading, flow_hints=flow_hints, scale_note=scale_note)
 
     def _help_section(self) -> str:
         return textwrap.dedent("""\

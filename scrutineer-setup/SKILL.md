@@ -42,7 +42,7 @@ does the crawl, then hands the resulting `servicemap.json` to the shared install
 - The **target repo** is the current working directory unless the user names another path.
 - Find the Scrutineer **toolkit** (the clone holding the generators). In order:
   1. If the `scrutineer` CLI is on PATH (`which scrutineer`), use it — it embeds everything.
-  2. Else look for a clone (e.g. `~/Projects/scrutineer`); if you cannot find one, ask the user for its path.
+  2. Else look for a local clone of the scrutineer repo; if you cannot find one, ask the user for its path.
 - Confirm target and toolkit paths with the user before writing anything outside the target's
   `.claude/commands/`.
 
