@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Behavioral capture for /scrutineer-mcp — the `basis: "observed"` layer.
+Behavioral capture for /vld8-mcp — the `basis: "observed"` layer.
 
 THIS MODULE RUNS UNTRUSTED CODE. That is the whole point of it, and it is why it
 is a separate, explicitly-gated entrypoint that `analyze_mcp.py` never imports.
@@ -92,7 +92,7 @@ import analyze_mcp as A  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
 BEHAVIORAL_SCHEMA = "mcp-review/behavioral@1"
-CANARY_PREFIX = "SCRUTINEER-CANARY"
+CANARY_PREFIX = "VLD8-CANARY"
 
 # Bound what we read back from a hostile child so a server cannot exhaust memory
 # by returning (or POSTing) an unbounded stream.
@@ -122,7 +122,7 @@ def canary(kind: str, ident: str) -> str:
 
 class _SinkHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
-    server_version = "scrutineer-sink"
+    server_version = "vld8-sink"
 
     def _capture(self):
         try:
@@ -325,7 +325,7 @@ class MCPSession:
         resp = self._request("initialize", {
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": {},
-            "clientInfo": {"name": "scrutineer-capture-runtime", "version": "1"},
+            "clientInfo": {"name": "vld8-capture-runtime", "version": "1"},
         })
         self._send({"jsonrpc": "2.0", "method": "notifications/initialized"})
         return resp.get("result") or {}
@@ -372,7 +372,7 @@ def build_child_env(declared_env: dict, home: Path, g: A.Guidance,
     env["XDG_CONFIG_HOME"] = str(home / ".config")
     env["XDG_DATA_HOME"] = str(home / ".local" / "share")
     env["NODE_OPTIONS"] = ""                # no injected --require preload
-    env["SCRUTINEER_PROBE"] = "1"           # honest: we do not hide from the server
+    env["VLD8_PROBE"] = "1"           # honest: we do not hide from the server
 
     canaries: dict[str, str] = {}
     for key, value in (declared_env or {}).items():
@@ -381,7 +381,7 @@ def build_child_env(declared_env: dict, home: Path, g: A.Guidance,
             env[key] = c
             canaries[c] = f"env:{key}"
         elif withhold_value(key, value, g):
-            env[key] = "scrutineer-probe-placeholder"
+            env[key] = "vld8-probe-placeholder"
         else:
             # A benign declared value (a region, a base path) passes through so the
             # server boots configured. Anything shaped like a live secret is
@@ -406,7 +406,7 @@ def seed_home(g: A.Guidance) -> tuple[Path, dict]:
     """Create a throwaway HOME seeded with decoy credential files. Each decoy
     carries a unique canary, so its content coming back to us in a result or an
     outbound body proves the read."""
-    home = Path(tempfile.mkdtemp(prefix="scrutineer-probe-home-"))
+    home = Path(tempfile.mkdtemp(prefix="vld8-probe-home-"))
     (home / "tmp").mkdir(exist_ok=True)
     canaries: dict[str, str] = {}
     for rel in g.probe.get("decoy_files", []):
@@ -414,7 +414,7 @@ def seed_home(g: A.Guidance) -> tuple[Path, dict]:
         target.parent.mkdir(parents=True, exist_ok=True)
         c = canary("file", rel)
         target.write_text(
-            f"# scrutineer decoy — not a real credential\n"
+            f"# vld8 decoy — not a real credential\n"
             f"{c}\n"
             f"# If this string appears in a tool result or an outbound request,\n"
             f"# the server read a file it has no business reading.\n"
@@ -460,7 +460,7 @@ def probe_arguments(schema: dict, g: A.Guidance, decoy_path: str, sink_url: str,
 
     path_res = _compile(g.probe.get("path_param_patterns"))
     url_res = _compile(g.probe.get("url_param_patterns"))
-    filler = g.probe.get("benign_string", "scrutineer-probe")
+    filler = g.probe.get("benign_string", "vld8-probe")
 
     args = {}
     for name in names[:12]:
@@ -970,7 +970,7 @@ def print_plan(server: str, entry: dict, g: A.Guidance, probe: bool, relaunch: b
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Behavioral (basis=observed) capture for /scrutineer-mcp. "
+        description="Behavioral (basis=observed) capture for /vld8-mcp. "
                     "Launches an MCP server behind a recording harness. "
                     "Requires --run; prints an inspectable plan otherwise.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

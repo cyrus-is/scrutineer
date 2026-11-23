@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP source-fetch helper — the safe-acquisition half of /scrutineer-mcp Pass 3.
+MCP source-fetch helper — the safe-acquisition half of /vld8-mcp Pass 3.
 
 Pass 3 reviews an MCP server's source whenever it can be obtained. But ACQUIRING
 that source is itself an active, weaponizable operation: a malicious package can
@@ -66,7 +66,7 @@ MAX_ENTRY_BYTES = 64 * 1024 * 1024       # 64 MiB per file
 MAX_ENTRIES = 20000                      # member count
 MAX_DOWNLOAD_BYTES = 128 * 1024 * 1024   # 128 MiB on the wire
 HTTP_TIMEOUT = 30
-USER_AGENT = "scrutineer-mcp-review-fetch/1 (+https://github.com/cyrus-is/scrutineer)"
+USER_AGENT = "vld8-mcp-review-fetch/1 (+https://github.com/cyrus-is/vld8)"
 
 NPM_REGISTRY = "https://registry.npmjs.org"
 PYPI_JSON = "https://pypi.org/pypi"
@@ -647,7 +647,7 @@ def safe_cleanup(path: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Safely fetch + extract MCP server source for /scrutineer-mcp Pass 3.",
+        description="Safely fetch + extract MCP server source for /vld8-mcp Pass 3.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     src = parser.add_mutually_exclusive_group(required=False)

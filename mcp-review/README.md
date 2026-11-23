@@ -13,7 +13,7 @@ questions, so they get separate answers.
 ## Architecture — a runtime split, not a generator
 
 Unlike `generate-peer-review` and `generate-security-review` (which scan the **host repo** at generate time
-and emit a tailored skill), `/scrutineer-mcp` reviews an **external** MCP server — independent of whatever repo
+and emit a tailored skill), `/vld8-mcp` reviews an **external** MCP server — independent of whatever repo
 you're in. There's no per-repo tailoring axis, so there's no generation step. The closer analog in this repo
 is `generate-servicemap`: a static skill plus a runtime Python helper.
 
@@ -23,7 +23,7 @@ is `generate-servicemap`: a static skill plus a runtime Python helper.
 | `fetch_source.py` | **Safe-acquisition half of Pass 3.** Resolves + downloads source via registry HTTP APIs (or a commit-pinned GitHub tarball), verifies integrity, and extracts with a path-sanitizing extractor. Never invokes npm/pip/git; never executes fetched code. Emits a manifest with `source_artifact_match`. |
 | `validate_findings.py` | **Optional agentic false-positive sweep (Pass 4).** Extracts every candidate finding with its evidence, builds a triage prompt, and applies the result back onto the analysis — suppress-only, auditable. Judgment is agentic (`--run` shells to `claude -p`); the extract/prompt/apply scaffolding is pure and tested. A separate entrypoint, so the analyzer's offline guarantee is untouched. |
 | `capture_runtime.py` | **Optional behavioral capture (Pass 5) — the only piece that RUNS a server.** Launches it behind the stdio handshake and records the surface it actually serves (manifest drift vs. the reviewed baseline), plus, with `--probe`, what each tool call does: canary-seeded credentials, a throwaway `HOME` full of decoy credential files, and a local sink that records egress without forwarding it. Produces `basis: "observed"` findings. Gated behind `--run`; `analyze_mcp.py` never imports it. |
-| `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, runs the Pass-4 self-review, assigns the verdict. Copied to `.claude/commands/scrutineer-mcp.md`. |
+| `SKILL.md` | **Judgment half.** Reads the analyzer's JSON, reviews source when available, reasons about risk and chains, runs the Pass-4 self-review, assigns the verdict. Copied to `.claude/commands/vld8-mcp.md`. |
 | `mcp_risk_guidance.yaml` | Tunable catalog: config-smell definitions, sensitive-env-key patterns, package-runner/shell lists, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns. |
 
 Detection stays deterministic in Python for reproducibility, and because **digest-bound suppression needs
@@ -31,8 +31,8 @@ real hashing** a prompt can't do reliably.
 
 ## Quick start
 
-> The top-level installer copies this skill into your repo for you (`scrutineer install <repo>` or
-> the `/scrutineer-setup` skill; see the [main README](../README.md)). You still set up the analyzer
+> The top-level installer copies this skill into your repo for you (`vld8 install <repo>` or
+> the `/vld8-setup` skill; see the [main README](../README.md)). You still set up the analyzer
 > venv below, and can run `analyze_mcp.py` / `fetch_source.py` directly.
 
 ```bash
@@ -42,19 +42,19 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Install the skill into your target repo by hand (or use Claude Desktop's commands dir):
 
 ```bash
-cp SKILL.md /path/to/your-repo/.claude/commands/scrutineer-mcp.md
+cp SKILL.md /path/to/your-repo/.claude/commands/vld8-mcp.md
 ```
 
 Then in Claude Code:
 
 ```
-/scrutineer-mcp                    # review every server in the auto-discovered config
-/scrutineer-mcp github             # review one named server
-/scrutineer-mcp --config .mcp.json --tools github-tools.json
+/vld8-mcp                    # review every server in the auto-discovered config
+/vld8-mcp github             # review one named server
+/vld8-mcp --config .mcp.json --tools github-tools.json
 ```
 
-Or run the analyzer directly. With the package installed, `scrutineer mcp analyze` takes the same
-arguments from any directory (likewise `scrutineer mcp fetch|validate|capture`); from this directory
+Or run the analyzer directly. With the package installed, `vld8 mcp analyze` takes the same
+arguments from any directory (likewise `vld8 mcp fetch|validate|capture`); from this directory
 in a clone:
 
 ```bash
@@ -66,7 +66,7 @@ in a clone:
 
 # With suppressions reconciled
 .venv/bin/python analyze_mcp.py --config .mcp.json --tools tools.json \
-  --suppressions .claude/scrutineer-mcp-suppressions.json
+  --suppressions .claude/vld8-mcp-suppressions.json
 ```
 
 Safely fetch a server's source for Pass 3 (never runs npm/pip/git, never executes fetched code):
@@ -231,7 +231,7 @@ contain only placeholders — no live-looking secrets are committed.
 
 - Python 3.10+ (uses `X | None` type syntax)
 - `pyyaml>=6.0`
-- [Claude Code](https://claude.ai/code) to run the `/scrutineer-mcp` skill
+- [Claude Code](https://claude.ai/code) to run the `/vld8-mcp` skill
 
 ## Status
 

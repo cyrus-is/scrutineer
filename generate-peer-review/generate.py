@@ -3,14 +3,14 @@
 Peer Review Skill Generator
 
 Scans a repository (and optionally consumes a servicemap.json) to generate a
-tailored .claude/commands/scrutineer-code.md with platform-specific pre-flight
+tailored .claude/commands/vld8-review.md with platform-specific pre-flight
 checks, focus areas, and evaluation lenses.
 
 The generated skill supports four invocation modes:
-  /scrutineer-code                  — review current branch diff vs main
-  /scrutineer-code 123              — review PR #123 (git pull + checkout)
-  /scrutineer-code <component-name> — full review of a service/app from the service map
-  /scrutineer-code --deep           — deep repo-wide review across services
+  /vld8-review                  — review current branch diff vs main
+  /vld8-review 123              — review PR #123 (git pull + checkout)
+  /vld8-review <component-name> — full review of a service/app from the service map
+  /vld8-review --deep           — deep repo-wide review across services
 
 Usage:
     python generate.py /path/to/repo
@@ -430,13 +430,13 @@ class SkillGenerator:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
-            /scrutineer-code
+            /vld8-review
             ```
             Reviews the current branch's changes against main. Runs `git diff main...HEAD`.
 
             ### Mode 2: PR Review (numeric argument)
             ```
-            /scrutineer-code 123
+            /vld8-review 123
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
@@ -448,7 +448,7 @@ class SkillGenerator:
 
             ### Mode 3: Full Service/App Review (component name argument)
             ```
-            /scrutineer-code <component-name>
+            /vld8-review <component-name>
             ```
             Full review of all code in a service or app directory — not just a diff. This is for
             comprehensive reviews of an entire component.
@@ -456,14 +456,14 @@ class SkillGenerator:
             Process:
             1. Identify the component directory: from the component table below when this skill has
                one (it is generated from the service map); otherwise from the directory the user
-               named. `/scrutineer-servicemap` plus a reinstall adds the table.
+               named. `/vld8-map` plus a reinstall adds the table.
             2. Read all source files in that directory.
             3. Apply pre-flight checks, focus areas, and all 8 lenses.
             4. Report findings in the same format as PR review, but without the PR metadata.
 
             ### Mode 4: Deep Repo Review (--deep flag)
             ```
-            /scrutineer-code --deep
+            /vld8-review --deep
             ```
             Full repository-level review that traces flows across services, compares patterns
             cross-service, and finds systemic issues that component-level reviews miss. This is
@@ -668,7 +668,7 @@ class SkillGenerator:
             "boundaries, and a component is a unit someone can reason about whole."
             if service_map else
             "Partition along top-level source directories (module, package, or service "
-            "roots). Run `/scrutineer-servicemap` first if you want the boundaries named "
+            "roots). Run `/vld8-map` first if you want the boundaries named "
             "for you."
         )
         return _render("""\
@@ -1075,7 +1075,7 @@ class SkillGenerator:
             additions to the guidance, because they are defects the checklist is currently blind to.
 
             **GitHub issues are opt-in.** Do NOT auto-file GitHub issues for findings.
-            Only create issues if the user explicitly asks (e.g., `/scrutineer-code 123 --file-issues`).
+            Only create issues if the user explicitly asks (e.g., `/vld8-review 123 --file-issues`).
 
         """)
 
@@ -1101,7 +1101,7 @@ class SkillGenerator:
             components_line = (
                 "**No service map was available when this skill was generated.** Before tracing "
                 "flows, inventory the deployable components yourself (entry points, manifests, "
-                "IaC, CI pipelines), or run `/scrutineer-servicemap` and reinstall with `--force`."
+                "IaC, CI pipelines), or run `/vld8-map` and reinstall with `--force`."
             )
             scale_note = (
                 "Size the work from that inventory: one agent for a handful of components; for a "
@@ -1269,14 +1269,14 @@ class SkillGenerator:
             If the argument is `--help`, output this summary and stop:
 
             ```
-            /scrutineer-code — Principal Engineer peer code review
+            /vld8-review — Principal Engineer peer code review
 
             MODES:
-              /scrutineer-code              Review current branch diff vs main (~2 min)
-              /scrutineer-code 123          Review PR #123, post findings as comment (~5 min)
-              /scrutineer-code <component>  Full review of a service/app by name (~5 min)
-              /scrutineer-code --deep       Deep repo-wide review across all components (~20 min)
-              /scrutineer-code --help       Show this help
+              /vld8-review              Review current branch diff vs main (~2 min)
+              /vld8-review 123          Review PR #123, post findings as comment (~5 min)
+              /vld8-review <component>  Full review of a service/app by name (~5 min)
+              /vld8-review --deep       Deep repo-wide review across all components (~20 min)
+              /vld8-review --help       Show this help
 
             WHAT IT DOES:
               Modes 1-3: Pre-flight checks → agentic analysis → 8 evaluation lenses
@@ -1359,8 +1359,8 @@ def main():
         """),
     )
     parser.add_argument("repo_path", help="Path to the repository to analyze")
-    parser.add_argument("--output", "-o", default=".claude/commands/scrutineer-code.md",
-                        help="Output path relative to repo root (default: .claude/commands/scrutineer-code.md)")
+    parser.add_argument("--output", "-o", default=".claude/commands/vld8-review.md",
+                        help="Output path relative to repo root (default: .claude/commands/vld8-review.md)")
     sm_group = parser.add_mutually_exclusive_group()
     sm_group.add_argument("--service-map", "-s", default=None,
                           help="Path to servicemap.json for richer context. "
@@ -1372,7 +1372,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true",
                         help="Print generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
-                        help="Overwrite existing scrutineer-code.md without prompting")
+                        help="Overwrite existing vld8-review.md without prompting")
 
     args = parser.parse_args()
 
@@ -1474,7 +1474,7 @@ def main():
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /scrutineer-code (from Claude Code in the target repo)")
+    print(f"\nUsage: /vld8-review (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 {
-  "_comment": "Top reputable MCP servers — documented real-world install specs (mostly the unpinned `npx -y` / `uvx` forms the projects' READMEs publish). Used to dogfood /scrutineer-mcp. Env values are ${PLACEHOLDER} so they register as sensitive-env-required without tripping live-secret findings. Captured versions are recorded in tools/<server>.json serverInfo.",
+  "_comment": "Top reputable MCP servers — documented real-world install specs (mostly the unpinned `npx -y` / `uvx` forms the projects' READMEs publish). Used to dogfood /vld8-mcp. Env values are ${PLACEHOLDER} so they register as sensitive-env-required without tripping live-secret findings. Captured versions are recorded in tools/<server>.json serverInfo.",
   "mcpServers": {
     "everything": {
       "command": "npx",

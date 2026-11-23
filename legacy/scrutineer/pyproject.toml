@@ -1,0 +1,28 @@
+# The final release of the `scrutineer` package, published after the toolkit was
+# renamed vld8. It installs vld8 and forwards the `scrutineer` command to it, so
+# repos whose skills still call `scrutineer …` keep working until they reinstall.
+# Built and published from a `scrutineer-v*` release tag (see publish.yml).
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scrutineer"
+version = "2.0.0"
+description = "Renamed to vld8 and no longer maintained. This final release installs vld8 and forwards the scrutineer command to it."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+# Capped at the major whose CLI the forwarding below was written against.
+dependencies = ["vld8>=2.0.0,<3"]
+classifiers = ["Development Status :: 7 - Inactive"]
+
+[project.urls]
+Homepage = "https://github.com/cyrus-is/vld8"
+
+[project.scripts]
+scrutineer = "scrutineer.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["scrutineer"]

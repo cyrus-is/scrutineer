@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-MCP review analyzer — the deterministic half of /scrutineer-mcp.
+MCP review analyzer — the deterministic half of /vld8-mcp.
 
 This is NOT a skill generator. Unlike generate-peer-review / generate-security-
 review (which scan the HOST repo at generate time and emit a tailored skill),
 this runs at REVIEW time, like generate-servicemap's validate_servicemap.py. It
 consumes the thing under review — an MCP client config and/or a tools/list
-response — and emits a normalized JSON record the /scrutineer-mcp skill reasons over.
+response — and emits a normalized JSON record the /vld8-mcp skill reasons over.
 
 It does only what must be deterministic and reproducible:
   1. Parse a config (the mcpServers map) and normalize each server entry.
@@ -44,7 +44,7 @@ Usage:
     python analyze_mcp.py --config claude_desktop_config.redacted.json
     python analyze_mcp.py --tools-list tools.json --server "github mcp"
     python analyze_mcp.py --config cfg.json --tools-list tools.json \\
-        --server "github mcp" --suppressions .claude/scrutineer-mcp-suppressions.json
+        --server "github mcp" --suppressions .claude/vld8-mcp-suppressions.json
     python analyze_mcp.py --config cfg.json --server weather \\
         --behavioral behavioral.json      # fold in an observed-basis capture
 """
@@ -1398,7 +1398,7 @@ def reconcile(servers: list[dict], tools: list[dict], suppressions: list[dict]) 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analyze an MCP config and/or tools/list for /scrutineer-mcp.",
+        description="Analyze an MCP config and/or tools/list for /vld8-mcp.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--config", help="Path to a (redacted) MCP client config JSON")

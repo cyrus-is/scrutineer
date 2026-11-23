@@ -1,12 +1,12 @@
 """Command-line front door.
 
-``scrutineer install [target]`` installs the skill set. ``scrutineer mcp …`` and
-``scrutineer servicemap …`` run the toolkit's bundled scripts, which is how the
+``vld8 install [target]`` installs the skill set. ``vld8 mcp …`` and
+``vld8 map …`` run the toolkit's bundled scripts, which is how the
 installed skills reach them from any repo.
 
 Reachable two ways, both running the same shared core:
-    python -m scrutineer install /path/to/repo        # from a clone
-    pip install scrutineer && scrutineer install .    # from PyPI
+    python -m vld8 install /path/to/repo        # from a clone
+    pip install vld8 && vld8 install .    # from PyPI
 """
 
 from __future__ import annotations
@@ -30,10 +30,10 @@ def _run_script(script: Path, args: list[str]) -> int:
 def _add_mcp_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "mcp",
-        help="Run an MCP-review script (used by /scrutineer-mcp).",
+        help="Run an MCP-review script (used by /vld8-mcp).",
         description=(
             "Run one of the bundled MCP-review scripts. Everything after the script name "
-            "is passed to it unchanged; `scrutineer mcp analyze --help` shows its options."
+            "is passed to it unchanged; `vld8 mcp analyze --help` shows its options."
         ),
     )
     p.add_argument("script", choices=sorted(paths.MCP_SCRIPTS), help="Which script to run.")
@@ -41,10 +41,10 @@ def _add_mcp_parser(sub: argparse._SubParsersAction) -> None:
     p.set_defaults(func=lambda a: _run_script(paths.MCP_SCRIPTS[a.script], a.args))
 
 
-def _add_servicemap_parser(sub: argparse._SubParsersAction) -> None:
+def _add_map_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
-        "servicemap",
-        help="Service-map helpers (used by /scrutineer-servicemap).",
+        "map",
+        help="Service-map helpers (used by /vld8-map).",
         description="`validate PATH` checks a service map; `schema` prints the schema's path.",
     )
     actions = p.add_subparsers(dest="action", required=True)
@@ -66,10 +66,10 @@ def _cmd_schema(args: argparse.Namespace) -> int:
 def _add_install_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "install",
-        help="Install the full Scrutineer skill set into a repo.",
+        help="Install the full vld8 skill set into a repo.",
         description=(
-            "Copy the servicemap, mcp and setup skills and generate the peer-review and "
-            "security-review skills into TARGET/.claude/commands/, all named scrutineer-*."
+            "Copy the map, mcp and setup skills and generate the peer-review and "
+            "security-review skills into TARGET/.claude/commands/, all named vld8-*."
         ),
     )
     p.add_argument(
@@ -111,25 +111,31 @@ def _cmd_install(args: argparse.Namespace) -> int:
             print(f"    /{name[:-3]}")  # strip .md → slash command name
     else:
         print("Nothing was written (all targets existed; re-run with --force).")
+    if result.moved_suppressions:
+        print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
+    if result.removed:
+        print("✓ Removed the scrutineer-era commands they replace:")
+        for name in result.removed:
+            print(f"    /{name[:-3]}")
     if result.skipped_crawl:
         print(
             "\nNote: skills were generated without a service map. For cross-service\n"
-            "      awareness, run /scrutineer-servicemap in Claude Code, then re-run\n"
-            "      `scrutineer install --force` (or pass --crawl)."
+            "      awareness, run /vld8-map in Claude Code, then re-run\n"
+            "      `vld8 install --force` (or pass --crawl)."
         )
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="scrutineer",
-        description="Agentic code review toolkit.",
+        prog="vld8",
+        description="Dev tooling for Claude Code: service map, code and security review, MCP review.",
     )
-    parser.add_argument("--version", action="version", version=f"scrutineer {__version__}")
+    parser.add_argument("--version", action="version", version=f"vld8 {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     _add_install_parser(sub)
     _add_mcp_parser(sub)
-    _add_servicemap_parser(sub)
+    _add_map_parser(sub)
     return parser
 
 
@@ -138,12 +144,12 @@ def _passthrough(argv: list[str]) -> int | None:
 
     argparse can't hand a script its own options: with a REMAINDER positional,
     a leading `-x` is parsed as an option of the wrapper, so
-    `scrutineer servicemap validate --help` printed the wrapper's help. The
-    parsers above still exist for `scrutineer --help` and for bad script names.
+    `vld8 map validate --help` printed the wrapper's help. The
+    parsers above still exist for `vld8 --help` and for bad script names.
     """
     if len(argv) >= 2 and argv[0] == "mcp" and argv[1] in paths.MCP_SCRIPTS:
         return _run_script(paths.MCP_SCRIPTS[argv[1]], argv[2:])
-    if len(argv) >= 2 and argv[:2] == ["servicemap", "validate"]:
+    if len(argv) >= 2 and argv[:2] == ["map", "validate"]:
         return _run_script(paths.SERVICEMAP_VALIDATOR, argv[2:])
     return None
 

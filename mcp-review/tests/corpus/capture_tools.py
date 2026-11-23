@@ -6,7 +6,7 @@ JSON-RPC handshake (initialize -> notifications/initialized -> tools/list),
 writes the captured tools array to a file, then terminates the server.
 
 This is a *capture* tool for assembling fixtures — it is NOT part of the
-/scrutineer-mcp audit (which never launches a server). Only run it against
+/vld8-mcp audit (which never launches a server). Only run it against
 servers you trust. Placeholder values are injected for any declared env var
 that is unset, so servers that demand a credential to boot will still start
 far enough to answer tools/list (which does not require real auth).
@@ -106,7 +106,7 @@ def main():
             "params": {
                 "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "scrutineer-corpus-capture", "version": "0"},
+                "clientInfo": {"name": "vld8-corpus-capture", "version": "0"},
             },
         })
         init, err = _await(q, 1, deadline)

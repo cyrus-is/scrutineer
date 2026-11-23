@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from scrutineer import cli, installer, paths  # noqa: E402
+from vld8 import cli, installer, paths  # noqa: E402
 
 _results: list[tuple[str, bool]] = []
 
@@ -33,7 +33,7 @@ def check(name: str, cond) -> None:
 
 def run_cli(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-m", "scrutineer", *args],
+        [sys.executable, "-m", "vld8", *args],
         cwd=ROOT, capture_output=True, text=True,
     )
 
@@ -44,22 +44,22 @@ def main() -> int:
     # The bundled-script subcommands reach their scripts.
     for name in sorted(paths.MCP_SCRIPTS):
         proc = run_cli("mcp", name, "--help")
-        check(f"`scrutineer mcp {name} --help` exits 0", proc.returncode == 0)
-    proc = run_cli("servicemap", "schema")
-    check("`scrutineer servicemap schema` prints an existing path",
+        check(f"`vld8 mcp {name} --help` exits 0", proc.returncode == 0)
+    proc = run_cli("map", "schema")
+    check("`vld8 map schema` prints an existing path",
           proc.returncode == 0 and Path(proc.stdout.strip()).is_file())
-    proc = run_cli("servicemap", "validate", "--help")
-    check("`scrutineer servicemap validate --help` reaches the validator, not the wrapper",
+    proc = run_cli("map", "validate", "--help")
+    check("`vld8 map validate --help` reaches the validator, not the wrapper",
           proc.returncode == 0 and "path-to-servicemap.json" in proc.stdout)
     with tempfile.TemporaryDirectory() as tmp:
         bad = Path(tmp) / "bad.json"
         bad.write_text("{}")
-        proc = run_cli("servicemap", "validate", str(bad))
-        check("`scrutineer servicemap validate` fails an invalid map", proc.returncode != 0)
+        proc = run_cli("map", "validate", str(bad))
+        check("`vld8 map validate` fails an invalid map", proc.returncode != 0)
     check("unknown mcp script is rejected", run_cli("mcp", "bogus").returncode != 0)
 
     # Install into a throwaway repo, then check what the installed skills ask for.
-    with tempfile.TemporaryDirectory(prefix="scrutineer-cli-test-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="vld8-cli-test-") as tmp:
         target = Path(tmp) / "repo"
         target.mkdir()
         (target / "index.ts").write_text("export const x = 1;\n")
@@ -78,14 +78,43 @@ def main() -> int:
         for f in sorted(expected):
             text = (cmd_dir / f).read_text()
             check(f"{f}: no clone-only venv path", ".venv/bin/python" not in text)
-            used_mcp = set(re.findall(r"scrutineer mcp (\w+)", text))
-            check(f"{f}: every `scrutineer mcp X` is a real subcommand {sorted(used_mcp - mcp_actions)}",
+            used_mcp = set(re.findall(r"vld8 mcp (\w+)", text))
+            check(f"{f}: every `vld8 mcp X` is a real subcommand {sorted(used_mcp - mcp_actions)}",
                   used_mcp <= mcp_actions)
-            used_sm = set(re.findall(r"scrutineer servicemap (\w+)", text))
-            check(f"{f}: every `scrutineer servicemap X` is a real subcommand {sorted(used_sm - servicemap_actions)}",
+            used_sm = set(re.findall(r"vld8 map (\w+)", text))
+            check(f"{f}: every `vld8 map X` is a real subcommand {sorted(used_sm - servicemap_actions)}",
                   used_sm <= servicemap_actions)
         mcp_text = (cmd_dir / paths.MCP_COMMAND).read_text()
-        check("mcp skill runs the analyzer through the CLI", "scrutineer mcp analyze" in mcp_text)
+        check("mcp skill runs the analyzer through the CLI", "vld8 mcp analyze" in mcp_text)
+        for f in sorted(expected):
+            check(f"{f}: no leftover scrutineer name", "scrutineer" not in (cmd_dir / f).read_text().lower())
+
+    # Upgrading a repo that scrutineer set up: its own files go, anything else stays.
+    with tempfile.TemporaryDirectory(prefix="vld8-cli-test-") as tmp:
+        target = Path(tmp) / "repo"
+        cmd_dir = target / ".claude" / "commands"
+        cmd_dir.mkdir(parents=True)
+        (target / "index.ts").write_text("export const x = 1;\n")
+        subprocess.run(["git", "init", "-q"], cwd=target, check=True)
+        (cmd_dir / "scrutineer-mcp.md").write_text("---\nname: scrutineer-mcp\n---\nold\n")
+        (cmd_dir / "scrutineer-code.md").write_text(
+            "You are a TL/Principal SDE performing a peer code review. Old.\n")
+        (cmd_dir / "scrutineer-security.md").write_text("A hand-written command that shares the name.\n")
+        (cmd_dir / "scrutineer-notes.md").write_text("Not one of ours.\n")
+        (target / ".claude" / "scrutineer-mcp-suppressions.json").write_text('{"suppressions": []}\n')
+        result = installer.install(target, log=lambda *_: None)
+        check("upgrade removes the scrutineer files it replaced",
+              sorted(result.removed) == ["scrutineer-code.md", "scrutineer-mcp.md"]
+              and not (cmd_dir / "scrutineer-mcp.md").exists()
+              and not (cmd_dir / "scrutineer-code.md").exists())
+        check("upgrade keeps a same-named file scrutineer did not write",
+              (cmd_dir / "scrutineer-security.md").exists())
+        check("upgrade leaves unrelated command files alone", (cmd_dir / "scrutineer-notes.md").exists())
+        check("upgrade moves the MCP suppressions file to its vld8 name",
+              result.moved_suppressions and (target / paths.SUPPRESSIONS_FILE).is_file()
+              and not (target / paths.LEGACY_SUPPRESSIONS_FILE).exists())
+        check("the mcp skill names the suppressions file the installer moves to",
+              paths.SUPPRESSIONS_FILE in (cmd_dir / paths.MCP_COMMAND).read_text())
 
     # The parser accepts what the skills use, so the regex above checks real choices.
     parser = cli.build_parser()

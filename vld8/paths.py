@@ -4,9 +4,9 @@ The generators, guidance YAMLs and static SKILL.md files live in the tool
 directories at the repo root. They are resolved from one of two places:
 
 * **clone / ``pip install -e .``** — the directories sit as siblings of this
-  package, one level up from ``scrutineer/``.
+  package, one level up from ``vld8/``.
 * **installed wheel** — the build (Hatchling ``force-include``) copies those
-  directories into ``scrutineer/_assets/``, so a ``pip install scrutineer`` with
+  directories into ``vld8/_assets/``, so a ``pip install vld8`` with
   no clone still has everything the installer needs.
 
 ``toolkit_root()`` returns whichever of the two is present, so the installer
@@ -36,10 +36,10 @@ PEER_GENERATOR = _ROOT / "generate-peer-review" / "generate.py"
 SECURITY_GENERATOR = _ROOT / "generate-security-review" / "generate.py"
 SERVICEMAP_SKILL = _ROOT / "generate-servicemap" / "SKILL.md"
 MCP_SKILL = _ROOT / "mcp-review" / "SKILL.md"
-SETUP_SKILL = _ROOT / "scrutineer-setup" / "SKILL.md"
+SETUP_SKILL = _ROOT / "vld8-setup" / "SKILL.md"
 
 # Scripts the installed skills run. The skills reach them through the CLI
-# (`scrutineer mcp analyze …`, `scrutineer servicemap validate …`), because an
+# (`vld8 mcp analyze …`, `vld8 map validate …`), because an
 # installed skill sits in the target repo's .claude/commands/, where no
 # repo-relative path into this toolkit resolves.
 MCP_SCRIPTS = {
@@ -52,11 +52,30 @@ SERVICEMAP_VALIDATOR = _ROOT / "generate-servicemap" / "validate_servicemap.py"
 SERVICEMAP_SCHEMA = _ROOT / "references" / "schema.md"
 
 # Command-file names produced in the target repo's .claude/commands/ directory.
-SERVICEMAP_COMMAND = "scrutineer-servicemap.md"
-MCP_COMMAND = "scrutineer-mcp.md"
-SETUP_COMMAND = "scrutineer-setup.md"
-PEER_COMMAND = "scrutineer-code.md"
-SECURITY_COMMAND = "scrutineer-security.md"
+SERVICEMAP_COMMAND = "vld8-map.md"
+MCP_COMMAND = "vld8-mcp.md"
+SETUP_COMMAND = "vld8-setup.md"
+PEER_COMMAND = "vld8-review.md"
+SECURITY_COMMAND = "vld8-security.md"
+
+# Command files that scrutineer (this package's name before 2.0) installed, each
+# mapped to the vld8 file that replaces it and a line only that skill contains.
+# `vld8 install` deletes an old file once its replacement is in place, and only
+# when the marker shows scrutineer wrote it, so a hand-written file survives.
+LEGACY_COMMANDS = {
+    "scrutineer-servicemap.md": (SERVICEMAP_COMMAND, "name: scrutineer-servicemap"),
+    "scrutineer-mcp.md": (MCP_COMMAND, "name: scrutineer-mcp"),
+    "scrutineer-setup.md": (SETUP_COMMAND, "name: scrutineer-setup"),
+    "scrutineer-code.md": (PEER_COMMAND, "You are a TL/Principal SDE performing a peer code review."),
+    "scrutineer-security.md": (
+        SECURITY_COMMAND, "Perform a security review focused on finding exploitable vulnerabilities"),
+}
+
+# The MCP reviewer's suppressions file, relative to the target repo, and the name
+# scrutineer gave it. `vld8 install` renames the old file so accepted
+# suppressions survive the upgrade.
+SUPPRESSIONS_FILE = ".claude/vld8-mcp-suppressions.json"
+LEGACY_SUPPRESSIONS_FILE = ".claude/scrutineer-mcp-suppressions.json"
 
 # Default name for the generated service map at the target repo root.
 SERVICEMAP_FILE = "servicemap.json"

@@ -3,20 +3,20 @@
 A Claude Code skill that performs a deep, phased crawl of a repository and produces a machine-readable `servicemap.json` — mapping every service, app, library, data store, external dependency, infrastructure resource, CI/CD pipeline, and inter-service connection.
 
 > **Most users don't copy this manually.** The top-level installer places the skill for you —
-> `scrutineer install <repo>`, or the `/scrutineer-setup` skill which also runs the crawl; see the
+> `vld8 install <repo>`, or the `/vld8-setup` skill which also runs the crawl; see the
 > [main README](../README.md). The setup below is for installing the skill by hand. The default
 > output is `./servicemap.json` with `./references/schema.md` alongside; the `tools/` paths below are
 > just an example of pointing `--path` elsewhere.
 
 ## Setup
 
-1. Copy `SKILL.md` into your repo's `.claude/commands/` directory (rename to `scrutineer-servicemap.md`)
+1. Copy `SKILL.md` into your repo's `.claude/commands/` directory (rename to `vld8-map.md`)
 2. Place `references/schema.md` as a sibling `references/` folder next to where you want the output:
 
 ```
 your-repo/
 ├── .claude/commands/
-│   └── scrutineer-servicemap.md    ← copy of SKILL.md
+│   └── vld8-map.md              ← copy of SKILL.md
 ├── tools/
 │   ├── references/
 │   │   └── schema.md            ← schema reference
@@ -31,10 +31,10 @@ From Claude Code in your repo:
 
 ```
 # Default: writes to ./servicemap.json, looks for ./references/schema.md
-/scrutineer-servicemap
+/vld8-map
 
 # Specify output path: writes to tools/servicemap.json, looks for tools/references/schema.md
-/scrutineer-servicemap --path tools/servicemap.json
+/vld8-map --path tools/servicemap.json
 ```
 
 ## What it produces

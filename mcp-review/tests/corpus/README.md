@@ -1,6 +1,6 @@
 # MCP audit eval corpus
 
-A dogfooding / regression corpus for `/scrutineer-mcp`: real top MCP servers and
+A dogfooding / regression corpus for `/vld8-mcp`: real top MCP servers and
 reconstructed known-bad cases, with captured evidence and synthesized verdicts.
 Built 2026-05-25. The narrative writeup is **[REVIEW.md](REVIEW.md)**.
 

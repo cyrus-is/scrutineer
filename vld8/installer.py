@@ -3,14 +3,17 @@
 Given a target repo, this:
 
 1. copies the static skills (servicemap, mcp, setup) into ``.claude/commands/``
-   with their correct ``scrutineer-*`` names,
-2. obtains a service map (see :mod:`scrutineer.servicemap`),
+   with their correct ``vld8-*`` names,
+2. obtains a service map (see :mod:`vld8.servicemap`),
 3. runs the peer-review and security-review generators against the repo,
-   wiring in the service map when one is available.
+   wiring in the service map when one is available,
+4. removes the ``scrutineer-*`` command files that releases before the rename
+   installed, once their ``vld8-*`` replacements are in place, and renames the
+   MCP reviewer's suppressions file to its vld8 name.
 
-Both front doors — the ``scrutineer`` CLI and the ``/scrutineer-setup`` skill —
+Both front doors — the ``vld8`` CLI and the ``/vld8-setup`` skill —
 call :func:`install`. The skill passes ``service_map=`` after doing its own
-agentic crawl; the CLI lets :mod:`scrutineer.servicemap` resolve one.
+agentic crawl; the CLI lets :mod:`vld8.servicemap` resolve one.
 """
 
 from __future__ import annotations
@@ -33,6 +36,8 @@ def _default_log(msg: str = "") -> None:
 class InstallResult:
     target: Path
     installed: list[str] = field(default_factory=list)   # command files written
+    removed: list[str] = field(default_factory=list)     # scrutineer-era files deleted
+    moved_suppressions: bool = False                     # renamed the MCP suppressions file
     service_map_note: str = ""
     skipped_crawl: bool = False
 
@@ -48,6 +53,46 @@ def _copy_skill(src: Path, dest: Path, *, force: bool, log) -> bool:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dest)
     log(f"  ✓ copied {dest.name}")
+    return True
+
+
+def _remove_legacy(cmd_dir: Path, log) -> list[str]:
+    """Delete scrutineer-era command files that a vld8 file now replaces.
+
+    A file goes only when its replacement exists and it carries the marker of
+    the skill scrutineer wrote under that name; anything else is kept and named.
+    """
+    removed = []
+    for old, (new, marker) in paths.LEGACY_COMMANDS.items():
+        old_path = cmd_dir / old
+        if not old_path.is_file() or not (cmd_dir / new).is_file():
+            continue
+        try:
+            text = old_path.read_text(errors="replace")
+        except OSError as exc:
+            log(f"  kept {old} (could not read it: {exc})")
+            continue
+        if marker not in text:
+            log(f"  kept {old} (scrutineer did not write it; delete it by hand if it is stale)")
+            continue
+        old_path.unlink()
+        log(f"  ✓ removed {old} (replaced by {new})")
+        removed.append(old)
+    return removed
+
+
+def _migrate_suppressions(target: Path, log) -> bool:
+    """Rename scrutineer's MCP suppressions file to vld8's name; True if moved."""
+    old = target / paths.LEGACY_SUPPRESSIONS_FILE
+    new = target / paths.SUPPRESSIONS_FILE
+    if not old.is_file():
+        return False
+    if new.exists():
+        log(f"  kept {paths.LEGACY_SUPPRESSIONS_FILE}: {paths.SUPPRESSIONS_FILE} already exists; "
+            "merge any entries you still need by hand")
+        return False
+    old.rename(new)
+    log(f"  ✓ moved {paths.LEGACY_SUPPRESSIONS_FILE} → {paths.SUPPRESSIONS_FILE}")
     return True
 
 
@@ -83,7 +128,7 @@ def install(
     force: bool = False,
     log=_default_log,
 ) -> InstallResult:
-    """Install the full Scrutineer skill set into ``target``.
+    """Install the full vld8 skill set into ``target``.
 
     Parameters
     ----------
@@ -93,7 +138,7 @@ def install(
         If no service map exists, run a headless ``claude -p`` crawl to make one.
     service_map
         Explicit path to an existing service map (overrides discovery/crawl).
-        The ``/scrutineer-setup`` skill passes the map it just crawled here.
+        The ``/vld8-setup`` skill passes the map it just crawled here.
     force
         Overwrite existing command files / service map.
     """
@@ -105,21 +150,21 @@ def install(
     if missing:
         listed = "\n  ".join(str(p) for p in missing)
         raise FileNotFoundError(
-            "Scrutineer toolkit assets are missing — is the package intact?\n  " + listed
+            "vld8 toolkit assets are missing — is the package intact?\n  " + listed
         )
 
     result = InstallResult(target=target)
     cmd_dir = _commands_dir(target)
 
     # 1. Copy the static skills first — the servicemap skill must be present
-    #    before a headless crawl can invoke /scrutineer-servicemap.
+    #    before a headless crawl can invoke /vld8-map.
     log("Copying static skills…")
     if _copy_skill(paths.SERVICEMAP_SKILL, cmd_dir / paths.SERVICEMAP_COMMAND, force=force, log=log):
         result.installed.append(paths.SERVICEMAP_COMMAND)
     if _copy_skill(paths.MCP_SKILL, cmd_dir / paths.MCP_COMMAND, force=force, log=log):
         result.installed.append(paths.MCP_COMMAND)
     # The setup skill too, so a pip-only install can later re-crawl the map and
-    # regenerate the review skills with /scrutineer-setup.
+    # regenerate the review skills with /vld8-setup.
     if _copy_skill(paths.SETUP_SKILL, cmd_dir / paths.SETUP_COMMAND, force=force, log=log):
         result.installed.append(paths.SETUP_COMMAND)
 
@@ -145,5 +190,12 @@ def install(
         paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm, force=force, log=log
     ):
         result.installed.append(paths.SECURITY_COMMAND)
+
+    # 4. Retire the scrutineer-* files this install replaces, so the old and new
+    #    commands don't both appear in Claude Code.
+    if any((cmd_dir / old).exists() for old in paths.LEGACY_COMMANDS):
+        log("Removing scrutineer-era commands…")
+        result.removed = _remove_legacy(cmd_dir, log)
+    result.moved_suppressions = _migrate_suppressions(target, log)
 
     return result

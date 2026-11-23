@@ -1,4 +1,4 @@
-# Contributing to Scrutineer
+# Contributing to vld8
 
 Contributions are welcome! All PRs require approval before merging.
 

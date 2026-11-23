@@ -3,14 +3,14 @@
 Security Review Skill Generator
 
 Scans a repository (and optionally consumes a servicemap.json) to generate a
-tailored .claude/commands/scrutineer-security.md with platform-specific vulnerability
+tailored .claude/commands/vld8-security.md with platform-specific vulnerability
 checklists.
 
 The generated skill supports four invocation modes:
-  /scrutineer-security                  — review current branch diff vs main
-  /scrutineer-security 123              — review PR #123 (git fetch + diff)
-  /scrutineer-security <component-name> — full security review of a service/app from the service map
-  /scrutineer-security --deep           — deep repo-wide audit across services
+  /vld8-security                  — review current branch diff vs main
+  /vld8-security 123              — review PR #123 (git fetch + diff)
+  /vld8-security <component-name> — full security review of a service/app from the service map
+  /vld8-security --deep           — deep repo-wide audit across services
 
 Usage:
     python generate.py /path/to/repo
@@ -392,7 +392,7 @@ class ServiceMapLoader:
 # ---------------------------------------------------------------------------
 
 class SkillGenerator:
-    """Generates the scrutineer-security.md skill file."""
+    """Generates the vld8-security.md skill file."""
 
     def generate(self, detected: dict[str, dict],
                  component_paths: dict[str, list[str]],
@@ -449,13 +449,13 @@ class SkillGenerator:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
-            /scrutineer-security
+            /vld8-security
             ```
             Reviews the current branch's security-relevant changes against main. Runs `git diff main...HEAD`.
 
             ### Mode 2: PR Review (numeric argument)
             ```
-            /scrutineer-security 123
+            /vld8-security 123
             ```
             Reviews PR #123 for security issues. Process:
             1. `git fetch origin`
@@ -467,7 +467,7 @@ class SkillGenerator:
 
             ### Mode 3: Full Service/App Security Audit (component name argument)
             ```
-            /scrutineer-security <component-name>
+            /vld8-security <component-name>
             ```
             Full security audit of all code in a service or app directory. This is for
             comprehensive security reviews — not just a diff, but the entire attack surface.
@@ -475,7 +475,7 @@ class SkillGenerator:
             Process:
             1. Identify the component directory: from the component table below when this skill has
                one (it is generated from the service map); otherwise from the directory the user
-               named. `/scrutineer-servicemap` plus a reinstall adds the table.
+               named. `/vld8-map` plus a reinstall adds the table.
             2. Read all source files in that directory.
             3. Map the component's endpoints, auth mechanisms, and data flows.
             4. Apply universal and platform-specific checklists against all code.
@@ -483,7 +483,7 @@ class SkillGenerator:
 
             ### Mode 4: Deep Repo Security Audit (--deep flag)
             ```
-            /scrutineer-security --deep
+            /vld8-security --deep
             ```
             Full repository-level security audit that traces trust boundaries across services,
             audits auth boundaries end-to-end, traces secrets from storage through infrastructure
@@ -923,14 +923,14 @@ class SkillGenerator:
             If the argument is `--help`, output this summary and stop:
 
             ```
-            /scrutineer-security — Security-focused code review
+            /vld8-security — Security-focused code review
 
             MODES:
-              /scrutineer-security              Review current branch diff vs main (~2 min)
-              /scrutineer-security 123          Review PR #123 for security issues (~5 min)
-              /scrutineer-security <component>  Full security audit of a service/app (~5 min)
-              /scrutineer-security --deep       Deep repo-wide security audit (~20 min)
-              /scrutineer-security --help       Show this help
+              /vld8-security              Review current branch diff vs main (~2 min)
+              /vld8-security 123          Review PR #123 for security issues (~5 min)
+              /vld8-security <component>  Full security audit of a service/app (~5 min)
+              /vld8-security --deep       Deep repo-wide security audit (~20 min)
+              /vld8-security --help       Show this help
 
             WHAT IT DOES:
               Modes 1-3: Threat model → checklist scan → agentic analysis (input tracing,
@@ -965,7 +965,7 @@ class SkillGenerator:
             components_line = (
                 "**No service map was available when this skill was generated.** Before tracing "
                 "flows, inventory the deployable components yourself (entry points, manifests, "
-                "IaC, CI pipelines), or run `/scrutineer-servicemap` and reinstall with `--force`."
+                "IaC, CI pipelines), or run `/vld8-map` and reinstall with `--force`."
             )
             scale_note = (
                 "Size the work from that inventory: one agent for a handful of components; for a "
@@ -1200,8 +1200,8 @@ def main():
         """),
     )
     parser.add_argument("repo_path", help="Path to the repository to analyze")
-    parser.add_argument("--output", "-o", default=".claude/commands/scrutineer-security.md",
-                        help="Output path relative to repo root (default: .claude/commands/scrutineer-security.md)")
+    parser.add_argument("--output", "-o", default=".claude/commands/vld8-security.md",
+                        help="Output path relative to repo root (default: .claude/commands/vld8-security.md)")
     sm_group = parser.add_mutually_exclusive_group()
     sm_group.add_argument("--service-map", "-s", default=None,
                           help="Path to servicemap.json for richer context. "
@@ -1213,7 +1213,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true",
                         help="Print the generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
-                        help="Overwrite existing scrutineer-security.md without prompting")
+                        help="Overwrite existing vld8-security.md without prompting")
 
     args = parser.parse_args()
 
@@ -1306,7 +1306,7 @@ def main():
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /scrutineer-security (from Claude Code in the target repo)")
+    print(f"\nUsage: /vld8-security (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":

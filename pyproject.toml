@@ -3,55 +3,56 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "scrutineer"
-version = "1.7.0"
-description = "Agentic code review toolkit for Claude Code — one-command installer for the scrutineer-* skill set."
+name = "vld8"
+version = "2.0.0"
+description = "Dev tooling for Claude Code: a service map, context-aware code and security review, and an MCP-server reviewer. Formerly scrutineer."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = ["pyyaml>=6.0"]
 
 [project.urls]
-Homepage = "https://github.com/cyrus-is/scrutineer"
+Homepage = "https://github.com/cyrus-is/vld8"
+Issues = "https://github.com/cyrus-is/vld8/issues"
 
 [project.scripts]
-scrutineer = "scrutineer.cli:main"
+vld8 = "vld8.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["scrutineer"]
+packages = ["vld8"]
 
-# Bundle the runtime assets into the wheel under scrutineer/_assets/ without
+# Bundle the runtime assets into the wheel under vld8/_assets/ without
 # moving them in the source tree (the servicemap/mcp skills reference them by
-# repo-relative paths). scrutineer/paths.py resolves _assets/ when installed and
+# repo-relative paths). vld8/paths.py resolves _assets/ when installed and
 # the repo-root siblings when run from a clone or `pip install -e .`.
 #
 # Listed per-file on purpose: force-include bypasses `exclude`, so enumerating
 # the runtime essentials is the only way to keep tests/READMEs out of the wheel.
 [tool.hatch.build.targets.wheel.force-include]
-"generate-peer-review/generate.py" = "scrutineer/_assets/generate-peer-review/generate.py"
-"generate-peer-review/peer_review_guidance.yaml" = "scrutineer/_assets/generate-peer-review/peer_review_guidance.yaml"
-"generate-security-review/generate.py" = "scrutineer/_assets/generate-security-review/generate.py"
-"generate-security-review/security_guidance.yaml" = "scrutineer/_assets/generate-security-review/security_guidance.yaml"
-"generate-servicemap/SKILL.md" = "scrutineer/_assets/generate-servicemap/SKILL.md"
-"generate-servicemap/validate_servicemap.py" = "scrutineer/_assets/generate-servicemap/validate_servicemap.py"
-"mcp-review/SKILL.md" = "scrutineer/_assets/mcp-review/SKILL.md"
-"mcp-review/analyze_mcp.py" = "scrutineer/_assets/mcp-review/analyze_mcp.py"
-"mcp-review/fetch_source.py" = "scrutineer/_assets/mcp-review/fetch_source.py"
-"mcp-review/validate_findings.py" = "scrutineer/_assets/mcp-review/validate_findings.py"
-"mcp-review/capture_runtime.py" = "scrutineer/_assets/mcp-review/capture_runtime.py"
-"mcp-review/mcp_risk_guidance.yaml" = "scrutineer/_assets/mcp-review/mcp_risk_guidance.yaml"
-"references/schema.md" = "scrutineer/_assets/references/schema.md"
-"scrutineer-setup/SKILL.md" = "scrutineer/_assets/scrutineer-setup/SKILL.md"
+"generate-peer-review/generate.py" = "vld8/_assets/generate-peer-review/generate.py"
+"generate-peer-review/peer_review_guidance.yaml" = "vld8/_assets/generate-peer-review/peer_review_guidance.yaml"
+"generate-security-review/generate.py" = "vld8/_assets/generate-security-review/generate.py"
+"generate-security-review/security_guidance.yaml" = "vld8/_assets/generate-security-review/security_guidance.yaml"
+"generate-servicemap/SKILL.md" = "vld8/_assets/generate-servicemap/SKILL.md"
+"generate-servicemap/validate_servicemap.py" = "vld8/_assets/generate-servicemap/validate_servicemap.py"
+"mcp-review/SKILL.md" = "vld8/_assets/mcp-review/SKILL.md"
+"mcp-review/analyze_mcp.py" = "vld8/_assets/mcp-review/analyze_mcp.py"
+"mcp-review/fetch_source.py" = "vld8/_assets/mcp-review/fetch_source.py"
+"mcp-review/validate_findings.py" = "vld8/_assets/mcp-review/validate_findings.py"
+"mcp-review/capture_runtime.py" = "vld8/_assets/mcp-review/capture_runtime.py"
+"mcp-review/mcp_risk_guidance.yaml" = "vld8/_assets/mcp-review/mcp_risk_guidance.yaml"
+"references/schema.md" = "vld8/_assets/references/schema.md"
+"vld8-setup/SKILL.md" = "vld8/_assets/vld8-setup/SKILL.md"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "scrutineer/",
+    "vld8/",
     "generate-peer-review/",
     "generate-security-review/",
     "generate-servicemap/",
     "mcp-review/",
     "references/",
-    "scrutineer-setup/",
+    "vld8-setup/",
     "README.md",
     "LICENSE*",
 ]

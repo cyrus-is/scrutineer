@@ -180,7 +180,7 @@ def detection_line(text: str, platform: str) -> str:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="scrutineer-gen-test-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="vld8-gen-test-") as tmp:
         repos = fixtures(Path(tmp))
         outputs = {
             (g, name): generate(path, repo, sm)

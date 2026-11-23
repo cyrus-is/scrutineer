@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory() as td:
     check("gate: plan exits 0 without --run", plan.returncode == 0)
     check("gate: plan says nothing has run", "NOTHING HAS RUN" in plan.stdout)
     check("gate: plan does not launch the server",
-          not (Path(td) / ".scrutineer-drift-launch").exists() and not marker.exists())
+          not (Path(td) / ".vld8-drift-launch").exists() and not marker.exists())
     check("gate: plan names the scrubbed environment", "SCRUBBED" in plan.stdout)
 
 # A remote/url server has no local process — capture must refuse, not improvise.
@@ -88,7 +88,7 @@ except C.SessionError as e:
 # Child environment is SCRUBBED — the probe must never hand over real secrets
 # ---------------------------------------------------------------------------
 
-os.environ["SCRUTINEER_TEST_REAL_SECRET"] = "ghp_averyrealtokenvalue"
+os.environ["VLD8_TEST_REAL_SECRET"] = "ghp_averyrealtokenvalue"
 with tempfile.TemporaryDirectory() as td:
     home = Path(td) / "home"
     home.mkdir()
@@ -97,7 +97,7 @@ with tempfile.TemporaryDirectory() as td:
         "http://127.0.0.1:9")
     blob = json.dumps(env)
     check("env: real os.environ secret not passed through",
-          "SCRUTINEER_TEST_REAL_SECRET" not in env and "ghp_averyrealtokenvalue" not in blob)
+          "VLD8_TEST_REAL_SECRET" not in env and "ghp_averyrealtokenvalue" not in blob)
     check("env: declared secret replaced by a canary",
           env["WEATHER_API_KEY"].startswith(C.CANARY_PREFIX) and "ghp_realvalue" not in blob)
     check("env: canary is attributable to its key",
@@ -105,7 +105,7 @@ with tempfile.TemporaryDirectory() as td:
     check("env: benign declared value passes through", env["REGION"] == "eu-west-1")
     check("env: HOME redirected to the throwaway dir", env["HOME"] == str(home))
     check("env: proxy vars point at the sink", env["HTTP_PROXY"] == "http://127.0.0.1:9")
-del os.environ["SCRUTINEER_TEST_REAL_SECRET"]
+del os.environ["VLD8_TEST_REAL_SECRET"]
 
 # A secret-shaped value under a NON-credential key name is still withheld — the
 # key-name patterns are not the only line of defence.

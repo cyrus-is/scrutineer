@@ -1,15 +1,19 @@
-# Scrutineer
+# vld8
 
-[![Release](https://img.shields.io/github/v/release/cyrus-is/scrutineer?label=release)](https://github.com/cyrus-is/scrutineer/releases/latest)
-[![PyPI](https://img.shields.io/pypi/v/scrutineer?label=pypi)](https://pypi.org/project/scrutineer/)
+[![Release](https://img.shields.io/github/v/release/cyrus-is/vld8?label=release)](https://github.com/cyrus-is/vld8/releases/latest)
+[![PyPI](https://img.shields.io/pypi/v/vld8?label=pypi)](https://pypi.org/project/vld8/)
 
-Agentic code review toolkit for [Claude Code](https://claude.ai/code). Three generators that scan your repo and produce tailored review skills — a principal engineer peer review, a security audit, and a service topology map that makes both smarter — plus `/scrutineer-mcp`, a standalone auditor for the MCP servers you're about to trust.
+Dev tooling for [Claude Code](https://claude.ai/code): Cyrus's toolbox. It installs three tools as skills in your repo:
+
+- **Map** (`/vld8-map`) crawls your repo into `servicemap.json`, a topology of its services, datastores and connections that gives the reviews their context.
+- **Review** is a code review (`/vld8-review`) and a security review (`/vld8-security`), each generated for the platforms your repo actually uses.
+- **MCP review** (`/vld8-mcp`) audits an MCP server before you trust it with tools, data and credentials.
 
 ```bash
-pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -security, -servicemap, -mcp, -setup to .claude/commands/
+pip install vld8 && vld8 install .   # adds /vld8-map, -review, -security, -mcp, -setup to .claude/commands/
 ```
 
-> **New in 1.6 — [`/scrutineer-mcp`](#mcp-review): an "npm audit" for MCP servers.** Installing an MCP server hands it tool access, data access, and usually a live credential. `/scrutineer-mcp` audits one *before* it runs — verdict (`SAFE`/`CAUTION`/`BLOCK`) + a separate data-sensitivity rating — catching unpinned installs, creds-in-URLs, read-then-send exfil paths, and tool-poisoning. Motivated by real 2025 incidents (the postmark-mcp backdoor, CVE-2025-6514).
+> **Upgrading from scrutineer?** vld8 is the same toolkit under a new name; `scrutineer` is no longer maintained. Run `pip install vld8`, then `vld8 install` in each repo. The install replaces the `/scrutineer-*` commands with `/vld8-*` ones (it deletes only files scrutineer wrote) and moves `.claude/scrutineer-mcp-suppressions.json` to `.claude/vld8-mcp-suppressions.json`. On the command line, `scrutineer servicemap …` is now `vld8 map …`. Until you switch, `pip install -U scrutineer` gets a final release that installs vld8 and forwards the old `scrutineer` command to it.
 
 ## What's in the box
 
@@ -29,7 +33,7 @@ Supports incremental updates — re-run it as your codebase evolves and it merge
 
 ### generate-peer-review
 
-Scans your repo and generates a Claude Code skill (`.claude/commands/scrutineer-code.md`) that performs principal engineer-level code review across **8 evaluation lenses**:
+Scans your repo and generates a Claude Code skill (`.claude/commands/vld8-review.md`) that performs principal engineer-level code review across **8 evaluation lenses**:
 
 | Lens | What it checks |
 |------|---------------|
@@ -54,7 +58,7 @@ It also opens with **Phase 0: verify before you judge** — it runs the repo's o
 
 ### generate-security-review
 
-Same scan-and-generate approach, producing `.claude/commands/scrutineer-security.md` — a security auditor skill that hunts for vulnerabilities.
+Same scan-and-generate approach, producing `.claude/commands/vld8-security.md` — a security auditor skill that hunts for vulnerabilities.
 
 **Analysis flow:**
 1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
@@ -66,7 +70,7 @@ Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays 
 
 ### mcp-review
 
-A standalone auditor for MCP servers — the `npm audit` equivalent for the [Model Context Protocol](https://modelcontextprotocol.io). Installing an MCP server grants it tool access, data access, and usually a live credential; `/scrutineer-mcp` makes that trust decision inspectable **before** the server runs. Unlike the generators, it reviews an *external* server rather than your repo, so there's no generate step — it's a static skill plus a runtime analyzer (`analyze_mcp.py`), evidence in Python and judgment in the skill.
+A standalone auditor for MCP servers — the `npm audit` equivalent for the [Model Context Protocol](https://modelcontextprotocol.io). Installing an MCP server grants it tool access, data access, and usually a live credential; `/vld8-mcp` makes that trust decision inspectable **before** the server runs. Unlike the generators, it reviews an *external* server rather than your repo, so there's no generate step — it's a static skill plus a runtime analyzer (`analyze_mcp.py`), evidence in Python and judgment in the skill.
 
 It reports **two independent axes** — a server can be perfectly secure and still want to read every message you've ever sent:
 
@@ -98,9 +102,9 @@ generate-servicemap ──→ servicemap.json
                     │                   │
                     ▼                   ▼
          .claude/commands/      .claude/commands/
-         scrutineer-code.md      scrutineer-security.md
+         vld8-review.md         vld8-security.md
 
-mcp-review ──────────→ .claude/commands/scrutineer-mcp.md
+mcp-review ──────────→ .claude/commands/vld8-mcp.md
    (standalone — audits external MCP servers, no service map needed)
 ```
 
@@ -108,7 +112,7 @@ The service map is optional but recommended. Without it, peer review and securit
 
 ## Agent support
 
-Scrutineer targets **Claude Code** today — the generators emit `.claude/commands/*.md` and the skills install there. Support for **Cursor**, **Gemini CLI**, and **OpenAI Codex CLI** is in progress via a shared emitter / `--target` foundation; see the [Multi-tool support milestone](https://github.com/cyrus-is/scrutineer/milestone/1).
+vld8 targets **Claude Code** today — the generators emit `.claude/commands/*.md` and the skills install there. Support for **Cursor**, **Gemini CLI**, and **OpenAI Codex CLI** is in progress via a shared emitter / `--target` foundation; see the [Multi-tool support milestone](https://github.com/cyrus-is/vld8/milestone/1).
 
 ## Quick start
 
@@ -119,37 +123,37 @@ The fastest path installs all five skills — correctly named, with the review s
 **From Claude Code, inside your repo** — Claude crawls the service map, then installs everything:
 
 ```
-/scrutineer-setup
+/vld8-setup
 ```
 
-(`scrutineer install` also installs `/scrutineer-setup`, so after a pip install you can re-run setup from Claude Code to crawl the map and regenerate. From a clone, copy `scrutineer-setup/SKILL.md` into your repo's `.claude/commands/` once.)
+(`vld8 install` also installs `/vld8-setup`, so after a pip install you can re-run setup from Claude Code to crawl the map and regenerate. From a clone, copy `vld8-setup/SKILL.md` into your repo's `.claude/commands/` once.)
 
-**From the shell** — install the `scrutineer` CLI and run the installer:
+**From the shell** — install the `vld8` CLI and run the installer:
 
 ```bash
-pip install scrutineer                           # from PyPI
+pip install vld8                           # from PyPI
 # (or from a clone: `pip install -e .`)
 
-scrutineer install /path/to/your-repo            # map-less (fast)
-scrutineer install /path/to/your-repo --crawl    # also run the servicemap crawl via `claude -p`
+vld8 install /path/to/your-repo            # map-less (fast)
+vld8 install /path/to/your-repo --crawl    # also run the servicemap crawl via `claude -p`
 ```
 
 Both produce the same result in `your-repo/.claude/commands/`:
 
 ```
-/scrutineer-servicemap   /scrutineer-code   /scrutineer-security   /scrutineer-mcp   /scrutineer-setup
+/vld8-map   /vld8-review   /vld8-security   /vld8-mcp   /vld8-setup
 ```
 
-The only difference between the front doors is **how the service map is produced**: `/scrutineer-setup` lets Claude crawl it inline; `scrutineer install` reuses an existing `servicemap.json`, runs a headless `claude -p` crawl with `--crawl`, or skips it (re-run with `--force` after you generate a map to make the skills map-aware). The deterministic copy-and-generate work is identical and lives in `scrutineer/installer.py`.
+The only difference between the front doors is **how the service map is produced**: `/vld8-setup` lets Claude crawl it inline; `vld8 install` reuses an existing `servicemap.json`, runs a headless `claude -p` crawl with `--crawl`, or skips it (re-run with `--force` after you generate a map to make the skills map-aware). The deterministic copy-and-generate work is identical and lives in `vld8/installer.py`.
 
-> Note: the wheel bundles the generators, guidance YAMLs, skills and scripts under `scrutineer/_assets/`, so `pip install scrutineer` works with no clone present — `scrutineer/paths.py` resolves the bundled assets when installed and the repo-root copies when run from a clone.
+> Note: the wheel bundles the generators, guidance YAMLs, skills and scripts under `vld8/_assets/`, so `pip install vld8` works with no clone present — `vld8/paths.py` resolves the bundled assets when installed and the repo-root copies when run from a clone.
 
 The installed skills reach the bundled scripts through the CLI, so they work from any repo:
 
 ```bash
-scrutineer mcp analyze|fetch|validate|capture [args]   # the MCP-review scripts (/scrutineer-mcp)
-scrutineer servicemap validate servicemap.json         # check a crawled map
-scrutineer servicemap schema                           # print the schema's path
+vld8 mcp analyze|fetch|validate|capture [args]   # the MCP-review scripts (/vld8-mcp)
+vld8 map validate servicemap.json                # check a crawled map
+vld8 map schema                                  # print the schema's path
 ```
 
 ### Option B — manual, step by step
@@ -158,22 +162,22 @@ The steps below are what the installer automates; use them if you want to run ea
 
 #### 1. Generate a service map (optional, recommended)
 
-Copy `generate-servicemap/SKILL.md` to `.claude/commands/scrutineer-servicemap.md` in your target repo:
+Copy `generate-servicemap/SKILL.md` to `.claude/commands/vld8-map.md` in your target repo:
 
 ```bash
-cp generate-servicemap/SKILL.md /path/to/your-repo/.claude/commands/scrutineer-servicemap.md
+cp generate-servicemap/SKILL.md /path/to/your-repo/.claude/commands/vld8-map.md
 ```
 
 Then in Claude Code, inside your repo:
 
 ```
-/scrutineer-servicemap --path servicemap.json
+/vld8-map --path servicemap.json
 ```
 
 Validate the output:
 
 ```bash
-scrutineer servicemap validate servicemap.json
+vld8 map validate servicemap.json
 # from a clone: python generate-servicemap/validate_servicemap.py servicemap.json
 ```
 
@@ -182,11 +186,11 @@ scrutineer servicemap validate servicemap.json
 ```bash
 # Peer review skill
 python generate-peer-review/generate.py /path/to/your-repo \
-  --output .claude/commands/scrutineer-code.md
+  --output .claude/commands/vld8-review.md
 
 # Security review skill
 python generate-security-review/generate.py /path/to/your-repo \
-  --output .claude/commands/scrutineer-security.md
+  --output .claude/commands/vld8-security.md
 ```
 
 Both generators **auto-discover `servicemap.json` at the repo root** when present, producing the richer cross-service-aware skill. Pass `--service-map /path/to/servicemap.json` for a non-standard location, or `--no-service-map` to deliberately skip it.
@@ -196,15 +200,15 @@ Both generators **auto-discover `servicemap.json` at the repo root** when presen
 In Claude Code, inside your repo:
 
 ```
-/scrutineer-code                       # Review current branch diff
-/scrutineer-code 123                   # Review PR #123
-/scrutineer-code <component-name>      # Full review of a service/app (requires service map)
-/scrutineer-code --deep                # Deep repo-wide review across services
+/vld8-review                       # Review current branch diff
+/vld8-review 123                   # Review PR #123
+/vld8-review <component-name>      # Full review of a service/app (requires service map)
+/vld8-review --deep                # Deep repo-wide review across services
 
-/scrutineer-security                   # Security audit of current branch diff
-/scrutineer-security 123               # Audit PR #123 (findings to terminal, not posted)
-/scrutineer-security <component-name>  # Full audit of a service/app (requires service map)
-/scrutineer-security --deep            # Deep repo-wide audit across services
+/vld8-security                     # Security audit of current branch diff
+/vld8-security 123                 # Audit PR #123 (findings to terminal, not posted)
+/vld8-security <component-name>    # Full audit of a service/app (requires service map)
+/vld8-security --deep              # Deep repo-wide audit across services
 ```
 
 #### 4. Audit an MCP server (standalone)
@@ -219,13 +223,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Install the skill into your repo, then run it in Claude Code:
 
 ```bash
-cp mcp-review/SKILL.md /path/to/your-repo/.claude/commands/scrutineer-mcp.md
+cp mcp-review/SKILL.md /path/to/your-repo/.claude/commands/vld8-mcp.md
 ```
 
 ```
-/scrutineer-mcp                                        # review every server in the auto-discovered config
-/scrutineer-mcp github                                 # review one named server
-/scrutineer-mcp --config .mcp.json --tools tools.json  # add a captured tools/list for the tool-surface pass
+/vld8-mcp                                        # review every server in the auto-discovered config
+/vld8-mcp github                                 # review one named server
+/vld8-mcp --config .mcp.json --tools tools.json  # add a captured tools/list for the tool-surface pass
 ```
 
 ## Requirements
@@ -242,7 +246,7 @@ The review tools are driven by YAML guidance files:
 - **`generate-security-review/security_guidance.yaml`** — platform detection rules, vulnerability checklists with OWASP mapping, and secure alternatives
 - **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns for MCP review
 
-To add a new platform or customize checks for your stack, add entries to these files; the two generators pick them up on the next `scrutineer install --force`. The generators only detect platforms these files describe. The generated skills carry a self-heal instruction: when a review meets code no checklist covers, it flags the gap and drafts checks in its output. Those drafts are not written back to the guidance files, so add the ones worth keeping here. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
+To add a new platform or customize checks for your stack, add entries to these files; the two generators pick them up on the next `vld8 install --force`. The generators only detect platforms these files describe. The generated skills carry a self-heal instruction: when a review meets code no checklist covers, it flags the gap and drafts checks in its output. Those drafts are not written back to the guidance files, so add the ones worth keeping here. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
 
 The service map schema is documented in `references/schema.md`.
 

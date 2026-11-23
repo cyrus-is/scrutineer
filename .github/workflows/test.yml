@@ -6,7 +6,7 @@ name: Tests
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, staging]
 
 permissions:
   contents: read
@@ -28,6 +28,7 @@ jobs:
         run: |
           python tests/test_generators.py
           python tests/test_cli.py
+          python tests/test_legacy_shim.py
       - name: MCP review tests
         working-directory: mcp-review
         run: |
@@ -37,14 +38,24 @@ jobs:
       - name: Wheel install smoke test
         run: |
           python -m build --wheel --outdir dist .
+          python -m build --wheel --outdir dist legacy/scrutineer
           python -m venv /tmp/wheel-venv
-          /tmp/wheel-venv/bin/pip install dist/*.whl
+          # Both wheels at once, so the forwarding package's vld8 requirement
+          # resolves to the wheel just built rather than to PyPI.
+          /tmp/wheel-venv/bin/pip install dist/vld8-*.whl dist/scrutineer-*.whl
           mkdir /tmp/target && cd /tmp/target && git init -q && echo 'export const x = 1;' > index.ts
-          /tmp/wheel-venv/bin/scrutineer install /tmp/target
-          test -f .claude/commands/scrutineer-setup.md
+          mkdir -p .claude/commands
+          printf -- '---\nname: scrutineer-mcp\n---\n' > .claude/commands/scrutineer-mcp.md
+          /tmp/wheel-venv/bin/vld8 install /tmp/target
+          test -f .claude/commands/vld8-setup.md
+          test ! -e .claude/commands/scrutineer-mcp.md
           # `! grep` would never fail the step under `set -e`, so test explicitly.
           if grep -l '\.venv/bin/python' .claude/commands/*.md; then exit 1; fi
-          /tmp/wheel-venv/bin/scrutineer mcp analyze --help > /dev/null
-          test -f "$(/tmp/wheel-venv/bin/scrutineer servicemap schema)"
+          if grep -il 'scrutineer' .claude/commands/*.md; then exit 1; fi
+          /tmp/wheel-venv/bin/vld8 mcp analyze --help > /dev/null
+          test -f "$(/tmp/wheel-venv/bin/vld8 map schema)"
           echo '{}' > bad.json
-          if /tmp/wheel-venv/bin/scrutineer servicemap validate bad.json > /dev/null; then exit 1; fi
+          if /tmp/wheel-venv/bin/vld8 map validate bad.json > /dev/null; then exit 1; fi
+          # The old command still works through the forwarding package.
+          test -f "$(/tmp/wheel-venv/bin/scrutineer servicemap schema 2>/dev/null)"
+          /tmp/wheel-venv/bin/scrutineer mcp analyze --help > /dev/null

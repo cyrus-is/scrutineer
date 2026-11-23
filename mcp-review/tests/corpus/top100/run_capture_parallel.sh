@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 HERE="$(pwd)"
 CORPUS="$(cd .. && pwd)"
-IMAGE="scrutineer-capture:latest"
+IMAGE="vld8-capture:latest"
 SHARDS="${1:-5}"
 PER_TIMEOUT="${2:-60}"
 CONFIG="$HERE/config.json"

@@ -3,7 +3,7 @@
 # Why a container: capturing a server's tool surface means *launching* it, which
 # runs the package's install/postinstall + boot code. Doing that for ~100
 # unpinned `npx -y` / `uvx` packages on a workstation is precisely the supply-
-# chain risk Scrutineer warns about. Here it runs as a non-root user in a
+# chain risk vld8 warns about. Here it runs as a non-root user in a
 # disposable container with only the output dir mounted writable.
 #
 # Build context = the corpus dir (parent), so we can COPY capture_tools.py.

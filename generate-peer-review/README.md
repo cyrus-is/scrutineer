@@ -1,11 +1,11 @@
 # generate-peer-review
 
 Scans a repository (and optionally a `servicemap.json`) to generate a tailored
-`.claude/commands/scrutineer-code.md` — a Principal Engineer-level code review skill
+`.claude/commands/vld8-review.md` — a Principal Engineer-level code review skill
 with platform-specific pre-flight checks, focus areas, and 8 evaluation lenses.
 
 > **Most users don't run this directly.** The top-level installer does it for you —
-> `scrutineer install <repo>` (or the `/scrutineer-setup` skill); see the
+> `vld8 install <repo>` (or the `/vld8-setup` skill); see the
 > [main README](../README.md). Run the generator directly when you want control over
 > the output path, guidance file, or service-map wiring.
 
@@ -30,11 +30,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 1. **Scans** the repo for languages, frameworks, and infrastructure
 2. **Loads** platform-specific pre-flight checks and focus areas from `peer_review_guidance.yaml`
 3. **Optionally reads** `servicemap.json` to discover reviewable components (services + apps)
-4. **Generates** a `/scrutineer-code` skill with four invocation modes:
-   - `/scrutineer-code` — review current branch diff vs main
-   - `/scrutineer-code 123` — review PR #123 (fetches, diffs, posts findings as comment)
-   - `/scrutineer-code <component-name>` — full review of a service/app directory (requires service map)
-   - `/scrutineer-code --deep` — deep repo-wide review tracing cross-service flows and systemic issues
+4. **Generates** a `/vld8-review` skill with four invocation modes:
+   - `/vld8-review` — review current branch diff vs main
+   - `/vld8-review 123` — review PR #123 (fetches, diffs, posts findings as comment)
+   - `/vld8-review <component-name>` — full review of a service/app directory (requires service map)
+   - `/vld8-review --deep` — deep repo-wide review tracing cross-service flows and systemic issues
 5. **Embeds a verification ladder** (`verification:` in the guidance YAML) — a Phase 0 that runs
    the repo's own gate or the platform's cheap subset *before* judging anything
 6. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
@@ -137,7 +137,7 @@ Generate a service map first: see `../generate-servicemap/`.
 ## Options
 
 ```
---output, -o        Output path (default: .claude/commands/scrutineer-code.md)
+--output, -o        Output path (default: .claude/commands/vld8-review.md)
 --service-map, -s   Path to servicemap.json for richer context
 --guidance, -g      Custom guidance YAML path
 --dry-run, -n       Preview without writing

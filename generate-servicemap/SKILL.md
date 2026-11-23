@@ -1,10 +1,10 @@
 ---
-name: scrutineer-servicemap
+name: vld8-map
 description: >
   Deep agentic crawl of a code repository to produce a machine-readable servicemap.json that maps every service,
   app, library, data store, external dependency, infrastructure resource, CI/CD pipeline, and inter-service
   communication path — including authentication, authorization, public/private endpoints, and confidence scores.
-  Use this skill whenever the user says /scrutineer-servicemap, asks to "map a repo", "build a service map",
+  Use this skill whenever the user says /vld8-map, asks to "map a repo", "build a service map",
   "generate a service topology", "trace service dependencies", "map infrastructure", or any variation of
   "understand how this codebase fits together." Also trigger when the user asks to update or enrich an
   existing servicemap.json. This skill is designed for DEEP crawls — it does not support shallow or partial
@@ -12,7 +12,7 @@ description: >
   direct human reading.
 ---
 
-# /scrutineer-servicemap
+# /vld8-map
 
 Generate a comprehensive, machine-readable `servicemap.json` from a repository by performing a deep, phased
 agentic crawl. The map captures services, apps, libraries, infrastructure, data stores, external dependencies,
@@ -22,19 +22,19 @@ on every discovery.
 ## Invocation
 
 ```
-/scrutineer-servicemap --path <output-path>
+/vld8-map --path <output-path>
 ```
 
 - `--path` (optional): Where to write the output file. Defaults to `./servicemap.json` in the current
   working directory. Use a specific path to control where the map lands (e.g.,
-  `/scrutineer-servicemap --path tools/servicemap.json`).
+  `/vld8-map --path tools/servicemap.json`).
 
 ## Before You Start
 
-1. **Locate the schema**: run `scrutineer servicemap schema`, which prints the path of the schema
-   bundled with the CLI (`python3 -m scrutineer servicemap schema` if `scrutineer` isn't on PATH).
-   From a clone of the scrutineer repo it is `references/schema.md`. If neither is available, tell the
-   user (`pip install scrutineer` fixes it) rather than inventing the structure.
+1. **Locate the schema**: run `vld8 map schema`, which prints the path of the schema
+   bundled with the CLI (`python3 -m vld8 map schema` if `vld8` isn't on PATH).
+   From a clone of the vld8 repo it is `references/schema.md`. If neither is available, tell the
+   user (`pip install vld8` fixes it) rather than inventing the structure.
 
    Read the schema to internalize the full JSON structure. Every field matters — the schema is
    the contract that downstream skills and apps depend on.
@@ -254,7 +254,7 @@ establish a connection.
 
 **Goal**: Produce the final `servicemap.json`.
 
-1. Assemble all phase outputs into the schema (the file `scrutineer servicemap schema` names).
+1. Assemble all phase outputs into the schema (the file `vld8 map schema` names).
 2. **Validate completeness**: Every service discovered in Phase 1 should have a deep-dive entry from
    Phase 2 and connections from Phase 3. If any are missing, go back and fill them.
 3. **Identify stubs**: Any service, data store, or dependency referenced but NOT found in this repo
@@ -278,7 +278,7 @@ Running the crawler against repo B does not touch repo A's components. Component
 removed from the map automatically. They can only be:
 - **Updated** (re-crawled from their source repo)
 - **Marked stale** (not found in their own source repo during a re-crawl)
-- **Explicitly deleted** by the user (e.g., `/scrutineer-servicemap --remove-repo my-old-repo`)
+- **Explicitly deleted** by the user (e.g., `/vld8-map --remove-repo my-old-repo`)
 
 ### When an existing servicemap.json is found:
 
@@ -321,7 +321,7 @@ a refresh. If any repo is more than 30 days stale, flag it:
 
 ```
 ⚠️ STALE REPOS: notification-service was last crawled 45 days ago (5 components).
-   Consider re-running /scrutineer-servicemap from that repo to refresh.
+   Consider re-running /vld8-map from that repo to refresh.
 ```
 
 ### First-time crawl (no existing map)
@@ -369,7 +369,7 @@ reached through a vendor SDK is `storage` or `database` by what it stores.
 `component_counts`, `low_confidence_components`, `shared_datastores`,
 `unauthenticated_public_endpoints`, `unmonitored_services`.
 
-Run `scrutineer servicemap validate <path>` when you are done (from a clone:
+Run `vld8 map validate <path>` when you are done (from a clone:
 `python generate-servicemap/validate_servicemap.py <path>`). Fix what it reports rather than
 shipping a map that only mostly conforms.
 
