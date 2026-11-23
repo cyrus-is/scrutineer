@@ -554,7 +554,7 @@ Minimum required fields for a stub:
 
 ### Stub Resolution (Multi-Repo)
 
-When running `/scrutineer-servicemap` against a new repo that points to an existing servicemap:
+When running `/vld8-map` against a new repo that points to an existing servicemap:
 1. If a discovered component matches a stub by ID or name, the stub is **replaced** with the full
    entry. The `source_repo` is set to the newly crawled repo. The `stub` field becomes `false`.
 2. The `stubs_resolved` count in `metadata.incremental` tracks how many stubs were resolved.

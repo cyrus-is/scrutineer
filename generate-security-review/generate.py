@@ -3,14 +3,14 @@
 Security Review Skill Generator
 
 Scans a repository (and optionally consumes a servicemap.json) to generate a
-tailored .claude/commands/scrutineer-security.md with platform-specific vulnerability
+tailored .claude/commands/vld8-security.md with platform-specific vulnerability
 checklists.
 
 The generated skill supports four invocation modes:
-  /scrutineer-security                  — review current branch diff vs main
-  /scrutineer-security 123              — review PR #123 (git fetch + diff)
-  /scrutineer-security <component-name> — full security review of a service/app from the service map
-  /scrutineer-security --deep           — deep repo-wide audit across services
+  /vld8-security                  — review current branch diff vs main
+  /vld8-security 123              — review PR #123 (git fetch + diff)
+  /vld8-security <component-name> — full security review of a service/app from the service map
+  /vld8-security --deep           — deep repo-wide audit across services
 
 Usage:
     python generate.py /path/to/repo
@@ -20,14 +20,67 @@ Usage:
 
 import argparse
 import fnmatch
+import functools
+import itertools
 import json
 import os
 import re
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
 
 import yaml
+
+
+def _render(template: str, **values) -> str:
+    """Dedent a section template, then fill in its values.
+
+    The order matters. ``textwrap.dedent(f"...")`` dedents *after* interpolation,
+    so a value that spans lines brings continuation lines with less indent than
+    the template's, dedent finds a smaller common margin, and the whole section
+    keeps its source indentation, which Markdown renders as a code block.
+    Dedenting the template first makes the output independent of the values.
+    Literal braces in templates are written doubled, as in an f-string.
+    """
+    return textwrap.dedent(template).format(**values)
+
+
+@functools.lru_cache(maxsize=None)
+def _glob_regex(pattern: str) -> "re.Pattern[str]":
+    parts = pattern.split("**/")
+    candidates = {
+        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
+        for keeps in itertools.product((True, False), repeat=len(parts) - 1)
+    }
+    return re.compile("|".join(f"(?:{fnmatch.translate(c)})" for c in sorted(candidates)))
+
+
+def glob_match(rel: str, pattern: str) -> bool:
+    """fnmatch, except that `**/` may also match no directory at all.
+
+    fnmatch's `*` already crosses `/`, so `**/` behaves like `*/` and demands at
+    least one directory: `App/**/*.swift` never matched `App/Foo.swift`, and
+    `**/*.swift` never matched a root-level file, which is why the guidance lists
+    both forms of so many globs. Allowing each `**/` to be dropped gives the usual
+    zero-or-more-directories meaning without changing what `*` matches.
+    """
+    return _glob_regex(pattern).match(rel) is not None
+
+
+# The universal checklist, one area per bullet. Kept as data so the generator's
+# summary line counts what it actually emits rather than a hand-kept number.
+UNIVERSAL_AREAS = [
+    "Authentication/authorization (JWT handling, session management, auth checks)",
+    "Injection vectors (SQL, command, XSS, template injection)",
+    "Secrets handling (API keys, tokens, credentials in code or config — never committed)",
+    "Network calls (SSRF, unvalidated URLs, missing TLS)",
+    "Cryptography (weak algorithms, hardcoded keys, missing encryption)",
+    "Access control (missing ownership checks, privilege escalation, IDOR)",
+    "Rate limiting (missing or bypassed)",
+    "Dependencies (new deps with known CVEs)",
+    "Error messages leaking internals (stack traces, SQL errors, internal URLs)",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -64,84 +117,247 @@ class RepoAnalyzer:
         if not self.repo_path.is_dir():
             raise ValueError(f"Not a directory: {self.repo_path}")
         self._file_index: list[Path] | None = None
+        self._text_cache: dict[str, str | None] = {}
+
+    # Third-party trees that are sometimes committed. Skipped even in the git
+    # index; everything else that git tracks is the repo's own code.
+    TRACKED_SKIP_DIRS = {"node_modules", "bower_components", "Pods", "Carthage"}
 
     @property
     def file_index(self) -> list[Path]:
         if self._file_index is None:
-            # Sort directories and files so traversal order is deterministic
-            # across filesystems. Without this, output (and any drift-detection
-            # gates downstream) differs between macOS APFS, Linux ext4, etc.
-            self._file_index = []
-            for root, dirs, files in os.walk(self.repo_path):
-                dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
-                for f in sorted(files):
-                    self._file_index.append(Path(root) / f)
+            self._file_index = self._git_index()
+            if self._file_index is None:
+                self._file_index = self._walk_index()
         return self._file_index
+
+    def _git_index(self) -> list[Path] | None:
+        """Tracked plus untracked-but-not-ignored files, or None outside a git repo.
+
+        Walking the working tree let gitignored build output, worktree caches,
+        vendored SAM builds and scratch folders decide which platforms a repo
+        has and which directories the skill names (written into a file meant to
+        be committed), and read gitignored secret- and PII-bearing files along
+        the way. What git would commit is what the review is about. A
+        top-level `vendor/` (Go, PHP, Ruby) is third-party by convention; a
+        nested one is often first-party, so only the top level is skipped.
+        """
+        try:
+            out = subprocess.run(
+                ["git", "-C", str(self.repo_path), "ls-files", "-z",
+                 "--cached", "--others", "--exclude-standard"],
+                capture_output=True, check=True, timeout=120,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            return None
+        files = []
+        for rel in sorted(set(p for p in out.decode("utf-8", "surrogateescape").split("\0") if p)):
+            parts = Path(rel).parts
+            if parts[0] == "vendor" or any(p in self.TRACKED_SKIP_DIRS for p in parts[:-1]):
+                continue
+            f = self.repo_path / rel
+            if f.is_file():
+                files.append(f)
+        return files
+
+    def _walk_index(self) -> list[Path]:
+        # Outside git, fall back to a walk with a name denylist. Sorted so the
+        # order is deterministic across filesystems.
+        files = []
+        for root, dirs, names in os.walk(self.repo_path):
+            dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
+            for f in sorted(names):
+                files.append(Path(root) / f)
+        return files
 
     def relative_paths(self) -> list[str]:
         return [str(f.relative_to(self.repo_path)) for f in self.file_index]
 
     def matches_glob(self, pattern: str) -> list[str]:
-        return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
+        return [rel for rel in self.relative_paths() if glob_match(rel, pattern)]
 
-    def file_contains(self, pattern: str, extensions: list[str] | None = None,
-                      max_files: int = 50, max_bytes: int = 50_000) -> bool:
-        regex = re.compile(pattern, re.MULTILINE)
+    # Extensions worth grepping for platform signals. Without this filter,
+    # content detection burns its budget on binary assets and generated data
+    # before it reaches source. Documentation extensions are deliberately absent:
+    # a README that mentions `import SwiftUI` must not detect an iOS platform.
+    CONTENT_EXTS = {
+        ".swift", ".m", ".mm", ".h", ".kt", ".java", ".py", ".go", ".rs", ".rb",
+        ".php", ".cs", ".ts", ".tsx", ".js", ".jsx", ".vue",
+        ".mjs", ".cjs", ".mts", ".cts", ".dart", ".scala", ".ex", ".exs",
+        ".c", ".cc", ".cpp", ".hpp", ".sh",
+        ".yml", ".yaml", ".json", ".toml", ".tf", ".plist", ".entitlements",
+        ".xcconfig", ".xcprivacy", ".pbxproj", ".resolved", ".gradle", ".kts",
+    }
+
+    def _read_text(self, f: Path, max_bytes: int = 2_000_000) -> str | None:
+        """A file's text, read at most once per run; None if unreadable or oversized."""
+        key = str(f)
+        if key not in self._text_cache:
+            try:
+                too_big = f.stat().st_size > max_bytes
+                self._text_cache[key] = None if too_big else f.read_text(errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                self._text_cache[key] = None
+        return self._text_cache[key]
+
+    def file_contains_any(self, patterns: list[str], extensions: list[str] | set | None = None,
+                          max_files: int = 5000) -> bool:
+        """True when any file with a matching extension matches any of the patterns.
+
+        All of a block's patterns are checked in one pass, and each file is read
+        once per run, so a block with six patterns costs one walk, not six.
+        """
+        # The budget used to be 50 files / 50 KB, which on any real repo was
+        # exhausted in the first directory `os.walk` happened to visit. Measured
+        # on a 1071-file Swift repo: `^import CloudKit` (16 real hits),
+        # `^import Testing` (273) and `^import FoundationModels` (13) all
+        # returned False because the walk never reached `Sources/`. Detection
+        # that depends on walk order is not detection.
+        regexes = [re.compile(p, re.MULTILINE) for p in patterns]
+        exts = set(extensions) if extensions else None
         count = 0
         for f in self.file_index:
-            if extensions and f.suffix not in extensions:
+            if exts is not None and f.suffix not in exts:
                 continue
-            if f.stat().st_size > max_bytes:
+            text = self._read_text(f)
+            if text is None:
                 continue
             count += 1
             if count > max_files:
                 break
-            try:
-                if regex.search(f.read_text(errors="ignore")):
-                    return True
-            except (OSError, UnicodeDecodeError):
-                continue
+            if any(r.search(text) for r in regexes):
+                return True
         return False
 
     def detect_platforms(self, guidance: dict) -> dict[str, dict]:
+        # `detect_mode` controls how detect_files and detect_content combine:
+        #
+        #   "files" (default) — detect_files decides. detect_content is consulted
+        #                       ONLY when a block declares no detect_files. This
+        #                       is the historical behaviour, kept as the default
+        #                       deliberately: because the old code could never
+        #                       reach detect_content for a block that had
+        #                       detect_files, those patterns have never once been
+        #                       evaluated, and several are wrong. `go`'s
+        #                       `^module\s+` and `java`'s `^package\s+[a-z]` both
+        #                       match modern Swift source (`package` is a Swift
+        #                       5.9 access modifier), so promoting them to an
+        #                       OR-fallback detects Go and Java in a pure Swift
+        #                       repo. Opt a block in only after validating its
+        #                       patterns against a real repo.
+        #
+        #   "all"             — BOTH must match. This is what a sub-platform
+        #                       needs: "Swift files AND they import CloudKit" is
+        #                       not expressible otherwise, and without it every
+        #                       capability sub-block fires on every Swift repo.
+        #
+        #   "any"             — either signal detects the platform. Opt-in.
         detected = {}
         rel_paths = self.relative_paths()
         for category_name, platforms in guidance.items():
             for platform_key, platform_data in platforms.items():
-                file_match = False
-                for pattern in platform_data.get("detect_files", []):
-                    for rel in rel_paths:
-                        if fnmatch.fnmatch(rel, pattern):
-                            file_match = True
-                            break
-                    if file_match:
-                        break
-                content_match = False
-                if not platform_data.get("detect_files"):
-                    for cp in platform_data.get("detect_content", []):
-                        if self.file_contains(cp):
-                            content_match = True
-                            break
-                if file_match or content_match:
+                globs = platform_data.get("detect_files", [])
+                contents = platform_data.get("detect_content", [])
+                mode = platform_data.get("detect_mode", "files")
+
+                file_match = any(
+                    glob_match(rel, pattern)
+                    for pattern in globs
+                    for rel in rel_paths
+                )
+
+                # Only pay for a content scan when it can still change the answer.
+                if not contents:
+                    need_content = False
+                elif mode == "all":
+                    need_content = file_match
+                elif mode == "any":
+                    need_content = not file_match
+                else:  # "files"
+                    need_content = not globs
+                # A block may narrow which extensions its content patterns are
+                # searched in. Without that, a repo whose own files *describe*
+                # a pattern matches it: this repo's guidance YAMLs mention
+                # `import AppKit` and `NSApplicationDelegate` as things to look
+                # for, which was enough to detect a macOS app in a pure Python
+                # repo. Documentation about a platform is not that platform.
+                exts = platform_data.get("detect_content_exts") or self.CONTENT_EXTS
+                content_match = (
+                    self.file_contains_any(contents, extensions=exts) if need_content else False
+                )
+
+                if mode == "all":
+                    hit = bool(globs) and file_match and bool(contents) and content_match
+                else:
+                    hit = file_match or content_match
+
+                if hit:
                     detected[platform_key] = {**platform_data, "_category": category_name}
         return detected
 
+    def _file_matches_any(self, rel: str, regexes: list, exts=None) -> bool:
+        """True when the file at `rel` matches one of the compiled patterns."""
+        exts = exts or self.CONTENT_EXTS
+        f = self.repo_path / rel
+        if f.suffix not in exts:
+            return False
+        text = self._read_text(f)
+        return bool(text) and any(r.search(text) for r in regexes)
+
     def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
+        # Ordered by how much code each path actually contributes, NOT
+        # alphabetically. Callers truncate this list to name a few directories in
+        # the generated skill, and an alphabetical sort meant the truncation kept
+        # whichever directories sorted first — on a Swift repo that named two
+        # single-file app shells and dropped every module holding the code.
+        #
+        # For a `detect_mode: all` block, a path only counts if the files there
+        # actually match the block's content patterns. Otherwise a capability
+        # block ("Swift files AND they import CloudKit") would name every Swift
+        # directory in the repo and send the reviewer to files that have nothing
+        # to do with it — the same wrong-directory failure, one level down.
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
-            paths = set()
-            for pattern in pd.get("detect_files", []):
-                for rel in rel_paths:
-                    if fnmatch.fnmatch(rel, pattern):
+            counts: dict[str, int] = {}
+            scoped = pd.get("detect_mode") == "all" and pd.get("detect_content")
+            regexes = [re.compile(c, re.MULTILINE) for c in pd.get("detect_content", [])] \
+                if scoped else []
+            scope_exts = pd.get("detect_content_exts") or self.CONTENT_EXTS
+            # `component_globs` lets a content-gated block still name real
+            # directories. When they name none (an Xcode layout like
+            # `MyApp/Store.swift` matches no `App/`/`Sources/` glob), fall back
+            # to the detection globs rather than reporting no paths at all.
+            glob_sets = [pd.get("component_globs"), pd.get("detect_files")]
+            for globs in (g for g in glob_sets if g):
+                for pattern in globs:
+                    for rel in rel_paths:
+                        if not glob_match(rel, pattern):
+                            continue
+                        if scoped and not self._file_matches_any(rel, regexes, scope_exts):
+                            continue
                         parts = Path(rel).parts
-                        if len(parts) >= 2:
-                            paths.add(f"{parts[0]}/{parts[1]}")
-                        elif len(parts) == 1:
-                            paths.add(parts[0])
-            component_paths[pk] = sorted(paths)
+                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                        counts[key] = counts.get(key, 0) + 1
+                if counts:
+                    break
+            component_paths[pk] = [
+                p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            ]
         return component_paths
 
+
+
+def format_paths(paths: list[str], limit: int = 6) -> str:
+    """Render component paths for the skill, saying so when the list is trimmed.
+
+    Paths arrive ranked by how much code each contributes. Silently truncating
+    told the reviewer to check three directories as though they were the whole
+    surface; naming the overflow keeps the omission visible.
+    """
+    shown = "`, `".join(paths[:limit])
+    extra = len(paths) - limit
+    return f"`{shown}`" + (f", and {extra} more" if extra > 0 else "")
 
 # ---------------------------------------------------------------------------
 # Service Map Loader
@@ -176,7 +392,7 @@ class ServiceMapLoader:
 # ---------------------------------------------------------------------------
 
 class SkillGenerator:
-    """Generates the scrutineer-security.md skill file."""
+    """Generates the vld8-security.md skill file."""
 
     def generate(self, detected: dict[str, dict],
                  component_paths: dict[str, list[str]],
@@ -229,34 +445,37 @@ class SkillGenerator:
         lines = [textwrap.dedent("""\
             ## Invocation Modes
 
-            This skill supports three modes based on the argument:
+            This skill supports four modes based on the argument:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
-            /scrutineer-security
+            /vld8-security
             ```
             Reviews the current branch's security-relevant changes against main. Runs `git diff main...HEAD`.
 
             ### Mode 2: PR Review (numeric argument)
             ```
-            /scrutineer-security 123
+            /vld8-security 123
             ```
             Reviews PR #123 for security issues. Process:
             1. `git fetch origin`
-            2. Get PR metadata: `gh pr view 123 --json number,title,headRefName,baseRefName`
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
+               Read the body: the author's statement of intent tells you which behaviour is deliberate.
             3. Get full diff: `gh pr diff 123`
             4. Review the diff for security issues.
             5. Output findings (does not auto-post to PR — security findings may be sensitive).
 
             ### Mode 3: Full Service/App Security Audit (component name argument)
             ```
-            /scrutineer-security <component-name>
+            /vld8-security <component-name>
             ```
             Full security audit of all code in a service or app directory. This is for
             comprehensive security reviews — not just a diff, but the entire attack surface.
 
             Process:
-            1. Identify the component directory from the table below.
+            1. Identify the component directory: from the component table below when this skill has
+               one (it is generated from the service map); otherwise from the directory the user
+               named. `/vld8-map` plus a reinstall adds the table.
             2. Read all source files in that directory.
             3. Map the component's endpoints, auth mechanisms, and data flows.
             4. Apply universal and platform-specific checklists against all code.
@@ -264,7 +483,7 @@ class SkillGenerator:
 
             ### Mode 4: Deep Repo Security Audit (--deep flag)
             ```
-            /scrutineer-security --deep
+            /vld8-security --deep
             ```
             Full repository-level security audit that traces trust boundaries across services,
             audits auth boundaries end-to-end, traces secrets from storage through infrastructure
@@ -301,13 +520,12 @@ class SkillGenerator:
         for key, data in detected.items():
             paths = component_paths.get(key, [])
             if paths:
-                path_str = "`, `".join(paths[:5])
-                detection_rules.append(f"   - `{path_str}` → **{data['name']}**")
+                detection_rules.append(f"   - {format_paths(paths)} → **{data['name']}**")
             else:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Process
 
             1. **Determine mode** — parse arguments (see Invocation Modes above)
@@ -322,7 +540,7 @@ class SkillGenerator:
             9. **False positive filtering** — apply hard exclusions and precedent rules, assign confidence scores, discard findings below threshold (see below)
             10. **Self-heal check** — if the code touches platforms not covered by any checklist, flag them
 
-        """)
+        """, detection_block=detection_block)
 
     def _threat_model_section(self) -> str:
         return textwrap.dedent("""\
@@ -365,17 +583,8 @@ class SkillGenerator:
 
             Use these as investigation prompts, not a grep list. For each area, actively
             look for the concern — don't just check if a pattern exists.
-
-            - Authentication/authorization (JWT handling, session management, auth checks)
-            - Injection vectors (SQL, command, XSS, template injection)
-            - Secrets handling (API keys, tokens, credentials in code or config — never committed)
-            - Network calls (SSRF, unvalidated URLs, missing TLS)
-            - Cryptography (weak algorithms, hardcoded keys, missing encryption)
-            - Access control (missing ownership checks, privilege escalation, IDOR)
-            - Rate limiting (missing or bypassed)
-            - Dependencies (new deps with known CVEs)
-            - Error messages leaking internals (stack traces, SQL errors, internal URLs)
         """)]
+        lines.append("\n".join(f"- {area}" for area in UNIVERSAL_AREAS) + "\n")
 
         # Enrich with service map data if available
         if service_map:
@@ -406,8 +615,7 @@ class SkillGenerator:
         checklist_items = data.get("checklist", [])
 
         if paths:
-            path_str = "`, `".join(paths[:5])
-            trigger = f"When reviewing `{path_str}`:"
+            trigger = f"When reviewing {format_paths(paths)}:"
         else:
             trigger = f"When reviewing {name}-related code:"
 
@@ -505,7 +713,7 @@ class SkillGenerator:
             memory_safe_langs.append("Rust")
         if "go" in platform_keys:
             memory_safe_langs.append("Go")
-        if "java" in platform_keys or "kotlin" in platform_keys:
+        if "java" in platform_keys or "android" in platform_keys:  # no "kotlin" key exists
             memory_safe_langs.append("Java/Kotlin")
         if "swift" in platform_keys:
             memory_safe_langs.append("Swift")
@@ -522,9 +730,9 @@ class SkillGenerator:
             )
 
         xss_safe_frameworks = []
-        if "react" in platform_keys or "nextjs" in platform_keys:
+        if "react" in platform_keys:
             xss_safe_frameworks.append("React/Next.js")
-        if "vue" in platform_keys or "nuxt" in platform_keys:
+        if "vue" in platform_keys:
             xss_safe_frameworks.append("Vue/Nuxt")
 
         xss_safe_note = ""
@@ -537,14 +745,21 @@ class SkillGenerator:
             )
 
         client_side_note = ""
-        if any(k in platform_keys for k in ("react", "nextjs", "vue", "nuxt", "nodejs")):
+        # Keyed on the frontend platforms that exist. The old key list named
+        # platforms that don't ("nextjs", "nuxt", "nodejs"), and the note said
+        # nothing about server code living inside a frontend framework, so on a
+        # Next.js repo it could talk the reviewer out of real auth findings.
+        if any(k in platform_keys for k in ("react", "vue", "angular")):
             client_side_note = (
-                "\n- **Client-side JS/TS code does not need permission checks or auth.** "
-                "Client-side code is untrusted — the server is responsible for validation "
-                "and authorization. Do not report missing auth in frontend code."
+                "\n- **Code that runs only in the browser does not need its own auth checks.** "
+                "It is untrusted; the server is responsible for validation and authorization, "
+                "so do not report missing auth in browser-only code. This does NOT cover server "
+                "code inside a frontend framework: Next.js/Nuxt route handlers, API routes, "
+                "server actions, `getServerSideProps`, middleware, and SvelteKit or Remix "
+                "loaders and actions run on the server, and missing auth there IS reportable."
             )
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## False Positive Filtering
 
             A security review that floods the report with noise is worse than no review.
@@ -575,8 +790,11 @@ class SkillGenerator:
                concrete exploitation path and real impact, not theoretical timing windows.
             9. **SSRF with path-only control** — SSRF is only reportable if the attacker
                can control the host or protocol, not just the path.
-            10. **AI prompt injection** — including user-controlled content in AI system
-                prompts is not a vulnerability in this context.
+            10. **Prompt injection that reaches nothing** — untrusted content in a model's
+                prompt is not, by itself, a finding when the model's output only shapes its
+                own reply to the same user. It IS reportable when that output can call tools,
+                write or delete data, reach another user, or carry secrets out: that is the
+                "prompt injection → data pollution → trust exploitation" chain in Mode 4.
             11. **Regex injection** — injecting untrusted content into a regex pattern is
                 not a vulnerability.
             12. **Missing audit logs** — absence of logging is an operational gap, not a
@@ -634,7 +852,7 @@ class SkillGenerator:
             3. **Threshold**: Only findings that survive Pass 2 with confidence ≥ 0.8
                appear in the final report.
 
-        """)
+        """, client_side_note=client_side_note, memory_safe_note=memory_safe_note, xss_safe_note=xss_safe_note)
 
     def _output_format(self) -> str:
         return textwrap.dedent("""\
@@ -705,14 +923,14 @@ class SkillGenerator:
             If the argument is `--help`, output this summary and stop:
 
             ```
-            /scrutineer-security — Security-focused code review
+            /vld8-security — Security-focused code review
 
             MODES:
-              /scrutineer-security              Review current branch diff vs main (~2 min)
-              /scrutineer-security 123          Review PR #123 for security issues (~5 min)
-              /scrutineer-security <component>  Full security audit of a service/app (~5 min)
-              /scrutineer-security --deep       Deep repo-wide security audit (~20 min)
-              /scrutineer-security --help       Show this help
+              /vld8-security              Review current branch diff vs main (~2 min)
+              /vld8-security 123          Review PR #123 for security issues (~5 min)
+              /vld8-security <component>  Full security audit of a service/app (~5 min)
+              /vld8-security --deep       Deep repo-wide security audit (~20 min)
+              /vld8-security --help       Show this help
 
             WHAT IT DOES:
               Modes 1-3: Threat model → checklist scan → agentic analysis (input tracing,
@@ -743,7 +961,31 @@ class SkillGenerator:
         if service_map:
             component_count = len(service_map.get_reviewable_components())
 
-        return textwrap.dedent(f"""\
+        if service_map is None:
+            components_line = (
+                "**No service map was available when this skill was generated.** Before tracing "
+                "flows, inventory the deployable components yourself (entry points, manifests, "
+                "IaC, CI pipelines), or run `/vld8-map` and reinstall with `--force`."
+            )
+            scale_note = (
+                "Size the work from that inventory: one agent for a handful of components; for a "
+                "large repo, dispatch sub-agents, one per investigation area."
+            )
+        elif component_count <= 20:
+            components_line = f"**Repo has {component_count} reviewable components.**"
+            scale_note = (
+                "**Small repo (≤20 components): Single-agent deep audit.** Read the service map, "
+                "then read source files as needed. Prioritize depth on auth boundaries, secret "
+                "handling, and the highest-risk data flows."
+            )
+        else:
+            components_line = f"**Repo has {component_count} reviewable components.**"
+            scale_note = (
+                "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the "
+                "Agent tool — one per investigation area. Each sub-agent gets a fresh context. "
+                "Collect findings, then synthesize and chain."
+            )
+        return _render("""\
             ## Mode 4: Deep Repo Security Audit
 
             **Role:** You are a world-class Security Auditor performing a comprehensive security
@@ -761,9 +1003,9 @@ class SkillGenerator:
 
             ### Adaptive Execution Strategy
 
-            **Repo has {component_count} reviewable components.**
+            {components_line}
 
-            {"**Small repo (≤20 components): Single-agent deep audit.** Read the service map, then read source files as needed. Prioritize depth on auth boundaries, secret handling, and the highest-risk data flows." if component_count <= 20 else "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the Agent tool — one per investigation area. Each sub-agent gets a fresh context. Collect findings, then synthesize and chain."}
+            {scale_note}
 
             ### Investigation 1: Trust Boundary Mapping
 
@@ -879,11 +1121,11 @@ class SkillGenerator:
             | MEDIUM   | N     |
             ```
 
-        """)
+        """, component_count=component_count, components_line=components_line, scale_note=scale_note)
 
     def _self_heal_section(self, all_known_platforms: list[str]) -> str:
         known_list = ", ".join(sorted(all_known_platforms))
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Self-Healing: Unknown Platforms
 
             This skill was generated with checklists for a known set of platforms. If the code
@@ -927,7 +1169,7 @@ class SkillGenerator:
 
             If you cannot meet this bar for a platform, say so — a missing checklist is
             better than a checklist full of generic "validate your input" noise.
-        """)
+        """, known_list=known_list)
 
 
 # ---------------------------------------------------------------------------
@@ -958,8 +1200,8 @@ def main():
         """),
     )
     parser.add_argument("repo_path", help="Path to the repository to analyze")
-    parser.add_argument("--output", "-o", default=".claude/commands/scrutineer-security.md",
-                        help="Output path relative to repo root (default: .claude/commands/scrutineer-security.md)")
+    parser.add_argument("--output", "-o", default=".claude/commands/vld8-security.md",
+                        help="Output path relative to repo root (default: .claude/commands/vld8-security.md)")
     sm_group = parser.add_mutually_exclusive_group()
     sm_group.add_argument("--service-map", "-s", default=None,
                           help="Path to servicemap.json for richer context. "
@@ -971,7 +1213,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true",
                         help="Print the generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
-                        help="Overwrite existing scrutineer-security.md without prompting")
+                        help="Overwrite existing vld8-security.md without prompting")
 
     args = parser.parse_args()
 
@@ -1060,11 +1302,11 @@ def main():
     checklist_count = sum(len(d.get("checklist", [])) for d in detected.values())
     print(f"\n✓ Generated security review skill at: {output_path}")
     print(f"  Platforms: {len(detected)}")
-    print(f"  Checklist items: {checklist_count} platform-specific + 11 universal")
+    print(f"  Checklist items: {checklist_count} platform-specific + {len(UNIVERSAL_AREAS)} universal")
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /scrutineer-security (from Claude Code in the target repo)")
+    print(f"\nUsage: /vld8-security (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":

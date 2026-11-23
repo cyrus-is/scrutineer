@@ -18,7 +18,7 @@ import os
 import sys
 from pathlib import Path
 
-MARKER = Path(os.environ.get("HOME", ".")) / ".scrutineer-drift-launch"
+MARKER = Path(os.environ.get("HOME", ".")) / ".vld8-drift-launch"
 
 BENIGN = [
     {

@@ -1,253 +1,220 @@
-# Scrutineer
+# vld8
 
-[![Release](https://img.shields.io/github/v/release/cyrus-is/scrutineer?label=release)](https://github.com/cyrus-is/scrutineer/releases/latest)
-[![PyPI](https://img.shields.io/pypi/v/scrutineer?label=pypi)](https://pypi.org/project/scrutineer/)
+[![Release](https://img.shields.io/github/v/release/cyrus-is/vld8?label=release)](https://github.com/cyrus-is/vld8/releases/latest)
+[![PyPI](https://img.shields.io/pypi/v/vld8?label=pypi)](https://pypi.org/project/vld8/)
 
-Agentic code review toolkit for [Claude Code](https://claude.ai/code). Three generators that scan your repo and produce tailored review skills — a principal engineer peer review, a security audit, and a service topology map that makes both smarter — plus `/scrutineer-mcp`, a standalone auditor for the MCP servers you're about to trust.
+Dev tooling for [Claude Code](https://claude.ai/code): Cyrus's toolbox. vld8 installs three tools into your repo as Claude Code commands:
+
+- **Map** (`/vld8-map`) crawls your repo into `servicemap.json`, a topology of its services, datastores and connections. The reviews use it as context.
+- **Review** is two commands generated for the platforms your repo actually uses: a principal-engineer code review (`/vld8-review`) and a security review (`/vld8-security`).
+- **MCP review** (`/vld8-mcp`) audits an MCP server before you trust it with tools, data and credentials.
 
 ```bash
-pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -security, -servicemap, -mcp to .claude/commands/
+pip install vld8
+vld8 install .    # adds /vld8-map, /vld8-review, /vld8-security, /vld8-mcp and /vld8-setup to .claude/commands/
 ```
 
-> **New in 1.6 — [`/scrutineer-mcp`](#mcp-review): an "npm audit" for MCP servers.** Installing an MCP server hands it tool access, data access, and usually a live credential. `/scrutineer-mcp` audits one *before* it runs — verdict (`SAFE`/`CAUTION`/`BLOCK`) + a separate data-sensitivity rating — catching unpinned installs, creds-in-URLs, read-then-send exfil paths, and tool-poisoning. Motivated by real 2025 incidents (the postmark-mcp backdoor, CVE-2025-6514).
+> **Upgrading from Scrutineer?** vld8 is the same toolkit under a new name, and the `scrutineer` package is no longer maintained.
+>
+> 1. Install vld8 the way you installed scrutineer: `pip install vld8`, `pipx install vld8` or `uv tool install vld8`.
+> 2. Run `vld8 install` in each repo. It replaces the `/scrutineer-*` commands with `/vld8-*` ones and moves the old files to `.claude/scrutineer-backup/`. It only moves files scrutineer wrote, so your edits aren't lost. It also renames `.claude/scrutineer-mcp-suppressions.json` to `.claude/vld8-mcp-suppressions.json`.
+> 3. On the command line, `scrutineer servicemap …` is now `vld8 map …`.
+>
+> Until you switch, `pip install -U scrutineer` gets a final release that installs vld8 and forwards the old `scrutineer` command to it.
 
-## What's in the box
+## The tools
 
-### generate-servicemap
+### Map: `/vld8-map`
 
-Deep agentic crawl of your repository that produces `servicemap.json` — a machine-readable topology of all services, apps, libraries, datastores, infrastructure, and their connections.
+An agentic crawl of your repository that writes `servicemap.json`. The file is a machine-readable topology of the repo's services, apps, libraries, datastores and infrastructure, and how they connect.
 
-The service map is useful on its own (architecture docs that stay current), but it also feeds into the other two tools. With a service map, peer review can trace cross-service impacts and the security review can flag unauthenticated endpoints and shared datastores.
+The crawl has four phases:
+1. **Discovery:** find every component (services, apps, libraries, infrastructure, datastores).
+2. **Deep dive:** each component's endpoints, auth, config and dependencies.
+3. **Trace connections:** how the components talk to each other (HTTP, gRPC, queues, databases).
+4. **Assemble:** validate and write `servicemap.json`, with a confidence score on each entry.
 
-**Four-phase crawl:**
-1. **Discovery** — identify all components (services, apps, libraries, infra, datastores)
-2. **Deep dive** — analyze each component's endpoints, auth, config, dependencies
-3. **Trace connections** — map how components talk to each other (HTTP, gRPC, queues, DB)
-4. **Assemble** — validate and output `servicemap.json` with confidence scores
+Re-running it updates the map in place. Fields marked `"manual_override": true` are kept, and connections that belong to other repos are preserved. The schema is in [`references/schema.md`](references/schema.md), and `vld8 map validate servicemap.json` checks a map against it.
 
-Supports incremental updates — re-run it as your codebase evolves and it merges new findings with existing data, preserving manual overrides.
+The map is useful on its own as architecture documentation, and it feeds the reviews:
+- the code review uses its components to scope component reviews and to split large diffs;
+- the security review lists the map's intentionally unauthenticated endpoints and shared datastores, and uses its components to scope component reviews.
 
-### generate-peer-review
+### Review: `/vld8-review` and `/vld8-security`
 
-Scans your repo and generates a Claude Code skill (`.claude/commands/scrutineer-code.md`) that performs principal engineer-level code review across **8 evaluation lenses**:
+`vld8 install` generates both commands from your repo. Detection decides which platform guidance each command carries, and it looks only at files git would commit, so build output and gitignored files don't count. After your stack changes, or once you have a service map, regenerate with `vld8 install --force`.
 
-| Lens | What it checks |
+Both commands take the same four modes:
+
+```
+/vld8-review                     # the current branch's diff against main
+/vld8-review 123                 # pull request #123
+/vld8-review <component-name>    # a whole service or app (from the service map, or a directory you name)
+/vld8-review --deep              # repo-wide, tracing flows across services
+```
+
+`/vld8-security` takes the same arguments.
+
+**Code review** (`/vld8-review`) reviews like a principal engineer, across 8 lenses:
+
+| Lens | What it asks |
 |------|---------------|
-| Production Reliability | Will this survive real traffic, failures, and edge cases? |
+| Production Reliability | Will this survive real traffic, failures and edge cases? |
 | Correctness | Does the logic do what it claims? |
-| Data Integrity | Can data be lost, corrupted, or desynchronized? |
-| Error Handling | Are errors caught, surfaced, and recoverable? |
+| Data Integrity | Can data be lost, corrupted or desynchronized? |
+| Error Handling | Are errors caught, surfaced and recoverable? |
 | Architecture | Does this fit the system's patterns and boundaries? |
-| Operability | Can you debug, monitor, and deploy this safely? |
-| Performance | Will this scale? Any hidden N+1s, unbounded queries, or hot paths? |
+| Operability | Can you debug, monitor and deploy this safely? |
+| Performance | Will this scale? Any hidden N+1s, unbounded queries or hot paths? |
 | Maintainability | Will someone understand this in 6 months? |
 
-**Four review modes:**
-- **Branch diff** — review your current branch vs main
-- **PR review** — review a pull request by number, optionally post findings as a PR comment
-- **Component review** — full review of an entire service or app directory (requires service map)
-- **Deep repo review** (`--deep`) — trace cross-service flows and surface systemic issues
+- **Verify before judging.** It starts by finding your repo's own gate. That can be a gate script (`run-gate.sh`, `scripts/gate.sh`, `scripts/ci.sh` or `bin/ci`), a Makefile `check` or `ci` target, a justfile `check` recipe, or the CI workflow that gates merge. It runs that gate and stops if the build is red. On a green build, it doesn't report anything the toolchain already proved. Platform-specific cheap checks exist so far for Swift and Python.
+- **Size the diff first.** Past about 150 files or 20 commits, it splits the review into parts, along the service map when there is one, and it checks that the base branch isn't stale.
+- **Platform guidance** for each detected platform: pre-flight checks, focus areas and change-type signals.
+- **It reports on itself.** Every finding names the check behind it. A closing Check Performance section lists:
+  - checks that fired wrongly;
+  - checks that had nothing to match;
+  - findings no check covered.
+- **In PR mode** it posts its findings as a single PR comment with `gh pr comment`. The other modes print to the terminal.
 
-The generated skill is customized to your repo's tech stack — it detects which platforms you use (Go, Python, TypeScript, Swift, Kotlin, Terraform, etc.) and includes platform-specific pre-flight checks, focus areas, and change-type signals. 15+ platforms supported via `peer_review_guidance.yaml`.
+**Security review** (`/vld8-security`) hunts for exploitable vulnerabilities, in four stages:
+1. **Threat model:** attack surface, trust boundaries, blast radius and the auth model.
+2. **Universal checklist:** 9 areas, including auth, injection, secrets, crypto, rate limiting and dependencies.
+3. **Platform checklists:** each item comes with a secure alternative and an OWASP reference. Mobile items use the Mobile Top 10 (2024) and MASVS.
+4. **Agentic analysis:** tracing input from entry to storage, auditing auth boundaries, and reasoning about attack chains.
 
-### generate-security-review
+Findings are rated CRITICAL, HIGH, MEDIUM or LOW. Security findings always stay in your terminal, PR mode included, because they may be sensitive.
 
-Same scan-and-generate approach, producing `.claude/commands/scrutineer-security.md` — a security auditor skill that hunts for vulnerabilities.
+**Platform coverage.** The two reviews share most of their platform guidance. The security review carries more blocks.
 
-**Analysis flow:**
-1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
-2. **Universal checklist** — 11 areas including auth, injection, secrets, crypto, rate limiting, dependencies
-3. **Platform-specific checklists** — vulnerability patterns for 25+ platforms with OWASP mapping
-4. **Agentic analysis** — input tracing from entry to storage, auth boundary auditing, attack chain reasoning
+| Area | Code review | Security review |
+|---|---|---|
+| Backend | Go, Python, Java, Node.js / JavaScript / TypeScript, Rust, C# / .NET, Ruby, PHP | same |
+| Web | React / Next.js, Vue.js | adds Angular |
+| Mobile | Android (Kotlin/Java) | adds React Native, Flutter (Dart) |
+| Apple | Swift (language and concurrency), SwiftUI, Swift Package Manager, Apple app targets, macOS apps, CloudKit sync, Apple on-device AI (Foundation Models), Swift Testing | same, except Swift Testing |
+| Infrastructure | Terraform, Docker, GitHub Actions | adds Kubernetes, GitLab CI |
+| API | OpenAPI / REST, GraphQL | adds gRPC / Protocol Buffers |
+| Database | SQL | adds MongoDB |
+| Auth | — | JWT, OAuth 2.0 |
+| **Blocks** | **25** | **33** |
 
-Findings are rated CRITICAL / HIGH / MEDIUM / LOW. Security review output stays in your terminal — it does not auto-post to PRs, because security findings may be sensitive.
+When a review meets code that no checklist covers, it flags the gap and drafts candidate checks in its output. See [Customizing](#customizing) to keep them.
 
-### mcp-review
+### MCP review: `/vld8-mcp`
 
-A standalone auditor for MCP servers — the `npm audit` equivalent for the [Model Context Protocol](https://modelcontextprotocol.io). Installing an MCP server grants it tool access, data access, and usually a live credential; `/scrutineer-mcp` makes that trust decision inspectable **before** the server runs. Unlike the generators, it reviews an *external* server rather than your repo, so there's no generate step — it's a static skill plus a runtime analyzer (`analyze_mcp.py`), evidence in Python and judgment in the skill.
+A standalone auditor for MCP servers, the `npm audit` equivalent for the [Model Context Protocol](https://modelcontextprotocol.io). Installing an MCP server grants it tool access, data access, and usually a live credential. `/vld8-mcp` lets you inspect that trust decision **before** the server runs. It reviews an *external* server, not your repo, so it needs no generate step and no service map. The evidence comes from a Python analyzer (`vld8 mcp analyze`), and the judgment comes from the skill.
 
-It reports **two independent axes** — a server can be perfectly secure and still want to read every message you've ever sent:
+It reports **two independent ratings**, because a server can be perfectly secure and still want to read every message you've ever sent:
 
-- **Security verdict** — `SAFE / CAUTION / BLOCK`
-- **Data-sensitivity rating** — `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE` (or `UNKNOWN` when no tool surface was captured — so a server whose tools couldn't be enumerated never silently reads as low-risk)
+- **Security verdict:** `SAFE / CAUTION / BLOCK`.
+- **Data-sensitivity rating:** `MINIMAL / LIMITED / SENSITIVE / HIGHLY_SENSITIVE`, or `UNKNOWN` when no tool surface was captured. A server whose tools couldn't be enumerated therefore never reads as low-risk by default.
 
-**Static-first passes (never start the server, call a tool, or fetch a URL):**
-1. **Config review** — install/transport/secret/scope smells (including a credential or cleartext URL hidden in a command arg, e.g. `mcp-remote http://…`), plus *provenance* (can the reviewed code be tied to what actually runs?) and *containment*
-2. **Tool-surface review** — capability classification (allow/ask/deny), each hit carrying the matched-token *evidence* and a *confidence* (a name/param match outweighs one buried in prose); the data categories each tool touches; schema-intent signals that expose the benign-name/powerful-schema evasion shape; and a **tool-poisoning scan** for hidden instructions in tool descriptions (`<IMPORTANT>`-style directives, "read `~/.ssh`", covert exfil)
-3. **Source review** — handler injection, secret handling, exfil paths, and obfuscation, with source safely acquired by `fetch_source.py` (resolves via registry APIs, integrity-verified, path-sanitized extraction — never runs a package manager or executes fetched code)
-4. **Finding self-review** — an optional agentic false-positive sweep (`validate_findings.py`) that re-examines each candidate against its own evidence and suppresses clear mismatches *auditably* (suppress-only, with a recorded reason)
+**Static passes.** These never start the server, call a tool or fetch a URL:
+1. **Config review:** install, transport, secret and scope problems, including a credential or cleartext URL hidden in a command argument (for example `mcp-remote http://…`). It also covers *provenance* (can the reviewed code be tied to what actually runs?) and *containment*.
+2. **Tool-surface review:**
+   - each tool is classified allow, ask or deny, and each hit carries the matched *evidence* and a *confidence*;
+   - it records the data categories each tool touches;
+   - schema-intent signals expose a tool with a benign name but a powerful schema;
+   - a **tool-poisoning scan** looks for hidden instructions in tool descriptions.
+3. **Source review:** handler injection, secret handling, exfiltration paths and obfuscation. Source is fetched safely by `vld8 mcp fetch`: it resolves through registry APIs, verifies integrity and extracts with sanitized paths. It never runs a package manager or executes fetched code.
+4. **Finding self-review:** an optional false-positive sweep (`vld8 mcp validate`) re-examines each candidate against its own evidence. It can only suppress, and every suppression records its reason.
 
-**Behavioral pass (opt-in — this one *does* run the server):**
+**Behavioral pass.** This one is opt-in, and it *does* run the server:
 
-5. **Behavioral capture** (`capture_runtime.py`, gated behind `--run`) — the `basis: "observed"` layer, answering *what does it actually do?* rather than *what does it claim?* It diffs the `tools/list` the server really serves against the reviewed one (**`manifest_drift`** — the rug-pull a static pass can only make "detectable on re-review"), scans tool **return values** for prompt injection (the runtime form of tool poisoning, invisible statically because the payload doesn't exist until the call), and — with `--probe` — seeds every credential-shaped env var with a unique **canary** and a throwaway `HOME` with **decoy credential files**, then calls each tool with egress routed to a sink that records but never forwards. A canary appearing in an outbound request is **`secret_in_egress`**: proof of exfiltration rather than an inferred capability pairing. Observed capabilities feed the toxic-combination layer at high confidence. The child never inherits your environment or receives a real credential, and every record states its own coverage — a probe only sees the paths its inputs trigger, so absence of findings is never reported as clean.
+5. **Behavioral capture** (`vld8 mcp capture`, gated behind `--run`) answers *what does it actually do?* rather than *what does it claim?*
+   - It compares the `tools/list` the server really serves with the one you reviewed, and reports any difference as `manifest_drift`.
+   - It scans tool return values for prompt injection.
+   - With `--probe`, it gives every credential-shaped environment variable a unique canary value, and gives the server a throwaway `HOME` full of decoy credential files. It then calls each tool, with network traffic routed to a sink that records it and never forwards it.
+   - A canary that turns up in a tool result shows secrets access the tools never declared. A canary in an outbound request is `secret_in_egress`, which proves exfiltration.
+   - The server never inherits your environment or receives a real credential. Every record states its own coverage, so finding nothing is never reported as clean.
 
-Plus **toxic combinations** (individually-tolerable capabilities that together form an attack primitive — e.g. secrets-access + network-egress = read-then-send exfil), severity- and confidence-gated so a single weak signal can't mint a false HIGH, and **approval drift** (what your client has already auto-authorized vs. what review recommends). Findings bind to a SHA-256 digest so false-positive suppressions auto-expire the moment the server's config or tool surface changes.
+On top of these passes:
+- **Toxic combinations:** capabilities that are tolerable alone but together form an attack, such as secrets access plus network egress. They're gated on severity and confidence, so one weak signal can't produce a false HIGH.
+- **Approval drift:** what your client already auto-approves compared with what the review recommends.
+- **Suppressions that expire:** findings bind to a SHA-256 digest, so a false-positive suppression in `.claude/vld8-mcp-suppressions.json` expires as soon as the server's config or tool surface changes.
 
 See [`mcp-review/README.md`](mcp-review/README.md) for the full design.
 
-## How the tools relate
+## How the tools fit together
 
 ```
-generate-servicemap ──→ servicemap.json
-                              │
-                    ┌─────────┴─────────┐
-                    ▼                   ▼
-         generate-peer-review   generate-security-review
-                    │                   │
-                    ▼                   ▼
-         .claude/commands/      .claude/commands/
-         scrutineer-code.md      scrutineer-security.md
+/vld8-map ──→ servicemap.json ──┬──→ /vld8-review     (generated by vld8 install)
+                                └──→ /vld8-security   (generated by vld8 install)
 
-mcp-review ──────────→ .claude/commands/scrutineer-mcp.md
-   (standalone — audits external MCP servers, no service map needed)
+/vld8-mcp    standalone: audits an external MCP server; no map, no generate step
+/vld8-setup  crawls the map, then runs the installer from inside Claude Code
 ```
 
-The service map is optional but recommended. Without it, peer review and security review still work — they just can't do cross-service analysis or component-level reviews. `mcp-review` stands apart from this pipeline entirely: it audits an *external* MCP server rather than your repo, so it needs neither a service map nor a generate step.
+The service map is optional. Without it, both reviews still work, but they can't do component reviews or trace flows across services.
 
-## Agent support
+## Install
 
-Scrutineer targets **Claude Code** today — the generators emit `.claude/commands/*.md` and the skills install there. Support for **Cursor**, **Gemini CLI**, and **OpenAI Codex CLI** is in progress via a shared emitter / `--target` foundation; see the [Multi-tool support milestone](https://github.com/cyrus-is/scrutineer/milestone/1).
-
-## Quick start
-
-The fastest path installs all four skills — correctly named and generated from a fresh service map — in one step. There are two front doors over the same shared installer; pick whichever fits where you are.
-
-### Option A — one command (recommended)
-
-**From Claude Code, inside your repo** — Claude crawls the service map, then installs everything:
-
-```
-/scrutineer-setup
-```
-
-(Copy `scrutineer-setup/SKILL.md` into your repo's `.claude/commands/` once to make `/scrutineer-setup` available, or just run the CLI below.)
-
-**From the shell** — install the `scrutineer` CLI and run the installer:
+### From the shell
 
 ```bash
-pip install scrutineer                           # from PyPI
-# (or from a clone: `pip install -e .`)
-
-scrutineer install /path/to/your-repo            # map-less (fast)
-scrutineer install /path/to/your-repo --crawl    # also run the servicemap crawl via `claude -p`
+pip install vld8                                     # or pipx install vld8 / uv tool install vld8
+vld8 install /path/to/your-repo                      # without a service map (fast)
+vld8 install /path/to/your-repo --crawl              # also crawl a service map with a headless `claude -p`
+vld8 install /path/to/your-repo --service-map m.json # use an existing map
+vld8 install /path/to/your-repo --force              # overwrite existing commands (e.g. to regenerate)
 ```
 
-Both produce the same result in `your-repo/.claude/commands/`:
+`vld8 install` uses `servicemap.json` at the repo root if there is one.
 
-```
-/scrutineer-servicemap   /scrutineer-code   /scrutineer-security   /scrutineer-mcp
-```
+### From Claude Code
 
-The only difference between the front doors is **how the service map is produced**: `/scrutineer-setup` lets Claude crawl it inline; `scrutineer install` reuses an existing `servicemap.json`, runs a headless `claude -p` crawl with `--crawl`, or skips it (re-run with `--force` after you generate a map to make the skills map-aware). The deterministic copy-and-generate work is identical and lives in `scrutineer/installer.py`.
+`/vld8-setup`, which `vld8 install` also installs, does the same job from inside Claude Code: Claude crawls the service map itself, then runs the installer, so the review commands come out map-aware. Re-run it whenever you want a fresh map and regenerated reviews.
 
-> Note: the wheel bundles the generators, guidance YAMLs, and skills under `scrutineer/_assets/`, so `pip install scrutineer` works with no clone present — `scrutineer/paths.py` resolves the bundled assets when installed and the repo-root copies when run from a clone.
+### Commands the skills use
 
-### Option B — manual, step by step
-
-The steps below are what the installer automates; use them if you want to run each tool individually.
-
-#### 1. Generate a service map (optional, recommended)
-
-Copy `generate-servicemap/SKILL.md` to `.claude/commands/scrutineer-servicemap.md` in your target repo:
+The installed skills reach vld8's bundled scripts through the CLI, so they work in any repo:
 
 ```bash
-cp generate-servicemap/SKILL.md /path/to/your-repo/.claude/commands/scrutineer-servicemap.md
+vld8 mcp analyze|fetch|validate|capture [args]   # the MCP review scripts
+vld8 map validate servicemap.json                # check a map against the schema
+vld8 map schema                                  # print the schema's path
 ```
 
-Then in Claude Code, inside your repo:
-
-```
-/scrutineer-servicemap --path servicemap.json
-```
-
-Validate the output:
+### From a clone
 
 ```bash
-python generate-servicemap/validate_servicemap.py servicemap.json
+git clone https://github.com/cyrus-is/vld8 && cd vld8
+pip install -e .            # the vld8 CLI, running from this checkout
 ```
 
-#### 2. Generate review skills
+Each tool also runs on its own from the clone:
 
 ```bash
-# Peer review skill
-python generate-peer-review/generate.py /path/to/your-repo \
-  --output .claude/commands/scrutineer-code.md
-
-# Security review skill
-python generate-security-review/generate.py /path/to/your-repo \
-  --output .claude/commands/scrutineer-security.md
+python generate-peer-review/generate.py /path/to/your-repo --output .claude/commands/vld8-review.md
+python generate-security-review/generate.py /path/to/your-repo --output .claude/commands/vld8-security.md
+cp generate-servicemap/SKILL.md /path/to/your-repo/.claude/commands/vld8-map.md
+cp mcp-review/SKILL.md /path/to/your-repo/.claude/commands/vld8-mcp.md
 ```
 
-Both generators **auto-discover `servicemap.json` at the repo root** when present, producing the richer cross-service-aware skill. Pass `--service-map /path/to/servicemap.json` for a non-standard location, or `--no-service-map` to deliberately skip it.
-
-#### 3. Use the skills
-
-In Claude Code, inside your repo:
-
-```
-/scrutineer-code                       # Review current branch diff
-/scrutineer-code 123                   # Review PR #123
-/scrutineer-code <component-name>      # Full review of a service/app (requires service map)
-/scrutineer-code --deep                # Deep repo-wide review across services
-
-/scrutineer-security                   # Security audit of current branch diff
-/scrutineer-security 123               # Audit PR #123 (findings to terminal, not posted)
-/scrutineer-security <component-name>  # Full audit of a service/app (requires service map)
-/scrutineer-security --deep            # Deep repo-wide audit across services
-```
-
-#### 4. Audit an MCP server (standalone)
-
-`mcp-review` ships its own analyzer, so set up its venv once:
-
-```bash
-cd mcp-review
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-```
-
-Install the skill into your repo, then run it in Claude Code:
-
-```bash
-cp mcp-review/SKILL.md /path/to/your-repo/.claude/commands/scrutineer-mcp.md
-```
-
-```
-/scrutineer-mcp                                        # review every server in the auto-discovered config
-/scrutineer-mcp github                                 # review one named server
-/scrutineer-mcp --config .mcp.json --tools tools.json  # add a captured tools/list for the tool-surface pass
-```
+Both generators use `servicemap.json` at the repo root when it's present. Pass `--service-map PATH` for a map stored somewhere else, or `--no-service-map` to skip it.
 
 ## Requirements
 
-- Python 3.10+ (the tools use `X | None` type syntax)
-- `pyyaml>=6.0` (`pip install pyyaml`)
-- [Claude Code](https://claude.ai/code) to run the skills
+- Python 3.10+ and `pyyaml>=6.0`, which pip installs for you.
+- [Claude Code](https://claude.ai/code) to run the commands.
+- `git`. Detection reads git's file list, and falls back to walking the directory outside a git repo.
+- [`gh`](https://cli.github.com) for PR mode in both reviews.
+- The `claude` CLI for `vld8 install --crawl`.
 
 ## Customizing
 
-The review tools are driven by YAML guidance files:
+Three YAML files drive the tools:
 
-- **`generate-peer-review/peer_review_guidance.yaml`** — platform detection rules, pre-flight checks, focus areas, and change-type signals for peer review
-- **`generate-security-review/security_guidance.yaml`** — platform detection rules, vulnerability checklists with OWASP mapping, and secure alternatives
-- **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns for MCP review
+- **`generate-peer-review/peer_review_guidance.yaml`:** for the code review, the platform detection rules, pre-flight checks, focus areas, change-type signals and verification ladders.
+- **`generate-security-review/security_guidance.yaml`:** for the security review, the platform detection rules and the vulnerability checklists, with OWASP references and secure alternatives.
+- **`mcp-review/mcp_risk_guidance.yaml`:** for the MCP analyzer, the config problems, sensitive environment-variable patterns, capability and data-sensitivity taxonomies, and tool-poisoning patterns.
 
-To add a new platform or customize checks for your stack, add entries to these files. The two generators pick them up automatically and self-heal — if they detect a platform in your repo that isn't in the guidance file, they'll flag it and offer to enrich the guidance. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
+Edit them in a clone installed with `pip install -e .`, then run `vld8 install --force` to regenerate the review commands. The generators only detect platforms these files describe. Drafts from a review's coverage gaps aren't written back automatically, so add the ones worth keeping here. If a change would help everyone, open a PR.
 
-The service map schema is documented in `references/schema.md`.
+## Agent support
 
-## Supported platforms
-
-**Backend:** Go, Python, Java, Node.js / JavaScript, Rust, C# / .NET, Ruby, PHP
-**Web:** React / Next.js, Vue.js, Angular
-**Mobile:** iOS (Swift), Android (Kotlin/Java), React Native, Flutter
-**Infrastructure:** Terraform, Docker, Kubernetes, GitHub Actions, GitLab CI
-**API:** OpenAPI / REST, GraphQL, gRPC
-**Database:** SQL, MongoDB
-**Auth:** JWT, OAuth 2.0
-
-Peer review covers a subset; the security review covers the full set above.
-
-Missing your stack? Add it to the guidance YAML and open a PR.
+vld8 supports **Claude Code** only. Support for Cursor, Gemini CLI and OpenAI Codex CLI is planned but not started; it's tracked in the [Multi-tool support milestone](https://github.com/cyrus-is/vld8/milestone/1).
 
 ## License
 

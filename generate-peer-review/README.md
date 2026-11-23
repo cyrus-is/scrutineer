@@ -1,11 +1,11 @@
 # generate-peer-review
 
 Scans a repository (and optionally a `servicemap.json`) to generate a tailored
-`.claude/commands/scrutineer-code.md` — a Principal Engineer-level code review skill
+`.claude/commands/vld8-review.md` — a Principal Engineer-level code review skill
 with platform-specific pre-flight checks, focus areas, and 8 evaluation lenses.
 
 > **Most users don't run this directly.** The top-level installer does it for you —
-> `scrutineer install <repo>` (or the `/scrutineer-setup` skill); see the
+> `vld8 install <repo>` (or the `/vld8-setup` skill); see the
 > [main README](../README.md). Run the generator directly when you want control over
 > the output path, guidance file, or service-map wiring.
 
@@ -30,12 +30,74 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 1. **Scans** the repo for languages, frameworks, and infrastructure
 2. **Loads** platform-specific pre-flight checks and focus areas from `peer_review_guidance.yaml`
 3. **Optionally reads** `servicemap.json` to discover reviewable components (services + apps)
-4. **Generates** a `/scrutineer-code` skill with four invocation modes:
-   - `/scrutineer-code` — review current branch diff vs main
-   - `/scrutineer-code 123` — review PR #123 (fetches, diffs, posts findings as comment)
-   - `/scrutineer-code <component-name>` — full review of a service/app directory (requires service map)
-   - `/scrutineer-code --deep` — deep repo-wide review tracing cross-service flows and systemic issues
-5. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
+4. **Generates** a `/vld8-review` skill with four invocation modes:
+   - `/vld8-review` — review current branch diff vs main
+   - `/vld8-review 123` — review PR #123 (fetches, diffs, posts findings as comment)
+   - `/vld8-review <component-name>` — full review of a service/app directory (requires service map)
+   - `/vld8-review --deep` — deep repo-wide review tracing cross-service flows and systemic issues
+5. **Embeds a verification ladder** (`verification:` in the guidance YAML) — a Phase 0 that runs
+   the repo's own gate or the platform's cheap subset *before* judging anything
+6. **Embeds self-healing** — flags unknown platforms and offers to enrich itself
+
+## Cross-cutting: universal, service, client
+
+The cross-cutting block is split three ways. It used to be one list introduced as "the
+highest-value focus areas, apply to EVERY review" — and four of its six items assumed an HTTP
+service with endpoints, response envelopes, billing tiers and other users. On a local-first
+single-user app they were not merely unhelpful, they were literally false, which teaches a
+reviewer to skim the section that claims to matter most.
+
+`universal` is emitted always; `service` and `client` carry an `applies_when` gate that the
+generated skill prints, so a reviewer skips an inapplicable set rather than forcing findings
+out of it.
+
+Two live reviews showed that **the wording, not the question, is what fails to travel**:
+"guard consistency" was the best-performing item in both runs, but only once re-read from
+"endpoint" to "any code path reaching the same resource". The universal set is phrased in
+terms of code paths and resources for that reason; the service set keeps HTTP vocabulary
+where it is genuinely apt.
+
+## Phase 0: verify before you judge
+
+The generated skill opens by establishing what the toolchain already proves, and converts that into
+an **exclusion list** the rest of the review must honour. A review that reports a missing `Sendable`
+conformance in code `swift build` accepted under Swift 6 language mode is not merely unhelpful — it
+is confidently wrong, and it spends the reader's trust on the findings that are real.
+
+Phase 0 prefers the **repo's own gate script** (`run-gate.sh`, `scripts/ci.sh`, a `Makefile`
+`check:` target, the merge-gating workflow) over anything inferred: it is the most accurate
+available description of what "correct" means in that repo, and it usually explains why each stage
+exists. If the gate is red, the skill stops — reviewing code that does not build is guesswork, and
+the build failure is the finding.
+
+Ladders live under `verification.platforms.<platform_key>` and carry four things: the commands
+(split into per-diff and per-repo), what each proves (`proves` → the exclusion list), what remains
+unproven (which is where the review's value actually is), and what never to run.
+
+## Detection: `detect_files`, `detect_content`, `detect_mode`
+
+`detect_mode` controls how a platform block's two detection signals combine:
+
+| Mode | Behaviour |
+|---|---|
+| `files` *(default)* | `detect_files` decides. `detect_content` is consulted only when a block declares no `detect_files`. |
+| `all` | **Both** must match — "Swift files AND they import CloudKit". This is what a capability sub-platform needs; without it such a block fires on every repo in the language. |
+| `any` | Either signal detects the platform. Opt-in, and only after validating the patterns. |
+
+`files` is the default deliberately. Under the previous implementation `detect_content` could never
+be reached for a block that declared `detect_files` — which is every block in both guidance files —
+so those patterns have never been evaluated and several are wrong: `go`'s `^module\s+` and `java`'s
+`^package\s+[a-z]` both match modern Swift (`package` is a Swift 5.9 access modifier), and
+promoting them to a fallback detects Go and Java in a pure Swift repo.
+
+Two matching gotchas worth knowing before adding a block:
+
+- **Matching is `fnmatch`, not globstar.** `*` matches `/`, and `**/x` compiles to `.*/x` — "x
+  preceded by at least one slash". A root-level `Package.swift` therefore never matches
+  `**/Package.swift`. **Pair every `**/foo` with a bare `foo`.**
+- **`component_globs`** (optional) sets which paths get named in the generated skill, for blocks
+  whose `detect_files` include single manifest files rather than review surfaces. Paths are ranked
+  by how much code each contributes, so the ones the skill names are the ones that matter.
 
 ## The 8 Evaluation Lenses
 
@@ -52,7 +114,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 **Backend:** Go, Python, Java, Node.js, Rust, C#, Ruby, PHP
 **Web:** React/Next.js, Vue/Nuxt
-**Mobile:** iOS (Swift), Android (Kotlin)
+**Mobile:** Android (Kotlin)
+**Apple:** Swift (language & concurrency), SwiftUI, CloudKit, Foundation Models (on-device AI),
+Swift Package Manager, Apple app target, macOS app, Swift Testing
+
+The Apple blocks replaced a single `ios` block whose six checks were written for a UIKit app talking
+to a REST API. Three were cut rather than ported: `DispatchQueue.main` misuse is a compile error
+under Swift 6 main-actor isolation, retain cycles are rare in value- and actor-oriented code, and one
+check hardcoded a foreign API's pagination default. The capability blocks use `detect_mode: all`, so
+`cloudkit` means "Swift files **and** they import CloudKit" rather than firing on every Swift repo.
 **Infra:** Terraform, Docker, GitHub Actions
 **API:** OpenAPI/REST, GraphQL
 **Database:** SQL (general)
@@ -67,7 +137,7 @@ Generate a service map first: see `../generate-servicemap/`.
 ## Options
 
 ```
---output, -o        Output path (default: .claude/commands/scrutineer-code.md)
+--output, -o        Output path (default: .claude/commands/vld8-review.md)
 --service-map, -s   Path to servicemap.json for richer context
 --guidance, -g      Custom guidance YAML path
 --dry-run, -n       Preview without writing

@@ -1,5 +1,5 @@
 {
-  "_comment": "KNOWN-BAD corpus — each entry reconstructs a documented real-world malicious/vulnerable MCP case as a DETECTION test for /scrutineer-mcp.",
+  "_comment": "KNOWN-BAD corpus — each entry reconstructs a documented real-world malicious/vulnerable MCP case as a DETECTION test for /vld8-mcp.",
   "_WARNING": "DEFANGED — NEVER LAUNCH. Every package name is a non-existent placeholder (…-EXAMPLE-do-not-install) so a runner can't fetch real or squatted code; every host uses the non-routable .invalid TLD (RFC 2606) so nothing can be reached or exfiltrated to; and the source/ snippets are stubbed (no exec, no send) so they're inert even if executed. These are static-analysis fixtures, not runnable servers. Real incident mapping is in each _case and in README.md.",
   "_test_note": "FOR DETECTION/EVAL: pretend every entry here is a genuine, live attack. The defanging above (.invalid hosts, EXAMPLE package names, stubbed source) is SAFETY-ONLY and is NOT grounds to downgrade, suppress, or validate-out any finding. If the analyzer or the agentic validator stops flagging these because they 'look like fake test fixtures', that is a regression — not a cleanup.",
   "mcpServers": {

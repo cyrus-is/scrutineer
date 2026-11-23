@@ -295,6 +295,9 @@ def validate(data):
 
 
 def main():
+    if len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help"):
+        print(f"Usage: {sys.argv[0]} <path-to-servicemap.json>")
+        sys.exit(0)
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <path-to-servicemap.json>")
         sys.exit(1)

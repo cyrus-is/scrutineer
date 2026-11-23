@@ -1,10 +1,10 @@
 ---
-name: scrutineer-servicemap
+name: vld8-map
 description: >
   Deep agentic crawl of a code repository to produce a machine-readable servicemap.json that maps every service,
   app, library, data store, external dependency, infrastructure resource, CI/CD pipeline, and inter-service
   communication path — including authentication, authorization, public/private endpoints, and confidence scores.
-  Use this skill whenever the user says /scrutineer-servicemap, asks to "map a repo", "build a service map",
+  Use this skill whenever the user says /vld8-map, asks to "map a repo", "build a service map",
   "generate a service topology", "trace service dependencies", "map infrastructure", or any variation of
   "understand how this codebase fits together." Also trigger when the user asks to update or enrich an
   existing servicemap.json. This skill is designed for DEEP crawls — it does not support shallow or partial
@@ -12,7 +12,7 @@ description: >
   direct human reading.
 ---
 
-# /scrutineer-servicemap
+# /vld8-map
 
 Generate a comprehensive, machine-readable `servicemap.json` from a repository by performing a deep, phased
 agentic crawl. The map captures services, apps, libraries, infrastructure, data stores, external dependencies,
@@ -22,19 +22,19 @@ on every discovery.
 ## Invocation
 
 ```
-/scrutineer-servicemap --path <output-path>
+/vld8-map --path <output-path>
 ```
 
 - `--path` (optional): Where to write the output file. Defaults to `./servicemap.json` in the current
   working directory. Use a specific path to control where the map lands (e.g.,
-  `/scrutineer-servicemap --path tools/servicemap.json`).
+  `/vld8-map --path tools/servicemap.json`).
 
 ## Before You Start
 
-1. **Locate the schema**: Look for `references/schema.md` relative to the directory where `servicemap.json`
-   will be written (i.e., sibling `references/` folder next to the output path). For example:
-   - Output path `tools/servicemap.json` → read `references/schema.md`
-   - Output path `./servicemap.json` → read `./references/schema.md`
+1. **Locate the schema**: run `vld8 map schema`, which prints the path of the schema
+   bundled with the CLI (`python3 -m vld8 map schema` if `vld8` isn't on PATH).
+   From a clone of the vld8 repo it is `references/schema.md`. If neither is available, tell the
+   user (`pip install vld8` fixes it) rather than inventing the structure.
 
    Read the schema to internalize the full JSON structure. Every field matters — the schema is
    the contract that downstream skills and apps depend on.
@@ -59,10 +59,11 @@ Scan the repository structure to identify:
 
 - **Services**: Anything that runs independently. Heuristics: has its own Dockerfile, has a `package.json`
   / `go.mod` / `Cargo.toml` / `pyproject.toml` / `build.gradle` / `pom.xml` / `*.csproj` / `*.sln`
-  with an entrypoint, has its own Terraform module that provisions compute (ECS, Lambda, EC2, Cloud Run,
-  App Service, etc.), or has its own Kubernetes Deployment manifest.
+  / `Package.swift` with an entrypoint, has its own Terraform module that provisions compute (ECS,
+  Lambda, EC2, Cloud Run, App Service, etc.), or has its own Kubernetes Deployment manifest.
 - **Apps**: Frontend applications, mobile apps, CLI tools. Distinguished from services by being
-  user-facing rather than API-facing.
+  user-facing rather than API-facing. Apple platform apps declare themselves with an `*.xcodeproj`
+  or `*.xcworkspace`, or a `Package.swift` with an `.executableTarget`.
 - **Libraries**: Shared internal packages without their own entrypoint. Look for workspace members,
   internal package references, monorepo package directories.
 - **Infrastructure**: Terraform/OpenTofu/Pulumi/CloudFormation directories. Each module or stack is a
@@ -83,6 +84,30 @@ For each component discovered, record:
 
 Write the Phase 1 manifest to memory before proceeding. This is your roadmap for subsequent phases.
 
+### Phase 1a: Ask the Build System Before Inferring
+
+Some toolchains will hand you the component graph exactly, in seconds, for no reasoning cost. When a
+manifest command is available, run it and treat its output as ground truth — a crawl that infers a
+graph the toolchain would have stated is slower, less accurate, and less complete.
+
+| Repo shape | Command | Gives you |
+|---|---|---|
+| `Package.swift` at root | `swift package dump-package` | Every target, its type (`regular` / `test` / `executable`), its dependencies, external package dependencies, and the platform floors — the whole internal module graph as JSON |
+| `*.xcodeproj` / `*.xcworkspace` | `xcodebuild -list -json` | Scheme and target names, which are not derivable from the project name |
+| `package.json` workspaces | `npm query .workspace` / `pnpm -r list --json` | Workspace member packages and their interdependencies |
+| `go.mod` | `go list -deps -json ./...` | Package graph |
+| `Cargo.toml` workspace | `cargo metadata --format-version 1` | Workspace members and the dependency graph |
+
+Record each Swift target as a **library** component (or **app** for an `.executableTarget`), with the
+`dependencies` array from the dump as its outbound `connections` of type `library`, and
+`discovery_method: "swift package dump-package"` at confidence `1.0` — this is a declaration, not an
+inference. Note the platform floors on the package component: they are a deployment constraint that
+downstream reviews need.
+
+A target that is depended on by no test target is worth recording as such. That is frequently
+deliberate (a module that links a framework the test host cannot load), and it is exactly the kind
+of architectural fact a service map exists to make visible.
+
 ### Phase 1b: Fallback Discovery — Unknown or Sparse Stacks
 
 If Phase 1 discovers fewer components than the repository structure suggests (e.g., a large repo with
@@ -92,7 +117,8 @@ heuristics above, run a fallback discovery pass:
 1. **Scan for generic service signals**:
    - Entrypoint files: `main.*`, `app.*`, `server.*`, `Program.cs`, `Startup.cs`, `index.*`
    - Build system files not already matched: `Makefile`, `CMakeLists.txt`, `*.csproj`, `*.sln`,
-     `*.fsproj`, `mix.exs`, `build.zig`, `dune-project`, `*.cabal`, `stack.yaml`
+     `*.fsproj`, `mix.exs`, `build.zig`, `dune-project`, `*.cabal`, `stack.yaml`, `Package.swift`,
+     `*.xcodeproj`, `*.xcworkspace`, `project.yml` (XcodeGen)
    - Port exposure: `EXPOSE` in any Dockerfile, `ports:` in docker-compose, `listen` calls in source
    - HTTP handler patterns: any file registering routes, handlers, or controllers
    - Database connection patterns: connection strings, ORM config, migration directories
@@ -228,7 +254,7 @@ establish a connection.
 
 **Goal**: Produce the final `servicemap.json`.
 
-1. Assemble all phase outputs into the schema defined in `references/schema.md`.
+1. Assemble all phase outputs into the schema (the file `vld8 map schema` names).
 2. **Validate completeness**: Every service discovered in Phase 1 should have a deep-dive entry from
    Phase 2 and connections from Phase 3. If any are missing, go back and fill them.
 3. **Identify stubs**: Any service, data store, or dependency referenced but NOT found in this repo
@@ -252,7 +278,7 @@ Running the crawler against repo B does not touch repo A's components. Component
 removed from the map automatically. They can only be:
 - **Updated** (re-crawled from their source repo)
 - **Marked stale** (not found in their own source repo during a re-crawl)
-- **Explicitly deleted** by the user (e.g., `/scrutineer-servicemap --remove-repo my-old-repo`)
+- **Explicitly deleted** by the user (e.g., `/vld8-map --remove-repo my-old-repo`)
 
 ### When an existing servicemap.json is found:
 
@@ -295,7 +321,7 @@ a refresh. If any repo is more than 30 days stale, flag it:
 
 ```
 ⚠️ STALE REPOS: notification-service was last crawled 45 days ago (5 components).
-   Consider re-running /scrutineer-servicemap from that repo to refresh.
+   Consider re-running /vld8-map from that repo to refresh.
 ```
 
 ### First-time crawl (no existing map)
@@ -317,9 +343,39 @@ Every discovery should include a confidence score. Use this calibration:
   service but no entrypoint found.
 - **< 0.3**: Weak signal. Include only if it fills a gap that would otherwise be a stub.
 
+### Required fields the validator enforces
+
+`validate_servicemap.py` rejects a map that omits these. A crawl that follows the prose above
+but not this list produces a map that fails the toolkit's own validator, so check against it
+before writing the file.
+
+**Every component:** `id`, `name`, `type`, `confidence`, `discovery_method`, `last_crawled`,
+`stub`. Non-stub components also need `path`, except `external` ones.
+
+**`type` must be one of:** `service`, `app`, `library`, `infrastructure`, `pipeline`,
+`datastore`, `external`.
+
+**`datastore` additionally requires:** `engine`, `shared`, `consumers`.
+
+**`external` additionally requires:** `vendor`, `category`, `consumers` — and takes no `path`.
+
+**Every connection:** `id`, `source`, `target`, `type`, plus `confidence` and
+`discovery_method`. **`type` must be one of:** `http`, `grpc`, `graphql`, `websocket`,
+`queue`, `pubsub`, `event`, `database`, `cache`, `storage`, `library`, `infrastructure`.
+There is no `sdk` type — a framework dependency is `library`, and a managed data service
+reached through a vendor SDK is `storage` or `database` by what it stores.
+
+**`metadata` requires:** `total_components`, `total_connections`, `total_stubs`,
+`component_counts`, `low_confidence_components`, `shared_datastores`,
+`unauthenticated_public_endpoints`, `unmonitored_services`.
+
+Run `vld8 map validate <path>` when you are done (from a clone:
+`python generate-servicemap/validate_servicemap.py <path>`). Fix what it reports rather than
+shipping a map that only mostly conforms.
+
 ## Output
 
-The output is a single JSON file conforming to the schema in `references/schema.md`. The JSON should
+The output is a single JSON file conforming to the schema (see "Locate the schema" above). The JSON should
 be pretty-printed with 2-space indentation for version control friendliness, even though it's
 machine-targeted.
 

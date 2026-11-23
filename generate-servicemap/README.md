@@ -3,20 +3,20 @@
 A Claude Code skill that performs a deep, phased crawl of a repository and produces a machine-readable `servicemap.json` — mapping every service, app, library, data store, external dependency, infrastructure resource, CI/CD pipeline, and inter-service connection.
 
 > **Most users don't copy this manually.** The top-level installer places the skill for you —
-> `scrutineer install <repo>`, or the `/scrutineer-setup` skill which also runs the crawl; see the
+> `vld8 install <repo>`, or the `/vld8-setup` skill which also runs the crawl; see the
 > [main README](../README.md). The setup below is for installing the skill by hand. The default
 > output is `./servicemap.json` with `./references/schema.md` alongside; the `tools/` paths below are
 > just an example of pointing `--path` elsewhere.
 
 ## Setup
 
-1. Copy `SKILL.md` into your repo's `.claude/commands/` directory (rename to `scrutineer-servicemap.md`)
+1. Copy `SKILL.md` into your repo's `.claude/commands/` directory (rename to `vld8-map.md`)
 2. Place `references/schema.md` as a sibling `references/` folder next to where you want the output:
 
 ```
 your-repo/
 ├── .claude/commands/
-│   └── scrutineer-servicemap.md    ← copy of SKILL.md
+│   └── vld8-map.md              ← copy of SKILL.md
 ├── tools/
 │   ├── references/
 │   │   └── schema.md            ← schema reference
@@ -31,10 +31,10 @@ From Claude Code in your repo:
 
 ```
 # Default: writes to ./servicemap.json, looks for ./references/schema.md
-/scrutineer-servicemap
+/vld8-map
 
 # Specify output path: writes to tools/servicemap.json, looks for tools/references/schema.md
-/scrutineer-servicemap --path tools/servicemap.json
+/vld8-map --path tools/servicemap.json
 ```
 
 ## What it produces
@@ -47,9 +47,12 @@ A `servicemap.json` (schema v1.0.0) containing:
 
 ## Downstream consumers
 
-The service map is consumed by:
-- **generate-security-review** — uses component paths and languages for more precise platform detection
-- **generate-peer-review** — uses connections, auth, observability, and shared datastore data to inform review lenses
+The service map is consumed by both review generators at generate time, and by the generated skills at review time:
+- **generate-peer-review** — lists the reviewable components (name, type, path, language) for Mode 3, uses connection counts to name the most-connected components for Mode 4, and partitions oversized diffs along component boundaries
+- **generate-security-review** — lists the reviewable components, and adds the map's unauthenticated public endpoints and shared datastores to the universal checklist
+- **The generated skills** — tell the reviewer to read `servicemap.json` for cross-service flows in Modes 3 and 4
+
+Platform detection does not use the map; both generators detect platforms from the repo's files.
 
 ## Validation
 

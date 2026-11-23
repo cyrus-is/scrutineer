@@ -1,18 +1,18 @@
 # Security Policy
 
-Scrutineer is a security tool, so its own disclosure process is held to the same bar.
+vld8 reviews other people's code for security problems, so its own disclosure process is held to the same bar.
 
 ## Reporting a vulnerability
 
 **Please do not open a public issue for a security problem.**
 
-Report it privately via GitHub's **[Report a vulnerability](https://github.com/cyrus-is/scrutineer/security/advisories/new)** (the repo's Security tab → Advisories). That opens a private channel with the maintainer.
+Report it privately via GitHub's **[Report a vulnerability](https://github.com/cyrus-is/vld8/security/advisories/new)** (the repo's Security tab → Advisories). That opens a private channel with the maintainer.
 
 You'll get an acknowledgement within a few days — best effort; this is solo-maintained OSS. If a fix is warranted we'll coordinate a private patch and a disclosure timeline, and credit you in the advisory unless you'd prefer to stay anonymous.
 
 ## What's in scope
 
-Scrutineer is a **static** analyzer by default: `analyze_mcp.py` never starts an MCP server, calls a tool, executes fetched code, or runs a package manager, and that must stay true. The one component that deliberately executes a server under review is `mcp-review/capture_runtime.py`, which is a separate, opt-in entrypoint gated behind `--run` — the static analyzer never imports it and communicates with it only through a JSON record. The highest-value areas to probe:
+The MCP reviewer is a **static** analyzer by default: `analyze_mcp.py` never starts an MCP server, calls a tool, executes fetched code, or runs a package manager, and that must stay true. The one component that deliberately executes a server under review is `mcp-review/capture_runtime.py`, which is a separate, opt-in entrypoint gated behind `--run` — the static analyzer never imports it and communicates with it only through a JSON record. The highest-value areas to probe:
 
 - **`mcp-review/fetch_source.py`** — the source-acquisition step. Its extractor must reject zip-slip (`../`), symlinks, hardlinks, absolute paths, and special files, and must never execute a fetched lifecycle/`postinstall` script. (Guarded by `mcp-review/tests/test_fetch_source.py`.)
 - **`mcp-review/capture_runtime.py`** — the behavioral harness. It runs untrusted code on purpose, so its containment is in scope: the child environment must never inherit `os.environ` or receive a real credential (canaries and placeholders only), `HOME` must be redirected to a throwaway directory, and the recording sink must never forward a captured request to its real destination. A path by which the harness executes without `--run`, leaks a live secret into the child, or completes an exfiltration it was meant to record is a vulnerability. (Guarded by `mcp-review/tests/test_capture_runtime.py`.)
@@ -21,4 +21,4 @@ Scrutineer is a **static** analyzer by default: `analyze_mcp.py` never starts an
 
 ## Supported versions
 
-The latest release on PyPI is supported. Please `pip install -U scrutineer` before reporting.
+The latest release on PyPI is supported. Please `pip install -U vld8` before reporting.

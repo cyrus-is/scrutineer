@@ -3,14 +3,14 @@
 Peer Review Skill Generator
 
 Scans a repository (and optionally consumes a servicemap.json) to generate a
-tailored .claude/commands/scrutineer-code.md with platform-specific pre-flight
+tailored .claude/commands/vld8-review.md with platform-specific pre-flight
 checks, focus areas, and evaluation lenses.
 
 The generated skill supports four invocation modes:
-  /scrutineer-code                  — review current branch diff vs main
-  /scrutineer-code 123              — review PR #123 (git pull + checkout)
-  /scrutineer-code <component-name> — full review of a service/app from the service map
-  /scrutineer-code --deep           — deep repo-wide review across services
+  /vld8-review                  — review current branch diff vs main
+  /vld8-review 123              — review PR #123 (git pull + checkout)
+  /vld8-review <component-name> — full review of a service/app from the service map
+  /vld8-review --deep           — deep repo-wide review across services
 
 Usage:
     python generate.py /path/to/repo
@@ -20,14 +20,62 @@ Usage:
 
 import argparse
 import fnmatch
+import functools
+import itertools
 import json
 import os
 import re
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
 
 import yaml
+
+
+def _render(template: str, **values) -> str:
+    """Dedent a section template, then fill in its values.
+
+    The order matters. ``textwrap.dedent(f"...")`` dedents *after* interpolation,
+    so a value that spans lines brings continuation lines with less indent than
+    the template's, dedent finds a smaller common margin, and the whole section
+    keeps its source indentation, which Markdown renders as a code block.
+    Dedenting the template first makes the output independent of the values.
+    Literal braces in templates are written doubled, as in an f-string.
+    """
+    return textwrap.dedent(template).format(**values)
+
+
+@functools.lru_cache(maxsize=None)
+def _glob_regex(pattern: str) -> "re.Pattern[str]":
+    parts = pattern.split("**/")
+    candidates = {
+        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
+        for keeps in itertools.product((True, False), repeat=len(parts) - 1)
+    }
+    return re.compile("|".join(f"(?:{fnmatch.translate(c)})" for c in sorted(candidates)))
+
+
+def glob_match(rel: str, pattern: str) -> bool:
+    """fnmatch, except that `**/` may also match no directory at all.
+
+    fnmatch's `*` already crosses `/`, so `**/` behaves like `*/` and demands at
+    least one directory: `App/**/*.swift` never matched `App/Foo.swift`, and
+    `**/*.swift` never matched a root-level file, which is why the guidance lists
+    both forms of so many globs. Allowing each `**/` to be dropped gives the usual
+    zero-or-more-directories meaning without changing what `*` matches.
+    """
+    return _glob_regex(pattern).match(rel) is not None
+
+
+def code_span(text: str) -> str:
+    """Wrap text as inline code, even when it contains backticks itself.
+
+    A command such as "swiftlint … <the config's `included:` paths>" inside a
+    single-backtick span closes the span at its first inner backtick, so the
+    reader copies a truncated command. Markdown allows a longer fence instead.
+    """
+    return f"`` {text} ``" if "`" in text else f"`{text}`"
 
 
 # ---------------------------------------------------------------------------
@@ -62,81 +110,247 @@ class RepoAnalyzer:
         if not self.repo_path.is_dir():
             raise ValueError(f"Not a directory: {self.repo_path}")
         self._file_index: list[Path] | None = None
+        self._text_cache: dict[str, str | None] = {}
+
+    # Third-party trees that are sometimes committed. Skipped even in the git
+    # index; everything else that git tracks is the repo's own code.
+    TRACKED_SKIP_DIRS = {"node_modules", "bower_components", "Pods", "Carthage"}
 
     @property
     def file_index(self) -> list[Path]:
         if self._file_index is None:
-            # Sort directories and files so traversal order is deterministic
-            # across filesystems. Without this, output (and any drift-detection
-            # gates downstream) differs between macOS APFS, Linux ext4, etc.
-            self._file_index = []
-            for root, dirs, files in os.walk(self.repo_path):
-                dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
-                for f in sorted(files):
-                    self._file_index.append(Path(root) / f)
+            self._file_index = self._git_index()
+            if self._file_index is None:
+                self._file_index = self._walk_index()
         return self._file_index
+
+    def _git_index(self) -> list[Path] | None:
+        """Tracked plus untracked-but-not-ignored files, or None outside a git repo.
+
+        Walking the working tree let gitignored build output, worktree caches,
+        vendored SAM builds and scratch folders decide which platforms a repo
+        has and which directories the skill names (written into a file meant to
+        be committed), and read gitignored secret- and PII-bearing files along
+        the way. What git would commit is what the review is about. A
+        top-level `vendor/` (Go, PHP, Ruby) is third-party by convention; a
+        nested one is often first-party, so only the top level is skipped.
+        """
+        try:
+            out = subprocess.run(
+                ["git", "-C", str(self.repo_path), "ls-files", "-z",
+                 "--cached", "--others", "--exclude-standard"],
+                capture_output=True, check=True, timeout=120,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            return None
+        files = []
+        for rel in sorted(set(p for p in out.decode("utf-8", "surrogateescape").split("\0") if p)):
+            parts = Path(rel).parts
+            if parts[0] == "vendor" or any(p in self.TRACKED_SKIP_DIRS for p in parts[:-1]):
+                continue
+            f = self.repo_path / rel
+            if f.is_file():
+                files.append(f)
+        return files
+
+    def _walk_index(self) -> list[Path]:
+        # Outside git, fall back to a walk with a name denylist. Sorted so the
+        # order is deterministic across filesystems.
+        files = []
+        for root, dirs, names in os.walk(self.repo_path):
+            dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
+            for f in sorted(names):
+                files.append(Path(root) / f)
+        return files
 
     def relative_paths(self) -> list[str]:
         return [str(f.relative_to(self.repo_path)) for f in self.file_index]
 
     def matches_glob(self, pattern: str) -> list[str]:
-        return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
+        return [rel for rel in self.relative_paths() if glob_match(rel, pattern)]
 
-    def file_contains(self, pattern: str, max_files: int = 50, max_bytes: int = 50_000) -> bool:
-        regex = re.compile(pattern, re.MULTILINE)
+    # Extensions worth grepping for platform signals. Without this filter,
+    # content detection burns its budget on binary assets and generated data
+    # before it reaches source. Documentation extensions are deliberately absent:
+    # a README that mentions `import SwiftUI` must not detect an iOS platform.
+    CONTENT_EXTS = {
+        ".swift", ".m", ".mm", ".h", ".kt", ".java", ".py", ".go", ".rs", ".rb",
+        ".php", ".cs", ".ts", ".tsx", ".js", ".jsx", ".vue",
+        ".mjs", ".cjs", ".mts", ".cts", ".dart", ".scala", ".ex", ".exs",
+        ".c", ".cc", ".cpp", ".hpp", ".sh",
+        ".yml", ".yaml", ".json", ".toml", ".tf", ".plist", ".entitlements",
+        ".xcconfig", ".xcprivacy", ".pbxproj", ".resolved", ".gradle", ".kts",
+    }
+
+    def _read_text(self, f: Path, max_bytes: int = 2_000_000) -> str | None:
+        """A file's text, read at most once per run; None if unreadable or oversized."""
+        key = str(f)
+        if key not in self._text_cache:
+            try:
+                too_big = f.stat().st_size > max_bytes
+                self._text_cache[key] = None if too_big else f.read_text(errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                self._text_cache[key] = None
+        return self._text_cache[key]
+
+    def file_contains_any(self, patterns: list[str], extensions: list[str] | set | None = None,
+                          max_files: int = 5000) -> bool:
+        """True when any file with a matching extension matches any of the patterns.
+
+        All of a block's patterns are checked in one pass, and each file is read
+        once per run, so a block with six patterns costs one walk, not six.
+        """
+        # The budget used to be 50 files / 50 KB, which on any real repo was
+        # exhausted in the first directory `os.walk` happened to visit. Measured
+        # on a 1071-file Swift repo: `^import CloudKit` (16 real hits),
+        # `^import Testing` (273) and `^import FoundationModels` (13) all
+        # returned False because the walk never reached `Sources/`. Detection
+        # that depends on walk order is not detection.
+        regexes = [re.compile(p, re.MULTILINE) for p in patterns]
+        exts = set(extensions) if extensions else None
         count = 0
         for f in self.file_index:
-            if f.stat().st_size > max_bytes:
+            if exts is not None and f.suffix not in exts:
+                continue
+            text = self._read_text(f)
+            if text is None:
                 continue
             count += 1
             if count > max_files:
                 break
-            try:
-                if regex.search(f.read_text(errors="ignore")):
-                    return True
-            except (OSError, UnicodeDecodeError):
-                continue
+            if any(r.search(text) for r in regexes):
+                return True
         return False
 
     def detect_platforms(self, guidance: dict) -> dict[str, dict]:
+        # `detect_mode` controls how detect_files and detect_content combine:
+        #
+        #   "files" (default) — detect_files decides. detect_content is consulted
+        #                       ONLY when a block declares no detect_files. This
+        #                       is the historical behaviour, kept as the default
+        #                       deliberately: because the old code could never
+        #                       reach detect_content for a block that had
+        #                       detect_files, those patterns have never once been
+        #                       evaluated, and several are wrong. `go`'s
+        #                       `^module\s+` and `java`'s `^package\s+[a-z]` both
+        #                       match modern Swift source (`package` is a Swift
+        #                       5.9 access modifier), so promoting them to an
+        #                       OR-fallback detects Go and Java in a pure Swift
+        #                       repo. Opt a block in only after validating its
+        #                       patterns against a real repo.
+        #
+        #   "all"             — BOTH must match. This is what a sub-platform
+        #                       needs: "Swift files AND they import CloudKit" is
+        #                       not expressible otherwise, and without it every
+        #                       capability sub-block fires on every Swift repo.
+        #
+        #   "any"             — either signal detects the platform. Opt-in.
         detected = {}
         rel_paths = self.relative_paths()
         for category_name, platforms in guidance.items():
             for platform_key, platform_data in platforms.items():
-                file_match = False
-                for pattern in platform_data.get("detect_files", []):
-                    for rel in rel_paths:
-                        if fnmatch.fnmatch(rel, pattern):
-                            file_match = True
-                            break
-                    if file_match:
-                        break
-                content_match = False
-                if not platform_data.get("detect_files"):
-                    for cp in platform_data.get("detect_content", []):
-                        if self.file_contains(cp):
-                            content_match = True
-                            break
-                if file_match or content_match:
+                globs = platform_data.get("detect_files", [])
+                contents = platform_data.get("detect_content", [])
+                mode = platform_data.get("detect_mode", "files")
+
+                file_match = any(
+                    glob_match(rel, pattern)
+                    for pattern in globs
+                    for rel in rel_paths
+                )
+
+                # Only pay for a content scan when it can still change the answer.
+                if not contents:
+                    need_content = False
+                elif mode == "all":
+                    need_content = file_match
+                elif mode == "any":
+                    need_content = not file_match
+                else:  # "files"
+                    need_content = not globs
+                # A block may narrow which extensions its content patterns are
+                # searched in. Without that, a repo whose own files *describe*
+                # a pattern matches it: this repo's guidance YAMLs mention
+                # `import AppKit` and `NSApplicationDelegate` as things to look
+                # for, which was enough to detect a macOS app in a pure Python
+                # repo. Documentation about a platform is not that platform.
+                exts = platform_data.get("detect_content_exts") or self.CONTENT_EXTS
+                content_match = (
+                    self.file_contains_any(contents, extensions=exts) if need_content else False
+                )
+
+                if mode == "all":
+                    hit = bool(globs) and file_match and bool(contents) and content_match
+                else:
+                    hit = file_match or content_match
+
+                if hit:
                     detected[platform_key] = {**platform_data, "_category": category_name}
         return detected
 
-    def map_component_paths(self, detected: dict) -> dict[str, list[str]]:
+    def _file_matches_any(self, rel: str, regexes: list, exts=None) -> bool:
+        """True when the file at `rel` matches one of the compiled patterns."""
+        exts = exts or self.CONTENT_EXTS
+        f = self.repo_path / rel
+        if f.suffix not in exts:
+            return False
+        text = self._read_text(f)
+        return bool(text) and any(r.search(text) for r in regexes)
+
+    def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
+        # Ordered by how much code each path actually contributes, NOT
+        # alphabetically. Callers truncate this list to name a few directories in
+        # the generated skill, and an alphabetical sort meant the truncation kept
+        # whichever directories sorted first — on a Swift repo that named two
+        # single-file app shells and dropped every module holding the code.
+        #
+        # For a `detect_mode: all` block, a path only counts if the files there
+        # actually match the block's content patterns. Otherwise a capability
+        # block ("Swift files AND they import CloudKit") would name every Swift
+        # directory in the repo and send the reviewer to files that have nothing
+        # to do with it — the same wrong-directory failure, one level down.
         component_paths = {}
         rel_paths = self.relative_paths()
         for pk, pd in detected.items():
-            paths = set()
-            for pattern in pd.get("detect_files", []):
-                for rel in rel_paths:
-                    if fnmatch.fnmatch(rel, pattern):
+            counts: dict[str, int] = {}
+            scoped = pd.get("detect_mode") == "all" and pd.get("detect_content")
+            regexes = [re.compile(c, re.MULTILINE) for c in pd.get("detect_content", [])] \
+                if scoped else []
+            scope_exts = pd.get("detect_content_exts") or self.CONTENT_EXTS
+            # `component_globs` lets a content-gated block still name real
+            # directories. When they name none (an Xcode layout like
+            # `MyApp/Store.swift` matches no `App/`/`Sources/` glob), fall back
+            # to the detection globs rather than reporting no paths at all.
+            glob_sets = [pd.get("component_globs"), pd.get("detect_files")]
+            for globs in (g for g in glob_sets if g):
+                for pattern in globs:
+                    for rel in rel_paths:
+                        if not glob_match(rel, pattern):
+                            continue
+                        if scoped and not self._file_matches_any(rel, regexes, scope_exts):
+                            continue
                         parts = Path(rel).parts
-                        if len(parts) >= 2:
-                            paths.add(f"{parts[0]}/{parts[1]}")
-                        elif len(parts) == 1:
-                            paths.add(parts[0])
-            component_paths[pk] = sorted(paths)
+                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                        counts[key] = counts.get(key, 0) + 1
+                if counts:
+                    break
+            component_paths[pk] = [
+                p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            ]
         return component_paths
 
+
+
+def format_paths(paths: list[str], limit: int = 6) -> str:
+    """Render component paths for the skill, saying so when the list is trimmed.
+
+    Paths arrive ranked by how much code each contributes. Silently truncating
+    told the reviewer to check three directories as though they were the whole
+    surface; naming the overflow keeps the omission visible.
+    """
+    shown = "`, `".join(paths[:limit])
+    extra = len(paths) - limit
+    return f"`{shown}`" + (f", and {extra} more" if extra > 0 else "")
 
 # ---------------------------------------------------------------------------
 # Service Map Loader
@@ -171,12 +385,16 @@ class SkillGenerator:
     def generate(self, detected: dict, component_paths: dict,
                  all_known_platforms: list[str],
                  service_map: ServiceMapLoader | None = None,
-                 cross_cutting: dict | None = None) -> str:
+                 cross_cutting: dict | None = None,
+                 verification: dict | None = None) -> str:
         sections = [
             self._header(),
             self._help_section(),
             self._invocation_section(service_map),
-            self._process_section(detected, component_paths, service_map),
+            self._process_section(detected, component_paths, service_map,
+                                  has_phase0=bool(verification)),
+            self._verification_section(detected, verification),
+            self._diff_triage_section(service_map),
             self._understand_first_section(),
             self._preflight_section(detected, component_paths),
             self._agentic_analysis_section(),
@@ -208,41 +426,44 @@ class SkillGenerator:
         lines = [textwrap.dedent("""\
             ## Invocation Modes
 
-            This skill supports three modes based on the argument:
+            This skill supports four modes based on the argument:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
-            /scrutineer-code
+            /vld8-review
             ```
             Reviews the current branch's changes against main. Runs `git diff main...HEAD`.
 
             ### Mode 2: PR Review (numeric argument)
             ```
-            /scrutineer-code 123
+            /vld8-review 123
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
-            2. Get PR metadata: `gh pr view 123 --json number,title,headRefName,baseRefName`
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
+               The body is the author's statement of intent; Phase 1 reads it.
             3. Get full diff: `gh pr diff 123`
             4. Review the diff.
             5. Post findings as a PR comment via `gh pr comment`.
 
             ### Mode 3: Full Service/App Review (component name argument)
             ```
-            /scrutineer-code <component-name>
+            /vld8-review <component-name>
             ```
             Full review of all code in a service or app directory — not just a diff. This is for
             comprehensive reviews of an entire component.
 
             Process:
-            1. Identify the component directory from the service map (see table below).
+            1. Identify the component directory: from the component table below when this skill has
+               one (it is generated from the service map); otherwise from the directory the user
+               named. `/vld8-map` plus a reinstall adds the table.
             2. Read all source files in that directory.
             3. Apply pre-flight checks, focus areas, and all 8 lenses.
             4. Report findings in the same format as PR review, but without the PR metadata.
 
             ### Mode 4: Deep Repo Review (--deep flag)
             ```
-            /scrutineer-code --deep
+            /vld8-review --deep
             ```
             Full repository-level review that traces flows across services, compares patterns
             cross-service, and finds systemic issues that component-level reviews miss. This is
@@ -278,22 +499,31 @@ class SkillGenerator:
         return "\n".join(lines)
 
     def _process_section(self, detected: dict, component_paths: dict,
-                         service_map: ServiceMapLoader | None) -> str:
+                         service_map: ServiceMapLoader | None,
+                         has_phase0: bool = True) -> str:
         detection_rules = []
         for key, data in detected.items():
             paths = component_paths.get(key, [])
             if paths:
-                path_str = "`, `".join(paths[:5])
-                detection_rules.append(f"   - `{path_str}` → **{data['name']}**")
+                detection_rules.append(f"   - {format_paths(paths)} → **{data['name']}**")
             else:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
+        # Step 0 points at Phase 0, which exists only when the guidance defines
+        # `verification`; a custom guidance file without it must not get a
+        # pointer to a section that was never emitted.
+        phase0_step = (
+            "0. **Verify before judging** — establish what the toolchain already proves, "
+            "and stop if it is red (see Phase 0)\n"
+            if has_phase0 else ""
+        )
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Process
 
-            1. **Determine mode** — parse arguments (see Invocation Modes above)
+            {phase0_step}1. **Determine mode** — parse arguments (see Invocation Modes above)
             2. **Get the code** — Mode 1: `git diff main...HEAD`, Mode 2: `gh pr diff <number>`, Mode 3: read all files in component directory
+               - **Size the diff before reading it** — see Diff Triage below. A review unit you cannot hold is a review you cannot trust.
             3. **Detect platforms** — scan file paths to determine which platform checklists apply:
             {detection_block}
             4. **Understand first** — build a mental model of the code before judging it (see below)
@@ -303,7 +533,176 @@ class SkillGenerator:
             8. **Evaluate through all 8 lenses** — rate each as PASS / CONCERN / ISSUE.
             9. **Post findings** — Mode 2: `gh pr comment <number>` with structured output. Mode 1 and 3: output to terminal.
 
-        """)
+        """, detection_block=detection_block, phase0_step=phase0_step)
+
+    def _verification_section(self, detected: dict, verification: dict | None) -> str:
+        """Phase 0 — what the toolchain proves, so the review stops re-deriving it.
+
+        Emitted only for detected platforms that have a ladder. A repo whose
+        platforms have none still gets the gate-discovery step, which is the
+        part that generalises: the repo's own gate script is a better
+        description of "correct here" than anything this file can infer.
+        """
+        if not verification:
+            return ""
+
+        gates = verification.get("gate_candidates", [])
+        ladders = verification.get("platforms", {})
+        applicable = [(k, ladders[k]) for k in detected if k in ladders]
+
+        lines = [textwrap.dedent("""\
+            ## Phase 0: Verify Before You Judge
+
+            Before reading a single line for review, establish what the toolchain already
+            proves. Everything it proves, you must not re-derive — and must not report. A
+            finding the compiler already refuted is worse than no finding: it is confidently
+            wrong, and it spends the reader's trust on the findings that are real.
+
+            **1. Find the repo's own gate.** Look for:
+        """)]
+        for g in gates:
+            note = f" — {g['note']}" if g.get("note") else ""
+            lines.append(f"   - {code_span(g['path'])}{note}")
+        lines.append(textwrap.dedent("""
+            If one exists, READ IT FIRST. It is the most accurate available description of
+            this repo's definition of correct, it usually explains *why* each stage exists,
+            and it encodes constraints no generated checklist knows about. Run it when the
+            review is repo- or component-scoped.
+
+            **2. Otherwise compose the cheap subset** for the platforms in the diff, below.
+
+            **3. If anything fails, STOP.** Report the failure verbatim, name the first
+            failing stage, and do not continue to semantic review — reviewing code that does
+            not build is guesswork, and the build failure is the finding.
+
+            **4. If it passes, honour the exclusion list.** It is not advice; it is the set
+            of things you now know are absent.
+
+            **5. Record which oracle covers which changed files.** Coverage is not uniform, and
+            an exclusion you apply outside the range of the command that earned it is a guess
+            wearing a proof's clothing. Build this table before judging anything:
+
+            | Changed path | Covered by | Not covered by |
+            |---|---|---|
+
+            Then state plainly: **which changed files no oracle covered at all.** Those are the
+            files where you are reasoning without a net, and findings there deserve more
+            scepticism and more reading of surrounding code — not less.
+
+            **6. Use the toolchain to measure, not only to gate.** A green build answers
+            "does it compile"; the same tools also answer questions the source cannot. When the
+            diff touches build configuration, packaging, or the module graph, read the *produced
+            artefact* rather than the input that was meant to produce it — the merged plist
+            rather than the authored one, the resolved module closure rather than the manifest,
+            the built test bundle rather than the target list. Several classes of defect are
+            invisible in the diff and obvious in the output, and the commands are already
+            installed.
+        """))
+
+        if not applicable:
+            lines.append(textwrap.dedent("""
+                No verification ladder is defined for the platforms detected in this repo.
+                Establish one from the gate script or CI workflow above, run it, and record
+                what it proves before continuing.
+            """))
+            return "\n".join(lines)
+
+        for key, ladder in applicable:
+            name = detected[key]["name"]
+            lines.append(f"\n### {name} — commands\n")
+
+            per_diff = ladder.get("per_diff", [])
+            if per_diff:
+                lines.append("**Per-diff (always, before judging — target under ~60s):**\n")
+                for step in per_diff:
+                    cost = f" *({step['cost']})*" if step.get("cost") else ""
+                    lines.append(f"- {code_span(step['cmd'])}{cost}")
+                    lines.append(f"  - When: {step['when']}")
+                    if step.get("note"):
+                        lines.append(f"  - Note: {step['note']}")
+                lines.append("")
+
+            per_repo = ladder.get("per_repo", [])
+            if per_repo:
+                lines.append("**Per-repo / per-PR (on request, or when the diff is large or touches the package graph):**\n")
+                for step in per_repo:
+                    lines.append(f"- {code_span(step['cmd'])}")
+                    lines.append(f"  - When: {step['when']}")
+                lines.append("")
+
+            proves = ladder.get("proves", [])
+            if proves:
+                lines.append(f"**{name} — exclusion list.** When these pass, do NOT report:\n")
+                lines.append("| Proved green | Therefore do NOT report |")
+                lines.append("|---|---|")
+                for p in proves:
+                    lines.append(f"| {code_span(p['green'])} | {p['excludes']} |")
+                lines.append("")
+
+            unproven = ladder.get("still_unproven", [])
+            if unproven:
+                lines.append("**What the toolchain still does not prove** — this is where the review's value is:\n")
+                for u in unproven:
+                    lines.append(f"- {u}")
+                lines.append("")
+
+            never = ladder.get("never_run", [])
+            if never:
+                lines.append("**Do not run:**\n")
+                for n in never:
+                    lines.append(f"- {code_span(n['what'])} — {n['why']}")
+                lines.append("")
+
+        return "\n".join(lines)
+
+    def _diff_triage_section(self, service_map: "ServiceMapLoader | None") -> str:
+        """Measure the diff before reviewing it, and partition when it is too large.
+
+        Mode 1 assumes a branch diff is a review unit. It is not always: a branch
+        that has drifted, or a release train, can be hundreds of files. Reading
+        that linearly produces a shallow pass that reports nothing useful — and
+        the reviewer cannot tell the difference from the inside.
+        """
+        map_line = (
+            "Partition along the components in the service map — it already names the "
+            "boundaries, and a component is a unit someone can reason about whole."
+            if service_map else
+            "Partition along top-level source directories (module, package, or service "
+            "roots). Run `/vld8-map` first if you want the boundaries named "
+            "for you."
+        )
+        return _render("""\
+            ## Diff Triage — size the change before reviewing it
+
+            Run this first, before reading any code:
+
+            ```
+            git diff <base>...HEAD --shortstat
+            git diff <base>...HEAD --numstat | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
+            ```
+
+            **Check the base is what you think it is.** `git fetch` first and compare
+            `git rev-parse main origin/main`. A stale local base silently inflates the diff
+            with work that already merged — you end up reviewing other people's landed code
+            and reporting it as this branch's. If they differ, say so and use the remote.
+
+            Then choose by size:
+
+            | Diff size | What to do |
+            |---|---|
+            | **under ~50 files** | Review it as one unit. This is the normal path. |
+            | **50–150 files** | Still one unit, but lead with the second command above and review in descending order of insertions, so the largest surface gets your freshest attention. |
+            | **over ~150 files, or over ~20 commits** | **Do not review it linearly.** Partition it, state the partitions up front, and review each as its own unit with its own verdict. {map_line} |
+
+            When you partition, say so in the output — the reader needs to know whether they
+            are holding one review or several, and which partition each finding came from.
+            Carry Phase 0's results into every partition rather than re-running the build for
+            each one.
+
+            A diff this large is usually also a signal worth reporting on its own: it means the
+            branch has outgrown reviewability, and that is a process finding, not a code one.
+
+        """, map_line=map_line)
 
     def _understand_first_section(self) -> str:
         return textwrap.dedent("""\
@@ -322,8 +721,9 @@ class SkillGenerator:
                its dependencies, and the data it receives? Are those assumptions documented or
                just hoped for?
             5. **What changed and why?** (Mode 1 and 2 only) What was the author trying to
-               accomplish? Read PR description and commit messages. Understanding intent prevents
-               false findings.
+               accomplish? Read the PR description (Mode 2: the `body` fetched above; Mode 1: if
+               the branch has an open PR, `gh pr view --json title,body`) and the commit messages
+               (`git log main..HEAD`). Understanding intent prevents false findings.
 
             Carry this model through the rest of the review. A checklist item that fires is only
             a finding if it matters given this context.
@@ -412,9 +812,8 @@ class SkillGenerator:
                 name = platform_data["name"]
 
                 if paths:
-                    path_str = "`, `".join(paths[:3])
                     lines.append(f"### {name}\n")
-                    lines.append(f"When reviewing `{path_str}`:\n")
+                    lines.append(f"When reviewing {format_paths(paths)}:\n")
                 else:
                     lines.append(f"### {name}\n")
 
@@ -428,32 +827,67 @@ class SkillGenerator:
         return "\n".join(lines) + "\n"
 
     def _cross_cutting_section(self, cross_cutting: dict | None) -> str:
+        """Universal areas, plus service and client sets behind an explicit gate.
+
+        The block used to be one undifferentiated list introduced as the
+        highest-value part of the review — and most of it assumed an HTTP service.
+        A reviewer who is told that the most important questions are about response
+        envelopes, while reviewing an on-device app with no network surface, learns
+        to skip the section. Gating the inapplicable sets is what makes the
+        applicable ones credible.
+        """
         if not cross_cutting:
             return ""
 
-        areas = cross_cutting.get("focus_areas", [])
-        if not areas:
+        def render(areas: list) -> list[str]:
+            out = []
+            for area in areas:
+                desc = area["description"].strip().replace("\n", " ")
+                why = area.get("why", "").strip().replace("\n", " ")
+                out.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
+                if why:
+                    out.append(f"  - *Why this matters*: {why}")
+                out.append("")
+            return out
+
+        # Back-compatible with the old flat shape.
+        if "focus_areas" in cross_cutting:
+            cross_cutting = {"universal": cross_cutting}
+
+        universal = cross_cutting.get("universal", {}).get("focus_areas", [])
+        if not universal and not any(k in cross_cutting for k in ("service", "client")):
             return ""
 
         lines = [textwrap.dedent("""\
-            ## Cross-Cutting Review (all code, all platforms)
+            ## Cross-Cutting Review
 
-            These are the highest-value focus areas. They catch bugs that platform-specific
-            checklists miss — inconsistencies between code paths, bypass vectors, and
-            assumptions that only surface under adversarial use. Apply these to EVERY review,
-            regardless of platform.
+            These catch what platform checklists miss: inconsistencies between code paths,
+            guarantees that do not guarantee, and assumptions that only surface under
+            unexpected use.
+
+            The universal set applies to every review. The two sets after it are gated —
+            read the gate first and skip the whole set when it does not apply. Forcing a
+            question about response envelopes onto an on-device app produces noise, and a
+            section that produces noise is a section reviewers learn to skim.
 
         """)]
 
-        for area in areas:
-            desc = area["description"].strip().replace("\n", " ")
-            why = area.get("why", "").strip().replace("\n", " ")
-            lines.append(f"- **{area['area']}**: {desc} *(Lens: {area['lens']})*")
-            if why:
-                lines.append(f"  - *Why this matters*: {why}")
-            lines.append("")
+        if universal:
+            lines.append("### Universal — apply to every review\n")
+            lines.extend(render(universal))
 
-        return "\n".join(lines) + "\n"
+        for key, heading in (("service", "Services and multi-user components"),
+                             ("client", "Client applications")):
+            group = cross_cutting.get(key)
+            if not group or not group.get("focus_areas"):
+                continue
+            gate = group.get("applies_when", "").strip().replace("\n", " ")
+            lines.append(f"### {heading} — conditional\n")
+            if gate:
+                lines.append(f"**Applies when:** {gate}\n")
+            lines.extend(render(group["focus_areas"]))
+
+        return "\n".join(lines)
 
     def _focus_areas_section(self, detected: dict, component_paths: dict) -> str:
         lines = [textwrap.dedent("""\
@@ -524,12 +958,17 @@ class SkillGenerator:
             "api-contract": ("Architecture, Production Reliability", "Backward compatibility with deployed clients, breaking changes, versioning"),
             "dependency-update": ("Production Reliability, Maintainability", "Breaking changes, CVEs, bundle size impact, transitive dependency risks"),
             "config-change": ("Operability, Production Reliability", "Deployment risk, rollback path, environment-specific behavior, secret exposure"),
+            "documented-claim": ("Correctness, Maintainability", "Does the document match the code it describes? Check the direction that matters: every implemented behaviour documented, not just every documented behaviour implemented"),
         }
 
         lines.append("| Change Type | Detected By | Increased Scrutiny |")
         lines.append("|---|---|---|")
         for ct, patterns in all_signals.items():
-            pattern_str = ", ".join(f"`{p}`" for p in patterns[:4])
+            # Every pattern, not the first four. This table exists to be matched
+            # against a diff; a truncated list is a silent miss, and truncating
+            # an alphabetically sorted list drops whichever patterns happen to
+            # sort late — which is how `Info.plist` and `pyproject.toml` fell off.
+            pattern_str = ", ".join(f"`{p}`" for p in patterns)
             label, scrutiny = modifier_map.get(ct, (ct, "Review carefully"))
             lines.append(f"| **{ct.replace('-', ' ').title()}** | {pattern_str} | {label}: {scrutiny} |")
         lines.append("")
@@ -556,7 +995,8 @@ class SkillGenerator:
             **Verdict: APPROVE** — no issues found.
             ```
 
-            That's it. Do not produce empty sections or filler. A clean review is valuable.
+            Follow it with the Check Performance section (below) and nothing else: no empty
+            sections, no filler. A clean review is valuable.
 
             ### When issues are found:
 
@@ -565,7 +1005,7 @@ class SkillGenerator:
 
             **PR:** #<number> — <title>  (omit for Mode 1 and 3)
             **Verdict:** APPROVE / APPROVE with concerns / DISCUSS / REQUEST CHANGES
-            **Findings:** N total (X ISSUE, Y CONCERN)
+            **Findings:** N total (X ISSUE, Y CONCERN; Z reported with no check behind them)
             **Components touched:** <list>
             **Change type(s):** <from modifiers, if any>
 
@@ -591,6 +1031,7 @@ class SkillGenerator:
 
             - **Lens:** <which of the 8 lenses>
             - **Rating:** ISSUE / CONCERN
+            - **Check:** <the id of the pre-flight check that led you here, or `none`>
             - **Intent:** What the author was trying to accomplish
             - **Risk:** Why this is risky or buggy
             - **Failure mode:** How this will break in production
@@ -612,8 +1053,29 @@ class SkillGenerator:
 
             Do not manufacture findings. If the code is clean, APPROVE it.
 
+            ### Check Performance
+
+            Always include this section, even on a clean review. It is how the checklists get
+            better: a check nobody can see misfiring stays wrong forever. Be blunt — this
+            section is graded on honesty, not on making the tooling look good.
+
+            **False positives** — checks that fired on code they did not actually apply to:
+
+            | Check | Fired on | Why it did not apply |
+            |---|---|---|
+            | <check id> | <file:line, or "6 sites"> | <the specific reason> |
+
+            **Inert** — checks whose platform was detected but which had no applicable code in
+            this diff at all. List the check ids or, where a whole block was inert, the block
+            name and the reason (e.g. "the module abstracts this framework behind a protocol,
+            so its vocabulary never appears").
+
+            **Unnamed** — findings you reported with `Check: none`. For each, say in one line
+            what a check that WOULD have caught it should look for. These are the highest-value
+            additions to the guidance, because they are defects the checklist is currently blind to.
+
             **GitHub issues are opt-in.** Do NOT auto-file GitHub issues for findings.
-            Only create issues if the user explicitly asks (e.g., `/scrutineer-code 123 --file-issues`).
+            Only create issues if the user explicitly asks (e.g., `/vld8-review 123 --file-issues`).
 
         """)
 
@@ -635,7 +1097,32 @@ class SkillGenerator:
             top = sorted(conn_counts.items(), key=lambda x: -x[1])[:5]
             flow_hints = "\n".join(f"   - `{k}` ({v} connections)" for k, v in top)
 
-        return textwrap.dedent(f"""\
+        if service_map is None:
+            components_line = (
+                "**No service map was available when this skill was generated.** Before tracing "
+                "flows, inventory the deployable components yourself (entry points, manifests, "
+                "IaC, CI pipelines), or run `/vld8-map` and reinstall with `--force`."
+            )
+            scale_note = (
+                "Size the work from that inventory: one agent for a handful of components; for a "
+                "large repo, dispatch sub-agents, one per investigation area."
+            )
+        elif component_count <= 20:
+            components_line = f"**Repo has {component_count} reviewable components.**"
+            scale_note = (
+                "**Small repo (≤20 components): Single-agent deep review.** Read the service map, "
+                "then read source files as needed to trace flows. You have enough context. "
+                "Prioritize depth on the most complex and highest-risk areas."
+            )
+        else:
+            components_line = f"**Repo has {component_count} reviewable components.**"
+            scale_note = (
+                "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the "
+                "Agent tool — one per investigation area. Each sub-agent gets a fresh context and "
+                "reads only the files relevant to its investigation. Collect findings, then synthesize."
+            )
+        flow_heading = "**Most-connected components (start here):**" if flow_hints else ""
+        return _render("""\
             ## Mode 4: Deep Repo Review
 
             **Role:** You are a world-class Principal Software Engineer performing a comprehensive,
@@ -656,9 +1143,9 @@ class SkillGenerator:
 
             ### Adaptive Execution Strategy
 
-            **Repo has {component_count} reviewable components.**
+            {components_line}
 
-            {"**Small repo (≤20 components): Single-agent deep review.** Read the service map, then read source files as needed to trace flows. You have enough context. Prioritize depth on the most complex and highest-risk areas." if component_count <= 20 else "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the Agent tool — one per investigation area. Each sub-agent gets a fresh context and reads only the files relevant to its investigation. Collect findings, then synthesize."}
+            {scale_note}
 
             ### Investigation 1: Trace Critical User Flows End-to-End
 
@@ -673,7 +1160,7 @@ class SkillGenerator:
             - Is the same restriction (rate limit, billing check, auth) applied on ALL paths
               that reach this flow, or can some paths bypass it?
 
-            {"**Most-connected components (start here):**" if flow_hints else ""}
+            {flow_heading}
             {flow_hints}
 
             ### Investigation 2: Cross-Service Pattern Comparison
@@ -773,7 +1260,7 @@ class SkillGenerator:
             <Things one service does well that others should adopt>
             ```
 
-        """)
+        """, component_count=component_count, components_line=components_line, flow_heading=flow_heading, flow_hints=flow_hints, scale_note=scale_note)
 
     def _help_section(self) -> str:
         return textwrap.dedent("""\
@@ -782,14 +1269,14 @@ class SkillGenerator:
             If the argument is `--help`, output this summary and stop:
 
             ```
-            /scrutineer-code — Principal Engineer peer code review
+            /vld8-review — Principal Engineer peer code review
 
             MODES:
-              /scrutineer-code              Review current branch diff vs main (~2 min)
-              /scrutineer-code 123          Review PR #123, post findings as comment (~5 min)
-              /scrutineer-code <component>  Full review of a service/app by name (~5 min)
-              /scrutineer-code --deep       Deep repo-wide review across all components (~20 min)
-              /scrutineer-code --help       Show this help
+              /vld8-review              Review current branch diff vs main (~2 min)
+              /vld8-review 123          Review PR #123, post findings as comment (~5 min)
+              /vld8-review <component>  Full review of a service/app by name (~5 min)
+              /vld8-review --deep       Deep repo-wide review across all components (~20 min)
+              /vld8-review --help       Show this help
 
             WHAT IT DOES:
               Modes 1-3: Pre-flight checks → agentic analysis → 8 evaluation lenses
@@ -815,7 +1302,7 @@ class SkillGenerator:
 
     def _self_heal_section(self, all_known_platforms: list[str]) -> str:
         known_list = ", ".join(sorted(all_known_platforms))
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Self-Healing: Unknown Platforms
 
             **Known platforms at generation time:** {known_list}
@@ -841,7 +1328,7 @@ class SkillGenerator:
             4. **If you have enough knowledge**, include a draft checklist in the review output
                under a "Draft Checklist" section. Each item MUST name a specific API/function/pattern,
                include a failure mode, and map to one of the 8 lenses.
-        """)
+        """, known_list=known_list)
 
 
 # ---------------------------------------------------------------------------
@@ -872,8 +1359,8 @@ def main():
         """),
     )
     parser.add_argument("repo_path", help="Path to the repository to analyze")
-    parser.add_argument("--output", "-o", default=".claude/commands/scrutineer-code.md",
-                        help="Output path relative to repo root (default: .claude/commands/scrutineer-code.md)")
+    parser.add_argument("--output", "-o", default=".claude/commands/vld8-review.md",
+                        help="Output path relative to repo root (default: .claude/commands/vld8-review.md)")
     sm_group = parser.add_mutually_exclusive_group()
     sm_group.add_argument("--service-map", "-s", default=None,
                           help="Path to servicemap.json for richer context. "
@@ -885,7 +1372,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true",
                         help="Print generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
-                        help="Overwrite existing scrutineer-code.md without prompting")
+                        help="Overwrite existing vld8-review.md without prompting")
 
     args = parser.parse_args()
 
@@ -928,8 +1415,11 @@ def main():
 
     # Extract cross-cutting focus areas (not platform-specific)
     cross_cutting = guidance.pop("cross_cutting", None)
+    verification = guidance.pop("verification", None)
     if cross_cutting:
-        cc_count = len(cross_cutting.get("focus_areas", []))
+        # Grouped layout (universal / service / client), or the legacy flat list.
+        groups = [cross_cutting] if "focus_areas" in cross_cutting else cross_cutting.values()
+        cc_count = sum(len(g.get("focus_areas", [])) for g in groups if isinstance(g, dict))
         print(f"  {cc_count} cross-cutting focus areas loaded")
 
     detected = analyzer.detect_platforms(guidance)
@@ -947,7 +1437,8 @@ def main():
 
     # Generate
     generator = SkillGenerator()
-    skill_content = generator.generate(detected, component_paths, all_known, service_map, cross_cutting)
+    skill_content = generator.generate(detected, component_paths, all_known, service_map,
+                                       cross_cutting, verification)
 
     if args.dry_run:
         print("\n" + "=" * 72)
@@ -983,7 +1474,7 @@ def main():
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /scrutineer-code (from Claude Code in the target repo)")
+    print(f"\nUsage: /vld8-review (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":

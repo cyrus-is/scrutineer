@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agentic finding validator — late-stage false-positive sweep for /scrutineer-mcp.
+"""Agentic finding validator — late-stage false-positive sweep for /vld8-mcp.
 
 analyze_mcp.py emits CANDIDATE signals. Phases of regex/zoning/confidence work cut
 most noise deterministically, but a semantic long tail survives — e.g. a capability

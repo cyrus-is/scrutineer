@@ -1,5 +1,5 @@
 # MCP Risk Guidance
-# Tunable catalog for the /scrutineer-mcp skill. This file holds the DATA that
+# Tunable catalog for the /vld8-mcp skill. This file holds the DATA that
 # drives review — finding definitions, the lists/regexes that detection keys
 # off, and the dangerous-capability taxonomy. The detection LOGIC lives in
 # analyze_mcp.py (parsing a config or tools/list is too varied to fully
@@ -713,4 +713,4 @@ behavioral_probe:
   # Benign filler for parameters that are neither path- nor URL-shaped, so the
   # first (control) call of each tool exercises the handler without pointing it
   # at anything sensitive.
-  benign_string: "scrutineer-probe"
+  benign_string: "vld8-probe"

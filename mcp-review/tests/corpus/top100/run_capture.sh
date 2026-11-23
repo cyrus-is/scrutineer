@@ -13,7 +13,7 @@ CORPUS="$(cd .. && pwd)"             # build context (has capture_tools.py)
 
 CONFIG="${1:-$HERE/config.json}"
 OUTDIR="${2:-$HERE/tools}"
-IMAGE="scrutineer-capture:latest"
+IMAGE="vld8-capture:latest"
 PER_TIMEOUT="${PER_TIMEOUT:-90}"
 
 mkdir -p "$OUTDIR"

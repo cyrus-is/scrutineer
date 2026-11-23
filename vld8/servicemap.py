@@ -5,12 +5,12 @@ its own: building it is an agentic crawl that only Claude can run. This module
 resolves a map by the best method available to the caller:
 
 * ``reuse``  — an existing ``servicemap.json`` at the target root is used as-is.
-* ``crawl``  — shell out to ``claude -p '/scrutineer-servicemap ...'`` to run the
+* ``crawl``  — shell out to ``claude -p '/vld8-map ...'`` to run the
                crawl headlessly. Requires the ``claude`` CLI on PATH and the
                servicemap skill already installed in the target repo.
 * ``skip``   — no map; the generators run with ``--no-service-map``.
 
-The ``/scrutineer-setup`` skill never calls ``crawl`` here — Claude is already
+The ``/vld8-setup`` skill never calls ``crawl`` here — Claude is already
 running, so it does the crawl itself and then hands the resulting path to the
 installer via ``service_map=``.
 """
@@ -56,7 +56,7 @@ def acquire(
     which crawls first and passes the result straight through).
     ``crawl`` — when True and no map exists, run the headless ``claude -p`` crawl.
     """
-    # Caller supplied a map explicitly (e.g. the /scrutineer-setup skill).
+    # Caller supplied a map explicitly (e.g. the /vld8-setup skill).
     if service_map is not None:
         resolved = service_map if service_map.is_absolute() else (target / service_map)
         if not resolved.is_file():
@@ -72,7 +72,7 @@ def acquire(
         return ServiceMapResult(
             None, "skip",
             "no service map — generating map-less skills "
-            "(run /scrutineer-servicemap then re-run to add cross-service awareness)",
+            "(run /vld8-map then re-run to add cross-service awareness)",
         )
 
     # --crawl was requested but there is no map: run the headless crawl.
@@ -87,13 +87,13 @@ def acquire(
 
 
 def _crawl(target: Path, *, log=print) -> Path:
-    """Run ``/scrutineer-servicemap`` headlessly via ``claude -p`` in ``target``.
+    """Run ``/vld8-map`` headlessly via ``claude -p`` in ``target``.
 
     Assumes the servicemap skill has already been copied into the target repo
     (the installer copies the static skills before acquiring the map).
     """
     out = target / SERVICEMAP_FILE
-    prompt = f"/scrutineer-servicemap --path {SERVICEMAP_FILE}"
+    prompt = f"/vld8-map --path {SERVICEMAP_FILE}"
     log(f"  running headless crawl: claude -p {prompt!r} (this can take a while)…")
     try:
         subprocess.run(
@@ -107,6 +107,6 @@ def _crawl(target: Path, *, log=print) -> Path:
     if not out.is_file():
         raise RuntimeError(
             f"crawl finished but {out} was not produced. "
-            "Run /scrutineer-servicemap manually in Claude Code, then re-run with --service-map."
+            "Run /vld8-map manually in Claude Code, then re-run with --service-map."
         )
     return out
