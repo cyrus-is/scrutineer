@@ -103,7 +103,7 @@ Each phase is a release. Nothing is removed until its replacement has passed §6
 | Phase | Contents | Depends on |
 |---|---|---|
 | **P0** | 1.7.0: rendering, TS detection, git index, install paths, tests, CI (PR #39) | — |
-| **P1: Foundations** | One shared analyzer module (no more copy-paste); one detection spec shared by both lenses; a globstar matcher; findings contract v1, emitted alongside today's Markdown; `scrutineer checks --changed` | P0 |
+| **P1: Foundations** | The rename, if D7 goes ahead; one shared analyzer module (no more copy-paste); one detection spec shared by both lenses; a globstar matcher; findings contract v1, emitted alongside today's Markdown; `scrutineer checks --changed` | P0 |
 | **P2: Context** | `scrutineer context`: rules files, intent sources (`--spec`, PR body, linked issue), map slice for touched components, contract fan-out script; the evidence rubric; Spec questions | P1 |
 | **P3: Validation** | Separate validator over the findings JSON (fresh context, refute, suppress-only, recorded reasons); retire the security skill's pasted-in hard-exclusion list and its contradictions (rate limits, CVEs, ReDoS) | P1 |
 | **P4: Coverage** | Two-layer detection, package roots, roles, uncovered report; Tier 1 ladders; new blocks: Workers, Shell, AWS serverless, Next.js server, LLM/MCP apps, Kotlin JVM (split from Android), Unity, HTML templates; then Tier 2 | P1 (spec), P2 (context feeds checks) |
@@ -134,7 +134,8 @@ P2 and P3 can run in parallel once P1 lands. P4's detection work can start in P1
 |---|---|---|
 | D1 | Review tool: one engine with two separately runnable lenses, or one merged review | One engine, two lenses (§3, §8.2) |
 | D2 | Positioning: our own engine, or an expertise pack for first-party engines | Both, in that order: a thin engine of our own, so the expertise layer can be measured; publish the layer in a form other engines can consume once the findings contract is stable |
-| D3 | Naming. The collection was described as "security tools", but the code lens isn't security | "Review tools" for the collection, with security as one lens; or keep "security tools" and present code review as a lens rather than a product |
+| D3 | ~~Positioning of the collection~~ **Decided 2026-11-23: pitch it as dev tooling** (Cyrus). Security is one lens of the review tool, not the product's label | — |
+| D7 | Rename. Cyrus is considering one ("Cyrus's toolbox" as the idea) | Rename in P1, not 1.7.0, so users migrate once along with P1's CLI and skill changes. Candidates free on PyPI as of 2026-11-23: `trueup` (recommended), `trysquare`, `jointer`, `cyrkit`. Keep "Cyrus's toolbox" as the tagline. Mechanics: new PyPI package; a last `scrutineer` release that depends on it and prints a notice; GitHub repo rename (URLs redirect); the installer replaces old `/scrutineer-*` command files |
 | D4 | Run the held-out study before shipping P2/P3, or ship behind a flag and measure after | Study first for P2/P3 (they change what reaches the reader); P1 and P4 ship on CI and snapshot tests |
 | D5 | MCP review stays in the package until P6 | Yes |
 | D6 | Where the 90% research note lives. It is in session scratch now; the research desk could not file it in HQ | File it in `hq/research/notes/` with the desk's suggested frontmatter |
