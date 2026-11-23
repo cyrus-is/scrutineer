@@ -53,11 +53,35 @@ Five inputs, all from 2026-11-23. Session scratch paths may be cleared; the HQ f
 | **0. Index and detect** | Git index → languages (complete extension table) → frameworks and runtimes (parsed manifests) → package-rooted components → role per path (source / test / fixture / docs / scratch / generated) | Git index done; extension globs only | Two-layer detection; package roots (nearest manifest, or service-map component); roles; incidental platforms labelled, with no ladder; an "Uncovered in this diff" block and a `--strict` mode |
 | **1. Context packet** | Built by a deterministic `scrutineer context` step at review start, placed before any checklist, with a size budget | Only the PR body (Mode 2) | **A. Rules:** `CLAUDE.md`/`AGENTS.md`/`ENGINEERING.md`/`CONTRIBUTING.md` and nested rules files on changed paths, quoted. **B. Intent:** `--spec`, PR body, linked issue, commits. **C. Map slice:** touched components and their neighbours, with auth, endpoints and secrets. **D. Contract fan-out:** callers of changed exports, routes and payloads, computed by a script. **E. Repo history:** local checks and suppressions curated from past reviews. |
 | **2. Scan** | Lens prompt plus only the checks whose platforms the diff touches, plus Phase 0 (what the toolchain proves) | Checks frozen at install; ~47% of the prompt inert on a typical diff; ladders for Swift and Python only | `scrutineer checks --changed <paths>` selects checks at review time from the installed YAML; ladders for every Tier 1 platform (§5) |
-| **3. Findings contract** | Every finding written as JSON: `file`, `lineStart`/`lineEnd`, `lens`, `checkId`, `category`, `claim`, `evidence`, `severity`, `basis`, `suppressed`/`reason` | Prose only | Define once; peer, security and MCP all emit it; the Markdown report is rendered from it |
+| **3. Findings contract** | Every finding written as JSON: `file`, `lineStart`/`lineEnd`, `lens`, `checkId`, `category`, `claim`, `evidence`, `severity`, `basis`, `suppressed`/`reason`, and a stable `fingerprint` (see *Storing findings and decisions*) | Prose only | Define once; peer, security and MCP all emit it; the Markdown report is rendered from it |
 | **4. Validate** | A fresh context tries to refute each finding: it reads callers, applies the Phase 0 exclusions, reproduces where it can. It may only suppress or downgrade, and records why | Security self-grades at confidence ≥ 0.8; peer has nothing | Port the shape of `mcp-review/validate_findings.py`. Severity follows an **evidence rubric**: ISSUE if and only if (a) it breaks a stated requirement, (b) it breaks a written rule or stated invariant, (c) it departs from a contract that two named sites follow, (d) it has a traced, reachable trigger, or (e) it breaks a security invariant, whatever the current exploitability. CONCERN needs a concrete scenario. Objections to prescribed design go to **Spec questions**, which never set the verdict. |
 | **5. Report** | Verdict from ISSUEs only; CONCERNs and Spec questions listed; Check Performance written to the findings JSON | Verdict vocabulary differs per tool | One vocabulary; Check Performance aggregated across runs, to prune checks that never yield and to promote "Unnamed" findings to checks |
 
 **Why this order.** The findings contract (3) unblocks validation (4), measurement, and the feedback loop. The context packet (1) restores what made the original reviews work. Coverage (0, 2) is wide, so it runs on top of a measurable engine.
+
+### Storing findings and decisions
+
+Adopted 2026-11-23 (Cyrus). Checking findings into a repo is risky: in a public repo it publishes the vulnerabilities. So the plan splits two kinds of data, and needs no new secret store for the default case.
+
+- **What was found** is sensitive, but re-running the review produces it again.
+  - It's written to `.vld8/findings.json`, which is local and gitignored.
+  - It's the output of each run, and the Markdown report is rendered from it.
+- **What you decided** is the only part that must persist and be shared: still on fire, false positive or ignore (see `vld8 onfire`), plus suppressions.
+  - It lives in `.vld8/triage.json`, which is checked in.
+  - Each entry is a fingerprint and a decision, never the finding's details. The fingerprint is a hash of the check ID, the normalized code region and, where relevant, the package and version.
+  - A fingerprint means nothing without the code, and an entry expires when its fingerprint stops matching. The MCP reviewer's digest-bound suppressions already work this way and can move into the same file later.
+- **The leak that remains in public repos.** Anyone can run vld8 on your public code, compute the same fingerprints, and read which findings you marked `ignore`, that is, real but accepted. For public repos, `ignore` entries, and any free-text reasons, go in one of the two optional stores below rather than in the clear.
+
+Two optional stores, for teams that want a shared, private record:
+1. **GitHub code scanning, via SARIF upload.**
+   - vld8 renders `findings.json` as SARIF and uploads it. Only people with security access to the repo can see the result.
+   - Code scanning's own states map almost one-to-one onto vld8's: open is still on fire, "dismissed: false positive" is false positive, "dismissed: won't fix" is ignore, and closed when a later scan doesn't find it is fixed.
+   - It's free for public repos; private repos need GitHub's paid Code Security product.
+2. **SOPS with age, checked in.**
+   - `.vld8/findings.sops.json` is encrypted to the age public keys listed in `.sops.yaml`, for teams that want the full findings history in git. SOPS can leave the JSON structure readable, so diffs still show what changed.
+   - The cost is key management: every collaborator and the CI job needs a key, and removing someone's access means re-encrypting the file and rotating keys.
+
+Default: `findings.json` local, `triage.json` checked in, with SARIF export and SOPS both opt-in. Lands with the findings contract in P1. `onfire`'s triage states use the same `triage.json`.
 
 ## 5. Coverage target: the 90% set
 
@@ -105,7 +129,7 @@ Each phase is a release. Nothing is removed until its replacement has passed §6
 | Phase | Contents | Depends on |
 |---|---|---|
 | **P0** | 1.7.0: rendering, TS detection, git index, install paths, tests, CI (PR #39) | — |
-| **P1: Foundations** | One shared analyzer module (no more copy-paste); one detection spec shared by both lenses; a globstar matcher; findings contract v1, emitted alongside today's Markdown; `scrutineer checks --changed` | P0 |
+| **P1: Foundations** | One shared analyzer module (no more copy-paste); one detection spec shared by both lenses; a globstar matcher; findings contract v1, emitted alongside today's Markdown, with local `findings.json` and checked-in `triage.json` (§4, *Storing findings and decisions*); `scrutineer checks --changed` | P0 |
 | **P2: Context** | `scrutineer context`: rules files, intent sources (`--spec`, PR body, linked issue), map slice for touched components, contract fan-out script; the evidence rubric; Spec questions | P1 |
 | **P3: Validation** | Separate validator over the findings JSON (fresh context, refute, suppress-only, recorded reasons); retire the security skill's pasted-in hard-exclusion list and its contradictions (rate limits, CVEs, ReDoS) | P1 |
 | **P4: Coverage** | Two-layer detection, package roots, roles, uncovered report; Tier 1 ladders; new blocks: Workers, Shell, AWS serverless, Next.js server, LLM/MCP apps, Kotlin JVM (split from Android), Unity, HTML templates; then Tier 2 | P1 (spec), P2 (context feeds checks) |
@@ -174,7 +198,7 @@ These come after the phases above. They aren't scheduled yet.
   - **false positive:** vld8 was wrong.
   - **ignore:** the hit is real but accepted, recorded with who, why and until when.
 
-  States live in the repo, for example `.claude/vld8-onfire.json`. Each one is bound to a digest of its evidence, the way the MCP reviewer binds its suppressions. A mark therefore expires when the dependency version, the reachability evidence or the KEV entry changes. Ignored and false-positive hits stay visible as a count in every report, so they never silently disappear.
+  States live in the checked-in `.vld8/triage.json` (see *Storing findings and decisions*), as fingerprints, never details. Each one is bound to a digest of its evidence, the way the MCP reviewer binds its suppressions. A mark therefore expires when the dependency version, the reachability evidence or the KEV entry changes. Ignored and false-positive hits stay visible as a count in every report, so they never silently disappear.
 - **False-positive submissions,** opt-in. When marking a false positive, the user can send a code excerpt they've approved and a sentence on why it's safe, so vld8 can fix the check.
   - **What's sent:** the user sees exactly what will be sent, after secret redaction (reusing the analyzer's), and nothing goes without an explicit confirmation. The payload is the CVE, package, version, excerpt and explanation. The repo name and path are included only if the user adds them.
   - **Transport:** the payload is encrypted on the user's machine to the project's public key (for example with age) and sent over HTTPS. Only the maintainer can read it, whatever carries it. It never goes in the clear in a public GitHub issue.
