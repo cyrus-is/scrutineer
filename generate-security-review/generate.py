@@ -20,6 +20,8 @@ Usage:
 
 import argparse
 import fnmatch
+import functools
+import itertools
 import json
 import os
 import re
@@ -41,6 +43,28 @@ def _render(template: str, **values) -> str:
     Literal braces in templates are written doubled, as in an f-string.
     """
     return textwrap.dedent(template).format(**values)
+
+
+@functools.lru_cache(maxsize=None)
+def _glob_regex(pattern: str) -> "re.Pattern[str]":
+    parts = pattern.split("**/")
+    candidates = {
+        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
+        for keeps in itertools.product((True, False), repeat=len(parts) - 1)
+    }
+    return re.compile("|".join(f"(?:{fnmatch.translate(c)})" for c in sorted(candidates)))
+
+
+def glob_match(rel: str, pattern: str) -> bool:
+    """fnmatch, except that `**/` may also match no directory at all.
+
+    fnmatch's `*` already crosses `/`, so `**/` behaves like `*/` and demands at
+    least one directory: `App/**/*.swift` never matched `App/Foo.swift`, and
+    `**/*.swift` never matched a root-level file, which is why the guidance lists
+    both forms of so many globs. Allowing each `**/` to be dropped gives the usual
+    zero-or-more-directories meaning without changing what `*` matches.
+    """
+    return _glob_regex(pattern).match(rel) is not None
 
 
 # The universal checklist, one area per bullet. Kept as data so the generator's
@@ -111,7 +135,7 @@ class RepoAnalyzer:
         return [str(f.relative_to(self.repo_path)) for f in self.file_index]
 
     def matches_glob(self, pattern: str) -> list[str]:
-        return [rel for rel in self.relative_paths() if fnmatch.fnmatch(rel, pattern)]
+        return [rel for rel in self.relative_paths() if glob_match(rel, pattern)]
 
     # Extensions worth grepping for platform signals. Without this filter,
     # content detection burns its budget on binary assets and generated data
@@ -120,37 +144,50 @@ class RepoAnalyzer:
     CONTENT_EXTS = {
         ".swift", ".m", ".mm", ".h", ".kt", ".java", ".py", ".go", ".rs", ".rb",
         ".php", ".cs", ".ts", ".tsx", ".js", ".jsx", ".vue",
+        ".mjs", ".cjs", ".mts", ".cts", ".dart", ".scala", ".ex", ".exs",
+        ".c", ".cc", ".cpp", ".hpp", ".sh",
         ".yml", ".yaml", ".json", ".toml", ".tf", ".plist", ".entitlements",
         ".xcconfig", ".xcprivacy", ".pbxproj", ".resolved", ".gradle", ".kts",
     }
 
-    def file_contains(self, pattern: str, extensions: list[str] | set | None = None,
-                      max_files: int = 5000, max_bytes: int = 2_000_000) -> bool:
+    def _read_text(self, f: Path, max_bytes: int = 2_000_000) -> str | None:
+        """A file's text, read at most once per run; None if unreadable or oversized."""
+        key = str(f)
+        if key not in self._text_cache:
+            try:
+                too_big = f.stat().st_size > max_bytes
+                self._text_cache[key] = None if too_big else f.read_text(errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                self._text_cache[key] = None
+        return self._text_cache[key]
+
+    def file_contains_any(self, patterns: list[str], extensions: list[str] | set | None = None,
+                          max_files: int = 5000) -> bool:
+        """True when any file with a matching extension matches any of the patterns.
+
+        All of a block's patterns are checked in one pass, and each file is read
+        once per run, so a block with six patterns costs one walk, not six.
+        """
         # The budget used to be 50 files / 50 KB, which on any real repo was
         # exhausted in the first directory `os.walk` happened to visit. Measured
         # on a 1071-file Swift repo: `^import CloudKit` (16 real hits),
         # `^import Testing` (273) and `^import FoundationModels` (13) all
         # returned False because the walk never reached `Sources/`. Detection
         # that depends on walk order is not detection.
-        regex = re.compile(pattern, re.MULTILINE)
+        regexes = [re.compile(p, re.MULTILINE) for p in patterns]
         exts = set(extensions) if extensions else None
         count = 0
         for f in self.file_index:
             if exts is not None and f.suffix not in exts:
                 continue
-            try:
-                if f.stat().st_size > max_bytes:
-                    continue
-            except OSError:
+            text = self._read_text(f)
+            if text is None:
                 continue
             count += 1
             if count > max_files:
                 break
-            try:
-                if regex.search(f.read_text(errors="ignore")):
-                    return True
-            except (OSError, UnicodeDecodeError):
-                continue
+            if any(r.search(text) for r in regexes):
+                return True
         return False
 
     def detect_platforms(self, guidance: dict) -> dict[str, dict]:
@@ -185,7 +222,7 @@ class RepoAnalyzer:
                 mode = platform_data.get("detect_mode", "files")
 
                 file_match = any(
-                    fnmatch.fnmatch(rel, pattern)
+                    glob_match(rel, pattern)
                     for pattern in globs
                     for rel in rel_paths
                 )
@@ -206,10 +243,9 @@ class RepoAnalyzer:
                 # for, which was enough to detect a macOS app in a pure Python
                 # repo. Documentation about a platform is not that platform.
                 exts = platform_data.get("detect_content_exts") or self.CONTENT_EXTS
-                content_match = any(
-                    self.file_contains(cp, extensions=exts)
-                    for cp in contents
-                ) if need_content else False
+                content_match = (
+                    self.file_contains_any(contents, extensions=exts) if need_content else False
+                )
 
                 if mode == "all":
                     hit = bool(globs) and file_match and bool(contents) and content_match
@@ -223,16 +259,10 @@ class RepoAnalyzer:
     def _file_matches_any(self, rel: str, regexes: list, exts=None) -> bool:
         """True when the file at `rel` matches one of the compiled patterns."""
         exts = exts or self.CONTENT_EXTS
-        if rel not in self._text_cache:
-            f = self.repo_path / rel
-            try:
-                if f.suffix not in exts or f.stat().st_size > 2_000_000:
-                    self._text_cache[rel] = None
-                else:
-                    self._text_cache[rel] = f.read_text(errors="ignore")
-            except (OSError, UnicodeDecodeError):
-                self._text_cache[rel] = None
-        text = self._text_cache[rel]
+        f = self.repo_path / rel
+        if f.suffix not in exts:
+            return False
+        text = self._read_text(f)
         return bool(text) and any(r.search(text) for r in regexes)
 
     def map_component_paths(self, detected: dict[str, dict]) -> dict[str, list[str]]:
@@ -256,16 +286,22 @@ class RepoAnalyzer:
                 if scoped else []
             scope_exts = pd.get("detect_content_exts") or self.CONTENT_EXTS
             # `component_globs` lets a content-gated block still name real
-            # directories; falls back to the detection globs.
-            for pattern in pd.get("component_globs") or pd.get("detect_files", []):
-                for rel in rel_paths:
-                    if not fnmatch.fnmatch(rel, pattern):
-                        continue
-                    if scoped and not self._file_matches_any(rel, regexes, scope_exts):
-                        continue
-                    parts = Path(rel).parts
-                    key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
-                    counts[key] = counts.get(key, 0) + 1
+            # directories. When they name none (an Xcode layout like
+            # `MyApp/Store.swift` matches no `App/`/`Sources/` glob), fall back
+            # to the detection globs rather than reporting no paths at all.
+            glob_sets = [pd.get("component_globs"), pd.get("detect_files")]
+            for globs in (g for g in glob_sets if g):
+                for pattern in globs:
+                    for rel in rel_paths:
+                        if not glob_match(rel, pattern):
+                            continue
+                        if scoped and not self._file_matches_any(rel, regexes, scope_exts):
+                            continue
+                        parts = Path(rel).parts
+                        key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else parts[0]
+                        counts[key] = counts.get(key, 0) + 1
+                if counts:
+                    break
             component_paths[pk] = [
                 p for p, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
             ]

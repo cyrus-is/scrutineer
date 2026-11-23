@@ -1076,7 +1076,9 @@ apple:
     detect_content: ["^import AppKit", "NSApplicationDelegate", "MACOSX_DEPLOYMENT_TARGET",
                      "com\\.apple\\.security\\.app-sandbox"]
     detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
-    component_globs: ["**/macOS/*.swift", "**/macOS/**/*.swift", "**/*.entitlements"]
+    # Entitlements only under macOS/: every .entitlements file used to count,
+    # which pointed the macOS checklist at iOS and extension targets.
+    component_globs: ["**/macOS/**/*.swift", "**/macOS/**/*.entitlements"]
     preflight_checks:
       - id: macos-file-access-not-bookmarked
         title: User-chosen file path stored without a security-scoped bookmark

@@ -15,6 +15,7 @@ repos, built to trigger those conditions, and assert properties of the output th
 must hold for every repo.
 """
 
+import importlib.util
 import json
 import re
 import subprocess
@@ -83,16 +84,37 @@ def fixtures(base: Path) -> dict[str, tuple[Path, Path | None]]:
         "servicemap.json": json.dumps(SERVICE_MAP),
     })
     empty = make_repo(base, "empty", {"README.md": "nothing to detect\n"})
+    apple = make_repo(base, "apple", {  # content-gated blocks, single-level and Xcode layouts
+        "Package.swift": "// swift-tools-version:5.9\n",
+        "Sources/Store.swift": "import CloudKit\n",
+        "MyApp/SyncStore.swift": "import CloudKit\n",
+        "macOS/AppDelegate.swift": "import AppKit\n",
+        "iOS/App.entitlements": "<plist></plist>\n",
+    })
+    auth_docs = make_repo(base, "auth-docs", {  # auth named only in config and docs
+        "app.py": "print('hello')\n",
+        "docs/config.yml": "auth: uses oauth flow with jsonwebtoken and jose\n",
+        "package-lock.json": '{"packages": {"node_modules/jsonwebtoken": {}}}\n',
+    })
+    esm_jwt = make_repo(base, "esm-jwt", {  # auth in .mjs source, which content scans skipped
+        "src/auth.mjs": "export const check = (t) => jwt.verify(t, key);\n",
+    })
     return {
         "ts-only": (ts_only, None),
         "go-only": (go_only, None),
         "polyglot": (polyglot, polyglot / "servicemap.json"),
         "empty": (empty, None),
+        "apple": (apple, None),
+        "auth-docs": (auth_docs, None),
+        "esm-jwt": (esm_jwt, None),
     }
 
 
-def generate(generator: Path, repo: Path, service_map: Path | None) -> str:
+def generate(generator: Path, repo: Path, service_map: Path | None,
+             guidance: Path | None = None) -> str:
     cmd = [sys.executable, str(generator), str(repo), "--output", "out.md", "--force"]
+    if guidance:
+        cmd += ["--guidance", str(guidance)]
     cmd += ["--service-map", str(service_map)] if service_map else ["--no-service-map"]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -122,6 +144,21 @@ def check_rendering(label: str, text: str) -> None:
     deep = [n for n, l in lines_outside_fences(text) if l.strip() and len(l) - len(l.lstrip(" ")) > 4]
     check(f"{label}: nothing outside a fence is indented more than 4 spaces {deep[:3]}", not deep)
     check(f"{label}: code fences are balanced", text.count("```") % 2 == 0)
+    sublabels = [n for n, l in lines_outside_fences(text) if re.match(r"^\d+[a-z]\. ", l)]
+    check(f"{label}: no '2b.'-style list markers, which Markdown doesn't number {sublabels[:3]}",
+          not sublabels)
+
+
+def load_generator(path: Path):
+    spec = importlib.util.spec_from_file_location(f"gen_{path.parent.name.replace('-', '_')}", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def detection_line(text: str, platform: str) -> str:
+    """The Process step-3 line naming where a platform was found ('' if absent)."""
+    return next((l for l in text.splitlines() if l.endswith(f"→ **{platform}**")), "")
 
 
 def main() -> int:
@@ -132,6 +169,14 @@ def main() -> int:
             for g, path in GENERATORS.items()
             for name, (repo, sm) in repos.items()
         }
+        # A guidance file without `verification:` gets no Phase 0, so it must
+        # get no pointer to one either.
+        import yaml
+        guidance = yaml.safe_load((ROOT / "generate-peer-review" / "peer_review_guidance.yaml").read_text())
+        guidance.pop("verification", None)
+        custom = Path(tmp) / "no-verification.yaml"
+        custom.write_text(yaml.safe_dump(guidance))
+        no_phase0 = generate(GENERATORS["peer"], repos["go-only"][0], None, guidance=custom)
 
     for (g, name), text in outputs.items():
         check_rendering(f"{g}/{name}", text)
@@ -165,6 +210,53 @@ def main() -> int:
     poly = outputs[("peer", "polyglot")]
     check("peer/polyglot: most-connected components rendered",
           "**Most-connected components (start here):**" in poly)
+
+    check("peer: no Phase 0 pointer when the guidance defines no verification",
+          "see Phase 0" not in no_phase0 and "## Phase 0" not in no_phase0)
+    check_rendering("peer/no-verification", no_phase0)
+
+    # Content detection reads source, not config or docs, and reaches .mjs.
+    for name, want in (("auth-docs", False), ("esm-jwt", True)):
+        text = outputs[("security", name)]
+        check(f"security/{name}: JWT checklist {'present' if want else 'absent'}",
+              bool(detection_line(text, "JWT Authentication")) == want)
+    check("security/auth-docs: OAuth checklist absent",
+          not detection_line(outputs[("security", "auth-docs")], "OAuth 2.0"))
+
+    # Content-gated Apple blocks name real directories, and only the right ones.
+    for g in GENERATORS:
+        text = outputs[(g, "apple")]
+        ck = detection_line(text, "CloudKit sync")
+        check(f"{g}/apple: CloudKit names its directories, not '(content detection)' [{ck.strip()}]",
+              ck and "(content detection)" not in ck and "Sources/Store.swift" in ck)
+        mac = detection_line(text, "macOS app")
+        check(f"{g}/apple: macOS paths exclude the iOS entitlements [{mac.strip()}]",
+              mac and "iOS/" not in mac)
+
+    # Phase 0 commands that contain backticks render as one code span.
+    swift_cmd = next((l for l in outputs[("peer", "apple")].splitlines()
+                      if "swiftlint lint --strict" in l), "")
+    check("peer/apple: swiftlint command rendered with a double-backtick span",
+          swift_cmd.startswith("- `` swiftlint"))
+
+    # Unit checks on the helpers both generators share.
+    for g, path in GENERATORS.items():
+        mod = load_generator(path)
+        cases = [
+            ("App/Foo.swift", "App/**/*.swift", True),
+            ("App/a/b/Foo.swift", "App/**/*.swift", True),
+            ("Foo.swift", "**/*.swift", True),
+            ("x/App/Foo.swift", "App/**/*.swift", False),
+            ("macOS/A.entitlements", "**/macOS/**/*.entitlements", True),
+            ("iOS/A.entitlements", "**/macOS/**/*.entitlements", False),
+            ("src/index.ts", "**/*.ts", True),
+            ("src/index.tsx", "**/*.ts", False),
+        ]
+        bad = [(r, pat) for r, pat, want in cases if mod.glob_match(r, pat) != want]
+        check(f"{g}: glob_match treats **/ as zero or more directories {bad}", not bad)
+    peer_mod = load_generator(GENERATORS["peer"])
+    check("peer: code_span survives inner backticks",
+          peer_mod.code_span("a `b` c") == "`` a `b` c ``" and peer_mod.code_span("ls") == "`ls`")
 
     for n, ok in _results:
         print(("PASS " if ok else "FAIL ") + n)

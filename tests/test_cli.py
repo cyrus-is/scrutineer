@@ -49,7 +49,13 @@ def main() -> int:
     check("`scrutineer servicemap schema` prints an existing path",
           proc.returncode == 0 and Path(proc.stdout.strip()).is_file())
     proc = run_cli("servicemap", "validate", "--help")
-    check("`scrutineer servicemap validate` runs the validator", proc.returncode in (0, 1))
+    check("`scrutineer servicemap validate --help` reaches the validator, not the wrapper",
+          proc.returncode == 0 and "path-to-servicemap.json" in proc.stdout)
+    with tempfile.TemporaryDirectory() as tmp:
+        bad = Path(tmp) / "bad.json"
+        bad.write_text("{}")
+        proc = run_cli("servicemap", "validate", str(bad))
+        check("`scrutineer servicemap validate` fails an invalid map", proc.returncode != 0)
     check("unknown mcp script is rejected", run_cli("mcp", "bogus").returncode != 0)
 
     # Install into a throwaway repo, then check what the installed skills ask for.
@@ -84,7 +90,7 @@ def main() -> int:
     # The parser accepts what the skills use, so the regex above checks real choices.
     parser = cli.build_parser()
     ns = parser.parse_args(["mcp", "analyze", "--config", "x.json"])
-    check("mcp passes options through to the script", ns.args == ["--config", "x.json"])
+    check("mcp parser accepts script options", ns.args == ["--config", "x.json"])
 
     for n, ok in _results:
         print(("PASS " if ok else "FAIL ") + n)

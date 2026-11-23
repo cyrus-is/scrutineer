@@ -1113,10 +1113,11 @@ apple:
       - MACOSX_DEPLOYMENT_TARGET
       - com\.apple\.security\.app-sandbox
     detect_content_exts: [".swift", ".entitlements", ".plist", ".pbxproj", ".xcconfig", ".xcprivacy"]
+    # Entitlements only under macOS/: every .entitlements file used to count,
+    # which pointed the macOS checklist at iOS and extension targets.
     component_globs:
-      - '**/macOS/*.swift'
       - '**/macOS/**/*.swift'
-      - '**/*.entitlements'
+      - '**/macOS/**/*.entitlements'
     checklist:
       - id: macos-sandbox-temporary-exception
         title: App Sandbox temporary-exception entitlement
@@ -1602,10 +1603,15 @@ auth:
   jwt:
     name: JWT Authentication
     detect_files: []
+    # Source files only. Scanning YAML, JSON and lockfiles detected JWT in any
+    # repo whose config or docs merely mention it (including this repo's own
+    # guidance files). `jose` is word-bounded so it matches the library, not
+    # "purpose" or a name.
+    detect_content_exts: [".py", ".go", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".java", ".kt", ".scala", ".rb", ".php", ".cs", ".rs", ".swift", ".ex", ".exs", ".dart"]
     detect_content:
       - "jwt\\.sign"
       - "jwt\\.verify"
-      - "jose"
+      - "\\bjose\\b"
       - "jsonwebtoken"
       - "JWTVerifier"
       - "ParseWithClaims"
@@ -1641,6 +1647,8 @@ auth:
   oauth:
     name: OAuth 2.0
     detect_files: []
+    # Source files only, for the same reason as JWT above.
+    detect_content_exts: [".py", ".go", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".java", ".kt", ".scala", ".rb", ".php", ".cs", ".rs", ".swift", ".ex", ".exs", ".dart"]
     detect_content:
       - "oauth"
       - "client_secret"

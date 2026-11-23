@@ -133,7 +133,26 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _passthrough(argv: list[str]) -> int | None:
+    """Run a bundled script directly when argv names one; None otherwise.
+
+    argparse can't hand a script its own options: with a REMAINDER positional,
+    a leading `-x` is parsed as an option of the wrapper, so
+    `scrutineer servicemap validate --help` printed the wrapper's help. The
+    parsers above still exist for `scrutineer --help` and for bad script names.
+    """
+    if len(argv) >= 2 and argv[0] == "mcp" and argv[1] in paths.MCP_SCRIPTS:
+        return _run_script(paths.MCP_SCRIPTS[argv[1]], argv[2:])
+    if len(argv) >= 2 and argv[:2] == ["servicemap", "validate"]:
+        return _run_script(paths.SERVICEMAP_VALIDATOR, argv[2:])
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    code = _passthrough(argv)
+    if code is not None:
+        return code
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
