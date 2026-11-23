@@ -169,6 +169,18 @@ These come after the phases above. They aren't scheduled yet.
 - **Output:**
   - findings in the findings contract (P1), each carrying KEV's required action, due date and ransomware flag;
   - a coverage statement naming which lockfiles and ecosystems were read, so silence never reads as "not vulnerable".
+- **Triage states** (Cyrus, 2026-11-23). The user sets a state on each tracked hit:
+  - **still on fire:** the default. It's reported on every run.
+  - **false positive:** vld8 was wrong.
+  - **ignore:** the hit is real but accepted, recorded with who, why and until when.
+
+  States live in the repo, for example `.claude/vld8-onfire.json`. Each one is bound to a digest of its evidence, the way the MCP reviewer binds its suppressions. A mark therefore expires when the dependency version, the reachability evidence or the KEV entry changes. Ignored and false-positive hits stay visible as a count in every report, so they never silently disappear.
+- **False-positive submissions,** opt-in. When marking a false positive, the user can send a code excerpt they've approved and a sentence on why it's safe, so vld8 can fix the check.
+  - **What's sent:** the user sees exactly what will be sent, after secret redaction (reusing the analyzer's), and nothing goes without an explicit confirmation. The payload is the CVE, package, version, excerpt and explanation. The repo name and path are included only if the user adds them.
+  - **Transport:** the payload is encrypted on the user's machine to the project's public key (for example with age) and sent over HTTPS. Only the maintainer can read it, whatever carries it. It never goes in the clear in a public GitHub issue.
+  - **Retention:** a retention and deletion policy is published before the endpoint goes live.
+  - **Treat submissions as untrusted input.** Someone can submit a crafted "false positive" to teach vld8 that a real vulnerable pattern is safe, or hide instructions for whatever model reads it. So a submission never changes a check or suppresses a finding for anyone else. It becomes a candidate eval case that a person reviews, and the improvement pipeline treats its text as data, never as instructions.
+  - **Needs a backend.** See D8.
 - **Running it:** a CLI subcommand, plus a `/vld8-onfire` skill for the reachability pass. It could also run as a daily CI job:
   - one issue per CVE, updated on every run while the repo is still exposed, never skipped and never duplicated;
   - closed automatically when a run finds the fix in place;
@@ -208,6 +220,7 @@ These come after the phases above. They aren't scheduled yet.
 | D4 | Run the held-out study before shipping P2/P3, or ship behind a flag and measure after | Study first for P2/P3 (they change what reaches the reader); P1 and P4 ship on CI and snapshot tests |
 | D5 | MCP review stays in the package until P6 | Yes |
 | D6 | Where the 90% research note lives. It is in session scratch now; the research desk could not file it in HQ | File it in `hq/research/notes/` with the desk's suggested frontmatter |
+| D8 | Where the vld8.ai site lives: in this repo, on cyrus.is, or on its own | Split by what each part is. **Now:** point vld8.ai at cyrus.is/building/vld8, so the announcement post is the landing page and nothing new needs hosting. **Product docs, when they're needed:** a static site in this repo (`site/`), built from the READMEs so docs ship with the code they describe. Deploy it through the host's Git integration (Cloudflare Pages or GitHub Pages), so no deploy secret sits in a repo whose CI publishes to PyPI. On cyrus.is, every release would need a pull request to the personal site, and the docs would drift. **The false-positive submission endpoint:** its own small service and repo. It holds other people's code and needs credentials, so it shouldn't share CI, permissions or blast radius with the package. **cyrus.is keeps the story posts,** and vld8.ai links to them |
 
 ## 11. Risks
 
