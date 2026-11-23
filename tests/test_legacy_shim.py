@@ -45,6 +45,9 @@ def main() -> int:
     check("`scrutineer servicemap schema` prints only the schema path on stdout",
           proc.returncode == 0 and Path(out).is_file() and "\n" not in out)
     check("the notice goes to stderr", "renamed vld8" in proc.stderr)
+    check("the notice covers tool installs, where vld8 isn't on PATH",
+          "pipx install vld8" in proc.stderr and "uv tool install vld8" in proc.stderr
+          and "already installed" not in proc.stderr)
 
     proc = run_shim("mcp", "analyze", "--help")
     check("`scrutineer mcp analyze --help` reaches the analyzer", proc.returncode == 0 and "--config" in proc.stdout)

@@ -103,10 +103,22 @@ def main() -> int:
         (cmd_dir / "scrutineer-notes.md").write_text("Not one of ours.\n")
         (target / ".claude" / "scrutineer-mcp-suppressions.json").write_text('{"suppressions": []}\n')
         result = installer.install(target, log=lambda *_: None)
-        check("upgrade removes the scrutineer files it replaced",
-              sorted(result.removed) == ["scrutineer-code.md", "scrutineer-mcp.md"]
+        backup = target / paths.LEGACY_BACKUP_DIR
+        check("upgrade moves the scrutineer files it replaced out of .claude/commands",
+              sorted(result.retired) == ["scrutineer-code.md", "scrutineer-mcp.md"]
               and not (cmd_dir / "scrutineer-mcp.md").exists()
               and not (cmd_dir / "scrutineer-code.md").exists())
+        check("upgrade keeps the retired files, edits included, in the backup folder",
+              "Old." in (backup / "scrutineer-code.md").read_text()
+              and (backup / "scrutineer-mcp.md").is_file()
+              and not backup.is_relative_to(cmd_dir))
+        # A second upgrade (say the user restored an old file) must not clobber the first backup.
+        (cmd_dir / "scrutineer-code.md").write_text(
+            "You are a TL/Principal SDE performing a peer code review. Second.\n")
+        installer.install(target, log=lambda *_: None)
+        check("a later upgrade doesn't overwrite an earlier backup",
+              "Old." in (backup / "scrutineer-code.md").read_text()
+              and "Second." in (backup / "scrutineer-code.1.md").read_text())
         check("upgrade keeps a same-named file scrutineer did not write",
               (cmd_dir / "scrutineer-security.md").exists())
         check("upgrade leaves unrelated command files alone", (cmd_dir / "scrutineer-notes.md").exists())

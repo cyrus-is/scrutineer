@@ -13,7 +13,7 @@ Dev tooling for [Claude Code](https://claude.ai/code): Cyrus's toolbox. It insta
 pip install vld8 && vld8 install .   # adds /vld8-map, -review, -security, -mcp, -setup to .claude/commands/
 ```
 
-> **Upgrading from scrutineer?** vld8 is the same toolkit under a new name; `scrutineer` is no longer maintained. Run `pip install vld8`, then `vld8 install` in each repo. The install replaces the `/scrutineer-*` commands with `/vld8-*` ones (it deletes only files scrutineer wrote) and moves `.claude/scrutineer-mcp-suppressions.json` to `.claude/vld8-mcp-suppressions.json`. On the command line, `scrutineer servicemap …` is now `vld8 map …`. Until you switch, `pip install -U scrutineer` gets a final release that installs vld8 and forwards the old `scrutineer` command to it.
+> **Upgrading from scrutineer?** vld8 is the same toolkit under a new name; `scrutineer` is no longer maintained. Run `pip install vld8`, then `vld8 install` in each repo. The install replaces the `/scrutineer-*` commands with `/vld8-*` ones, moving the old files to `.claude/scrutineer-backup/` (only files scrutineer wrote, so edits aren't lost), and moves `.claude/scrutineer-mcp-suppressions.json` to `.claude/vld8-mcp-suppressions.json`. On the command line, `scrutineer servicemap …` is now `vld8 map …`. Until you switch, `pip install -U scrutineer` gets a final release that installs vld8 and forwards the old `scrutineer` command to it.
 
 ## What's in the box
 

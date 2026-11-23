@@ -49,6 +49,7 @@ jobs:
           /tmp/wheel-venv/bin/vld8 install /tmp/target
           test -f .claude/commands/vld8-setup.md
           test ! -e .claude/commands/scrutineer-mcp.md
+          test -f .claude/scrutineer-backup/scrutineer-mcp.md
           # `! grep` would never fail the step under `set -e`, so test explicitly.
           if grep -l '\.venv/bin/python' .claude/commands/*.md; then exit 1; fi
           if grep -il 'scrutineer' .claude/commands/*.md; then exit 1; fi

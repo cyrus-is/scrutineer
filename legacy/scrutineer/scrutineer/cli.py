@@ -8,11 +8,17 @@ from __future__ import annotations
 
 import sys
 
+# Worded for every way scrutineer could have been installed. Under pipx or
+# `uv tool`, the vld8 that came in as a dependency has no `vld8` on PATH, so the
+# user has to install vld8 itself, the same way they installed scrutineer.
 NOTICE = (
     "scrutineer has been renamed vld8 and is no longer maintained under this name.\n"
-    "This command forwards to `vld8`, which is already installed: use `vld8` directly,\n"
-    "run `vld8 install` in each repo to replace the /scrutineer-* skills with /vld8-*,\n"
-    "then `pip uninstall scrutineer`. Details: https://pypi.org/project/scrutineer/"
+    "This command forwards to vld8 for now. To switch:\n"
+    "  1. Install vld8 the way you installed scrutineer: pip install vld8,\n"
+    "     pipx install vld8, or uv tool install vld8.\n"
+    "  2. Run `vld8 install` in each repo to replace the /scrutineer-* skills with /vld8-*.\n"
+    "  3. Uninstall scrutineer the same way you installed it.\n"
+    "Details: https://pypi.org/project/scrutineer/"
 )
 
 # Subcommands whose name changed in the rename; everything else kept its name.

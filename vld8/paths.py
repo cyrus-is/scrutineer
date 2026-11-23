@@ -60,8 +60,10 @@ SECURITY_COMMAND = "vld8-security.md"
 
 # Command files that scrutineer (this package's name before 2.0) installed, each
 # mapped to the vld8 file that replaces it and a line only that skill contains.
-# `vld8 install` deletes an old file once its replacement is in place, and only
-# when the marker shows scrutineer wrote it, so a hand-written file survives.
+# `vld8 install` moves an old file to LEGACY_BACKUP_DIR once its replacement is
+# in place, and only when the marker shows scrutineer wrote it, so a hand-written
+# file stays put. The backup folder sits outside .claude/commands/ because
+# Claude Code loads commands from that folder's subfolders too.
 LEGACY_COMMANDS = {
     "scrutineer-servicemap.md": (SERVICEMAP_COMMAND, "name: scrutineer-servicemap"),
     "scrutineer-mcp.md": (MCP_COMMAND, "name: scrutineer-mcp"),
@@ -75,6 +77,7 @@ LEGACY_COMMANDS = {
 # scrutineer gave it. `vld8 install` renames the old file so accepted
 # suppressions survive the upgrade.
 SUPPRESSIONS_FILE = ".claude/vld8-mcp-suppressions.json"
+LEGACY_BACKUP_DIR = ".claude/scrutineer-backup"
 LEGACY_SUPPRESSIONS_FILE = ".claude/scrutineer-mcp-suppressions.json"
 
 # Default name for the generated service map at the target repo root.

@@ -53,8 +53,8 @@ include = [
     "mcp-review/",
     "references/",
     "vld8-setup/",
-    "README.md",
-    "LICENSE*",
+    "/README.md",
+    "/LICENSE*",
 ]
 # The entire test tree — unit tests, fixtures, and the MCP eval corpus
 # (live-captured tool surfaces, the top-100 survey, capture scripts) — is a

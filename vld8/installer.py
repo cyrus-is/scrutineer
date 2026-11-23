@@ -7,9 +7,9 @@ Given a target repo, this:
 2. obtains a service map (see :mod:`vld8.servicemap`),
 3. runs the peer-review and security-review generators against the repo,
    wiring in the service map when one is available,
-4. removes the ``scrutineer-*`` command files that releases before the rename
-   installed, once their ``vld8-*`` replacements are in place, and renames the
-   MCP reviewer's suppressions file to its vld8 name.
+4. moves the ``scrutineer-*`` command files that releases before the rename
+   installed into a backup folder, once their ``vld8-*`` replacements are in
+   place, and renames the MCP reviewer's suppressions file to its vld8 name.
 
 Both front doors — the ``vld8`` CLI and the ``/vld8-setup`` skill —
 call :func:`install`. The skill passes ``service_map=`` after doing its own
@@ -36,7 +36,7 @@ def _default_log(msg: str = "") -> None:
 class InstallResult:
     target: Path
     installed: list[str] = field(default_factory=list)   # command files written
-    removed: list[str] = field(default_factory=list)     # scrutineer-era files deleted
+    retired: list[str] = field(default_factory=list)     # scrutineer-era files moved to the backup folder
     moved_suppressions: bool = False                     # renamed the MCP suppressions file
     service_map_note: str = ""
     skipped_crawl: bool = False
@@ -56,13 +56,27 @@ def _copy_skill(src: Path, dest: Path, *, force: bool, log) -> bool:
     return True
 
 
-def _remove_legacy(cmd_dir: Path, log) -> list[str]:
-    """Delete scrutineer-era command files that a vld8 file now replaces.
+def _backup_path(backup_dir: Path, name: str) -> Path:
+    """A path in ``backup_dir`` for ``name`` that doesn't overwrite an earlier backup."""
+    dest = backup_dir / name
+    n = 1
+    while dest.exists():
+        dest = backup_dir / f"{Path(name).stem}.{n}{Path(name).suffix}"
+        n += 1
+    return dest
 
-    A file goes only when its replacement exists and it carries the marker of
+
+def _retire_legacy(target: Path, cmd_dir: Path, log) -> list[str]:
+    """Move scrutineer-era command files that a vld8 file now replaces out of the way.
+
+    A file moves only when its replacement exists and it carries the marker of
     the skill scrutineer wrote under that name; anything else is kept and named.
+    Files go to a backup folder outside ``.claude/commands/`` rather than being
+    deleted, because the user may have edited them and ``.claude/`` is often
+    gitignored.
     """
-    removed = []
+    retired = []
+    backup_dir = target / paths.LEGACY_BACKUP_DIR
     for old, (new, marker) in paths.LEGACY_COMMANDS.items():
         old_path = cmd_dir / old
         if not old_path.is_file() or not (cmd_dir / new).is_file():
@@ -75,10 +89,12 @@ def _remove_legacy(cmd_dir: Path, log) -> list[str]:
         if marker not in text:
             log(f"  kept {old} (scrutineer did not write it; delete it by hand if it is stale)")
             continue
-        old_path.unlink()
-        log(f"  ✓ removed {old} (replaced by {new})")
-        removed.append(old)
-    return removed
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        dest = _backup_path(backup_dir, old)
+        old_path.rename(dest)
+        log(f"  ✓ moved {old} → {dest.relative_to(target)} (replaced by {new})")
+        retired.append(old)
+    return retired
 
 
 def _migrate_suppressions(target: Path, log) -> bool:
@@ -194,8 +210,8 @@ def install(
     # 4. Retire the scrutineer-* files this install replaces, so the old and new
     #    commands don't both appear in Claude Code.
     if any((cmd_dir / old).exists() for old in paths.LEGACY_COMMANDS):
-        log("Removing scrutineer-era commands…")
-        result.removed = _remove_legacy(cmd_dir, log)
+        log("Retiring scrutineer-era commands…")
+        result.retired = _retire_legacy(target, cmd_dir, log)
     result.moved_suppressions = _migrate_suppressions(target, log)
 
     return result

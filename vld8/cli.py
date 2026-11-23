@@ -113,10 +113,11 @@ def _cmd_install(args: argparse.Namespace) -> int:
         print("Nothing was written (all targets existed; re-run with --force).")
     if result.moved_suppressions:
         print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
-    if result.removed:
-        print("✓ Removed the scrutineer-era commands they replace:")
-        for name in result.removed:
+    if result.retired:
+        print(f"✓ Moved the scrutineer-era commands they replace to {paths.LEGACY_BACKUP_DIR}/:")
+        for name in result.retired:
             print(f"    /{name[:-3]}")
+        print("  Delete that folder once you've copied over any edits you made to them.")
     if result.skipped_crawl:
         print(
             "\nNote: skills were generated without a service map. For cross-service\n"

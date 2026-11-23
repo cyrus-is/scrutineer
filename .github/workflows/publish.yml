@@ -6,6 +6,8 @@ name: Publish to PyPI
 # - `scrutineer-vX.Y.Z`  → scrutineer, the forwarding package in legacy/scrutineer
 # Each PyPI project's trusted publisher names this repo and this workflow file.
 # `workflow_dispatch` re-publishes an existing tag by hand.
+# Create the scrutineer release with `--latest=false`, so the repo's latest
+# release (and the README badge) stays on vld8.
 on:
   release:
     types: [published]
@@ -19,6 +21,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      contents: read    # checkout
       id-token: write   # required for OIDC trusted publishing
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
@@ -41,6 +44,14 @@ jobs:
           # Refuse to publish a version the tag doesn't name.
           if [ ! -f "dist/${pkg}-${want}-py3-none-any.whl" ]; then
             echo "::error::tag $TAG does not match the built version:"; ls dist; exit 1
+          fi
+          # The forwarding package requires vld8; publishing it first would leave
+          # `pip install -U scrutineer` unresolvable. Check the floor is live.
+          if [ "$pkg" = scrutineer ]; then
+            floor=$(sed -n 's/.*"vld8>=\([0-9.]*\),.*/\1/p' legacy/scrutineer/pyproject.toml)
+            if ! curl -fsS -o /dev/null "https://pypi.org/pypi/vld8/${floor}/json"; then
+              echo "::error::vld8 ${floor} is not on PyPI yet; publish v${floor} first"; exit 1
+            fi
           fi
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
