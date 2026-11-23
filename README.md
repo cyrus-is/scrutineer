@@ -6,7 +6,7 @@
 Agentic code review toolkit for [Claude Code](https://claude.ai/code). Three generators that scan your repo and produce tailored review skills — a principal engineer peer review, a security audit, and a service topology map that makes both smarter — plus `/scrutineer-mcp`, a standalone auditor for the MCP servers you're about to trust.
 
 ```bash
-pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -security, -servicemap, -mcp to .claude/commands/
+pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -security, -servicemap, -mcp, -setup to .claude/commands/
 ```
 
 > **New in 1.6 — [`/scrutineer-mcp`](#mcp-review): an "npm audit" for MCP servers.** Installing an MCP server hands it tool access, data access, and usually a live credential. `/scrutineer-mcp` audits one *before* it runs — verdict (`SAFE`/`CAUTION`/`BLOCK`) + a separate data-sensitivity rating — catching unpinned installs, creds-in-URLs, read-then-send exfil paths, and tool-poisoning. Motivated by real 2025 incidents (the postmark-mcp backdoor, CVE-2025-6514).
@@ -17,7 +17,7 @@ pip install scrutineer && scrutineer install .   # adds /scrutineer-code, -secur
 
 Deep agentic crawl of your repository that produces `servicemap.json` — a machine-readable topology of all services, apps, libraries, datastores, infrastructure, and their connections.
 
-The service map is useful on its own (architecture docs that stay current), but it also feeds into the other two tools. With a service map, peer review can trace cross-service impacts and the security review can flag unauthenticated endpoints and shared datastores.
+The service map is useful on its own (architecture docs; re-run the crawl when the architecture changes), but it also feeds into the other two tools. With a service map, peer review can trace cross-service impacts and the security review can flag unauthenticated endpoints and shared datastores.
 
 **Four-phase crawl:**
 1. **Discovery** — identify all components (services, apps, libraries, infra, datastores)
@@ -58,7 +58,7 @@ Same scan-and-generate approach, producing `.claude/commands/scrutineer-security
 
 **Analysis flow:**
 1. **Threat model** — attack surface, trust boundaries, blast radius, auth model
-2. **Universal checklist** — 11 areas including auth, injection, secrets, crypto, rate limiting, dependencies
+2. **Universal checklist** — 9 areas including auth, injection, secrets, crypto, rate limiting, dependencies
 3. **Platform-specific checklists** — vulnerability patterns for 33 platform blocks with OWASP Mobile Top 10 (2024) and MASVS mapping
 4. **Agentic analysis** — input tracing from entry to storage, auth boundary auditing, attack chain reasoning
 
@@ -112,7 +112,7 @@ Scrutineer targets **Claude Code** today — the generators emit `.claude/comman
 
 ## Quick start
 
-The fastest path installs all four skills — correctly named and generated from a fresh service map — in one step. There are two front doors over the same shared installer; pick whichever fits where you are.
+The fastest path installs all five skills — correctly named, with the review skills generated from a fresh service map — in one step. There are two front doors over the same shared installer; pick whichever fits where you are.
 
 ### Option A — one command (recommended)
 
@@ -122,7 +122,7 @@ The fastest path installs all four skills — correctly named and generated from
 /scrutineer-setup
 ```
 
-(Copy `scrutineer-setup/SKILL.md` into your repo's `.claude/commands/` once to make `/scrutineer-setup` available, or just run the CLI below.)
+(`scrutineer install` also installs `/scrutineer-setup`, so after a pip install you can re-run setup from Claude Code to crawl the map and regenerate. From a clone, copy `scrutineer-setup/SKILL.md` into your repo's `.claude/commands/` once.)
 
 **From the shell** — install the `scrutineer` CLI and run the installer:
 
@@ -137,12 +137,20 @@ scrutineer install /path/to/your-repo --crawl    # also run the servicemap crawl
 Both produce the same result in `your-repo/.claude/commands/`:
 
 ```
-/scrutineer-servicemap   /scrutineer-code   /scrutineer-security   /scrutineer-mcp
+/scrutineer-servicemap   /scrutineer-code   /scrutineer-security   /scrutineer-mcp   /scrutineer-setup
 ```
 
 The only difference between the front doors is **how the service map is produced**: `/scrutineer-setup` lets Claude crawl it inline; `scrutineer install` reuses an existing `servicemap.json`, runs a headless `claude -p` crawl with `--crawl`, or skips it (re-run with `--force` after you generate a map to make the skills map-aware). The deterministic copy-and-generate work is identical and lives in `scrutineer/installer.py`.
 
-> Note: the wheel bundles the generators, guidance YAMLs, and skills under `scrutineer/_assets/`, so `pip install scrutineer` works with no clone present — `scrutineer/paths.py` resolves the bundled assets when installed and the repo-root copies when run from a clone.
+> Note: the wheel bundles the generators, guidance YAMLs, skills and scripts under `scrutineer/_assets/`, so `pip install scrutineer` works with no clone present — `scrutineer/paths.py` resolves the bundled assets when installed and the repo-root copies when run from a clone.
+
+The installed skills reach the bundled scripts through the CLI, so they work from any repo:
+
+```bash
+scrutineer mcp analyze|fetch|validate|capture [args]   # the MCP-review scripts (/scrutineer-mcp)
+scrutineer servicemap validate servicemap.json         # check a crawled map
+scrutineer servicemap schema                           # print the schema's path
+```
 
 ### Option B — manual, step by step
 
@@ -165,7 +173,8 @@ Then in Claude Code, inside your repo:
 Validate the output:
 
 ```bash
-python generate-servicemap/validate_servicemap.py servicemap.json
+scrutineer servicemap validate servicemap.json
+# from a clone: python generate-servicemap/validate_servicemap.py servicemap.json
 ```
 
 #### 2. Generate review skills
@@ -233,7 +242,7 @@ The review tools are driven by YAML guidance files:
 - **`generate-security-review/security_guidance.yaml`** — platform detection rules, vulnerability checklists with OWASP mapping, and secure alternatives
 - **`mcp-review/mcp_risk_guidance.yaml`** — config-smell definitions, sensitive-env-key patterns, the dangerous-capability taxonomy, the data-sensitivity taxonomy, and the tool-poisoning / hidden-instruction patterns for MCP review
 
-To add a new platform or customize checks for your stack, add entries to these files. The two generators pick them up automatically and self-heal — if they detect a platform in your repo that isn't in the guidance file, they'll flag it and offer to enrich the guidance. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
+To add a new platform or customize checks for your stack, add entries to these files; the two generators pick them up on the next `scrutineer install --force`. The generators only detect platforms these files describe. The generated skills carry a self-heal instruction: when a review meets code no checklist covers, it flags the gap and drafts checks in its output. Those drafts are not written back to the guidance files, so add the ones worth keeping here. (`mcp_risk_guidance.yaml` is read by `analyze_mcp.py`; add a pattern and open a PR.)
 
 The service map schema is documented in `references/schema.md`.
 

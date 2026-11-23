@@ -31,15 +31,30 @@ def toolkit_root() -> Path:
 
 _ROOT = toolkit_root()
 
-# Generators (run as subprocesses) and the two copy-in static skills.
+# Generators (run as subprocesses) and the copy-in static skills.
 PEER_GENERATOR = _ROOT / "generate-peer-review" / "generate.py"
 SECURITY_GENERATOR = _ROOT / "generate-security-review" / "generate.py"
 SERVICEMAP_SKILL = _ROOT / "generate-servicemap" / "SKILL.md"
 MCP_SKILL = _ROOT / "mcp-review" / "SKILL.md"
+SETUP_SKILL = _ROOT / "scrutineer-setup" / "SKILL.md"
+
+# Scripts the installed skills run. The skills reach them through the CLI
+# (`scrutineer mcp analyze …`, `scrutineer servicemap validate …`), because an
+# installed skill sits in the target repo's .claude/commands/, where no
+# repo-relative path into this toolkit resolves.
+MCP_SCRIPTS = {
+    "analyze": _ROOT / "mcp-review" / "analyze_mcp.py",
+    "fetch": _ROOT / "mcp-review" / "fetch_source.py",
+    "validate": _ROOT / "mcp-review" / "validate_findings.py",
+    "capture": _ROOT / "mcp-review" / "capture_runtime.py",
+}
+SERVICEMAP_VALIDATOR = _ROOT / "generate-servicemap" / "validate_servicemap.py"
+SERVICEMAP_SCHEMA = _ROOT / "references" / "schema.md"
 
 # Command-file names produced in the target repo's .claude/commands/ directory.
 SERVICEMAP_COMMAND = "scrutineer-servicemap.md"
 MCP_COMMAND = "scrutineer-mcp.md"
+SETUP_COMMAND = "scrutineer-setup.md"
 PEER_COMMAND = "scrutineer-code.md"
 SECURITY_COMMAND = "scrutineer-security.md"
 
@@ -49,5 +64,8 @@ SERVICEMAP_FILE = "servicemap.json"
 
 def missing_assets() -> list[Path]:
     """Return any required asset paths that are not present on disk."""
-    required = [PEER_GENERATOR, SECURITY_GENERATOR, SERVICEMAP_SKILL, MCP_SKILL]
+    required = [
+        PEER_GENERATOR, SECURITY_GENERATOR, SERVICEMAP_SKILL, MCP_SKILL, SETUP_SKILL,
+        SERVICEMAP_VALIDATOR, SERVICEMAP_SCHEMA, *MCP_SCRIPTS.values(),
+    ]
     return [p for p in required if not p.exists()]

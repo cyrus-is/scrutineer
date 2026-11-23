@@ -30,6 +30,19 @@ from pathlib import Path
 import yaml
 
 
+def _render(template: str, **values) -> str:
+    """Dedent a section template, then fill in its values.
+
+    The order matters. ``textwrap.dedent(f"...")`` dedents *after* interpolation,
+    so a value that spans lines brings continuation lines with less indent than
+    the template's, dedent finds a smaller common margin, and the whole section
+    keeps its source indentation, which Markdown renders as a code block.
+    Dedenting the template first makes the output independent of the values.
+    Literal braces in templates are written doubled, as in an f-string.
+    """
+    return textwrap.dedent(template).format(**values)
+
+
 # ---------------------------------------------------------------------------
 # Repo Analyzer (shared logic with security review generator)
 # ---------------------------------------------------------------------------
@@ -327,7 +340,7 @@ class SkillGenerator:
         lines = [textwrap.dedent("""\
             ## Invocation Modes
 
-            This skill supports three modes based on the argument:
+            This skill supports four modes based on the argument:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
@@ -341,7 +354,8 @@ class SkillGenerator:
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
-            2. Get PR metadata: `gh pr view 123 --json number,title,headRefName,baseRefName`
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
+               The body is the author's statement of intent; Phase 1 reads it.
             3. Get full diff: `gh pr diff 123`
             4. Review the diff.
             5. Post findings as a PR comment via `gh pr comment`.
@@ -407,7 +421,7 @@ class SkillGenerator:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Process
 
             0. **Verify before judging** — establish what the toolchain already proves, and stop if it is red (see Phase 0)
@@ -423,7 +437,7 @@ class SkillGenerator:
             8. **Evaluate through all 8 lenses** — rate each as PASS / CONCERN / ISSUE.
             9. **Post findings** — Mode 2: `gh pr comment <number>` with structured output. Mode 1 and 3: output to terminal.
 
-        """)
+        """, detection_block=detection_block)
 
     def _verification_section(self, detected: dict, verification: dict | None) -> str:
         """Phase 0 — what the toolchain proves, so the review stops re-deriving it.
@@ -561,7 +575,7 @@ class SkillGenerator:
             "roots). Run `/scrutineer-servicemap` first if you want the boundaries named "
             "for you."
         )
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Diff Triage — size the change before reviewing it
 
             Run this first, before reading any code:
@@ -592,7 +606,7 @@ class SkillGenerator:
             A diff this large is usually also a signal worth reporting on its own: it means the
             branch has outgrown reviewability, and that is a process finding, not a code one.
 
-        """)
+        """, map_line=map_line)
 
     def _understand_first_section(self) -> str:
         return textwrap.dedent("""\
@@ -611,8 +625,9 @@ class SkillGenerator:
                its dependencies, and the data it receives? Are those assumptions documented or
                just hoped for?
             5. **What changed and why?** (Mode 1 and 2 only) What was the author trying to
-               accomplish? Read PR description and commit messages. Understanding intent prevents
-               false findings.
+               accomplish? Read the PR description (Mode 2: the `body` fetched above; Mode 1: if
+               the branch has an open PR, `gh pr view --json title,body`) and the commit messages
+               (`git log main..HEAD`). Understanding intent prevents false findings.
 
             Carry this model through the rest of the review. A checklist item that fires is only
             a finding if it matters given this context.
@@ -884,7 +899,8 @@ class SkillGenerator:
             **Verdict: APPROVE** — no issues found.
             ```
 
-            That's it. Do not produce empty sections or filler. A clean review is valuable.
+            Follow it with the Check Performance section (below) and nothing else: no empty
+            sections, no filler. A clean review is valuable.
 
             ### When issues are found:
 
@@ -985,7 +1001,20 @@ class SkillGenerator:
             top = sorted(conn_counts.items(), key=lambda x: -x[1])[:5]
             flow_hints = "\n".join(f"   - `{k}` ({v} connections)" for k, v in top)
 
-        return textwrap.dedent(f"""\
+        if component_count <= 20:
+            scale_note = (
+                "**Small repo (≤20 components): Single-agent deep review.** Read the service map, "
+                "then read source files as needed to trace flows. You have enough context. "
+                "Prioritize depth on the most complex and highest-risk areas."
+            )
+        else:
+            scale_note = (
+                "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the "
+                "Agent tool — one per investigation area. Each sub-agent gets a fresh context and "
+                "reads only the files relevant to its investigation. Collect findings, then synthesize."
+            )
+        flow_heading = "**Most-connected components (start here):**" if flow_hints else ""
+        return _render("""\
             ## Mode 4: Deep Repo Review
 
             **Role:** You are a world-class Principal Software Engineer performing a comprehensive,
@@ -1008,7 +1037,7 @@ class SkillGenerator:
 
             **Repo has {component_count} reviewable components.**
 
-            {"**Small repo (≤20 components): Single-agent deep review.** Read the service map, then read source files as needed to trace flows. You have enough context. Prioritize depth on the most complex and highest-risk areas." if component_count <= 20 else "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the Agent tool — one per investigation area. Each sub-agent gets a fresh context and reads only the files relevant to its investigation. Collect findings, then synthesize."}
+            {scale_note}
 
             ### Investigation 1: Trace Critical User Flows End-to-End
 
@@ -1023,7 +1052,7 @@ class SkillGenerator:
             - Is the same restriction (rate limit, billing check, auth) applied on ALL paths
               that reach this flow, or can some paths bypass it?
 
-            {"**Most-connected components (start here):**" if flow_hints else ""}
+            {flow_heading}
             {flow_hints}
 
             ### Investigation 2: Cross-Service Pattern Comparison
@@ -1123,7 +1152,7 @@ class SkillGenerator:
             <Things one service does well that others should adopt>
             ```
 
-        """)
+        """, component_count=component_count, flow_heading=flow_heading, flow_hints=flow_hints, scale_note=scale_note)
 
     def _help_section(self) -> str:
         return textwrap.dedent("""\
@@ -1165,7 +1194,7 @@ class SkillGenerator:
 
     def _self_heal_section(self, all_known_platforms: list[str]) -> str:
         known_list = ", ".join(sorted(all_known_platforms))
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Self-Healing: Unknown Platforms
 
             **Known platforms at generation time:** {known_list}
@@ -1191,7 +1220,7 @@ class SkillGenerator:
             4. **If you have enough knowledge**, include a draft checklist in the review output
                under a "Draft Checklist" section. Each item MUST name a specific API/function/pattern,
                include a failure mode, and map to one of the 8 lenses.
-        """)
+        """, known_list=known_list)
 
 
 # ---------------------------------------------------------------------------
@@ -1280,7 +1309,9 @@ def main():
     cross_cutting = guidance.pop("cross_cutting", None)
     verification = guidance.pop("verification", None)
     if cross_cutting:
-        cc_count = len(cross_cutting.get("focus_areas", []))
+        # Grouped layout (universal / service / client), or the legacy flat list.
+        groups = [cross_cutting] if "focus_areas" in cross_cutting else cross_cutting.values()
+        cc_count = sum(len(g.get("focus_areas", [])) for g in groups if isinstance(g, dict))
         print(f"  {cc_count} cross-cutting focus areas loaded")
 
     detected = analyzer.detect_platforms(guidance)

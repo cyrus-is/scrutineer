@@ -53,7 +53,9 @@ Then in Claude Code:
 /scrutineer-mcp --config .mcp.json --tools github-tools.json
 ```
 
-Or run the analyzer directly:
+Or run the analyzer directly. With the package installed, `scrutineer mcp analyze` takes the same
+arguments from any directory (likewise `scrutineer mcp fetch|validate|capture`); from this directory
+in a clone:
 
 ```bash
 # Config review (Pass 1)

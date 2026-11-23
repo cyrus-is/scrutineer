@@ -1,4 +1,8 @@
-"""Command-line front door: ``scrutineer install [target]``.
+"""Command-line front door.
+
+``scrutineer install [target]`` installs the skill set. ``scrutineer mcp …`` and
+``scrutineer servicemap …`` run the toolkit's bundled scripts, which is how the
+installed skills reach them from any repo.
 
 Reachable two ways, both running the same shared core:
     python -m scrutineer install /path/to/repo        # from a clone
@@ -8,10 +12,55 @@ Reachable two ways, both running the same shared core:
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
-from . import __version__, installer
+from . import __version__, installer, paths
+
+
+def _run_script(script: Path, args: list[str]) -> int:
+    """Run a bundled script with this interpreter, passing its arguments through."""
+    if not script.exists():
+        print(f"ERROR: bundled script is missing: {script}", file=sys.stderr)
+        return 1
+    return subprocess.run([sys.executable, str(script), *args]).returncode
+
+
+def _add_mcp_parser(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser(
+        "mcp",
+        help="Run an MCP-review script (used by /scrutineer-mcp).",
+        description=(
+            "Run one of the bundled MCP-review scripts. Everything after the script name "
+            "is passed to it unchanged; `scrutineer mcp analyze --help` shows its options."
+        ),
+    )
+    p.add_argument("script", choices=sorted(paths.MCP_SCRIPTS), help="Which script to run.")
+    p.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for the script.")
+    p.set_defaults(func=lambda a: _run_script(paths.MCP_SCRIPTS[a.script], a.args))
+
+
+def _add_servicemap_parser(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser(
+        "servicemap",
+        help="Service-map helpers (used by /scrutineer-servicemap).",
+        description="`validate PATH` checks a service map; `schema` prints the schema's path.",
+    )
+    actions = p.add_subparsers(dest="action", required=True)
+    v = actions.add_parser("validate", help="Validate a servicemap.json.")
+    v.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for the validator.")
+    v.set_defaults(func=lambda a: _run_script(paths.SERVICEMAP_VALIDATOR, a.args))
+    s = actions.add_parser("schema", help="Print the path of the service-map schema.")
+    s.set_defaults(func=_cmd_schema)
+
+
+def _cmd_schema(args: argparse.Namespace) -> int:
+    if not paths.SERVICEMAP_SCHEMA.exists():
+        print(f"ERROR: schema is missing: {paths.SERVICEMAP_SCHEMA}", file=sys.stderr)
+        return 1
+    print(paths.SERVICEMAP_SCHEMA)
+    return 0
 
 
 def _add_install_parser(sub: argparse._SubParsersAction) -> None:
@@ -19,7 +68,7 @@ def _add_install_parser(sub: argparse._SubParsersAction) -> None:
         "install",
         help="Install the full Scrutineer skill set into a repo.",
         description=(
-            "Copy the servicemap + mcp skills and generate the peer-review and "
+            "Copy the servicemap, mcp and setup skills and generate the peer-review and "
             "security-review skills into TARGET/.claude/commands/, all named scrutineer-*."
         ),
     )
@@ -74,11 +123,13 @@ def _cmd_install(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="scrutineer",
-        description="Agentic code review toolkit — installer.",
+        description="Agentic code review toolkit.",
     )
     parser.add_argument("--version", action="version", version=f"scrutineer {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     _add_install_parser(sub)
+    _add_mcp_parser(sub)
+    _add_servicemap_parser(sub)
     return parser
 
 

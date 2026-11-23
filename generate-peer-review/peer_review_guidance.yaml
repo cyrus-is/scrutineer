@@ -335,7 +335,10 @@ backend:
         patterns: ["pom.xml", "build.gradle", "build.gradle.kts"]
 
   node:
-    name: Node.js / JavaScript
+    name: Node.js / JavaScript / TypeScript
+    # Plain .ts must be listed: React claims .tsx/.jsx, and nothing else claims
+    # .ts, so an all-TypeScript service (a Worker, a Lambda, an API package) got
+    # no platform checklist at all.
     detect_files:
       - "package.json"
       - "**/*.js"
@@ -344,6 +347,12 @@ backend:
       - "*.mjs"
       - "**/*.cjs"
       - "*.cjs"
+      - "**/*.ts"
+      - "*.ts"
+      - "**/*.mts"
+      - "*.mts"
+      - "**/*.cts"
+      - "*.cts"
     detect_content:
       - "\"express\""
       - "\"fastify\""

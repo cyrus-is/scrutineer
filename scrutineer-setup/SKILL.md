@@ -11,13 +11,15 @@ description: >
 
 # /scrutineer-setup
 
-Install the complete Scrutineer toolkit into the current repository in one step. The end state is four
-commands in `.claude/commands/`, all correctly named and generated from a fresh service map:
+Install the complete Scrutineer toolkit into the current repository in one step. The end state is five
+commands in `.claude/commands/`, all correctly named, with the review skills generated from a fresh
+service map:
 
 | Command | Source | How it gets there |
 |---|---|---|
 | `/scrutineer-servicemap` | `generate-servicemap/SKILL.md` | copied |
 | `/scrutineer-mcp` | `mcp-review/SKILL.md` | copied |
+| `/scrutineer-setup` | `scrutineer-setup/SKILL.md` | copied (so this skill can be re-run later) |
 | `/scrutineer-code` | `generate-peer-review/generate.py` | generated, map-aware |
 | `/scrutineer-security` | `generate-security-review/generate.py` | generated, map-aware |
 
@@ -50,15 +52,17 @@ Unless `--no-servicemap` was passed:
 
 - If `servicemap.json` already exists at the target root and the user did not pass `--force`, reuse it.
 - Otherwise **perform the service-map crawl yourself**, following the full process in the
-  `scrutineer-servicemap` skill (`generate-servicemap/SKILL.md` in the toolkit): the four-phase deep crawl
+  `scrutineer-servicemap` skill (`.claude/commands/scrutineer-servicemap.md` once installed, or
+  `generate-servicemap/SKILL.md` in a clone): the four-phase deep crawl
   (discovery → deep dive → trace connections → assemble) writing `servicemap.json` to the target root.
-- Validate it: `python <toolkit>/generate-servicemap/validate_servicemap.py servicemap.json`.
+- Validate it: `scrutineer servicemap validate servicemap.json` (from a clone without the CLI:
+  `python <toolkit>/generate-servicemap/validate_servicemap.py servicemap.json`).
 
 Do not shell out to `claude -p` for this — you are already Claude. Run the crawl inline.
 
 ### 3. Run the shared installer for the deterministic steps
 
-Hand your freshly crawled map to the installer, which copies the two static skills and runs the two
+Hand your freshly crawled map to the installer, which copies the static skills and runs the two
 generators. Use whichever entry point is available:
 
 ```bash
@@ -76,7 +80,7 @@ If `--no-servicemap` was requested, omit `--service-map` and the installer runs 
 
 Summarize what landed in `<target>/.claude/commands/`:
 
-- `/scrutineer-servicemap`, `/scrutineer-mcp` (copied)
+- `/scrutineer-servicemap`, `/scrutineer-mcp`, `/scrutineer-setup` (copied)
 - `/scrutineer-code`, `/scrutineer-security` (generated; note whether they are map-aware)
 
 Then tell the user they can run `/scrutineer-code` and `/scrutineer-security` for reviews, and

@@ -31,10 +31,10 @@ on every discovery.
 
 ## Before You Start
 
-1. **Locate the schema**: Look for `references/schema.md` relative to the directory where `servicemap.json`
-   will be written (i.e., sibling `references/` folder next to the output path). For example:
-   - Output path `tools/servicemap.json` → read `references/schema.md`
-   - Output path `./servicemap.json` → read `./references/schema.md`
+1. **Locate the schema**: run `scrutineer servicemap schema`, which prints the path of the schema
+   bundled with the CLI (`python3 -m scrutineer servicemap schema` if `scrutineer` isn't on PATH).
+   From a clone of the scrutineer repo it is `references/schema.md`. If neither is available, tell the
+   user (`pip install scrutineer` fixes it) rather than inventing the structure.
 
    Read the schema to internalize the full JSON structure. Every field matters — the schema is
    the contract that downstream skills and apps depend on.
@@ -254,7 +254,7 @@ establish a connection.
 
 **Goal**: Produce the final `servicemap.json`.
 
-1. Assemble all phase outputs into the schema defined in `references/schema.md`.
+1. Assemble all phase outputs into the schema (the file `scrutineer servicemap schema` names).
 2. **Validate completeness**: Every service discovered in Phase 1 should have a deep-dive entry from
    Phase 2 and connections from Phase 3. If any are missing, go back and fill them.
 3. **Identify stubs**: Any service, data store, or dependency referenced but NOT found in this repo
@@ -369,12 +369,13 @@ reached through a vendor SDK is `storage` or `database` by what it stores.
 `component_counts`, `low_confidence_components`, `shared_datastores`,
 `unauthenticated_public_endpoints`, `unmonitored_services`.
 
-Run `python generate-servicemap/validate_servicemap.py <path>` when you are done. Fix what it
-reports rather than shipping a map that only mostly conforms.
+Run `scrutineer servicemap validate <path>` when you are done (from a clone:
+`python generate-servicemap/validate_servicemap.py <path>`). Fix what it reports rather than
+shipping a map that only mostly conforms.
 
 ## Output
 
-The output is a single JSON file conforming to the schema in `references/schema.md`. The JSON should
+The output is a single JSON file conforming to the schema (see "Locate the schema" above). The JSON should
 be pretty-printed with 2-space indentation for version control friendliness, even though it's
 machine-targeted.
 

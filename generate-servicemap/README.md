@@ -47,9 +47,12 @@ A `servicemap.json` (schema v1.0.0) containing:
 
 ## Downstream consumers
 
-The service map is consumed by:
-- **generate-security-review** — uses component paths and languages for more precise platform detection
-- **generate-peer-review** — uses connections, auth, observability, and shared datastore data to inform review lenses
+The service map is consumed by both review generators at generate time, and by the generated skills at review time:
+- **generate-peer-review** — lists the reviewable components (name, type, path, language) for Mode 3, uses connection counts to name the most-connected components for Mode 4, and partitions oversized diffs along component boundaries
+- **generate-security-review** — lists the reviewable components, and adds the map's unauthenticated public endpoints and shared datastores to the universal checklist
+- **The generated skills** — tell the reviewer to read `servicemap.json` for cross-service flows in Modes 3 and 4
+
+Platform detection does not use the map; both generators detect platforms from the repo's files.
 
 ## Validation
 

@@ -70,10 +70,12 @@ If several exist, ask the user which to review rather than guessing.
 
 ## Before you start
 
-1. **Locate the analyzer.** It lives next to this skill in the scrutineer repo as
-   `mcp-review/analyze_mcp.py`, run via its venv (`mcp-review/.venv/bin/python`). If you can't find it,
-   tell the user and fall back to doing the config/tool parsing yourself by hand — but note that
-   digest-bound suppression won't work without it.
+1. **Locate the analyzer.** The `scrutineer` CLI runs it: `scrutineer mcp analyze --help` should print
+   its options. Every command below uses that form (`scrutineer mcp analyze|fetch|validate|capture`).
+   If `scrutineer` isn't on PATH, try `python3 -m scrutineer mcp analyze --help`; from a clone of the
+   scrutineer repo, `mcp-review/analyze_mcp.py` can also be run directly. If none of these works, tell the
+   user (`pip install scrutineer` fixes it) and fall back to doing the config/tool parsing yourself by
+   hand — but note that digest-bound suppression won't work without the analyzer.
 2. **Redaction.** The review artifact should stay shareable. Never paste raw secret values into your
    output. The analyzer already refuses to echo live secret values — preserve that discipline in your
    own prose. If you had to read an unredacted config, treat any live secret as a HIGH finding
@@ -90,7 +92,7 @@ If several exist, ask the user which to review rather than guessing.
 Run the analyzer over the config. This pass answers: **should I install this at all?**
 
 ```bash
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
+scrutineer mcp analyze \
   --config <config-path> \
   [--server <name>] \
   [--suppressions .claude/scrutineer-mcp-suppressions.json]
@@ -211,10 +213,10 @@ lifecycle/`postinstall` script or git hook can run. Network egress is gated behi
 
 ```bash
 # Chain off the analyzer (recommended): reads the server's provenance.spec + launch command
-mcp-review/.venv/bin/python mcp-review/fetch_source.py --analysis analysis.json --server github --fetch
+scrutineer mcp fetch --analysis analysis.json --server github --fetch
 # …or point it at a spec directly:
-mcp-review/.venv/bin/python mcp-review/fetch_source.py --npm "@scope/pkg@1.2.3" --fetch
-mcp-review/.venv/bin/python mcp-review/fetch_source.py --github owner/repo --ref <40-hex-sha> --fetch
+scrutineer mcp fetch --npm "@scope/pkg@1.2.3" --fetch
+scrutineer mcp fetch --github owner/repo --ref <40-hex-sha> --fetch
 ```
 
 Without `--fetch` it prints an **offline plan** — what it would download and the predicted match — so the
@@ -263,7 +265,7 @@ copy of an untrusted package lying around:
   guarded helper (it refuses any path not named `mcp-review-src-*`, so it can't rm the wrong thing):
 
   ```bash
-  mcp-review/.venv/bin/python mcp-review/fetch_source.py --cleanup <dir>
+  scrutineer mcp fetch --cleanup <dir>
   ```
 
 - **`--cleanup` flag — don't ask.** If the user invoked `/scrutineer-mcp --cleanup`, delete the fetched
@@ -346,7 +348,7 @@ costs more than keeping a little noise); high-confidence (name/param-zone) hits 
 This pass may only **suppress or downgrade** — it can never escalate a finding or invent one (escalation needs
 source, which is Pass 3's job). Pass-1 config findings are deterministic facts and are not subject to it.
 
-The bundled `validate_findings.py` runs this pass programmatically — `--run` shells to `claude -p`, or
+The bundled `validate_findings.py` (`scrutineer mcp validate`) runs this pass programmatically — `--run` shells to `claude -p`, or
 `--emit-prompt` to drive your own agent — and applies the triage back onto the analysis as a `validation`
 block with an auditable `validated_out` list. In an interactive review, do the same reasoning inline.
 
@@ -369,23 +371,23 @@ read plus observed egress is a recording, not a heuristic pairing.
 
 ```bash
 # The plan. Executes nothing.
-mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather --probe
+scrutineer mcp capture --config .mcp.json --server weather --probe
 
 # Phase 1 — capture the running surface and diff it against the reviewed baseline
-mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+scrutineer mcp capture --config .mcp.json --server weather \
   --run --baseline analysis.json --out behavioral.json
 
 # No prior baseline? Launch twice and diff launch 1 against launch 2
-mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+scrutineer mcp capture --config .mcp.json --server weather \
   --run --relaunch --out behavioral.json
 
 # Phase 2 — add the canary probe (calls every tool)
-mcp-review/.venv/bin/python mcp-review/capture_runtime.py --config .mcp.json --server weather \
+scrutineer mcp capture --config .mcp.json --server weather \
   --run --probe --out behavioral.json
 
 # Fold the record back into the review. The ANALYZER still never runs anything —
 # it reads the record exactly like a tools/list.
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py --config .mcp.json --server weather \
+scrutineer mcp analyze --config .mcp.json --server weather \
   --tools tools.json --behavioral behavioral.json
 ```
 
@@ -621,20 +623,20 @@ If nothing of concern survives filtering for a server, say so cleanly — `**Sec
 
 ```bash
 # Config only (Pass 1)
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py --config claude_desktop_config.json
+scrutineer mcp analyze --config claude_desktop_config.json
 
 # One server + its tool surface (Pass 1 + 2)
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
+scrutineer mcp analyze \
   --config .mcp.json --server github --tools github-tools.json
 
 # With approval-drift check + suppressions reconciled
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
+scrutineer mcp analyze \
   --config .mcp.json --server github --tools tools.json \
   --allowlist .claude/settings.json \
   --suppressions .claude/scrutineer-mcp-suppressions.json
 
 # Folding in an observed-basis capture from Pass 5 (reads the record; runs nothing)
-mcp-review/.venv/bin/python mcp-review/analyze_mcp.py \
+scrutineer mcp analyze \
   --config .mcp.json --server weather --behavioral behavioral.json
 ```
 

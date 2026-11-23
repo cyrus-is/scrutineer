@@ -30,6 +30,34 @@ from pathlib import Path
 import yaml
 
 
+def _render(template: str, **values) -> str:
+    """Dedent a section template, then fill in its values.
+
+    The order matters. ``textwrap.dedent(f"...")`` dedents *after* interpolation,
+    so a value that spans lines brings continuation lines with less indent than
+    the template's, dedent finds a smaller common margin, and the whole section
+    keeps its source indentation, which Markdown renders as a code block.
+    Dedenting the template first makes the output independent of the values.
+    Literal braces in templates are written doubled, as in an f-string.
+    """
+    return textwrap.dedent(template).format(**values)
+
+
+# The universal checklist, one area per bullet. Kept as data so the generator's
+# summary line counts what it actually emits rather than a hand-kept number.
+UNIVERSAL_AREAS = [
+    "Authentication/authorization (JWT handling, session management, auth checks)",
+    "Injection vectors (SQL, command, XSS, template injection)",
+    "Secrets handling (API keys, tokens, credentials in code or config — never committed)",
+    "Network calls (SSRF, unvalidated URLs, missing TLS)",
+    "Cryptography (weak algorithms, hardcoded keys, missing encryption)",
+    "Access control (missing ownership checks, privilege escalation, IDOR)",
+    "Rate limiting (missing or bypassed)",
+    "Dependencies (new deps with known CVEs)",
+    "Error messages leaking internals (stack traces, SQL errors, internal URLs)",
+]
+
+
 # ---------------------------------------------------------------------------
 # Repo Analyzer
 # ---------------------------------------------------------------------------
@@ -342,7 +370,7 @@ class SkillGenerator:
         lines = [textwrap.dedent("""\
             ## Invocation Modes
 
-            This skill supports three modes based on the argument:
+            This skill supports four modes based on the argument:
 
             ### Mode 1: Current Branch Diff (no arguments)
             ```
@@ -356,7 +384,8 @@ class SkillGenerator:
             ```
             Reviews PR #123 for security issues. Process:
             1. `git fetch origin`
-            2. Get PR metadata: `gh pr view 123 --json number,title,headRefName,baseRefName`
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
+               Read the body: the author's statement of intent tells you which behaviour is deliberate.
             3. Get full diff: `gh pr diff 123`
             4. Review the diff for security issues.
             5. Output findings (does not auto-post to PR — security findings may be sensitive).
@@ -419,7 +448,7 @@ class SkillGenerator:
                 detection_rules.append(f"   - (content detection) → **{data['name']}**")
         detection_block = "\n".join(detection_rules)
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Process
 
             1. **Determine mode** — parse arguments (see Invocation Modes above)
@@ -434,7 +463,7 @@ class SkillGenerator:
             9. **False positive filtering** — apply hard exclusions and precedent rules, assign confidence scores, discard findings below threshold (see below)
             10. **Self-heal check** — if the code touches platforms not covered by any checklist, flag them
 
-        """)
+        """, detection_block=detection_block)
 
     def _threat_model_section(self) -> str:
         return textwrap.dedent("""\
@@ -477,17 +506,8 @@ class SkillGenerator:
 
             Use these as investigation prompts, not a grep list. For each area, actively
             look for the concern — don't just check if a pattern exists.
-
-            - Authentication/authorization (JWT handling, session management, auth checks)
-            - Injection vectors (SQL, command, XSS, template injection)
-            - Secrets handling (API keys, tokens, credentials in code or config — never committed)
-            - Network calls (SSRF, unvalidated URLs, missing TLS)
-            - Cryptography (weak algorithms, hardcoded keys, missing encryption)
-            - Access control (missing ownership checks, privilege escalation, IDOR)
-            - Rate limiting (missing or bypassed)
-            - Dependencies (new deps with known CVEs)
-            - Error messages leaking internals (stack traces, SQL errors, internal URLs)
         """)]
+        lines.append("\n".join(f"- {area}" for area in UNIVERSAL_AREAS) + "\n")
 
         # Enrich with service map data if available
         if service_map:
@@ -655,7 +675,7 @@ class SkillGenerator:
                 "and authorization. Do not report missing auth in frontend code."
             )
 
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## False Positive Filtering
 
             A security review that floods the report with noise is worse than no review.
@@ -686,8 +706,11 @@ class SkillGenerator:
                concrete exploitation path and real impact, not theoretical timing windows.
             9. **SSRF with path-only control** — SSRF is only reportable if the attacker
                can control the host or protocol, not just the path.
-            10. **AI prompt injection** — including user-controlled content in AI system
-                prompts is not a vulnerability in this context.
+            10. **Prompt injection that reaches nothing** — untrusted content in a model's
+                prompt is not, by itself, a finding when the model's output only shapes its
+                own reply to the same user. It IS reportable when that output can call tools,
+                write or delete data, reach another user, or carry secrets out: that is the
+                "prompt injection → data pollution → trust exploitation" chain in Mode 4.
             11. **Regex injection** — injecting untrusted content into a regex pattern is
                 not a vulnerability.
             12. **Missing audit logs** — absence of logging is an operational gap, not a
@@ -745,7 +768,7 @@ class SkillGenerator:
             3. **Threshold**: Only findings that survive Pass 2 with confidence ≥ 0.8
                appear in the final report.
 
-        """)
+        """, client_side_note=client_side_note, memory_safe_note=memory_safe_note, xss_safe_note=xss_safe_note)
 
     def _output_format(self) -> str:
         return textwrap.dedent("""\
@@ -854,7 +877,19 @@ class SkillGenerator:
         if service_map:
             component_count = len(service_map.get_reviewable_components())
 
-        return textwrap.dedent(f"""\
+        if component_count <= 20:
+            scale_note = (
+                "**Small repo (≤20 components): Single-agent deep audit.** Read the service map, "
+                "then read source files as needed. Prioritize depth on auth boundaries, secret "
+                "handling, and the highest-risk data flows."
+            )
+        else:
+            scale_note = (
+                "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the "
+                "Agent tool — one per investigation area. Each sub-agent gets a fresh context. "
+                "Collect findings, then synthesize and chain."
+            )
+        return _render("""\
             ## Mode 4: Deep Repo Security Audit
 
             **Role:** You are a world-class Security Auditor performing a comprehensive security
@@ -874,7 +909,7 @@ class SkillGenerator:
 
             **Repo has {component_count} reviewable components.**
 
-            {"**Small repo (≤20 components): Single-agent deep audit.** Read the service map, then read source files as needed. Prioritize depth on auth boundaries, secret handling, and the highest-risk data flows." if component_count <= 20 else "**Large repo (>20 components): Use sub-agents.** Dispatch sub-agents using the Agent tool — one per investigation area. Each sub-agent gets a fresh context. Collect findings, then synthesize and chain."}
+            {scale_note}
 
             ### Investigation 1: Trust Boundary Mapping
 
@@ -990,11 +1025,11 @@ class SkillGenerator:
             | MEDIUM   | N     |
             ```
 
-        """)
+        """, component_count=component_count, scale_note=scale_note)
 
     def _self_heal_section(self, all_known_platforms: list[str]) -> str:
         known_list = ", ".join(sorted(all_known_platforms))
-        return textwrap.dedent(f"""\
+        return _render("""\
             ## Self-Healing: Unknown Platforms
 
             This skill was generated with checklists for a known set of platforms. If the code
@@ -1038,7 +1073,7 @@ class SkillGenerator:
 
             If you cannot meet this bar for a platform, say so — a missing checklist is
             better than a checklist full of generic "validate your input" noise.
-        """)
+        """, known_list=known_list)
 
 
 # ---------------------------------------------------------------------------
@@ -1171,7 +1206,7 @@ def main():
     checklist_count = sum(len(d.get("checklist", [])) for d in detected.values())
     print(f"\n✓ Generated security review skill at: {output_path}")
     print(f"  Platforms: {len(detected)}")
-    print(f"  Checklist items: {checklist_count} platform-specific + 11 universal")
+    print(f"  Checklist items: {checklist_count} platform-specific + {len(UNIVERSAL_AREAS)} universal")
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")

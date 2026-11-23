@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrutineer"
-version = "1.6.4"
+version = "1.7.0"
 description = "Agentic code review toolkit for Claude Code — one-command installer for the scrutineer-* skill set."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,6 +41,7 @@ packages = ["scrutineer"]
 "mcp-review/capture_runtime.py" = "scrutineer/_assets/mcp-review/capture_runtime.py"
 "mcp-review/mcp_risk_guidance.yaml" = "scrutineer/_assets/mcp-review/mcp_risk_guidance.yaml"
 "references/schema.md" = "scrutineer/_assets/references/schema.md"
+"scrutineer-setup/SKILL.md" = "scrutineer/_assets/scrutineer-setup/SKILL.md"
 
 [tool.hatch.build.targets.sdist]
 include = [

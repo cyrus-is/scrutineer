@@ -2,7 +2,7 @@
 
 Given a target repo, this:
 
-1. copies the two static skills (servicemap, mcp) into ``.claude/commands/``
+1. copies the static skills (servicemap, mcp, setup) into ``.claude/commands/``
    with their correct ``scrutineer-*`` names,
 2. obtains a service map (see :mod:`scrutineer.servicemap`),
 3. runs the peer-review and security-review generators against the repo,
@@ -111,13 +111,17 @@ def install(
     result = InstallResult(target=target)
     cmd_dir = _commands_dir(target)
 
-    # 1. Copy the two static skills first — the servicemap skill must be present
+    # 1. Copy the static skills first — the servicemap skill must be present
     #    before a headless crawl can invoke /scrutineer-servicemap.
     log("Copying static skills…")
     if _copy_skill(paths.SERVICEMAP_SKILL, cmd_dir / paths.SERVICEMAP_COMMAND, force=force, log=log):
         result.installed.append(paths.SERVICEMAP_COMMAND)
     if _copy_skill(paths.MCP_SKILL, cmd_dir / paths.MCP_COMMAND, force=force, log=log):
         result.installed.append(paths.MCP_COMMAND)
+    # The setup skill too, so a pip-only install can later re-crawl the map and
+    # regenerate the review skills with /scrutineer-setup.
+    if _copy_skill(paths.SETUP_SKILL, cmd_dir / paths.SETUP_COMMAND, force=force, log=log):
+        result.installed.append(paths.SETUP_COMMAND)
 
     # 2. Resolve a service map (existing / crawl / skip).
     log("Resolving service map…")
