@@ -115,6 +115,42 @@ Each phase is a release. Nothing is removed until its replacement has passed §6
 
 P2 and P3 can run in parallel once P1 lands. P4's detection work can start in P1, but its checks should wait for P2's context packet.
 
+### Future features
+
+These come after the phases above. They aren't scheduled yet.
+
+**Automated improvement pipeline** (Cyrus, 2026-11-23). Pull recent GitHub security advisories that link to their fix. Run vld8 against the code as it was before the fix, and check whether it would have caught the problem. When it wouldn't have, work out why and prepare a fix.
+
+- **Source:**
+  - reviewed advisories in the GitHub Advisory Database that link a fix commit or PR;
+  - only in ecosystems the 90% set covers (§5): npm, PyPI, Go, crates.io, NuGet, Maven, Composer;
+  - each one checked out at the fix commit's parent.
+- **Run:** the security lens, plus the code lens for logic bugs, over the files the fix touched, at that parent commit.
+- **Score:** a catch is a finding on the lines or function the fix changed, in the advisory's CWE class. This needs the findings contract (P1) and the validator (P3), so scoring reads JSON rather than prose.
+- **Triage a miss into one cause:**
+  - detection: the platform was never detected;
+  - coverage: no check exists for that class;
+  - context: the check exists but the reviewer lacked what it needed;
+  - validation: a correct finding was suppressed;
+  - judgment: the finding was raised but at the wrong severity.
+- **Prepared fix:**
+  - a guidance-YAML or prompt change, opened as a draft PR;
+  - the advisory added to the eval set (§6) as a new case;
+  - never merged automatically. The PR goes through the normal review and §6 gates.
+- **Guardrails:**
+  - **Hold out by date.** A change made in response to one batch of advisories is judged only on advisories published after that batch. Otherwise the pipeline grades its own homework, the problem the held-out study (§6) exists to prevent.
+  - **Never run the target's code.** Phase 0 ("verify before judging") runs the repo's own gate script, and in this pipeline that would mean executing arbitrary public code. Turn Phase 0 off, or run it only in a throwaway sandbox with no credentials and no network.
+  - **Bounded runs.** Run on a schedule with a cap on advisories per run and a stop condition.
+- **Why it's worth building:**
+  - it tracks recall on real, current vulnerabilities rather than planted ones;
+  - it turns each miss into a check or a context fix, with the advisory as the test that proves it.
+- **Depends on:**
+  - P1, so findings are machine-readable;
+  - P3, for consistent scoring;
+  - P7's measurement plumbing.
+
+  It is most useful after P4, once coverage is broad enough that a miss points at a real gap rather than a known one.
+
 ## 8. Alternatives considered
 
 1. **Keep generate-time skills and keep patching.** Rejected. Every review pays for every detected platform. Guidance improvements need a reinstall in every repo. The output can't feed validation. And the coverage audit showed the detection faults are structural, not a list of misses.
