@@ -2,7 +2,7 @@
 
 **Status:** draft for Cyrus (2026-11-23). Approving it counts as the design review, per `ENGINEERING.md`.
 
-**Design:** the restructure plan, `docs/plans/2026-11-23-restructure.md` (PR #40), holds the reasoning, the alternatives and the risks. This roadmap puts that plan's work in order and says what each release has to prove.
+**Design:** the restructure plan, `docs/plans/2026-11-23-restructure.md` (landed in PR #45), holds the reasoning, the alternatives and the risks. This roadmap puts that plan's work in order and says what each release has to prove.
 
 **Where we are:** vld8 2.0.0 shipped the rename, the generator fixes and the install fixes.
 
@@ -41,17 +41,25 @@ The order: precision first, because it's the measured problem and its fix is che
 
 ## 2.0.x: finish the rename, repo hygiene
 
+**Done (2026-11-23):**
+- `staging` is the default branch, with force-pushes and deletion blocked and linear history required. The rules apply to admins too.
+- Publishing only from `main`: `publish.yml` refuses a release tag whose commit isn't on `main` (#43). It reached `main` by a fast-forward promotion (#44), the first under the branch model below.
+- The plan landed on `staging` (#45), replacing draft #40. The branches whose history carried private project names were deleted.
+- The announcement post is live at cyrus.is/building/vld8.
+
+**Open:**
+
 | Item | Owner | Source |
 |---|---|---|
-| Make `staging` the default branch, and require linear history and a PR on it | Cyrus (my token gets a 403 on repo settings) | Cyrus, 2026-11-23 |
-| **Branch model:** feature PRs squash into `staging`. `main` receives only releases: a "Release X.Y" PR from `staging` for review and CI, then a fast-forward push of `main` to `staging`, which GitHub records as merging the PR. A squash or rebase promotion would put commits on `main` that `staging` doesn't have, and the two would drift | Cyrus | Cyrus, 2026-11-23 |
-| **Publish only from `main`:** `publish.yml` refuses a release tag whose commit isn't on `main` | vld8 (PR to `staging`) | Cyrus, 2026-11-23 |
+| **A GitHub account for the agents:** a machine user with write access and its own token in `~/.claude/pats/`. Today every agent PR is authored by `cyrus-is`, and GitHub won't let Cyrus approve his own PRs. Once it exists, `staging` requires a PR, one code-owner approval (Cyrus can bypass the review rule for PRs he writes himself), and the `test (3.10)` and `test (3.13)` checks | Cyrus | Cyrus, 2026-11-23 |
+| **Branch model (in use since #44):** feature PRs squash into `staging`. `main` receives only releases: a "Release X.Y" PR from `staging` for review and CI, then a fast-forward push of `main` to `staging`, which GitHub records as merging the PR. A squash or rebase promotion would put commits on `main` that `staging` doesn't have, and the two would drift | Cyrus | Cyrus, 2026-11-23 |
 | Optional hardening of publishing: a `pypi` environment with Cyrus as required reviewer, and a tag ruleset so only Cyrus can create `v*` and `scrutineer-v*` tags | Cyrus | Supply chain |
 | Archive `scrutineer` on PyPI | Cyrus | Rename |
 | Update the GitHub repo description, which still describes Scrutineer | Cyrus | Rename |
 | Point vld8.ai at cyrus.is/building/vld8; Cloudflare has the nameservers but no A record | Cyrus | Plan D8 |
 | Rename "Scrutineer security audit" in the HQ engineering standard (canonical copy), then re-render `ENGINEERING.md` | HQ | Rename |
-| Retarget plan PR #40 to `staging`. Moving its branch needs a force-push that auto mode blocked; Cyrus pushes it, or it moves to a fresh branch | Cyrus | Branch model |
+| Record vld8 in HQ's `CLAUDE.md` as a repo with a `staging` branch, and as the exception to "the default branch stays `main`" | HQ, once Cyrus confirms | Branch model |
+| Ask GitHub Support to purge the commits that carried private names from PRs #39–#41 (the request is drafted) | Cyrus | Opsec |
 | Add a ruff config and a lint step to CI | vld8 | STD |
 | Add a diff-coverage gate at 80% to CI | vld8 | STD |
 | Pin CI dependencies with a constraints file. There's no lockfile today | vld8 | STD |
