@@ -207,7 +207,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 **One reviewable change a week** (Cyrus, 2026-11-23: "just one thing a week").
 - **Grouping:** small items from the same milestone can be grouped into one change when they're reviewed together.
 - **Splitting:** large items (the validator, the ladders, new blocks) get split into weekly slices when their turn comes.
-- So the 49 backlog items before "Later" set a pace, not a schedule.
+- So the backlog's item count sets a pace, not a schedule. Fixes found by validation join the 2.0.x milestone as they're filed, so the count moves.
 
 **Who runs it:** Cyrus starts each week's change, in an interactive session. No unattended loop runs it (`ENGINEERING.md`: `autonomy: interactive-only`).
 
