@@ -330,25 +330,31 @@ def main() -> int:
           and "including when it stops early" in flat
           and "In Mode 2, post the failure and then remove the worktree." in flat)
     check("peer: without a worktree, Phases 1-3 read the PR's head, not the checkout",
-          "contents/<path>?ref=<headRefOid>" in flat)
+          "contents/<path>?ref=<headRefOid>" in flat
+          and "`git grep <pattern> <headRefOid>`" in flat
+          and "the caller search was limited" in flat)
     check("peer: a bot's same-repo PR is treated as a fork, and the author field is fetched",
           "body,url,author,headRefName" in flat
-          and "One is a bot's PR (`author.is_bot`, which GitHub sets for app accounts" in flat
+          and "One is a bot's PR (`author.is_bot`, which `gh` reports for app accounts" in flat
           and "a bot runs on a personal token" in flat
           and "Same-repository PR not treated as a fork" in flat)
     check("peer: Mode 2 says how to point gh at the upstream repo",
-          "gh repo set-default \"$(gh repo view --json parent" in flat
-          and "saves the choice in this clone's git config" in flat)
+          "Ask the user which repository the PR is in" in flat
+          and "`gh repo set-default -u <owner>/<repo>` undoes it" in flat
+          and "names your fork, point it at" not in flat
+          and "Name the PR by its `url` in the report" in flat)
     check("peer: Mode 2 reads the PR's commits and sizes the PR's diff, not the checkout's",
           "Mode 2: `gh pr view <number> --json commits`" in flat
           and "In Mode 2, measure the PR, not your checkout" in flat
           and "--json changedFiles,additions,deletions,commits" in flat
           and 'gh api --paginate "repos/{owner}/{repo}/pulls/<number>/files?per_page=100"' in flat
           and "origin/<baseRefName>" not in flat
-          and "**Outside Mode 2, check the base is what you think it is.**" in flat)
+          and "**Outside Mode 2, check the base is what you think it is.**" in flat
+          and "GitHub lists at most 3,000 files; `changedFiles` is the true count." in flat)
     check("peer: no worktree step when there is no Phase 0",
           "git worktree add" not in no_phase0 and "worktree" not in no_phase0
           and "Read surrounding code at the PR's head, never in your checkout" in no_phase0
+          and "`git grep <pattern> <headRefOid>`" in no_phase0
           and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)
 
     # #94: the PR body is context, never grounds to accept a finding.
