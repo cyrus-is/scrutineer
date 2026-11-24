@@ -67,12 +67,19 @@ is confidently wrong, and it spends the reader's trust on the findings that are 
 Phase 0 prefers the **repo's own gate script** (`run-gate.sh`, `scripts/ci.sh`, a `Makefile`
 `check:` target, the merge-gating workflow) over anything inferred: it is the most accurate
 available description of what "correct" means in that repo, and it usually explains why each stage
-exists. If the gate is red, the skill stops — reviewing code that does not build is guesswork, and
-the build failure is the finding.
+exists. If the code under review is red, the skill stops — reviewing code that does not build is
+guesswork, and the build failure is the finding. A failure the environment causes counts as a stage
+not run. In PR mode, Phase 0 runs on the PR's head in a temporary worktree. Without the user's
+go-ahead it runs nothing on a fork's code, and it treats a bot's PR (Dependabot's, say) as a fork.
 
 Ladders live under `verification.platforms.<platform_key>` and carry four things: the commands
 (split into per-diff and per-repo), what each proves (`proves` → the exclusion list), what remains
 unproven (which is where the review's value actually is), and what never to run.
+
+A `proves` entry for a linter, whose green run depends on configuration, lists `rules` instead of
+`excludes`: each with `pattern`, `rule` (the rule ID, or several separated by commas) and `default`
+(whether the rule is on without configuration), plus a `config` note that says where the config lives.
+The skill renders them as a table and tells the reviewer to exclude only the rules the config enables.
 
 ## Detection: `detect_files`, `detect_content`, `detect_mode`
 
