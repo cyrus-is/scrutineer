@@ -58,6 +58,17 @@ SETUP_COMMAND = "vld8-setup.md"
 PEER_COMMAND = "vld8-review.md"
 SECURITY_COMMAND = "vld8-security.md"
 
+# Milestones whose output can be turned on early with `vld8 install --preview <m>`.
+# Changes to review output ship behind their milestone's flag until its gate
+# passes (docs/ROADMAP.md, Release train); then the flag becomes the default and
+# the milestone leaves this table. When the first one graduates, keep accepting
+# `--preview <m>` as a no-op with a note, so scripts and habits don't break.
+PREVIEW_MILESTONES = {
+    "2.1": "precision without a spec",
+}
+# The generators end a skill built with --preview with a comment starting so.
+PREVIEW_MARKER = "<!-- vld8 preview output:"
+
 # Command files that scrutineer (this package's name before 2.0) installed, each
 # mapped to the vld8 file that replaces it and a line only that skill contains.
 # `vld8 install` moves an old file to LEGACY_BACKUP_DIR once its replacement is

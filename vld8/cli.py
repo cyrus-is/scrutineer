@@ -89,6 +89,17 @@ def _add_install_parser(sub: argparse._SubParsersAction) -> None:
         "--force", "-f", action="store_true",
         help="Overwrite existing command files.",
     )
+    p.add_argument(
+        "--preview", action="append", default=[], metavar="MILESTONE",
+        choices=sorted(paths.PREVIEW_MILESTONES),
+        help=(
+            "Include review output that is still behind a milestone's preview flag "
+            "(available: " + ", ".join(
+                f"{m}, {desc}" for m, desc in sorted(paths.PREVIEW_MILESTONES.items())
+            ) + "). Repeatable. Add --force if the review skills already exist. "
+            "Reinstalling with --force and without --preview goes back to the default output."
+        ),
+    )
     p.set_defaults(func=_cmd_install)
 
 
@@ -99,8 +110,9 @@ def _cmd_install(args: argparse.Namespace) -> int:
             crawl=args.crawl,
             service_map=args.service_map,
             force=args.force,
+            previews=args.preview,
         )
-    except (FileNotFoundError, NotADirectoryError, RuntimeError) as exc:
+    except (FileNotFoundError, NotADirectoryError, RuntimeError, ValueError) as exc:
         print(f"\nERROR: {exc}", file=sys.stderr)
         return 1
 
@@ -111,6 +123,26 @@ def _cmd_install(args: argparse.Namespace) -> int:
             print(f"    /{name[:-3]}")  # strip .md → slash command name
     else:
         print("Nothing was written (all targets existed; re-run with --force).")
+    status = 0
+    if result.previews:
+        listed = ", ".join(f"{m} ({paths.PREVIEW_MILESTONES[m]})" for m in result.previews)
+        if not result.preview_missing:
+            print(f"✓ Review skills include preview output: {listed}")
+            print("  Reinstall with --force and without --preview to go back to the default.")
+        else:
+            why = ("generation failed (see above)" if args.force
+                   else "not regenerated (re-run with --force)")
+            print(f"✗ Preview {listed} NOT applied to {_commands(result.preview_missing)}: {why}.",
+                  file=sys.stderr)
+            status = 1
+    if result.preview_kept:
+        undo = ("Regeneration failed (see above)." if args.force
+                else "Re-run with --force to go back to the default.")
+        print(f"Note: {_commands(result.preview_kept)} still hold preview output from an earlier "
+              f"install. {undo}")
+    if result.preview_dropped:
+        print(f"Note: {_commands(result.preview_dropped)} held preview output and are now back to "
+              "the default. Pass --preview again to keep it.")
     if result.moved_suppressions:
         print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
     if result.retired:
@@ -124,7 +156,11 @@ def _cmd_install(args: argparse.Namespace) -> int:
             "      awareness, run /vld8-map in Claude Code, then re-run\n"
             "      `vld8 install --force` (or pass --crawl)."
         )
-    return 0
+    return status
+
+
+def _commands(files: list[str]) -> str:
+    return ", ".join(f"/{name[:-3]}" for name in files)
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -18,6 +18,7 @@ agentic crawl; the CLI lets :mod:`vld8.servicemap` resolve one.
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +39,10 @@ class InstallResult:
     installed: list[str] = field(default_factory=list)   # command files written
     retired: list[str] = field(default_factory=list)     # scrutineer-era files moved to the backup folder
     moved_suppressions: bool = False                     # renamed the MCP suppressions file
+    previews: list[str] = field(default_factory=list)    # preview milestones the generators got
+    preview_missing: list[str] = field(default_factory=list)  # review skills that lack the requested preview
+    preview_kept: list[str] = field(default_factory=list)     # not regenerated; still hold an earlier preview
+    preview_dropped: list[str] = field(default_factory=list)  # regenerated without the preview they held
     service_map_note: str = ""
     skipped_crawl: bool = False
 
@@ -119,9 +124,18 @@ def _run_generator(
     sm: servicemap.ServiceMapResult,
     *,
     force: bool,
+    previews: list[str],
     log,
 ) -> bool:
+    # Skip an existing skill the way _copy_skill does, rather than letting the
+    # generator prompt. Its "Overwrite? [y/N]" exits 0 on N, which made a
+    # declined file look regenerated.
+    if (target / output_rel).exists() and not force:
+        log(f"  skip {Path(output_rel).name} (exists; pass --force to regenerate)")
+        return False
     cmd = [sys.executable, str(generator), str(target), "--output", output_rel]
+    for milestone in previews:
+        cmd += ["--preview", milestone]
     if sm.path is not None:
         cmd += ["--service-map", str(sm.path)]
     else:
@@ -136,12 +150,30 @@ def _run_generator(
     return True
 
 
+def _has_preview(path: Path) -> bool:
+    try:
+        return paths.PREVIEW_MARKER in path.read_text(errors="replace")
+    except OSError:
+        return False
+
+
+def _preview_milestones(path: Path) -> set[str]:
+    """The milestones a generated skill's preview marker names; empty if it has none."""
+    try:
+        text = path.read_text(errors="replace")
+    except OSError:
+        return set()
+    line = next((ln for ln in text.splitlines() if ln.startswith(paths.PREVIEW_MARKER)), "")
+    return set(re.findall(r"--preview (\d+\.\d+)", line))
+
+
 def install(
     target: Path | str,
     *,
     crawl: bool = False,
     service_map: Path | str | None = None,
     force: bool = False,
+    previews: list[str] | tuple[str, ...] = (),
     log=_default_log,
 ) -> InstallResult:
     """Install the full vld8 skill set into ``target``.
@@ -157,6 +189,9 @@ def install(
         The ``/vld8-setup`` skill passes the map it just crawled here.
     force
         Overwrite existing command files / service map.
+    previews
+        Preview milestones (keys of ``paths.PREVIEW_MILESTONES``) whose output the
+        generated review skills include. Empty means the default output only.
     """
     target = Path(target).resolve()
     if not target.is_dir():
@@ -169,7 +204,14 @@ def install(
             "vld8 toolkit assets are missing — is the package intact?\n  " + listed
         )
 
-    result = InstallResult(target=target)
+    unknown = sorted(set(previews) - set(paths.PREVIEW_MILESTONES))
+    if unknown:
+        raise ValueError(
+            f"no preview for milestone {', '.join(unknown)}; "
+            f"available: {', '.join(sorted(paths.PREVIEW_MILESTONES)) or 'none'}"
+        )
+
+    result = InstallResult(target=target, previews=sorted(set(previews)))
     cmd_dir = _commands_dir(target)
 
     # 1. Copy the static skills first — the servicemap skill must be present
@@ -197,15 +239,32 @@ def install(
     log(f"  {sm.note}")
 
     # 3. Run the two generators against the repo, wiring in the map when present.
+    review = [paths.PEER_COMMAND, paths.SECURITY_COMMAND]
+    had_preview = {f for f in review if _has_preview(cmd_dir / f)}
     log("Generating review skills…")
     if _run_generator(
-        paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm, force=force, log=log
+        paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm,
+        force=force, previews=result.previews, log=log,
     ):
         result.installed.append(paths.PEER_COMMAND)
     if _run_generator(
-        paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm, force=force, log=log
+        paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm,
+        force=force, previews=result.previews, log=log,
     ):
         result.installed.append(paths.SECURITY_COMMAND)
+
+    # A preview took effect only in a file this run regenerated and whose marker
+    # names every requested milestone. A marker left by an earlier install may
+    # predate the preview content this release adds.
+    if result.previews:
+        wanted = set(result.previews)
+        result.preview_missing = [
+            f for f in review
+            if f not in result.installed or not wanted <= _preview_milestones(cmd_dir / f)
+        ]
+    else:
+        result.preview_kept = [f for f in review if f in had_preview and _has_preview(cmd_dir / f)]
+        result.preview_dropped = [f for f in review if f in had_preview and not _has_preview(cmd_dir / f)]
 
     # 4. Retire the scrutineer-* files this install replaces, so the old and new
     #    commands don't both appear in Claude Code.
