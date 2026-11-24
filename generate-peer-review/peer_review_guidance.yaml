@@ -156,6 +156,8 @@ backend:
     # it spends attention the reviewer could have spent on the test-quality items
     # below, which DID produce findings — including two found by reading the Swift
     # Testing checks against pytest, since this block had no test items at all.
+    # Phase 0 excludes them only when the repo's ruff config enables E722/B006; on
+    # a config without those rules they are back in scope through its rule table (#92).
     name: Python
     detect_files:
       - "requirements.txt"
@@ -1893,7 +1895,18 @@ verification:
         - green: "swift build (Swift 6 language mode)"
           excludes: "missing `Sendable` conformance, actor-isolation violations, missing `await`, main-actor UI violations, and use of API above the *package's* platform floor. Do not report any of these."
         - green: "swiftlint --strict"
-          excludes: "force try/cast/unwrap, IUO, unowned capture, unused capture lists, weak delegates, naming, line length, and every other style finding."
+          # Opt-in rules are off unless the config turns them on. A green run on a
+          # config without them proves nothing about force unwraps (#92).
+          config: "`.swiftlint.yml`: `only_rules` replaces the default set; otherwise the default rules run, plus `opt_in_rules`, minus `disabled_rules`. Check `included:`/`excluded:` too."
+          rules:
+            - {pattern: "force cast (`as!`)", rule: "force_cast", default: true}
+            - {pattern: "force try (`try!`)", rule: "force_try", default: true}
+            - {pattern: "force unwrap (`!`)", rule: "force_unwrapping", default: false}
+            - {pattern: "implicitly unwrapped optionals", rule: "implicitly_unwrapped_optional", default: false}
+            - {pattern: "`unowned` captures", rule: "unowned_variable_capture", default: false}
+            - {pattern: "strong delegate references", rule: "weak_delegate", default: false}
+            - {pattern: "naming", rule: "identifier_name, type_name", default: true}
+            - {pattern: "line length", rule: "line_length", default: true}
         - green: "swift-format lint --strict"
           excludes: "formatting of any kind."
         - green: "swift test"
@@ -1928,7 +1941,15 @@ verification:
           when: "reviewing a whole component"
       proves:
         - green: "ruff check"
-          excludes: "unused imports, unused variables, undefined names, mutable default arguments, bare `except:`, and every other lint-visible pattern. Do not report them."
+          # B006 is not in ruff's default set, and E722 drops out of any `select`
+          # without E7. A green run proves only the rules the config enables (#92).
+          config: "`[tool.ruff.lint]` in pyproject.toml, or ruff.toml / .ruff.toml: `select` replaces the default set (E4, E7, E9, F); `extend-select` adds to it; `ignore` and `per-file-ignores` remove rules."
+          rules:
+            - {pattern: "unused imports", rule: "F401", default: true}
+            - {pattern: "unused local variables", rule: "F841", default: true}
+            - {pattern: "undefined names", rule: "F821", default: true}
+            - {pattern: "bare `except:`", rule: "E722", default: true}
+            - {pattern: "mutable default arguments", rule: "B006", default: false}
         - green: "mypy"
           excludes: "type mismatches and most None-handling errors on annotated code."
       still_unproven:

@@ -8,7 +8,7 @@ checks, focus areas, and evaluation lenses.
 
 The generated skill supports four invocation modes:
   /vld8-review                  — review current branch diff vs main
-  /vld8-review 123              — review PR #123 (git pull + checkout)
+  /vld8-review 123              — review PR #123 (its head checked out in a worktree for Phase 0)
   /vld8-review <component-name> — full review of a service/app from the service map
   /vld8-review --deep           — deep repo-wide review across services
 
@@ -390,7 +390,7 @@ class SkillGenerator:
         sections = [
             self._header(),
             self._help_section(),
-            self._invocation_section(service_map),
+            self._invocation_section(service_map, has_phase0=bool(verification)),
             self._process_section(detected, component_paths, service_map,
                                   has_phase0=bool(verification)),
             self._verification_section(detected, verification),
@@ -422,8 +422,19 @@ class SkillGenerator:
 
         """)
 
-    def _invocation_section(self, service_map: ServiceMapLoader | None) -> str:
-        lines = [textwrap.dedent("""\
+    def _invocation_section(self, service_map: ServiceMapLoader | None,
+                            has_phase0: bool = True) -> str:
+        # Phase 0 must run on the PR's code, not the user's checkout (#93); the
+        # worktree step exists only when there is a Phase 0 to run in it.
+        pr_checkout = (
+            "4. Check out the PR's head for Phase 0 in its own worktree, so the user's checkout\n"
+            "   is untouched: `git fetch origin pull/123/head`, then\n"
+            "   `git worktree add --detach \"${TMPDIR:-/tmp}/vld8-pr-123\" FETCH_HEAD`. Run Phase 0\n"
+            "   there, and afterwards `git worktree remove --force \"${TMPDIR:-/tmp}/vld8-pr-123\"`.\n"
+            if has_phase0 else ""
+        )
+        n = 5 if has_phase0 else 4
+        lines = [_render("""\
             ## Invocation Modes
 
             This skill supports four modes based on the argument:
@@ -440,11 +451,11 @@ class SkillGenerator:
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
-            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
-               The body is the author's statement of intent; Phase 1 reads it.
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,headRefOid,baseRefName,isCrossRepository`.
+               The body is the author's account of what they meant to do. Phase 1 reads it as context, never as evidence that the code is right.
             3. Get full diff: `gh pr diff 123`
-            4. Review the diff.
-            5. Post findings as a PR comment via `gh pr comment`.
+            {pr_checkout}{n}. Review the diff.
+            {n1}. Post findings as a PR comment via `gh pr comment`.
 
             ### Mode 3: Full Service/App Review (component name argument)
             ```
@@ -473,7 +484,7 @@ class SkillGenerator:
             **This mode finds a DIFFERENT CLASS of bugs than Modes 1-3.** Component reviews scan
             files and match patterns. Deep review traces flows end-to-end and asks "what breaks
             when these components interact?"
-        """)]
+        """, pr_checkout=pr_checkout, n=n, n1=n + 1)]
 
         if service_map:
             reviewable = service_map.get_reviewable_components()
@@ -558,6 +569,16 @@ class SkillGenerator:
             finding the compiler already refuted is worse than no finding: it is confidently
             wrong, and it spends the reader's trust on the findings that are real.
 
+            **Run it on the code under review.** Modes 1, 3 and 4: this checkout. Mode 2: the
+            PR's head, in the worktree from Mode 2 step 4, never the base branch or the user's
+            checkout. A green run on other code proves nothing about the PR, and its exclusions
+            would suppress findings that are in it.
+
+            If the PR comes from a fork (`isCrossRepository: true`), its gate script, build and
+            tests are code its author controls: do not run them without the user's go-ahead.
+            Static linters whose config cannot load code, such as `ruff check` and `swiftlint`,
+            are safe to run. A stage you did not run on the PR's code earns no exclusions.
+
             **1. Find the repo's own gate.** Look for:
         """)]
         for g in gates:
@@ -576,7 +597,10 @@ class SkillGenerator:
             not build is guesswork, and the build failure is the finding.
 
             **4. If it passes, honour the exclusion list.** It is not advice; it is the set
-            of things you now know are absent.
+            of things you now know are absent. But a linter proves only the rules its config
+            enables, so read the config before excluding anything: each linter's rule table
+            below says where the config lives and which rules are on by default. A pattern
+            whose rule is off, or ignored for that file, is in scope like any other code.
 
             **5. Record which oracle covers which changed files.** Coverage is not uniform, and
             an exclusion you apply outside the range of the command that earned it is a guess
@@ -636,8 +660,26 @@ class SkillGenerator:
                 lines.append("| Proved green | Therefore do NOT report |")
                 lines.append("|---|---|")
                 for p in proves:
-                    lines.append(f"| {code_span(p['green'])} | {p['excludes']} |")
+                    excludes = (
+                        "only the patterns whose rule the repo's config enables (rule table below)"
+                        if p.get("rules") else p["excludes"]
+                    )
+                    lines.append(f"| {code_span(p['green'])} | {excludes} |")
                 lines.append("")
+                # A linter's green run says nothing about rules its config leaves
+                # off; an exclusion claimed for them drops real findings (#92).
+                for p in proves:
+                    if not p.get("rules"):
+                        continue
+                    lines.append(f"**{code_span(p['green'])} covers only what its config enables.** "
+                                 f"Read it first: {p['config']}\n")
+                    lines.append("| Pattern | Rule | On by default |")
+                    lines.append("|---|---|---|")
+                    for r in p["rules"]:
+                        rule_ids = ", ".join(code_span(x.strip()) for x in r["rule"].split(","))
+                        default = "yes" if r.get("default") else "no (opt-in)"
+                        lines.append(f"| {r['pattern']} | {rule_ids} | {default} |")
+                    lines.append("")
 
             unproven = ladder.get("still_unproven", [])
             if unproven:
@@ -723,7 +765,9 @@ class SkillGenerator:
             5. **What changed and why?** (Mode 1 and 2 only) What was the author trying to
                accomplish? Read the PR description (Mode 2: the `body` fetched above; Mode 1: if
                the branch has an open PR, `gh pr view --json title,body`) and the commit messages
-               (`git log main..HEAD`). Understanding intent prevents false findings.
+               (`git log main..HEAD`). Understanding intent prevents false findings. But the
+               description is the author's claim, not evidence: intent can explain a choice, and
+               it never makes a defect or an unsafe change acceptable.
 
             Carry this model through the rest of the review. A checklist item that fires is only
             a finding if it matters given this context.

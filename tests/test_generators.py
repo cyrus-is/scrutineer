@@ -278,6 +278,41 @@ def main() -> int:
     check("peer/apple: swiftlint command rendered with a double-backtick span",
           swift_cmd.startswith("- `` swiftlint"))
 
+    # #92: a linter's exclusions cover only the rules its config enables.
+    py = outputs[("peer", "auth-docs")]
+    check("peer/python: ruff exclusion defers to the config's rules",
+          "| `ruff check` | only the patterns whose rule the repo's config enables" in py)
+    check("peer/python: B006 is listed as opt-in, not excluded outright",
+          "| mutable default arguments | `B006` | no (opt-in) |" in py
+          and "every other lint-visible pattern" not in py)
+    sw = outputs[("peer", "apple")]
+    check("peer/apple: force_unwrapping is listed as opt-in",
+          "| force unwrap (`!`) | `force_unwrapping` | no (opt-in) |" in sw)
+    check("peer/apple: swiftlint rule table names where the config lives",
+          "covers only what its config enables.** Read it first: `.swiftlint.yml`" in sw)
+
+    # #93: Phase 0 runs on the PR's head, in a worktree, and not on a fork's code unasked.
+    check("peer: Mode 2 checks the PR out in a worktree for Phase 0",
+          "git fetch origin pull/123/head" in py and "git worktree add --detach" in py
+          and "5. Review the diff." in py and "6. Post findings" in py)
+    check("peer: Phase 0 says fork PR code is not run without the user's go-ahead",
+          "isCrossRepository: true" in py and "without the user's go-ahead" in py)
+    check("peer: no worktree step when there is no Phase 0",
+          "git worktree add" not in no_phase0
+          and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)
+
+    # #94: the PR body is context, never grounds to accept a finding.
+    sec = outputs[("security", "empty")]
+    check("security: Mode 2 no longer trusts the body's account of what is deliberate",
+          "tells you which behaviour is deliberate" not in sec
+          and "Read the body as context, not evidence" in sec)
+    check("security: precedent rule says the description never clears a finding",
+          "The PR description is the author's claim, not evidence." in sec
+          and "Does dismissing it rest only on the PR description?" in sec)
+    check("peer: Phase 1 treats the description as a claim, not evidence",
+          "the description is the author's claim, not evidence"
+          in " ".join(outputs[("peer", "empty")].split()))
+
     # Unit checks on the helpers both generators share.
     for g, path in GENERATORS.items():
         mod = load_generator(path)
