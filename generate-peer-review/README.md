@@ -142,7 +142,11 @@ Generate a service map first: see `../generate-servicemap/`.
 --guidance, -g      Custom guidance YAML path
 --dry-run, -n       Preview without writing
 --force, -f         Overwrite without prompting
+--preview MILESTONE Include output behind a milestone's preview flag (e.g. 2.1); repeatable
 ```
+
+Guidance entries can be gated on a milestone: `preview: "2.1"` keeps an entry only under
+`--preview 2.1`, and `replaced_in: "2.1"` keeps it only without that flag.
 
 ## How It Differs from Security Review
 

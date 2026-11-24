@@ -38,6 +38,7 @@ class InstallResult:
     installed: list[str] = field(default_factory=list)   # command files written
     retired: list[str] = field(default_factory=list)     # scrutineer-era files moved to the backup folder
     moved_suppressions: bool = False                     # renamed the MCP suppressions file
+    previews: list[str] = field(default_factory=list)    # preview milestones the generators got
     service_map_note: str = ""
     skipped_crawl: bool = False
 
@@ -119,9 +120,12 @@ def _run_generator(
     sm: servicemap.ServiceMapResult,
     *,
     force: bool,
+    previews: list[str],
     log,
 ) -> bool:
     cmd = [sys.executable, str(generator), str(target), "--output", output_rel]
+    for milestone in previews:
+        cmd += ["--preview", milestone]
     if sm.path is not None:
         cmd += ["--service-map", str(sm.path)]
     else:
@@ -142,6 +146,7 @@ def install(
     crawl: bool = False,
     service_map: Path | str | None = None,
     force: bool = False,
+    previews: list[str] | tuple[str, ...] = (),
     log=_default_log,
 ) -> InstallResult:
     """Install the full vld8 skill set into ``target``.
@@ -157,6 +162,9 @@ def install(
         The ``/vld8-setup`` skill passes the map it just crawled here.
     force
         Overwrite existing command files / service map.
+    previews
+        Preview milestones (keys of ``paths.PREVIEW_MILESTONES``) whose output the
+        generated review skills include. Empty means the default output only.
     """
     target = Path(target).resolve()
     if not target.is_dir():
@@ -169,7 +177,14 @@ def install(
             "vld8 toolkit assets are missing — is the package intact?\n  " + listed
         )
 
-    result = InstallResult(target=target)
+    unknown = sorted(set(previews) - set(paths.PREVIEW_MILESTONES))
+    if unknown:
+        raise ValueError(
+            f"no preview for milestone {', '.join(unknown)}; "
+            f"available: {', '.join(sorted(paths.PREVIEW_MILESTONES)) or 'none'}"
+        )
+
+    result = InstallResult(target=target, previews=sorted(set(previews)))
     cmd_dir = _commands_dir(target)
 
     # 1. Copy the static skills first — the servicemap skill must be present
@@ -199,11 +214,13 @@ def install(
     # 3. Run the two generators against the repo, wiring in the map when present.
     log("Generating review skills…")
     if _run_generator(
-        paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm, force=force, log=log
+        paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm,
+        force=force, previews=result.previews, log=log,
     ):
         result.installed.append(paths.PEER_COMMAND)
     if _run_generator(
-        paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm, force=force, log=log
+        paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm,
+        force=force, previews=result.previews, log=log,
     ):
         result.installed.append(paths.SECURITY_COMMAND)
 

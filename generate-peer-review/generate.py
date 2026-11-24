@@ -382,6 +382,10 @@ class ServiceMapLoader:
 
 class SkillGenerator:
 
+    def __init__(self, previews: "frozenset[str]" = frozenset()):
+        # Code-level preview gates test membership, e.g. `if "2.1" in self.previews`.
+        self.previews = previews
+
     def generate(self, detected: dict, component_paths: dict,
                  all_known_platforms: list[str],
                  service_map: ServiceMapLoader | None = None,
@@ -409,7 +413,7 @@ class SkillGenerator:
         return "\n".join(sections)
 
     def _header(self) -> str:
-        return textwrap.dedent("""\
+        return self._preview_marker() + textwrap.dedent("""\
             You are a TL/Principal SDE performing a peer code review. Your goal is NOT style review.
             Your goal is to find real issues that would cause production incidents, reliability problems,
             scaling issues, maintenance burden, or subtle bugs that a Senior Engineer might miss but a
@@ -421,6 +425,15 @@ class SkillGenerator:
             and asking "what's missing?" — things no checklist can do.
 
         """)
+
+    def _preview_marker(self) -> str:
+        """Say in the file itself that it holds preview output, and how to undo it."""
+        if not self.previews:
+            return ""
+        flags = " ".join(f"--preview {m}" for m in sorted(self.previews))
+        return (f"<!-- vld8 preview output: generated with `{flags}`. Parts of this skill come "
+                f"from milestones that haven't passed their gate. Reinstall without --preview "
+                f"for the default output. -->\n\n")
 
     def _invocation_section(self, service_map: ServiceMapLoader | None) -> str:
         lines = [textwrap.dedent("""\
@@ -1347,6 +1360,30 @@ def get_all_platform_keys(guidance: dict) -> list[str]:
     return keys
 
 
+def apply_previews(node, enabled: "set[str] | frozenset[str]"):
+    """Drop guidance that belongs to a preview milestone the install didn't turn on.
+
+    Output changes ship behind their milestone's preview flag until its gate passes
+    (docs/ROADMAP.md, Release train). Any guidance entry may carry one of two keys:
+    ``preview: "2.1"`` keeps it only under ``--preview 2.1``; ``replaced_in: "2.1"``
+    keeps it only without that flag, so a preview can swap an entry for its
+    successor. Both keys are stripped from what's kept. When a milestone graduates,
+    delete its ``replaced_in`` entries and its ``preview`` keys.
+    """
+    def keep(value) -> bool:
+        if not isinstance(value, dict):
+            return True
+        on, off = value.get("preview"), value.get("replaced_in")
+        return (on is None or str(on) in enabled) and (off is None or str(off) not in enabled)
+
+    if isinstance(node, dict):
+        return {k: apply_previews(v, enabled) for k, v in node.items()
+                if k not in ("preview", "replaced_in") and keep(v)}
+    if isinstance(node, list):
+        return [apply_previews(v, enabled) for v in node if keep(v)]
+    return node
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate a tailored peer code review skill for a repository.",
@@ -1373,6 +1410,9 @@ def main():
                         help="Print generated skill to stdout without writing")
     parser.add_argument("--force", "-f", action="store_true",
                         help="Overwrite existing vld8-review.md without prompting")
+    parser.add_argument("--preview", action="append", default=[], metavar="MILESTONE",
+                        help="Include output still behind a milestone's preview flag, e.g. 2.1. "
+                             "Repeatable. Without it, only the default output is generated.")
 
     args = parser.parse_args()
 
@@ -1384,6 +1424,10 @@ def main():
 
     print(f"Loading guidance from: {guidance_path}")
     guidance = load_guidance(guidance_path)
+    previews = frozenset(args.preview)
+    if previews:
+        print(f"Preview output on: {', '.join(sorted(previews))}")
+    guidance = apply_previews(guidance, previews)
 
     # Resolve service map: explicit --service-map, else auto-discover at repo root,
     # unless --no-service-map opts out. Silent degradation (running without a map
@@ -1436,7 +1480,7 @@ def main():
     all_known = get_all_platform_keys(guidance)
 
     # Generate
-    generator = SkillGenerator()
+    generator = SkillGenerator(previews=previews)
     skill_content = generator.generate(detected, component_paths, all_known, service_map,
                                        cross_cutting, verification)
 

@@ -29,11 +29,13 @@ does the crawl, then hands the resulting `servicemap.json` to the shared install
 ## Invocation
 
 ```
-/vld8-setup [--no-servicemap] [--force]
+/vld8-setup [--no-servicemap] [--force] [--preview <milestone>]
 ```
 
 - `--no-servicemap`: skip the crawl and generate map-less skills (faster; no cross-service analysis).
 - `--force`: overwrite existing command files / service map without prompting.
+- `--preview <milestone>`: include review output still behind that milestone's preview flag, e.g. `2.1`.
+  Repeatable. `vld8 install --help` lists the milestones that have one.
 
 ## Steps
 
@@ -74,7 +76,9 @@ python -m vld8 install <target> --service-map servicemap.json --force
 ```
 
 If `--no-servicemap` was requested, omit `--service-map` and the installer runs the generators with
-`--no-service-map`. The installer is idempotent; pass `--force` to overwrite.
+`--no-service-map`. The installer is idempotent; pass `--force` to overwrite. Pass each
+`--preview <milestone>` the user gave on to the installer unchanged. Without one, the review skills are
+regenerated with the default output, which also undoes an earlier preview.
 
 ### 4. Report
 

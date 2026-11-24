@@ -85,6 +85,29 @@ def main() -> int:
             check(f"{f}: every `vld8 map X` is a real subcommand {sorted(used_sm - servicemap_actions)}",
                   used_sm <= servicemap_actions)
         mcp_text = (cmd_dir / paths.MCP_COMMAND).read_text()
+        check("a default install has no preview marker",
+              all("vld8 preview output" not in (cmd_dir / f).read_text()
+                  for f in (paths.PEER_COMMAND, paths.SECURITY_COMMAND)))
+
+        # #81: --preview reaches both generators, and a plain reinstall undoes it.
+        result = installer.install(target, force=True, previews=["2.1"], log=lambda *_: None)
+        check("install --preview 2.1 marks both review skills",
+              result.previews == ["2.1"]
+              and all((cmd_dir / f).read_text().startswith("<!-- vld8 preview output")
+                      for f in (paths.PEER_COMMAND, paths.SECURITY_COMMAND)))
+        installer.install(target, force=True, log=lambda *_: None)
+        check("reinstalling without --preview goes back to the default output",
+              all("vld8 preview output" not in (cmd_dir / f).read_text()
+                  for f in (paths.PEER_COMMAND, paths.SECURITY_COMMAND)))
+        try:
+            installer.install(target, force=True, previews=["9.9"], log=lambda *_: None)
+            rejected = False
+        except ValueError:
+            rejected = True
+        check("the installer rejects a milestone with no preview", rejected)
+        proc = run_cli("install", str(target), "--preview", "9.9")
+        check("vld8 install --preview 9.9 fails with the available milestones",
+              proc.returncode != 0 and "2.1" in proc.stderr)
         check("mcp skill runs the analyzer through the CLI", "vld8 mcp analyze" in mcp_text)
         for f in sorted(expected):
             check(f"{f}: no leftover scrutineer name", "scrutineer" not in (cmd_dir / f).read_text().lower())

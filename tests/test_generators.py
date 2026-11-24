@@ -129,10 +129,12 @@ def fixtures(base: Path) -> dict[str, tuple[Path, Path | None]]:
 
 
 def generate(generator: Path, repo: Path, service_map: Path | None,
-             guidance: Path | None = None) -> str:
+             guidance: Path | None = None, previews: tuple[str, ...] = ()) -> str:
     cmd = [sys.executable, str(generator), str(repo), "--output", "out.md", "--force"]
     if guidance:
         cmd += ["--guidance", str(guidance)]
+    for milestone in previews:
+        cmd += ["--preview", milestone]
     cmd += ["--service-map", str(service_map)] if service_map else ["--no-service-map"]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -195,6 +197,21 @@ def main() -> int:
         custom = Path(tmp) / "no-verification.yaml"
         custom.write_text(yaml.safe_dump(guidance))
         no_phase0 = generate(GENERATORS["peer"], repos["go-only"][0], None, guidance=custom)
+
+        # #81: a guidance entry gated on a preview milestone appears only under its
+        # flag, and an entry it replaces appears only without it.
+        gated = yaml.safe_load((ROOT / "generate-peer-review" / "peer_review_guidance.yaml").read_text())
+        areas = gated["cross_cutting"]["universal"]["focus_areas"]
+        replaced_area = areas[0]["area"]
+        areas[0]["replaced_in"] = "2.1"
+        areas.append({"area": "Preview probe area", "description": "Only under --preview 2.1.",
+                      "lens": "correctness", "why": "Proves the gate.", "preview": "2.1"})
+        gated_path = Path(tmp) / "gated.yaml"
+        gated_path.write_text(yaml.safe_dump(gated))
+        go_repo = repos["go-only"][0]
+        preview_off = generate(GENERATORS["peer"], go_repo, None, guidance=gated_path)
+        preview_on = generate(GENERATORS["peer"], go_repo, None, guidance=gated_path, previews=("2.1",))
+        sec_on = generate(GENERATORS["security"], go_repo, None, previews=("2.1",))
 
     for (g, name), text in outputs.items():
         check_rendering(f"{g}/{name}", text)
@@ -278,6 +295,20 @@ def main() -> int:
     check("peer/apple: swiftlint command rendered with a double-backtick span",
           swift_cmd.startswith("- `` swiftlint"))
 
+    # #81: the preview gate.
+    check("preview off: gated entry absent, the entry it replaces present",
+          "Preview probe area" not in preview_off and replaced_area in preview_off)
+    check("preview on: gated entry present, the entry it replaces gone",
+          "Preview probe area" in preview_on and replaced_area not in preview_on)
+    check("preview on: the skill says it holds preview output and how to undo it",
+          preview_on.startswith("<!-- vld8 preview output: generated with `--preview 2.1`")
+          and sec_on.startswith("<!-- vld8 preview output: generated with `--preview 2.1`"))
+    check("preview off: no marker, and the gate keys never reach the output",
+          "vld8 preview output" not in preview_off and "replaced_in" not in preview_off
+          and "replaced_in" not in preview_on)
+    check_rendering("peer/preview-on", preview_on)
+    check_rendering("security/preview-on", sec_on)
+
     # Unit checks on the helpers both generators share.
     for g, path in GENERATORS.items():
         mod = load_generator(path)
@@ -293,6 +324,16 @@ def main() -> int:
         ]
         bad = [(r, pat) for r, pat, want in cases if mod.glob_match(r, pat) != want]
         check(f"{g}: glob_match treats **/ as zero or more directories {bad}", not bad)
+    sample = {"items": [{"a": 1}, {"b": 2, "preview": "2.1"}, {"c": 3, "replaced_in": 2.1}, "plain"],
+              "gated": {"preview": "2.2", "x": 1}}
+    for g, path in GENERATORS.items():
+        mod = load_generator(path)
+        check(f"{g}: apply_previews with no previews keeps defaults and drops gated entries",
+              mod.apply_previews(sample, frozenset())
+              == {"items": [{"a": 1}, {"c": 3}, "plain"]})
+        check(f"{g}: apply_previews under 2.1 swaps in its entries and strips the keys",
+              mod.apply_previews(sample, frozenset({"2.1"}))
+              == {"items": [{"a": 1}, {"b": 2}, "plain"]})
     peer_mod = load_generator(GENERATORS["peer"])
     check("peer: code_span survives inner backticks",
           peer_mod.code_span("a `b` c") == "`` a `b` c ``" and peer_mod.code_span("ls") == "`ls`")

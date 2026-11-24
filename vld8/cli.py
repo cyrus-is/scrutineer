@@ -89,6 +89,16 @@ def _add_install_parser(sub: argparse._SubParsersAction) -> None:
         "--force", "-f", action="store_true",
         help="Overwrite existing command files.",
     )
+    p.add_argument(
+        "--preview", action="append", default=[], metavar="MILESTONE",
+        choices=sorted(paths.PREVIEW_MILESTONES),
+        help=(
+            "Include review output that is still behind a milestone's preview flag "
+            "(available: " + ", ".join(
+                f"{m}, {desc}" for m, desc in sorted(paths.PREVIEW_MILESTONES.items())
+            ) + "). Repeatable. Reinstalling without it goes back to the default output."
+        ),
+    )
     p.set_defaults(func=_cmd_install)
 
 
@@ -99,8 +109,9 @@ def _cmd_install(args: argparse.Namespace) -> int:
             crawl=args.crawl,
             service_map=args.service_map,
             force=args.force,
+            previews=args.preview,
         )
-    except (FileNotFoundError, NotADirectoryError, RuntimeError) as exc:
+    except (FileNotFoundError, NotADirectoryError, RuntimeError, ValueError) as exc:
         print(f"\nERROR: {exc}", file=sys.stderr)
         return 1
 
@@ -111,6 +122,15 @@ def _cmd_install(args: argparse.Namespace) -> int:
             print(f"    /{name[:-3]}")  # strip .md → slash command name
     else:
         print("Nothing was written (all targets existed; re-run with --force).")
+    if result.previews:
+        listed = ", ".join(f"{m} ({paths.PREVIEW_MILESTONES[m]})" for m in result.previews)
+        regenerated = {paths.PEER_COMMAND, paths.SECURITY_COMMAND} & set(result.installed)
+        if regenerated:
+            print(f"✓ Review skills include preview output: {listed}")
+            print("  Reinstall with --force and without --preview to go back to the default.")
+        else:
+            print(f"Preview {listed} not applied: the review skills were not regenerated "
+                  "(re-run with --force).")
     if result.moved_suppressions:
         print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
     if result.retired:

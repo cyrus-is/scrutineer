@@ -162,9 +162,19 @@ vld8 install /path/to/your-repo --force              # overwrite existing comman
 
 `vld8 install` uses `servicemap.json` at the repo root if there is one.
 
+### Preview output
+
+A change to what the reviews look for, how they rate it, or how they report it ships behind a preview flag until it has been measured (see the [roadmap](docs/ROADMAP.md)). To try a milestone's changes early:
+
+```bash
+vld8 install /path/to/your-repo --force --preview 2.1
+```
+
+The regenerated commands start with a comment that names the preview. To go back to the default, reinstall with `--force` and without `--preview`. `vld8 install --help` lists the milestones that have a preview. 2.1's changes land behind its flag one at a time, so until the first one ships, the flag only adds that comment.
+
 ### From Claude Code
 
-`/vld8-setup`, which `vld8 install` also installs, does the same job from inside Claude Code: Claude crawls the service map itself, then runs the installer, so the review commands come out map-aware. Re-run it whenever you want a fresh map and regenerated reviews.
+`/vld8-setup`, which `vld8 install` also installs, does the same job from inside Claude Code: Claude crawls the service map itself, then runs the installer, so the review commands come out map-aware. Re-run it whenever you want a fresh map and regenerated reviews. It takes `--preview MILESTONE` too.
 
 ### Commands the skills use
 
@@ -192,7 +202,7 @@ cp generate-servicemap/SKILL.md /path/to/your-repo/.claude/commands/vld8-map.md
 cp mcp-review/SKILL.md /path/to/your-repo/.claude/commands/vld8-mcp.md
 ```
 
-Both generators use `servicemap.json` at the repo root when it's present. Pass `--service-map PATH` for a map stored somewhere else, or `--no-service-map` to skip it.
+Both generators use `servicemap.json` at the repo root when it's present. Pass `--service-map PATH` for a map stored somewhere else, or `--no-service-map` to skip it. Both also take `--preview MILESTONE`.
 
 ## Requirements
 
