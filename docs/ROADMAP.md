@@ -29,15 +29,15 @@ Every item below traces to one of these:
 | Release | Theme | Pipeline stage | Ships when |
 |---|---|---|---|
 | **2.0.x** | Finish the rename; repo hygiene | — | Repo changes only; no release needed |
-| **2.1** | Review precision bundle | Scan: rated findings | The held-out test passes its pre-registered rule |
+| **2.1** | Precision without a spec | Scan: rated findings | The held-out test passes its pre-registered rule |
 | **2.2** | Foundations: findings contract, one engine | Scan: structured findings | CI, snapshot tests, and no regression on the 2.1 eval |
 | **2.3** | Validation stage | Triage and validation | The held-out test shows precision holds or rises with no recall loss |
-| **2.4** | Context packet | Scan: system context | Cross-module seeds improve; no regression elsewhere |
+| **2.4** | Terrain: service map v2, business rules as implemented, the context packet | Scan: system context | Rule-change and cross-module seeds are caught; no regression elsewhere |
 | **2.5–2.7** | Coverage for the 90% set | Scan: breadth | Detection snapshots, plus one live review per new block |
-| **2.8+** | Service map v2; MCP as its own tool; measure and prune | All | Per item |
+| **2.8+** | MCP as its own tool; measure and prune | All | Per item |
 | **Later** | Suggested fixes; onfire; the improvement pipeline; other agents; vld8.ai | Suggested fix, and more | After 2.3's validation is measured |
 
-The order: precision first, because it's the measured problem and its fix is cheap. Then the contract, because it unblocks validation and measurement. Then validation, because it's the stage that was never built. Breadth comes last, so new checks land on an engine whose output can be measured.
+The order: precision first, because it's the measured problem and its fix is cheap. Then the contract, because it unblocks validation and measurement. Then validation, because it's the stage that was never built. Then terrain, because it's where intent comes from: the system's own rules, not a spec per change. Breadth comes last, so new checks land on an engine whose output can be measured, with terrain they can cite as evidence.
 
 ## 2.0.x: finish the rename, repo hygiene
 
@@ -65,33 +65,36 @@ The order: precision first, because it's the measured problem and its fix is che
 | Pin CI dependencies with a constraints file. There's no lockfile today | vld8 | STD |
 | Write `decisions/` records for: the MCP auditor built instead of the triage layer (April, written up after the fact); the rename (D7); dev-tooling positioning (D3) | vld8 | STD, CR-8 |
 
-## 2.1: review precision bundle
+## 2.1: precision without a spec
 
-**Why:** in the qwen-review-recall study the review found most seeded defects, but about 60% of what it flagged wasn't real. Most of that noise came from objecting to designs the spec had already chosen, and from severity labels that were never defined. These are prompt and generator changes to the current generated skill, so they don't wait for the engine work.
+**Why:** in the qwen-review-recall study the review found most seeded defects, but about 60% of what it flagged wasn't real.
+
+**TypeScript wasn't the cause.** The missed TypeScript detection was a coverage hole. One seeded defect traces to it, and it's fixed in 2.0.0. It doesn't explain the noise.
+
+**The noise came from asserting need without evidence:** "might want a timeout", "could use an audit trail", on code where nothing required one.
+
+**The fix doesn't need a spec.** The question is whether something *needed* to be there, not what the author intended, and need has to be shown (Cyrus, 2026-11-23). These are prompt and generator changes to the current skill, so they don't wait for the engine work.
 
 | Item | Source |
 |---|---|
-| A `--spec <file>` input, plus intent from acceptance criteria and a linked issue in the PR | HQ-3, HQ-1 |
-| **Spec questions:** objections to prescribed behaviour, and asks the spec doesn't make, are quoted here. They never count as findings and never set the verdict | HQ-1 |
-| **Evidence rubric:** ISSUE means the change breaks a stated requirement, a written rule, or an in-repo contract; or it has a traced, reachable trigger; or it breaks a security invariant. A CONCERN names a concrete scenario. One vocabulary throughout; Phase 1's CRITICAL/INFO/P0/P3 terms are retired | HQ-2 |
-| **Verdict rule:** REQUEST CHANGES if and only if there is an ISSUE. This also fixes the clean-review contract | HQ-2, HQ-7 |
-| **Spec-conformance walk:** each stated behaviour is marked implemented, deviates or can't verify, with file and line | HQ-3 |
+| **Evidence rule:** ISSUE only with evidence of need: it breaks a written rule, a confirmed map rule or a stated requirement; departs from a contract two named sites follow; has a traced, reachable trigger; or breaks a security invariant. Otherwise it isn't a gap. At most it's a CONCERN, which must name a concrete scenario. One vocabulary throughout; Phase 1's CRITICAL/INFO/P0/P3 terms are retired | HQ-2, Cyrus |
+| **Verdict rule:** REQUEST CHANGES if and only if there's an ISSUE. This also fixes the clean-review contract | HQ-2, HQ-7 |
 | **Read the repo's rules files** (CLAUDE.md, AGENTS.md, ENGINEERING.md, CONTRIBUTING.md, and nested ones on the changed paths). A broken written rule is an ISSUE, and the rule is quoted | HQ-4, CTX |
+| **Callers check,** moved up from 2.4: list the callers of each changed export, and check each caller's assumptions. The cross-module seeds scored 0 of 2 | HQ-9, CTX |
 | **Ambient-nondeterminism check:** flag `Date.now`, `new Date()`, `Math.random` or `crypto.randomUUID` used where an injected clock or ID source exists | HQ-5 |
 | **The lens table only cites findings.** It can't introduce new claims | HQ-6 |
+| **Optional intent sources:** `--spec <file>`, the PR body and linked issue, a design doc the diff adds. The review states which one it used and works without any. A spec counts as one more source of stated requirements; objections to it still need evidence of need | HQ-3, Cyrus |
 
-**Gate:** HQ's held-out test (§5 of the HQ proposal), pre-registered before any run.
-- Fresh change sets with newly planted bugs, never seen while tuning, plus about 10 real PRs to check that home-setting reviews don't get worse.
-- Opus first, 2 reps, in a spec setting and a home setting.
-- **Ship if:**
-  - Finding precision is at least the baseline + 20 points;
-  - recall is at least the baseline − 2;
-  - no more than 2 seeded defects land in Spec questions.
-- **If it fails:** the bundle doesn't ship. Its measurements go back into the design.
+**Gate:** the held-out test, pre-registered before any run.
+- **The primary set is real PRs with no spec:** about 10 PRs with fresh seeds and 2 clean ones. Spec-driven change sets are secondary.
+- **The baseline is 2.0.0,** so the TypeScript fix that already shipped isn't counted as part of 2.1's gain.
+- **Score on evidence of need:** a finding is real if it shows a broken rule, a broken contract or a triggerable failure, even when it contradicts a spec.
+- **Ship if:** Finding precision is at least the baseline + 20 points, and recall is at least the baseline − 2.
+- **If it fails:** the work stays off `staging` (see *Release train*), and its measurements go back into the design.
 
 **Needs:**
-- decision **D4**: study before shipping. The roadmap assumes yes.
-- held-out seeds, built by whoever runs the study (HQ's study desk built the last set).
+- decision **D4**: test before shipping. Assumed yes.
+- someone to build and run the held-out set, under the new scoring rule.
 
 ## 2.2: foundations
 
@@ -120,15 +123,25 @@ This is the stage that was never built.
 
 **Gate:** the held-out test re-run. Precision holds or rises, and recall doesn't fall: the validator must not suppress real seeded defects.
 
-## 2.4: the context packet
+## 2.4: terrain
+
+The service map becomes the system's known terrain, and the reviews read it. Design: plan §4, *Terrain*.
 
 | Item | Source |
 |---|---|
-| **`vld8 context`:** rules files, intent sources, and a size budget, so the packet doesn't crowd out the lens prompt | CTX, plan §11 |
-| **Map slice:** Modes 1 and 2 read only the touched components' entries; Modes 3 and 4 keep the full map | HQ-10 |
-| **Contract fan-out:** list the callers of each changed export, and check each caller's assumptions | HQ-9, CTX |
+| **Business rules as implemented in the map:** authorization (who can do what to which resource), tenancy, trust translation points such as a gateway that turns external JWT into internal tokens, identifier properties such as random IDs with no oracle, data classifications, accepted risks. Each comes with file and line evidence and a confidence | Cyrus, CTX |
+| **`vld8 map rules`:** reports the rules as implemented and asks yes / no, bug / not sure for each. Yes is confirmed terrain in the checked-in map. A bug is a finding, stored like findings and never in the map. Not sure stays a hint | Cyrus |
+| **Rule-change detection in reviews:** compare the rules as implemented before and after the diff. A change to a confirmed rule is an ISSUE; a change to an unconfirmed rule is a question | Cyrus |
+| **`crawled_commit` and drift detection,** plus a CI refresh that opens a PR | CTX |
+| **Terrain slice:** Modes 1 and 2 read only the touched components' terrain; Modes 3 and 4 keep the full map | HQ-10 |
+| **`vld8 context`:** the context packet, with rules files, intent, terrain slice and callers, under a size budget so it doesn't crowd out the lens prompt | CTX, plan §11 |
+| **Intent capture,** opt-in: a Claude Code hook that writes the approved plan into the PR description; an experimental reader for local session prompts | Cyrus |
+| **Map issues** from the old backlog: background and hosted services and job schedulers (#4), transactional outbox and messaging (#5), shared source includes (#6), a documentation / schema-spec component type (#19), cloud provider coverage (#3) | Backlog |
 
-**Gate:** the cross-module seeds, which scored 0 of 2 in the study, improve, with no regression elsewhere.
+**Gate:**
+- seeded authorization changes are caught as rule changes;
+- the cross-module seeds improve on 2.1;
+- no regression elsewhere.
 
 ## 2.5–2.7: coverage for the 90% set
 
@@ -150,8 +163,7 @@ Coverage means four things, not a generic checklist per language:
 
 | Item | Source |
 |---|---|
-| **Service map v2:** `crawled_commit` and drift detection; an intra-component contracts layer for single-deployable repos; an invariants file seeded by the crawl and confirmed by a person; a CI refresh that opens a PR | CTX, HQ (map granularity) |
-| **MCP review as its own tool:** a user-scoped install, `vld8 mcp` as the front door, and the shared findings contract (decision **D5**) | CR-7 |
+| **MCP review as its own tool:** a user-scoped install, `vld8 mcp` as the front door, and the shared findings contract (decision **D5**). Its backlog: a sandboxed side-effect tracer for behavioral capture (#38), and an OSV lookup for known-vulnerable MCP packages (#35, shared with `onfire`) | CR-7, Backlog |
 | **Measure and prune,** ongoing from 2.3: aggregate Check Performance across runs; prune checks that never yield, starting with the March-era generic blocks; promote "Unnamed" findings to checks | CR-6 |
 
 ## Later
@@ -161,8 +173,23 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 - **Suggested fixes:** the original pipeline's last stage. A patch per validated finding, verified by re-running the lens. It comes last on purpose: a fix generator on top of unvalidated findings multiplies the noise.
 - **`vld8 onfire day|week`:** checks new CISA KEV entries (48-hour and 8-day windows) for exposure. It has triage states, and false-positive submissions are encrypted.
 - **Automated improvement pipeline:** replay GitHub advisories against the code from before each fix, with a held-out set by date. A miss becomes a draft PR plus an eval case.
+- **Threat model generator (#1):** largely absorbed by terrain (2.4), whose trust translation points, authorization rules and data classifications are a threat model's inputs. Whatever's left is reassessed after 2.4.
 - **Other agents:** Cursor, Gemini CLI and Codex CLI (#31–#34). The design review's advice holds: no more breadth until the pipeline above lands.
 - **vld8.ai docs site:** a static site built from the READMEs (plan D8).
+
+## Release train
+
+Weekly, until the issue backlog is empty (Cyrus, 2026-11-23). The backlog is every roadmap item as an issue under its release milestone, plus the 12 issues that were open before the roadmap, each now mapped to a release.
+
+- **Every Monday:** if `staging` has changed since the last release and CI is green, cut a release:
+  1. open a "Release X.Y.Z" PR from `staging` to `main`, with notes drafted from the merged PRs;
+  2. Cyrus approves it;
+  3. fast-forward `main` to `staging`;
+  4. `gh release create vX.Y.Z --target main`, which publishes to PyPI.
+- **`staging` is always releasable.** Work that changes what reaches the reader, meaning the 2.1 bundle and the 2.3 validator, stays on its feature branch, or behind an opt-in flag, until its held-out gate passes. Only then does it merge. Everything else (fixes, hygiene, coverage behind its own gates) merges when it's ready and rides the next train.
+- **Version numbers follow what shipped,** not the calendar. A week with only fixes is a patch (2.0.1). The week a theme lands, the minor version goes up (2.1.0).
+- **A quiet week ships nothing.** No empty releases.
+- **The train stops** when the backlog's milestones are closed. Cadence is then revisited.
 
 ## Decisions this roadmap waits on
 
