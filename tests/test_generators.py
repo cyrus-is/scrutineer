@@ -24,6 +24,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from vld8 import paths  # noqa: E402  (the preview milestone table)
 GENERATORS = {
     "peer": ROOT / "generate-peer-review" / "generate.py",
     "security": ROOT / "generate-security-review" / "generate.py",
@@ -211,7 +213,18 @@ def main() -> int:
         go_repo = repos["go-only"][0]
         preview_off = generate(GENERATORS["peer"], go_repo, None, guidance=gated_path)
         preview_on = generate(GENERATORS["peer"], go_repo, None, guidance=gated_path, previews=("2.1",))
-        sec_on = generate(GENERATORS["security"], go_repo, None, previews=("2.1",))
+        sec_gated = yaml.safe_load((ROOT / "generate-security-review" / "security_guidance.yaml").read_text())
+        go_checks = sec_gated["backend"]["go"]["checklist"]
+        replaced_check = go_checks[0]["title"]
+        go_checks[0]["replaced_in"] = "2.1"
+        go_checks.append({"id": "preview-probe", "title": "Preview probe check",
+                          "pattern": "x", "secure_alternative": "y", "owasp": "z",
+                          "severity_if_found": "LOW", "preview": "2.1"})
+        sec_gated_path = Path(tmp) / "sec-gated.yaml"
+        sec_gated_path.write_text(yaml.safe_dump(sec_gated))
+        sec_off = generate(GENERATORS["security"], go_repo, None, guidance=sec_gated_path)
+        sec_on = generate(GENERATORS["security"], go_repo, None, guidance=sec_gated_path,
+                          previews=("2.1",))
 
     for (g, name), text in outputs.items():
         check_rendering(f"{g}/{name}", text)
@@ -300,9 +313,38 @@ def main() -> int:
           "Preview probe area" not in preview_off and replaced_area in preview_off)
     check("preview on: gated entry present, the entry it replaces gone",
           "Preview probe area" in preview_on and replaced_area not in preview_on)
-    check("preview on: the skill says it holds preview output and how to undo it",
-          preview_on.startswith("<!-- vld8 preview output: generated with `--preview 2.1`")
-          and sec_on.startswith("<!-- vld8 preview output: generated with `--preview 2.1`"))
+    check("security: the gate applies to its guidance too",
+          "Preview probe check" not in sec_off and replaced_check in sec_off
+          and "Preview probe check" in sec_on and replaced_check not in sec_on)
+    marker = "<!-- vld8 preview output: generated with `--preview 2.1`"
+    check("preview on: the skill ends by saying it holds preview output and how to undo it",
+          marker in preview_on.rstrip().splitlines()[-1] and marker in sec_on.rstrip().splitlines()[-1]
+          and not preview_on.startswith("<!--"))
+    check("the generators' marker is the one the installer looks for",
+          marker.startswith(paths.PREVIEW_MARKER))
+
+    # Graduation safety: every gate names a live milestone, in YAML and in code.
+    def gates(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k in ("preview", "replaced_in"):
+                    yield v
+                yield from gates(v)
+        elif isinstance(node, list):
+            for v in node:
+                yield from gates(v)
+    for name in ("generate-peer-review/peer_review_guidance.yaml",
+                 "generate-security-review/security_guidance.yaml"):
+        bad = [v for v in gates(yaml.safe_load((ROOT / name).read_text()))
+               if not (isinstance(v, str) and v in paths.PREVIEW_MILESTONES)]
+        check(f"{name}: every preview gate names a live milestone {bad}", not bad)
+    for g, path in GENERATORS.items():
+        src = path.read_text()
+        used = set(re.findall(r"preview_on\(\s*[\"'](\d+\.\d+)[\"']", src))
+        check(f"{g}: every preview_on() names a live milestone {sorted(used - set(paths.PREVIEW_MILESTONES))}",
+              used <= set(paths.PREVIEW_MILESTONES))
+        check(f"{g}: code gates go through preview_on(), not a bare membership test",
+              src.count("in self.previews") == 1)
     check("preview off: no marker, and the gate keys never reach the output",
           "vld8 preview output" not in preview_off and "replaced_in" not in preview_off
           and "replaced_in" not in preview_on)
@@ -324,7 +366,7 @@ def main() -> int:
         ]
         bad = [(r, pat) for r, pat, want in cases if mod.glob_match(r, pat) != want]
         check(f"{g}: glob_match treats **/ as zero or more directories {bad}", not bad)
-    sample = {"items": [{"a": 1}, {"b": 2, "preview": "2.1"}, {"c": 3, "replaced_in": 2.1}, "plain"],
+    sample = {"items": [{"a": 1}, {"b": 2, "preview": "2.1"}, {"c": 3, "replaced_in": "2.1"}, "plain"],
               "gated": {"preview": "2.2", "x": 1}}
     for g, path in GENERATORS.items():
         mod = load_generator(path)
@@ -334,6 +376,13 @@ def main() -> int:
         check(f"{g}: apply_previews under 2.1 swaps in its entries and strips the keys",
               mod.apply_previews(sample, frozenset({"2.1"}))
               == {"items": [{"a": 1}, {"b": 2}, "plain"]})
+        for bad_gate in (2.1, ["2.1"], True, "", "v2.1"):
+            try:
+                mod.apply_previews({"items": [{"x": 1, "preview": bad_gate}]}, frozenset())
+                raised = False
+            except ValueError:
+                raised = True
+            check(f"{g}: apply_previews rejects gate value {bad_gate!r}", raised)
     peer_mod = load_generator(GENERATORS["peer"])
     check("peer: code_span survives inner backticks",
           peer_mod.code_span("a `b` c") == "`` a `b` c ``" and peer_mod.code_span("ls") == "`ls`")

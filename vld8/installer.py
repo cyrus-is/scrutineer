@@ -39,6 +39,9 @@ class InstallResult:
     retired: list[str] = field(default_factory=list)     # scrutineer-era files moved to the backup folder
     moved_suppressions: bool = False                     # renamed the MCP suppressions file
     previews: list[str] = field(default_factory=list)    # preview milestones the generators got
+    preview_missing: list[str] = field(default_factory=list)  # review skills that lack the requested preview
+    preview_kept: list[str] = field(default_factory=list)     # not regenerated; still hold an earlier preview
+    preview_dropped: list[str] = field(default_factory=list)  # regenerated without the preview they held
     service_map_note: str = ""
     skipped_crawl: bool = False
 
@@ -123,6 +126,12 @@ def _run_generator(
     previews: list[str],
     log,
 ) -> bool:
+    # Skip an existing skill the way _copy_skill does, rather than letting the
+    # generator prompt. Its "Overwrite? [y/N]" exits 0 on N, which made a
+    # declined file look regenerated.
+    if (target / output_rel).exists() and not force:
+        log(f"  skip {Path(output_rel).name} (exists; pass --force to regenerate)")
+        return False
     cmd = [sys.executable, str(generator), str(target), "--output", output_rel]
     for milestone in previews:
         cmd += ["--preview", milestone]
@@ -138,6 +147,13 @@ def _run_generator(
         log(f"  ✗ {generator.parent.name} failed (exit {result.returncode})")
         return False
     return True
+
+
+def _has_preview(path: Path) -> bool:
+    try:
+        return paths.PREVIEW_MARKER in path.read_text(errors="replace")
+    except OSError:
+        return False
 
 
 def install(
@@ -212,6 +228,8 @@ def install(
     log(f"  {sm.note}")
 
     # 3. Run the two generators against the repo, wiring in the map when present.
+    review = [paths.PEER_COMMAND, paths.SECURITY_COMMAND]
+    had_preview = {f for f in review if _has_preview(cmd_dir / f)}
     log("Generating review skills…")
     if _run_generator(
         paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm,
@@ -223,6 +241,14 @@ def install(
         force=force, previews=result.previews, log=log,
     ):
         result.installed.append(paths.SECURITY_COMMAND)
+
+    # What the files now hold, not what the generators returned, decides whether
+    # a preview took effect.
+    if result.previews:
+        result.preview_missing = [f for f in review if not _has_preview(cmd_dir / f)]
+    else:
+        result.preview_kept = [f for f in review if f in had_preview and _has_preview(cmd_dir / f)]
+        result.preview_dropped = [f for f in review if f in had_preview and not _has_preview(cmd_dir / f)]
 
     # 4. Retire the scrutineer-* files this install replaces, so the old and new
     #    commands don't both appear in Claude Code.

@@ -170,7 +170,7 @@ A change to what the reviews look for, how they rate it, or how they report it s
 vld8 install /path/to/your-repo --force --preview 2.1
 ```
 
-The regenerated commands start with a comment that names the preview. To go back to the default, reinstall with `--force` and without `--preview`. `vld8 install --help` lists the milestones that have a preview. 2.1's changes land behind its flag one at a time, so until the first one ships, the flag only adds that comment.
+The regenerated commands end with a comment that names the preview, and the installer says whether it took effect. To go back to the default, reinstall with `--force` and without `--preview`. `vld8 install --help` lists the milestones that have a preview. 2.1's changes land behind its flag one at a time, so until the first one ships, the flag only adds that comment.
 
 ### From Claude Code
 

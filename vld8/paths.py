@@ -65,6 +65,8 @@ SECURITY_COMMAND = "vld8-security.md"
 PREVIEW_MILESTONES = {
     "2.1": "precision without a spec",
 }
+# The generators end a skill built with --preview with a comment starting so.
+PREVIEW_MARKER = "<!-- vld8 preview output:"
 
 # Command files that scrutineer (this package's name before 2.0) installed, each
 # mapped to the vld8 file that replaces it and a line only that skill contains.

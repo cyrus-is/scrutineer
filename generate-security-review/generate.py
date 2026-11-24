@@ -395,7 +395,7 @@ class SkillGenerator:
     """Generates the vld8-security.md skill file."""
 
     def __init__(self, previews: "frozenset[str]" = frozenset()):
-        # Code-level preview gates test membership, e.g. `if "2.1" in self.previews`.
+        # Gate prose in this file with self.preview_on(<milestone>); see its docstring.
         self.previews = previews
 
     def generate(self, detected: dict[str, dict],
@@ -429,10 +429,10 @@ class SkillGenerator:
         sections.append(self._deep_review_section(service_map))
         sections.append(self._self_heal_section(all_known_platforms))
 
-        return "\n".join(sections)
+        return "\n".join(sections) + self._preview_marker()
 
     def _header(self) -> str:
-        return self._preview_marker() + textwrap.dedent("""\
+        return textwrap.dedent("""\
             Perform a security review focused on finding exploitable vulnerabilities,
             data exposure risks, and security misconfigurations. This is NOT a code quality
             review — focus exclusively on security impact.
@@ -445,14 +445,31 @@ class SkillGenerator:
 
         """)
 
+    def preview_on(self, milestone: str) -> bool:
+        """True when this skill is generated with ``--preview <milestone>``.
+
+        Gate prose that lives in this file with this, never with a bare membership
+        test: the tests check every ``preview_on("…")`` names a live milestone, so
+        a gate left behind at graduation fails CI instead of silently dropping
+        the text from the new default.
+        """
+        return milestone in self.previews
+
     def _preview_marker(self) -> str:
-        """Say in the file itself that it holds preview output, and how to undo it."""
+        """Say in the file itself that it holds preview output, and how to undo it.
+
+        It goes at the end, so it doesn't become the command's menu description
+        (Claude Code falls back to the first line) or lead the reviewer's prompt.
+        The installer looks for it to report whether a preview was applied. A gate
+        comparing default and preview output should count it as a known
+        difference between the two arms.
+        """
         if not self.previews:
             return ""
         flags = " ".join(f"--preview {m}" for m in sorted(self.previews))
-        return (f"<!-- vld8 preview output: generated with `{flags}`. Parts of this skill come "
-                f"from milestones that haven't passed their gate. Reinstall without --preview "
-                f"for the default output. -->\n\n")
+        return (f"\n<!-- vld8 preview output: generated with `{flags}`. Parts of this skill come "
+                f"from milestones that haven't passed their gate. Reinstall with --force and "
+                f"without --preview for the default output. -->\n")
 
     def _invocation_section(self, service_map: ServiceMapLoader | None) -> str:
         lines = [textwrap.dedent("""\
@@ -1201,6 +1218,13 @@ def get_all_platform_keys(guidance: dict) -> list[str]:
     return keys
 
 
+def _milestone_arg(value: str) -> str:
+    """argparse type for --preview: a milestone such as 2.1, nothing else."""
+    if not re.fullmatch(r"\d+\.\d+", value):
+        raise argparse.ArgumentTypeError(f"{value!r} is not a milestone such as 2.1")
+    return value
+
+
 def apply_previews(node, enabled: "set[str] | frozenset[str]"):
     """Drop guidance that belongs to a preview milestone the install didn't turn on.
 
@@ -1210,12 +1234,26 @@ def apply_previews(node, enabled: "set[str] | frozenset[str]"):
     keeps it only without that flag, so a preview can swap an entry for its
     successor. Both keys are stripped from what's kept. When a milestone graduates,
     delete its ``replaced_in`` entries and its ``preview`` keys.
+
+    A gate value must be a quoted milestone string. Unquoted ``2.10`` is the float
+    2.1, and a list or ``true`` would silently drop the entry from every output, so
+    anything else raises. Plain-string list items (``patterns``, ``still_unproven``)
+    can't be gated one by one: gate the dict that holds the list. Anything that
+    reads this guidance at review time must apply the same filter.
     """
+    def gate(value: dict, key: str):
+        milestone = value.get(key)
+        if milestone is not None and not (isinstance(milestone, str)
+                                          and re.fullmatch(r"\d+\.\d+", milestone)):
+            raise ValueError(f"guidance gate `{key}: {milestone!r}` must be a quoted "
+                             f"milestone such as \"2.1\"")
+        return milestone
+
     def keep(value) -> bool:
         if not isinstance(value, dict):
             return True
-        on, off = value.get("preview"), value.get("replaced_in")
-        return (on is None or str(on) in enabled) and (off is None or str(off) not in enabled)
+        on, off = gate(value, "preview"), gate(value, "replaced_in")
+        return (on is None or on in enabled) and (off is None or off not in enabled)
 
     if isinstance(node, dict):
         return {k: apply_previews(v, enabled) for k, v in node.items()
@@ -1252,6 +1290,7 @@ def main():
     parser.add_argument("--force", "-f", action="store_true",
                         help="Overwrite existing vld8-security.md without prompting")
     parser.add_argument("--preview", action="append", default=[], metavar="MILESTONE",
+                        type=_milestone_arg,
                         help="Include output still behind a milestone's preview flag, e.g. 2.1. "
                              "Repeatable. Without it, only the default output is generated.")
 
@@ -1268,7 +1307,11 @@ def main():
     previews = frozenset(args.preview)
     if previews:
         print(f"Preview output on: {', '.join(sorted(previews))}")
-    guidance = apply_previews(guidance, previews)
+    try:
+        guidance = apply_previews(guidance, previews)
+    except ValueError as exc:
+        print(f"Error in {guidance_path}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     # Resolve service map: explicit --service-map, else auto-discover at repo root,
     # unless --no-service-map opts out. Silent degradation (running without a map

@@ -91,14 +91,34 @@ def main() -> int:
 
         # #81: --preview reaches both generators, and a plain reinstall undoes it.
         result = installer.install(target, force=True, previews=["2.1"], log=lambda *_: None)
+        review = [paths.PEER_COMMAND, paths.SECURITY_COMMAND]
         check("install --preview 2.1 marks both review skills",
-              result.previews == ["2.1"]
-              and all((cmd_dir / f).read_text().startswith("<!-- vld8 preview output")
-                      for f in (paths.PEER_COMMAND, paths.SECURITY_COMMAND)))
-        installer.install(target, force=True, log=lambda *_: None)
-        check("reinstalling without --preview goes back to the default output",
-              all("vld8 preview output" not in (cmd_dir / f).read_text()
-                  for f in (paths.PEER_COMMAND, paths.SECURITY_COMMAND)))
+              result.previews == ["2.1"] and result.preview_missing == []
+              and all(paths.PREVIEW_MARKER in (cmd_dir / f).read_text() for f in review))
+        result = installer.install(target, log=lambda *_: None)
+        check("a reinstall without --force reports the skills still hold the preview",
+              result.preview_kept == review and result.preview_dropped == [])
+        result = installer.install(target, force=True, log=lambda *_: None)
+        check("reinstalling with --force and without --preview goes back to the default, and says so",
+              result.preview_dropped == review
+              and all(paths.PREVIEW_MARKER not in (cmd_dir / f).read_text() for f in review))
+        # Existing skills and no --force: the preview can't apply, and the CLI must not claim it did.
+        result = installer.install(target, previews=["2.1"], log=lambda *_: None)
+        check("install --preview without --force over existing skills reports them as missing it",
+              result.preview_missing == review
+              and all(paths.PREVIEW_MARKER not in (cmd_dir / f).read_text() for f in review))
+        proc = run_cli("install", str(target), "--preview", "2.1")
+        check("vld8 install --preview without --force over existing skills fails and says why",
+              proc.returncode != 0 and "NOT applied" in proc.stderr
+              and "include preview output" not in proc.stdout)
+        (cmd_dir / paths.SECURITY_COMMAND).unlink()
+        proc = run_cli("install", str(target), "--preview", "2.1")
+        check("a preview applied to only one review skill is reported as not applied to the other",
+              proc.returncode != 0 and "/vld8-review" in proc.stderr
+              and "/vld8-security" not in proc.stderr)
+        proc = run_cli("install", str(target), "--force", "--preview", "2.1")
+        check("vld8 install --force --preview 2.1 succeeds and says so",
+              proc.returncode == 0 and "include preview output: 2.1" in proc.stdout)
         try:
             installer.install(target, force=True, previews=["9.9"], log=lambda *_: None)
             rejected = False

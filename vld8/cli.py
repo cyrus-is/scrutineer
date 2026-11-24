@@ -96,7 +96,8 @@ def _add_install_parser(sub: argparse._SubParsersAction) -> None:
             "Include review output that is still behind a milestone's preview flag "
             "(available: " + ", ".join(
                 f"{m}, {desc}" for m, desc in sorted(paths.PREVIEW_MILESTONES.items())
-            ) + "). Repeatable. Reinstalling without it goes back to the default output."
+            ) + "). Repeatable. Add --force if the review skills already exist. "
+            "Reinstalling with --force and without --preview goes back to the default output."
         ),
     )
     p.set_defaults(func=_cmd_install)
@@ -122,15 +123,22 @@ def _cmd_install(args: argparse.Namespace) -> int:
             print(f"    /{name[:-3]}")  # strip .md → slash command name
     else:
         print("Nothing was written (all targets existed; re-run with --force).")
+    status = 0
     if result.previews:
         listed = ", ".join(f"{m} ({paths.PREVIEW_MILESTONES[m]})" for m in result.previews)
-        regenerated = {paths.PEER_COMMAND, paths.SECURITY_COMMAND} & set(result.installed)
-        if regenerated:
+        if not result.preview_missing:
             print(f"✓ Review skills include preview output: {listed}")
             print("  Reinstall with --force and without --preview to go back to the default.")
         else:
-            print(f"Preview {listed} not applied: the review skills were not regenerated "
-                  "(re-run with --force).")
+            print(f"✗ Preview {listed} NOT applied to {_commands(result.preview_missing)}: "
+                  "not regenerated (re-run with --force).", file=sys.stderr)
+            status = 1
+    if result.preview_kept:
+        print(f"Note: {_commands(result.preview_kept)} still hold preview output from an earlier "
+              "install. Re-run with --force to go back to the default.")
+    if result.preview_dropped:
+        print(f"Note: {_commands(result.preview_dropped)} held preview output and are now back to "
+              "the default. Pass --preview again to keep it.")
     if result.moved_suppressions:
         print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
     if result.retired:
@@ -144,7 +152,11 @@ def _cmd_install(args: argparse.Namespace) -> int:
             "      awareness, run /vld8-map in Claude Code, then re-run\n"
             "      `vld8 install --force` (or pass --crawl)."
         )
-    return 0
+    return status
+
+
+def _commands(files: list[str]) -> str:
+    return ", ".join(f"/{name[:-3]}" for name in files)
 
 
 def build_parser() -> argparse.ArgumentParser:

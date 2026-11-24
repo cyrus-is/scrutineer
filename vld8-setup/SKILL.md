@@ -86,6 +86,8 @@ Summarize what landed in `<target>/.claude/commands/`:
 
 - `/vld8-map`, `/vld8-mcp`, `/vld8-setup` (copied)
 - `/vld8-review`, `/vld8-security` (generated; note whether they are map-aware)
+- Any preview line the installer printed, word for word: preview applied, preview NOT applied, or
+  skills that held an earlier preview and are now back to the default.
 
 Then tell the user they can run `/vld8-review` and `/vld8-security` for reviews, and
 `/vld8-mcp <server>` to audit an MCP server.
