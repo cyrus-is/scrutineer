@@ -4,8 +4,12 @@ name: Publish to PyPI
 # One repo, two PyPI projects, chosen by the release tag:
 # - `vX.Y.Z`             → vld8, built from the repo root
 # - `scrutineer-vX.Y.Z`  → scrutineer, the forwarding package in legacy/scrutineer
-# Each PyPI project's trusted publisher names this repo and this workflow file.
-# `workflow_dispatch` re-publishes an existing tag by hand.
+# Each PyPI project's trusted publisher names this repo, this workflow file and
+# the `pypi` environment. The environment waits for Cyrus's approval and lets
+# only `v*` and `scrutineer-v*` tags deploy.
+# `workflow_dispatch` re-publishes an existing tag by hand. Run it from the tag,
+# `gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z`, because the
+# environment refuses branch refs.
 # Either way, the tag's commit must already be on main.
 # Create the scrutineer release with `--latest=false`, so the repo's latest
 # release (and the README badge) stays on vld8.
@@ -21,6 +25,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: pypi   # required reviewer; PyPI accepts tokens from this environment only
     permissions:
       contents: read    # checkout
       id-token: write   # required for OIDC trusted publishing
