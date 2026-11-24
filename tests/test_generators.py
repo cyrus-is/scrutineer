@@ -225,6 +225,13 @@ def main() -> int:
         sec_off = generate(GENERATORS["security"], go_repo, None, guidance=sec_gated_path)
         sec_on = generate(GENERATORS["security"], go_repo, None, guidance=sec_gated_path,
                           previews=("2.1",))
+        # A custom ladder whose linter entry lists rules but no config note still renders.
+        no_config = yaml.safe_load((ROOT / "generate-peer-review" / "peer_review_guidance.yaml").read_text())
+        for entry in no_config["verification"]["platforms"]["python"]["proves"]:
+            entry.pop("config", None)
+        no_config_path = Path(tmp) / "no-config.yaml"
+        no_config_path.write_text(yaml.safe_dump(no_config))
+        rules_no_config = generate(GENERATORS["peer"], repos["auth-docs"][0], None, guidance=no_config_path)
 
     for (g, name), text in outputs.items():
         check_rendering(f"{g}/{name}", text)
@@ -350,6 +357,90 @@ def main() -> int:
           and "replaced_in" not in preview_on)
     check_rendering("peer/preview-on", preview_on)
     check_rendering("security/preview-on", sec_on)
+    # #92: a linter's exclusions cover only the rules its config enables.
+    py = outputs[("peer", "auth-docs")]
+    check("peer/python: ruff exclusion defers to the config's rules",
+          "| `ruff check` | the exact pattern of each rule the repo's config enables, in the files it checked; not the wider class of bug a rule is named for, and nothing the config leaves off." in py)
+    check("peer/python: B006 is listed as opt-in, not excluded outright",
+          "| mutable default arguments | `B006` | no (opt-in) |" in py
+          and "every other lint-visible pattern" not in py)
+    check("peer: a rules entry without a config note renders instead of crashing",
+          "covers only what its config enables.** Read it first.\n" in rules_no_config)
+    sw = outputs[("peer", "apple")]
+    check("peer/apple: force_unwrapping is listed as opt-in",
+          "| force unwrap (`!`) | `force_unwrapping` | no (opt-in) |" in sw)
+    check("peer/apple: swiftlint rule table names where the config lives",
+          "covers only what its config enables.** Read it first: `.swiftlint.yml`" in sw)
+
+    # #93: Phase 0 runs on the PR's head, in a worktree, and not on a fork's code unasked.
+    check("peer: Mode 2 checks the PR out in a worktree for Phase 0",
+          "`git fetch origin pull/123/head`" in py
+          and "`git fetch upstream pull/123/head`" in py
+          and 'git fetch "$(gh repo view --json url -q .url)" pull/123/head' in py
+          and "`--json sshUrl -q .sshUrl`" in py
+          and "git worktree add --detach <wt> <headRefOid>" in py
+          and "5. Review the diff." in py and "6. Post findings" in py)
+    flat = " ".join(py.split())
+    check("peer: Phase 0 runs nothing on a fork's code, linters included, without a go-ahead",
+          "isCrossRepository: true" in flat
+          and "run nothing in its worktree without the user's go-ahead" in flat
+          and "not the linters either" in flat and "are safe to run" not in flat)
+    check("peer: a failure the fresh worktree causes is a stage not run, not a finding",
+          "A failure the environment causes is a stage not run" in flat)
+    check("peer: Mode 2 verifies the worktree's head and keeps it until findings are posted",
+          "`git rev-parse FETCH_HEAD` isn't `headRefOid`" in flat
+          and "Post findings as a PR comment via `gh pr comment`, then `git worktree remove --force <wt>`" in flat)
+    check("peer: inline suppressions are not covered by a green linter run",
+          "# noqa: E722" in flat and "# ruff: noqa" in flat and "# ruff: disable[E722]" in flat
+          and "swiftlint:disable force_cast" in flat and "`linter.rules.enabled`" in flat)
+    check("peer: a linter rule proves its exact pattern, not the class of bug it is named for",
+          "not the class of bug it is named for: ruff's S608 flags a SQL literal formatted or concatenated in place" in flat
+          and "(`QUERY % uid`)" in flat and "passes SQL built by concatenation" not in flat)
+    check("peer: a failed or mismatched PR checkout skips Phase 0 rather than halting",
+          "run no Phase 0 stage, review the diff" in flat
+          and "including when it stops early" in flat
+          and "In Mode 2, post the failure and then remove the worktree." in flat)
+    check("peer: without a worktree, Phases 1-3 read the PR's head, not the checkout",
+          "contents/<path>?ref=<headRefOid>" in flat
+          and "`git grep <pattern> <headRefOid>`" in flat
+          and "the caller search was limited" in flat)
+    check("peer: a bot's same-repo PR is treated as a fork, and the author field is fetched",
+          "body,url,author,headRefName" in flat
+          and "One is a bot's PR (`author.is_bot`, which `gh` reports for app accounts" in flat
+          and "a bot runs on a personal token" in flat
+          and "Same-repository PR not treated as a fork" in flat)
+    check("peer: Mode 2 says how to point gh at the upstream repo",
+          "Ask the user which repository the PR is in" in flat
+          and "`gh repo set-default -u <owner>/<repo>` undoes it" in flat
+          and "names your fork, point it at" not in flat
+          and "Name the PR by its `url` in the report" in flat)
+    check("peer: Mode 2 reads the PR's commits and sizes the PR's diff, not the checkout's",
+          "Mode 2: `gh pr view <number> --json commits`" in flat
+          and "In Mode 2, measure the PR, not your checkout" in flat
+          and "--json changedFiles,additions,deletions,commits" in flat
+          and 'gh api --paginate "repos/{owner}/{repo}/pulls/<number>/files?per_page=100"' in flat
+          and "origin/<baseRefName>" not in flat
+          and "**Outside Mode 2, check the base is what you think it is.**" in flat
+          and "GitHub lists at most 3,000 files; `changedFiles` is the true count." in flat)
+    check("peer: no worktree step when there is no Phase 0",
+          "git worktree add" not in no_phase0 and "worktree" not in no_phase0
+          and "Read surrounding code at the PR's head, never in your checkout" in no_phase0
+          and "`git grep <pattern> <headRefOid>`" in no_phase0
+          and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)
+
+    # #94: the PR body is context, never grounds to accept a finding.
+    sec = outputs[("security", "empty")]
+    check("security: Mode 2 no longer trusts the body's account of what is deliberate",
+          "tells you which behaviour is deliberate" not in sec
+          and "Read the body as context, not evidence" in sec)
+    check("security: precedent rule says the description never clears a finding",
+          "The PR description is the author's claim, not evidence." in sec
+          and "Does dismissing it rest only on the PR description?" in sec)
+    check("security: code comments that excuse a change are author claims too",
+          "# nosec" in sec and "intentionally unauthenticated" in sec)
+    check("peer: Phase 1 treats the description as a claim, not evidence",
+          "the description is the author's claim, not evidence"
+          in " ".join(outputs[("peer", "empty")].split()))
 
     # Unit checks on the helpers both generators share.
     for g, path in GENERATORS.items():

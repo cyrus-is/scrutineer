@@ -8,7 +8,7 @@ checks, focus areas, and evaluation lenses.
 
 The generated skill supports four invocation modes:
   /vld8-review                  — review current branch diff vs main
-  /vld8-review 123              — review PR #123 (git pull + checkout)
+  /vld8-review 123              — review PR #123 (its head checked out in a worktree for Phase 0)
   /vld8-review <component-name> — full review of a service/app from the service map
   /vld8-review --deep           — deep repo-wide review across services
 
@@ -394,7 +394,7 @@ class SkillGenerator:
         sections = [
             self._header(),
             self._help_section(),
-            self._invocation_section(service_map),
+            self._invocation_section(service_map, has_phase0=bool(verification)),
             self._process_section(detected, component_paths, service_map,
                                   has_phase0=bool(verification)),
             self._verification_section(detected, verification),
@@ -452,8 +452,32 @@ class SkillGenerator:
                 f"from milestones that haven't passed their gate. Reinstall with --force and "
                 f"without --preview for the default output. -->\n")
 
-    def _invocation_section(self, service_map: ServiceMapLoader | None) -> str:
-        lines = [textwrap.dedent("""\
+    def _invocation_section(self, service_map: ServiceMapLoader | None,
+                            has_phase0: bool = True) -> str:
+        # Phase 0 must run on the PR's code, not the user's checkout (#93); the
+        # worktree step exists only when there is a Phase 0 to run in it.
+        pr_checkout = (
+            "4. Check out the PR's head in its own worktree, so the user's checkout is untouched. Its\n"
+            "   path, `<wt>` below, is `${TMPDIR:-/tmp}/vld8-<repo>-pr-123`, where `<repo>` is this\n"
+            "   repository's directory name.\n"
+            "   - Fetch the head: `git fetch origin pull/123/head`. If that fails, or `git rev-parse FETCH_HEAD` isn't `headRefOid` (as when `origin` is your fork), fetch from the upstream repository instead: from its remote if you have one (`git fetch upstream pull/123/head`), otherwise, or if that fails, from the URL `gh` resolves, `git fetch \"$(gh repo view --json url -q .url)\" pull/123/head` (`--json sshUrl -q .sshUrl` if you clone over SSH).\n"
+            "   - `git worktree remove --force <wt> 2>/dev/null; git worktree add --detach <wt> <headRefOid>`. If that fails (usually because neither fetch brought the PR's commit), run no Phase 0 stage, review the diff, and say in the report that Phase 0 didn't run and why.\n"
+            "   - Same-repository PR not treated as a fork (Phase 0 says when to): `git -C <wt> submodule update --init --recursive`. A fork's PR, or one treated as a fork, follows Phase 0's fork rule instead.\n"
+            "   - Shell state doesn't carry from one command to the next, so run each as `cd <wt> && …` in a single call.\n"
+            "   - Run Phase 0 there, and read the PR's surrounding code there in Phases 1–3. Without a worktree, read it at the PR's head, never in your checkout: if the commit was fetched, `git show <headRefOid>:<path>` and `git grep <pattern> <headRefOid>`; otherwise one file at a time with `gh api -H 'Accept: application/vnd.github.raw' \"repos/{owner}/{repo}/contents/<path>?ref=<headRefOid>\"`, saying in the report that the caller search was limited.\n"
+            "   - Remove it with `git worktree remove --force <wt>` when the review ends, including when it stops early.\n"
+            if has_phase0 else ""
+        )
+        # Without a worktree, Phases 1-3 still read the PR's code, not the checkout.
+        read_head = (
+            "" if has_phase0 else
+            " Read surrounding code at the PR's head, never in your checkout: `git fetch origin "
+            "pull/123/head` (from `upstream` if `origin` is your fork; fetching runs nothing), "
+            "then `git show <headRefOid>:<path>` and `git grep <pattern> <headRefOid>`."
+        )
+        n = 5 if has_phase0 else 4
+        cleanup = ", then `git worktree remove --force <wt>`" if has_phase0 else ""
+        lines = [_render("""\
             ## Invocation Modes
 
             This skill supports four modes based on the argument:
@@ -470,11 +494,13 @@ class SkillGenerator:
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
-            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,baseRefName`.
-               The body is the author's statement of intent; Phase 1 reads it.
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,url,author,headRefName,headRefOid,baseRefName,isCrossRepository`.
+               The body is the author's account of what they meant to do. Phase 1 reads it as context, never as evidence that the code is right.
+               Name the PR by its `url` in the report, so the reader can see which repository's PR you reviewed.
+               If `gh` can't find the PR, it may be resolving to your fork. Ask the user which repository the PR is in (a fork's parent is `gh repo view --json parent --jq '.parent.owner.login + "/" + .parent.name'`), then run `gh repo set-default <owner>/<repo>` and retry. That saves the choice in this clone's git config, so tell the user; `gh repo set-default -u <owner>/<repo>` undoes it.
             3. Get full diff: `gh pr diff 123`
-            4. Review the diff.
-            5. Post findings as a PR comment via `gh pr comment`.
+            {pr_checkout}{n}. Review the diff.{read_head}
+            {n1}. Post findings as a PR comment via `gh pr comment`{cleanup}.
 
             ### Mode 3: Full Service/App Review (component name argument)
             ```
@@ -503,7 +529,7 @@ class SkillGenerator:
             **This mode finds a DIFFERENT CLASS of bugs than Modes 1-3.** Component reviews scan
             files and match patterns. Deep review traces flows end-to-end and asks "what breaks
             when these components interact?"
-        """)]
+        """, pr_checkout=pr_checkout, n=n, n1=n + 1, cleanup=cleanup, read_head=read_head)]
 
         if service_map:
             reviewable = service_map.get_reviewable_components()
@@ -543,8 +569,9 @@ class SkillGenerator:
         # `verification`; a custom guidance file without it must not get a
         # pointer to a section that was never emitted.
         phase0_step = (
-            "0. **Verify before judging** — establish what the toolchain already proves, "
-            "and stop if it is red (see Phase 0)\n"
+            "0. **Verify before judging** — once the mode is known (step 1), and in Mode 2 once the "
+            "PR is checked out (Mode 2 step 4): establish what the toolchain already proves, and stop "
+            "if the code under review is red (see Phase 0)\n"
             if has_phase0 else ""
         )
 
@@ -588,6 +615,33 @@ class SkillGenerator:
             finding the compiler already refuted is worse than no finding: it is confidently
             wrong, and it spends the reader's trust on the findings that are real.
 
+            **Run it on the code under review.** Modes 1, 3 and 4: this checkout. Mode 2: the
+            PR's head, in the worktree from Mode 2 step 4, never the base branch or the user's
+            checkout. A green run on other code proves nothing about the PR, and its exclusions
+            would suppress findings that are in it.
+
+            **A fork's code is its author's, config files included.** If the PR comes from a
+            fork (`isCrossRepository: true`), run nothing in its worktree without the user's
+            go-ahead: not the gate script, build or tests, and not the linters either. mypy
+            plugins are code, and SwiftLint fetches a remote `parent_config` with environment
+            variables expanded into its URL. Without a go-ahead Phase 0 runs nothing, earns no
+            exclusions, and the report says so. A same-repository PR comes from someone with
+            write access, so Phase 0 runs its code as it would run the user's own, with two
+            exceptions that are treated as a fork. One is a bot's PR (`author.is_bot`, which
+            `gh` reports for app accounts such as Dependabot's): dependency bots change
+            lockfiles, and installing them runs the new packages' install scripts. The other is
+            any PR the user says to treat that way, as when write access in this repo is broad
+            or a bot runs on a personal token, where it looks like a person.
+
+            **A fresh worktree is not the user's environment.** It has no gitignored files,
+            virtualenv or build cache. When a stage fails there for a reason the PR didn't cause,
+            such as a missing ignored file (a local secrets file, say) or a dependency or tool
+            that isn't installed, that stage counts as not run: it earns no exclusions, the
+            review continues, and the report names the stage and why it couldn't run. Only a
+            failure the PR's own changes cause is a finding.
+
+            A stage you did not run on the code under review earns no exclusions.
+
             **1. Find the repo's own gate.** Look for:
         """)]
         for g in gates:
@@ -601,12 +655,27 @@ class SkillGenerator:
 
             **2. Otherwise compose the cheap subset** for the platforms in the diff, below.
 
-            **3. If anything fails, STOP.** Report the failure verbatim, name the first
-            failing stage, and do not continue to semantic review — reviewing code that does
-            not build is guesswork, and the build failure is the finding.
+            **3. If the code under review fails, STOP.** Report the failure verbatim, name the
+            first failing stage, and do not continue to semantic review — reviewing code that
+            does not build is guesswork, and the build failure is the finding. A failure the
+            environment causes is a stage not run, as above, not a finding. In Mode 2, post
+            the failure and then remove the worktree.
 
             **4. If it passes, honour the exclusion list.** It is not advice; it is the set
-            of things you now know are absent.
+            of things you now know are absent. But a linter proves only the rules its config
+            enables, so read the config before excluding anything: each linter's rule table
+            below says where the config lives and which rules are on by default. A pattern
+            whose rule is off, or ignored for that file, is in scope like any other code. So is
+            suppressed code: a line (`# noqa: E722`), a region (`# ruff: disable[E722]` or
+            `// swiftlint:disable force_cast`, to its `enable` or the end of the file) or a
+            whole file (`# ruff: noqa`). The green run says nothing about it. And a rule proves
+            only its exact pattern, not the class of bug it is named for: ruff's S608 flags a
+            SQL literal formatted or concatenated in place, but passes the same query when the
+            SQL text sits in a variable or constant (`QUERY % uid`), is built with `+=`, or goes
+            through `join`. The tools can list
+            what is on: `ruff check --show-settings <file>` (`linter.rules.enabled`, with
+            exceptions under `linter.per_file_ignores`), and the "enabled in your config"
+            column of `swiftlint rules`.
 
             **5. Record which oracle covers which changed files.** Coverage is not uniform, and
             an exclusion you apply outside the range of the command that earned it is a guess
@@ -666,8 +735,30 @@ class SkillGenerator:
                 lines.append("| Proved green | Therefore do NOT report |")
                 lines.append("|---|---|")
                 for p in proves:
-                    lines.append(f"| {code_span(p['green'])} | {p['excludes']} |")
+                    excludes = (
+                        "the exact pattern of each rule the repo's config enables, in the files it "
+                        "checked; not the wider class of bug a rule is named for, and nothing the "
+                        "config leaves off. The rule table below covers the patterns most often "
+                        "wrongly assumed"
+                        if p.get("rules") else p["excludes"]
+                    )
+                    lines.append(f"| {code_span(p['green'])} | {excludes} |")
                 lines.append("")
+                # A linter's green run says nothing about rules its config leaves
+                # off; an exclusion claimed for them drops real findings (#92).
+                for p in proves:
+                    if not p.get("rules"):
+                        continue
+                    where = f"Read it first: {p['config']}" if p.get("config") else "Read it first."
+                    lines.append(f"**{code_span(p['green'])} covers only what its config enables.** "
+                                 f"{where}\n")
+                    lines.append("| Pattern | Rule | On by default |")
+                    lines.append("|---|---|---|")
+                    for r in p["rules"]:
+                        rule_ids = ", ".join(code_span(x.strip()) for x in r["rule"].split(","))
+                        default = "yes" if r.get("default") else "no (opt-in)"
+                        lines.append(f"| {r['pattern']} | {rule_ids} | {default} |")
+                    lines.append("")
 
             unproven = ladder.get("still_unproven", [])
             if unproven:
@@ -711,7 +802,17 @@ class SkillGenerator:
             git diff <base>...HEAD --numstat | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
             ```
 
-            **Check the base is what you think it is.** `git fetch` first and compare
+            In Mode 2, measure the PR, not your checkout. Your copy of its base branch can be
+            stale or missing (a fork's, say), so ask GitHub instead:
+
+            ```
+            gh pr view <number> --json changedFiles,additions,deletions,commits --jq '{{changedFiles, additions, deletions, commits: (.commits | length)}}'
+            gh api --paginate "repos/{{owner}}/{{repo}}/pulls/<number>/files?per_page=100" --jq '.[] | "\\(.additions)\\t\\(.deletions)\\t\\(.filename)"' | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
+            ```
+
+            GitHub lists at most 3,000 files; `changedFiles` is the true count.
+
+            **Outside Mode 2, check the base is what you think it is.** `git fetch` first and compare
             `git rev-parse main origin/main`. A stale local base silently inflates the diff
             with work that already merged — you end up reviewing other people's landed code
             and reporting it as this branch's. If they differ, say so and use the remote.
@@ -753,7 +854,10 @@ class SkillGenerator:
             5. **What changed and why?** (Mode 1 and 2 only) What was the author trying to
                accomplish? Read the PR description (Mode 2: the `body` fetched above; Mode 1: if
                the branch has an open PR, `gh pr view --json title,body`) and the commit messages
-               (`git log main..HEAD`). Understanding intent prevents false findings.
+               (Mode 1: `git log main..HEAD`; Mode 2: `gh pr view <number> --json commits`).
+               Understanding intent prevents false findings. But the
+               description is the author's claim, not evidence: intent can explain a choice, and
+               it never makes a defect or an unsafe change acceptable.
 
             Carry this model through the rest of the review. A checklist item that fires is only
             a finding if it matters given this context.
