@@ -67,6 +67,7 @@ Every item below traces to one of these:
 **Done (2026-11-24):**
 - `ENGINEERING.md` names `/vld8-security` instead of the Scrutineer audit (#120), following the shared standard's rename.
 - 2.0.1 released (#108, #109, #113).
+- Publishing is gated on the `pypi` environment: the publish job uses it (#106), and both PyPI trusted publishers name it.
 
 **Open:**
 
@@ -74,13 +75,12 @@ Every item below traces to one of these:
 |---|---|---|
 | **A GitHub account for the agents:** a machine user with write access and its own token. Today every agent PR is authored by `cyrus-is`, and GitHub won't let Cyrus approve his own PRs. Once it exists, `staging` also requires a PR and one code-owner approval (Cyrus can bypass the review rule for PRs he writes himself) | Cyrus | Cyrus, 2026-11-23 |
 | **Branch model (in use since #44):** feature PRs squash into `staging`. `main` receives only releases: a "Release X.Y" PR from `staging` for review and CI, then a fast-forward push of `main` to `staging`, which GitHub records as merging the PR. A squash or rebase promotion would put commits on `main` that `staging` doesn't have, and the two would drift | Cyrus | Cyrus, 2026-11-23 |
-| **Gate publishing on the `pypi` environment** (#106): the environment exists, with Cyrus as required reviewer and only release tags allowed to deploy. #106 makes the publish job use it. Once #106 is on `main`, Cyrus names the environment on both PyPI trusted publishers. Doing that earlier would break publishing | Cyrus, vld8 | Repo assessment, 2026-11-23 |
 | Archive `scrutineer` on PyPI | Cyrus | Rename |
 | Update the GitHub repo description, which still describes Scrutineer | Cyrus | Rename |
 | Point vld8.ai at cyrus.is/building/vld8 | Cyrus | Plan D8 |
 | **Map schema 1.2:** <br>• `process`, `ipc` and `file` edges, with what crosses each boundary; <br>• `evidence[]` on edges and components, with drift computed by `vld8 map validate`; <br>• the crawl writes observations as findings, never in the map's notes. <br>Needs no fact store. Ships in 2.0.2 | vld8 | Design §7 |
-| **Python floor 3.14; CI tests 3.14 and 3.15** (D15). `requires-python` and the test matrix change in one PR; Cyrus switches the required checks to `test (3.14)` and `test (3.15)` before it merges. Ships in 2.0.2 | vld8, Cyrus | D15 |
-| **The replay,** on a consumer loop's recorded history (private): the old prompt, today's thorough prompt, and that prompt plus vld8's code findings and candidates. The success bar is fixed before any run, and the result decides how much of 2.2's candidate machinery gets built | vld8 | Design §15 |
+| **Python floor 3.14; CI tests 3.14 and 3.15** (D15). `requires-python` and the test matrix change in one PR; Cyrus switches the required checks to `test (3.14)` and `test (3.15)` before it merges. Ships in 2.0.2, with the release-notes callout the version rules require | vld8, Cyrus | D15 |
+| **The replay,** on consumer loops' recorded history (private):<br>• the candidate lister is frozen before the test changes are chosen, and no change that informed the design is eligible;<br>• three arms: the old prompt, today's thorough prompt, and that prompt plus vld8's code findings and candidates;<br>• win, partial, tie and loss outcomes are fixed before any run.<br>The result decides how much of 2.2's candidate machinery gets built | vld8 | Design §15 |
 | Add a ruff config and a lint step to CI | vld8 | STD |
 | Add a diff-coverage gate at 80% to CI | vld8 | STD |
 | Pin CI dependencies with a constraints file. There's no lockfile today | vld8 | STD |
@@ -115,7 +115,7 @@ Every item below traces to one of these:
 | **Evidence rule** (#50): ISSUE only with evidence of need. That means it breaks a written rule, a confirmed map rule or a stated requirement; departs from a contract two named sites follow; has a traced, reachable trigger; or breaks a security invariant. Otherwise it's at most a CONCERN, which must name a concrete scenario. One vocabulary for the code review; the security lens keeps CRITICAL–LOW, mapped by the contract | SP-2, Cyrus |
 | **Ambient-nondeterminism check** (#54) in the lens prompt | SP-5 |
 | **The skills switch** to prepare → lens prompt → report behind `--preview 2.1`, with the snapshot harness (#84) | Release train, gate support |
-| **Storage** (#59): `findings.json` and `triage.json` (plan §4), kept in the state directory or the repo as the plan says | Cyrus, 2026-11-23 |
+| **Storage** (#59): run outputs (`prepare.json`, `prompt.md`, findings JSON) go under `<git-common-dir>/vld8/runs/<tree id>/`, never in the worktree, which supersedes plan §4's `.vld8/findings.json`. `triage.json`, which holds people's decisions, stays checked in | Cyrus, 2026-11-23; design §6 |
 
 **Gate:** the held-out test, pre-registered before any run.
 - **Calibrate first** (#82). Re-score the study's existing findings under the evidence-of-need definition. That sets the expected baseline and the precision threshold. The old +20-point bar was calibrated on the dropped Spec-questions mechanism and no longer applies.
@@ -144,10 +144,10 @@ vld8's code starts finding issues itself, and listing the sites the model must r
 | **Extractors, consumer languages first:** Swift through tree-sitter (an extra, under the dependency policy, D16), Python through stdlib `ast`, then TypeScript | Design §6, loop analyses |
 | **Imports and callers,** and the **callers check** (#53, moved here from 2.1 because it needs import facts). The cross-module seeds scored 0 of 2 | SP-9, CTX |
 | **Comparing facts before and after a change,** which gives each change its risk list | Design §6 |
-| **Code findings:** departures from a pattern the code already follows, the change's effect on the system, OSV matches on lockfiles | Design §5 |
+| **Code findings (exact proofs):** OSV matches on lockfiles, and rule-pack violations. **Candidates the model rules on:** departures from a pattern the code already follows, and the change's effects on the system (a route added with no auth, a new process launch, an edge the map doesn't have) | Design §5 |
 | **Repo rule packs:** call boundaries, placement, banned API and required helper, census and pins matching their sources, references that resolve, vendored data matching its pins (design §8.1) | Loop analyses |
 | **The checks every loop rebuilt:** <br>• a private-denylist leak check that never prints a match; <br>• pinned Actions and dependencies; diff hygiene; <br>• discarded errors; sleeps and the wall clock in tests; vacuous assertion shapes; <br>• orchestrated script and workflow linters (design §8.2) | Loop analyses |
-| **Orchestrated analyzers:** run the linters and SARIF-producing tools the repo enables, with vld8's rule selection, and read their results | Design §4 |
+| **Orchestrated analyzers:** run linters and SARIF-producing tools with the base ref's config and vld8's rule selection, and read their results. On a fork's or a bot's PR, nothing runs and only `--evidence` is read | Design §4, §10 |
 | **`vld8 review prepare --tier fast`:** code findings only, in seconds, with an exit status | Design §9 |
 | **Hybrid checks the replay justified,** each with a proof; `shell=True` and secrets-in-failure-output first | Design §8 |
 | **The check schema** (`kind`, `applies_to`, `tier`, `query`, `judge`, `proof`, `blind_spots`), added as each check's query lands; #118's inventory labels every step | Design §8, #118 |
@@ -159,7 +159,8 @@ vld8's code starts finding issues itself, and listing the sites the model must r
 - CI and the snapshot harness;
 - a regression run of the 2.1 eval with the 2.2 preview: precision and recall within 2.1's noise band;
 - the security eval, for the security-lens items;
-- fast-tier precision per check on a corpus, and wall time on the largest consumer repo.
+- fast-tier precision per check on a corpus, and wall time on the largest consumer repo;
+- **each item also has its own gate before it's added to the preview:** fixture tests for each extractor and framework model, fixture rules for each rule shape, and the replay's outcome for hybrid checks.
 
 ## 2.3: validation and re-review
 
@@ -182,7 +183,7 @@ The service map becomes the system's known terrain, and the reviews read it. Des
 | Item | Source |
 |---|---|
 | **The crawl accounts for code's candidate edges:** each one is recorded, or explained, and the crawl adds what code can't see | Design §7 |
-| **Business rules as implemented in the map:** <br>• authorization (who can do what to which resource), including capability grants such as sudoers rules, tool allow-lists and verb tables; <br>• tenancy; trust translation points; identifier properties; data classifications. <br>Each comes with evidence and a confidence. Accepted risks are *not* in the map; they're triage decisions | Cyrus, CTX, design §7 |
+| **Business rules as implemented in the map:** <br>• authorization (who can do what to which resource), including capability grants such as sudoers rules, tool allow-lists and command allow-lists; <br>• tenancy; trust translation points; identifier properties; data classifications. <br>Each comes with evidence and a confidence. Accepted risks are *not* in the map; they're triage decisions | Cyrus, CTX, design §7 |
 | **`vld8 map rules`:** reports the rules as implemented and asks yes / no, bug / not sure for each. Yes is confirmed terrain in the checked-in map. A bug is a finding, stored like findings and never in the map. Not sure stays a hint | Cyrus |
 | **Rule-change detection in reviews:** compare the rules as implemented before and after the diff. A change to a confirmed rule is an ISSUE; a change to an unconfirmed rule is a question | Cyrus |
 | **`crawled_commit`,** plus a CI refresh that opens a PR. Drift detection itself lands with schema 1.2 (2.0.x) | CTX |
@@ -244,18 +245,18 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 ## Release train
 
-**Cadence:** from 2026-11-23, one reviewable change a week (Cyrus: "just one thing a week"). **Since 2026-11-24 the code-first conversion is the main line:** changes go back to back as Cyrus's subscription headroom allows. Each is still one reviewable PR with a fresh-context review.
+**Cadence:** from 2026-11-23, one reviewable change a week (Cyrus: "just one thing a week"). **Since 2026-11-24 the code-first conversion is the main line:** changes go back to back as capacity allows. Each is still one reviewable PR with a fresh-context review.
 - **Grouping:** small items from the same milestone can be grouped into one change when they're reviewed together.
 - **Splitting:** large items (the validator, the ladders, new blocks) get split into weekly slices when their turn comes.
 - So the backlog's item count sets a pace, not a schedule. Fixes found by validation join the 2.0.x milestone as they're filed, so the count moves.
 
 **Who runs it:** Cyrus starts each change, in an interactive session. No unattended loop runs it (`ENGINEERING.md`: `autonomy: interactive-only`).
 
-**The backlog:** every vld8-owned roadmap item is an issue under its release milestone, along with the eval and gate-support work. The 12 issues that were open before the roadmap are each mapped to a release.
+**The backlog:** every vld8-owned roadmap item is an issue under its release milestone, along with the eval and gate-support work. When the 2026-11-24 revision is approved, the milestones are swept to match it: issues move to their new releases, shipped items close, and the new items get issues.
 
 **Flags:**
 - **Changes to review output** ship behind their milestone's preview flag (`vld8 install --preview 2.1`) until the milestone's gate passes. Then the flag becomes the default. Review output means what's found, how it's rated, or how it's rendered.
-- **Changes that don't alter output** ship as is: CI, docs, JSON written alongside unchanged Markdown, and CLI helpers no skill calls yet. Switching a skill to a helper, as `vld8 checks --changed` does, is an output change.
+- **Changes that don't alter output** ship as is: CI, docs, JSON written alongside unchanged Markdown, and CLI helpers no skill calls yet. Switching a skill to `prepare` and `report` is an output change.
 - **A removal waits for its replacement to become the default.** For example, the security exclusion list goes only after the 2.3 validator is the default.
 
 **Release when `staging` has a package change and CI is green on it,** with Cyrus's go-ahead. CI-only and docs-only changes don't release.
@@ -269,6 +270,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 **Version numbers:**
 - **Patch:** default output doesn't change (fixes, flagged items, infrastructure).
 - **Minor:** a milestone's flag becomes the default (2.1.0, 2.2.0 and so on), one minor version per milestone.
+- **Raising the Python floor** can ship in a patch, because `requires-python` keeps older interpreters on the last compatible release. The release notes must say so first, naming that last release.
 
 **The train stops** when the milestones before "Later" are closed. The cadence is then revisited.
 
@@ -276,10 +278,13 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 | # | Decision | Needed before |
 |---|---|---|
-| D1 | One engine with two lenses, or one merged review | 2.2 |
+| D1 | One engine with two lenses, or one merged review | Decided when the code-first design is approved (design §17) |
 | D2 | Positioning: our own engine, or an expertise pack for other engines | 2.8 (MCP split), and before publishing the contract |
 | D4 | Held-out test before a milestone's default changes (items ship earlier behind a flag) | 2.1's default flip |
 | D5 | MCP review stays in the package until it becomes its own tool | 2.8 |
 | D6 | File the ~90% research note in the private research registry | 2.6 (it sets the Tier 1 list) |
 | D8 | Where the vld8.ai site lives | Later; the redirect is a 2.0.x item |
-| D9–D16 | The code-first engine's decisions: facts cache, check backends, trusted config, a self-contained map, the test lens, runner-neutral prompts, the Python floor (decided), and the dependency policy | Design §17 |
+| D9, D10 | Facts cache; code-check backends (design §17) | 2.2 |
+| D11, D14 | Trusted config; runner-neutral prompts (design §17) | 2.1 |
+| D12, D15, D16 | A self-contained map; the Python floor (decided: 3.14); the dependency policy (design §17) | 2.0.2 |
+| D13 | The test lens (design §17) | After 2.3 |

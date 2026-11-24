@@ -4,6 +4,13 @@
 - v1 went through an independent design review, with the verdict "adopt with changes". This version takes those changes and Cyrus's answers to the review's questions.
 - It builds on the restructure plan (`docs/plans/2026-11-23-restructure.md`) and replaces the shape of roadmap releases 2.1–2.4. §15 has the new order.
 
+**What this supersedes in the restructure plan:**
+- `vld8 context` (plan §4, §7) becomes part of `vld8 review prepare`.
+- Rendering the report from JSON lands with 2.1's flag, not the 2.2 flag (plan §9).
+- `.vld8/findings.json` in the worktree (plan §4) moves to the state directory (§6).
+- The weekly release cadence (plan §7) follows the roadmap's release train.
+- The stage table (plan §4) becomes the three verbs (§1, §9).
+
 **Priority (Cyrus, 2026-11-24):** this conversion is the main line of work. The goal is an engine that is built, tested, validated and resilient. A fast mode that reaches quality sooner should speed up the autonomous build loops that use vld8.
 
 ## 1. In one page
@@ -42,7 +49,7 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 **Reviews stop early, and a clean review says nothing.** Evidence from a private build loop that runs review and fix cycles unattended:
 - Across its parseable history, 38 of 82 reviews that asked for fixes reported exactly one blocking finding, and re-reviews averaged 1.67. The 42 reviews still on disk show the same share: 12 of 28.
 - Narrow fixes caused 16 of the 25 findings that came back after a fix.
-- One change spent six reviews on one defect class. Credential values reached test-failure output through five different routes, and each route was found by a new kind of test injection, not by searching more sites.
+- One change spent six reviews on one defect class. A sensitive-data class reached test-failure output through five different routes, and each route was found by a new kind of test injection, not by searching more sites.
 - No review said what it had checked. vld8's own pre-flight table says "Do not list passing checks."
 
 **Generic fast checks barely speed loops up; better first reviews and repo rules do.** Two more private loops were measured, both building Swift apps:
@@ -61,7 +68,7 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 - CI re-running trees that already passed costs more than any of this. That's each loop's own fix, not vld8's.
 
 **The map can't hold some systems' most important edges.**
-- A crawl of a private orchestrator produced 80 valid edges. 24 of its 26 `infrastructure` edges would fit a process or IPC type. The crawler itself noted 20 of them as launches, socket calls or signals, including a launch as another user.
+- A crawl of a private repo produced 80 valid edges. 24 of its 26 `infrastructure` edges were really process or IPC edges.
 - Security observations landed in free-text notes.
 - Staleness and `manual_override` handling are prose instructions that no code enforces.
 
@@ -115,8 +122,8 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 
 | Source | Examples | Reported as |
 |---|---|---|
-| **Code findings** (proven by code) | **Departure from a followed pattern:** two or more sites follow a pattern and a new one doesn't, such as every route in a component carrying auth middleware except the new one (rubric basis b). **The change's effect on the system,** from comparing facts before and after it: a route added with no auth, a launch added as another user, a credential read in a test role, an edge the map doesn't have. **Known-bad dependencies** (OSV against lockfiles). **Results of linters and SARIF the repo's config enables** | Findings, `source: code` |
-| **Candidates** (code can say where, not whether it's wrong) | a launch whose argv may carry outside input (`shell=True` needs user input in the command to be a finding); a `raise` inside an `except` whose frame holds a sensitive name; a test double that may ignore its arguments; every path to a sink, so the guards can be compared | A list the model must rule on, item by item |
+| **Code findings** (exact proofs) | **Known-bad dependencies** (OSV against lockfiles). **Results of linters and SARIF tools,** run with the base ref's config (§10). **Rule-pack violations** (§8.1): the repo wrote the rule, so a match is the finding (rubric basis a) | Findings, `source: code` |
+| **Candidates** (code can say where, not whether it's wrong) | **Departure from a followed pattern:** two or more sites follow a pattern and a new one doesn't, such as every route carrying auth middleware except the new one. Health checks and login routes depart on purpose, so the model judges. **The change's effect on the system,** from comparing facts before and after: a route added with no auth, a new process launch, a sensitive value read in a test role, an edge the map doesn't have. Plus: a launch whose argv may carry outside input (`shell=True` needs user input in the command to be a finding); a `raise` inside an `except` whose frame holds a sensitive name; a test double that may ignore its arguments; every path to a sink, so the guards can be compared | A list the model must rule on, item by item |
 | **Model findings** (judgment) | absence, intent, severity by need, a guard that can't fail, a class's rule and fix site, the open-ended pass over the change's risk list | Findings, `source: model` |
 
 **How the two sets merge in `report`:**
@@ -124,7 +131,11 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 - The model can dispute a code finding only with a stated reason, and the dispute stays visible.
 - Code checks every model citation (that the file, line and quoted text exist) and rejects one that doesn't.
 - Code checks the rubric's form: an ISSUE with none of the four bases is downgraded to a CONCERN.
-- **Accounting:** every candidate must come back as part of a finding or dismissed with a reason. Output that leaves a candidate unaccounted is rejected, and the run says so. That turns "be exhaustive" from a request into a check.
+- **Accounting:** every candidate must come back as part of a finding or dismissed with a reason. Output that leaves a candidate unaccounted is rejected, and the run says so. That turns "rule on every candidate" from a request into a check.
+- **Candidate scope and cap, by mode:**
+  - Modes 1 and 2 (a diff): candidates in the changed hunks plus the callers of changed symbols.
+  - Modes 3 and 4 (a component, the whole repo): there's no base to diff against, so each check gets a cap, ranked by risk.
+  - In every mode, candidates beyond the packet's budget are listed as unruled in the coverage table, and the run is marked partial. They're never silently dropped.
 
 **Code groups candidates as a proposal.** Clustering by check and by shared sink or fix site is a suggestion the model may merge or split. One defect class can reach output through several routes, and many unrelated launches can share a sink.
 
@@ -134,6 +145,8 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 
 **They're a private cache, not a second map.**
 - **Where:** `<git-common-dir>/vld8/facts.db` (SQLite), so state never lands in the worktree, and worktrees of one repo share it. A `--state-dir` flag overrides the location.
+- **Every run output lives there too:** `prepare.json`, `prompt.md` and the findings JSON go under `<git-common-dir>/vld8/runs/<tree id>/<run id>/`. This supersedes plan §4's `.vld8/findings.json` in the worktree. `triage.json`, which holds a person's decisions, stays checked in.
+- **Concurrency:** parallel runs from several worktrees share the cache. SQLite runs in WAL mode with a busy timeout, each run writes in its own transaction, and runs never share an output directory.
 - **What it holds:** only `source: code` rows, rebuildable from the code. Human and model content stays in `servicemap.json`.
 - **Columns are split by kind.** *Observed* columns (file, line, the call, its literal arguments) are certain. *Derived* columns are labelled with their method and confidence, never 1.0 by default: sensitivity from a name, `public`, `auth_mechanism`, whether a double `ignores_args`, the file's role.
 - **Component is not a fact.** It's an interpretation, so it lives in the map, and facts don't carry it.
@@ -168,8 +181,12 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
   - `file`: a shared control file or directory used as a channel.
 - **Network calls made through a CLI** (`gh`, `git`, `docker`) are `http` edges with a `via` field.
 - **Container mounts** are recorded on `process` edges, or on infrastructure edges.
-- **Capability grants** (sudoers rules, tool allow-lists, surface verb tables) are terrain: authorization recorded as business rules (2.4), not edges.
-- **Every edge and component can carry `evidence[]`:** each entry is a file, a line range and a content hash of those lines. `vld8 map validate` recomputes the hashes and reports drift when cited code changes or disappears. A crawl of a private repo already cited file and line for 31 of 80 edges, and every citation resolved.
+- **Capability grants** (sudoers rules, tool allow-lists, command allow-lists) are terrain: authorization recorded as business rules (2.4), not edges.
+- **Every edge and component can carry `evidence[]`:** each entry is a repo, a file, a line range and a content hash of those lines.
+  - `vld8 map validate --check-evidence` recomputes the hashes.
+  - Before calling a citation drift, it looks for the hashed lines elsewhere in the file. If they moved, it reports them as moved rather than drifted.
+  - Citations in other repos of a multi-repo map are reported as unverifiable here.
+  - A crawl of a private repo already cited file and line for 31 of 80 edges, and every citation resolved.
 - **Findings never go in the map.** The crawl skill writes observations to the findings JSON, and `vld8 map validate` warns when notes look like findings.
 
 **Using facts in the crawl (2.4):** code hands the crawl a candidate edge list. The crawl must account for each candidate (record it, or say why not) and can add edges code can't see.
@@ -198,9 +215,9 @@ The guidance YAML gains these fields, each added when a check's query lands, not
 ### 8.1 Repo rule packs
 
 **A repo's written rules, run as code in seconds.** Today they live in slow test suites built on hand-written lexers (§2). They're declarative rules in the guidance schema, loaded only from the trusted base (§10). Their findings cite the rule, which is rubric basis (a): the repo wrote it down. First rule shapes:
-- **Call boundaries:** only these functions or modules may call X ("only the store batches writes").
+- **Call boundaries:** only these functions or modules may call X ("only the repository layer opens database transactions").
 - **Placement:** a literal or symbol appears only in file F; code matching P stays inside `#if DEBUG` or a named guard.
-- **Banned API, required helper:** "use `normalizeName`, never ad-hoc normalization"; "never `standardizedFileURL` in path guards".
+- **Banned API, required helper:** "use `canonicalPath()` for path checks, never string comparison"; "never read the wall clock in domain code; take a `Clock`".
 - **Census and pins match their sources:** each needle a census or text-pin test names exists in the file it claims to pin, and matches whole identifiers, not a longer one.
 - **References resolve:** docs, ledgers and comments that cite a test, decision, path or symbol point at something that exists.
 - **Vendored data matches its pins:** a vendored schema's limits and versions match the code's constants.
@@ -209,7 +226,7 @@ Rules resolve names through the fact store, so a type alias or re-export can't h
 
 ### 8.2 Checks every loop rebuilt
 
-Three private loops each wrote their own version of these, so they're vld8's first generic fast-tier checks:
+Three private loops each wrote their own version of these, so they're vld8's first generic fast-tier checks. They ship as a rule pack a repo enables, so a match is a code finding under rubric basis (a). In a repo that hasn't enabled a check, its matches are candidates instead:
 - **A private-denylist leak check.** It matches a diff, and optionally text recovered from committed images, against a denylist kept outside the repo, and reports counts and locations, never the matched text.
 - **Pinned third-party Actions and other dependencies.**
 - **Diff hygiene:** loop artifacts, compiled files, home-directory paths and unfilled placeholders committed by accident.
@@ -227,20 +244,20 @@ Three private loops each wrote their own version of these, so they're vld8's fir
   - routing and check selection (#61);
   - rules files and intent sources;
   - extracting facts and comparing them before and after;
-  - running the linters and analyzers the repo's config enables, or reading their results;
+  - running linters and analyzers with the base ref's config, or reading their results from `--evidence`. On a fork's or a bot's PR, only `--evidence` results are read;
   - code findings, candidates, and the context packet with a size budget.
-- **Output:** `prepare.json`, holding the code findings, candidates, risk list, packet and coverage, plus `prompt.md`, the lens prompt with only the applicable checks.
+- **Output** (in the run directory, §6): `prepare.json`, holding the code findings, candidates, risk list, packet and coverage, plus `prompt.md`, the lens prompt with only the applicable checks.
 - **Tiers:** `--tier fast` stops after code findings and exits with a status. `--tier deep`, the default, also writes the prompt.
 
 **The lens prompt** (model). It must rule on every candidate, review the code findings, and run the open-ended pass. Its output is findings JSON. In Claude Code, `/vld8-review` and `/vld8-security` run `prepare`, do this step in the session, then run `report`. A loop runs the step with its own runner.
-- **Runner neutrality is about wording too.** One consumer's Codex reviews were refused when probes were written in attack language. The security lens's prompt uses plain test wording (probe names like `replaced_gitdir`, never "attacker"), and it never prints a secret value.
+- **Runner neutrality is about wording too.** One consumer's reviews on another model were refused when probes were written in attack language. The security lens's prompt uses plain test wording for probes and findings, and it never prints a secret value.
 
 **`vld8 review report`** (code):
 - checks the accounting, the citations and the rubric form, and merges the code and model findings;
 - groups classes, using code's proposal as revised by the model;
 - applies `--prior` (§11);
 - sets the verdict from ISSUEs only;
-- renders md, json and SARIF, and exits with a status: 0 for clean, 1 for blocking findings, 2 for incomplete or invalid output.
+- renders md, json and SARIF, and exits with a status: 0 for clean, 1 for blocking findings, 2 for incomplete or invalid output. When both apply, 2 wins, and the report still lists every code finding.
 - A loop formats its own lines from the JSON. vld8 doesn't hard-code one consumer's protocol.
 
 **Two contracts:** `prepare.json` and findings JSON (#58, extended):
@@ -256,8 +273,9 @@ Three private loops each wrote their own version of these, so they're vld8's fir
 ## 10. Outside evidence and trust
 
 - **`--evidence <file>`** reads results the repo already has: a gate verdict, linter output, SARIF. Each must carry a tree id equal to the reviewed tree, or it earns no Phase 0 exclusions.
-- **Config, check packs, queries and extra commands come only from the trusted base ref or from outside the repo,** never from the tree under review. A PR from a fork can't choose what vld8 runs. This extends #93's rule: vld8 runs nothing from a fork's or a bot's PR without the user's go-ahead.
-- **Config format:** TOML, read with the standard library's `tomllib`, which the 3.12 floor (D15) makes available.
+- **Config, check packs, queries and extra commands come only from the trusted base ref or from outside the repo,** never from the tree under review. A PR from a fork can't choose what vld8 runs. This extends the rule #108 added to the review skills: vld8 runs nothing from a fork's or a bot's PR without the user's go-ahead.
+- **That includes tool config.** Linter and analyzer configs can be code, or can fetch remote files (`eslint.config.js`, mypy plugins, SwiftLint's `parent_config`), so orchestrated tools run with the base ref's config. On a fork's or a bot's PR they don't run at all, and only `--evidence` results are read.
+- **Config format:** TOML, read with the standard library's `tomllib`, which the 3.14 floor (D15) makes available.
 
 ## 11. Re-review
 
@@ -298,7 +316,7 @@ Three private loops each wrote their own version of these, so they're vld8's fir
 - Absence.
 - Naming a class and choosing its fix site.
 - Edges code can't resolve.
-- Rulings on candidates.
+- Rulings on candidates, including departures from a followed pattern and the change's effects on the system.
 - The open-ended pass.
 - Validation.
 
@@ -309,12 +327,16 @@ Releases ship behind preview flags, and today's generated skills stay the defaul
 **Phase 0: decide and prove.**
 1. This design and its decision records, approved.
 2. **Map schema 1.2** (§7) and the rule that findings never go in the map. It needs no fact store; ships as 2.0.2.
-3. **The replay,** on a consumer loop's recorded history (kept private):
-   - **Ground truth:** every site a later review flagged that already existed in the tree the first review saw, in three changes.
+3. **The replay,** on consumer loops' recorded history (kept private):
+   - **Freeze the tools first.** The candidate lister and its check spec are written and frozen before the test changes are chosen. No change cited in §2's evidence, nor any change that shaped a check in this design, is eligible: a set that informed a fix is no longer held out.
+   - **Ground truth:** in three eligible changes, every site a later review flagged that already existed in the tree the first review saw. It's labelled before any arm runs.
    - **Arms:** the old prompt; today's thorough prompt; that prompt plus vld8's code findings and candidates. Two reps each.
    - **Built for it:** minimal `prepare` and `report` (with accounting), plus one stdlib `ast` candidate lister.
-   - **Success, fixed beforehand:** the third arm finds at least 80% of ground-truth sites, beats the second arm by more than the spread between reps, and loses nothing the second arm found.
-   - **On a tie:** keep code for #118's deterministic steps and code findings, and drop hybrid candidate lists from Phase 2.
+   - **Outcomes, fixed beforehand.** Spread is the difference between reps.
+     - **Win:** the third arm finds at least 80% of ground-truth sites, beats the second by more than the spread, and loses nothing the second found. Build Phase 2's hybrid checks.
+     - **Partial:** the third arm beats the second by more than the spread, but misses 80% or loses a site the second found. Build hybrid checks only for the check classes that won. Keep the open-ended pass prominent, and re-test on fresh changes after the next improvement.
+     - **Tie:** keep code for #118's deterministic steps and the exact-proof code findings, and drop hybrid candidate lists from Phase 2.
+     - **Loss:** the third arm trails the second by more than the spread. Candidates distract, so none go into prompts. Keep exact-proof code findings, and find out why before trying again.
 
 **Phase 1: the verbs (2.1).**
 - The eval set and held-out harness (#83, #57).
@@ -366,7 +388,7 @@ Releases ship behind preview flags, and today's generated skills stay the defaul
 | Running a fork's config | §10: trusted base or outside the repo only |
 | State in the worktree breaking a loop | §6: the git common dir |
 | Maintaining framework models | Tier 1 only; fixture tests; unmodelled files reported |
-| The tree-sitter dependency | An extra until proven; tree-sitter 0.27 publishes cp314 and cp315 wheels, and the Swift and TypeScript grammars ship abi3 wheels (checked 2026-11-24); Python needs only stdlib `ast` |
+| The tree-sitter dependency | An extra until proven; tree-sitter 0.27.0 publishes cp314 and cp315 wheels, and the Swift and TypeScript grammars ship abi3 wheels (checked 2026-11-24). Under the one-week bar (D16), tree-sitter 0.27.0 is eligible from 2026-11-30, and PyYAML 6.0.4 (the first release with cp315 wheels) from 2026-11-27; Python needs only stdlib `ast` |
 | Original-system bias, repeated with one new consumer | Evaluate on several consumers and on the portfolio's other shapes |
 | Rewrite risk | Phases behind flags; the generated skills remain the default until each gate passes |
 
@@ -383,4 +405,4 @@ Releases ship behind preview flags, and today's generated skills stay the defaul
 | D14 | Model stages: vld8's prompt run by any runner; vld8 renders JSON plus an exit code, and the consumer formats its own protocol | Recommended |
 | D15 | **Python floor: 3.14** (released 2025-10-07). CI tests 3.14 and 3.15 (released 2026-10-09, the newest stable). Config can be TOML through `tomllib`.<br>**Rule (Cyrus, 2026-11-24):** "We should never be partial to old tech for the sake of continuity. We can always adopt newer tech provided it meets our supply chain requirements." Any release over a week old is acceptable.<br>**Dependencies:** PyYAML and tree-sitter publish wheels for both versions, and the grammars ship abi3 wheels.<br>**CI:** the required checks change with this, which is Cyrus's setting | **Decided** |
 | D16 | **Dependency policy.** Adopt a newer dependency or runtime whenever it meets the supply-chain bar: at least a week old; pinned with hashes in the constraints file; published with provenance (Trusted Publishing or attestations) where the ecosystem supports it; actively maintained; licence-compatible; covered by Dependabot. tree-sitter and its grammars are checked against this bar before they move from an extra into the default install | Recommended |
-| D1 | (existing) One engine, two lenses | Yes: this is that engine |
+| D1 | (existing) One engine, two lenses | Decided when this design is approved: this is that engine |
