@@ -42,8 +42,8 @@ The order: precision first, because it's the measured problem and its fix is che
 ## 2.0.x: finish the rename, repo hygiene
 
 **Done (2026-11-23):**
-- `main` is the default branch, so the landing page matches what `pip install vld8` installs. `staging` was the default for a few hours, then the change was reverted. Both branches block force-pushes and deletion and require linear history. On `staging` these rules apply to admins too, and `main` requires the `test (3.10)` and `test (3.13)` checks.
-- Repo hardening: release tags can't be moved or deleted, and releases are immutable. Actions are limited to GitHub's own plus the PyPI publish action, each pinned to a commit. CodeQL, secret scanning and push protection are on.
+- `main` is the default branch, so the landing page matches what `pip install vld8` installs. `staging` was the default for a few hours, then the change was reverted. Both branches block force-pushes and deletion, require linear history, and require the `test (3.10)` and `test (3.13)` checks. The rules apply to admins too. No reviews are required. A direct push is accepted only for a commit that has already passed CI.
+- Repo hardening: release tags can't be moved or deleted, and releases are immutable. Dependabot opens one grouped PR a week against `staging` for the pinned actions (#106). Actions are limited to GitHub's own plus the PyPI publish action, each pinned to a commit. CodeQL, secret scanning and push protection are on.
 - Publishing only from `main`: `publish.yml` refuses a release tag whose commit isn't on `main` (#43). It reached `main` by a fast-forward promotion (#44), the first under the branch model below.
 - The plan landed on `staging` (#45), replacing draft #40.
 - The announcement post is live at cyrus.is/building/vld8.
@@ -52,9 +52,9 @@ The order: precision first, because it's the measured problem and its fix is che
 
 | Item | Owner | Source |
 |---|---|---|
-| **A GitHub account for the agents:** a machine user with write access and its own token. Today every agent PR is authored by `cyrus-is`, and GitHub won't let Cyrus approve his own PRs. Once it exists, `staging` requires a PR, one code-owner approval (Cyrus can bypass the review rule for PRs he writes himself), and the `test (3.10)` and `test (3.13)` checks | Cyrus | Cyrus, 2026-11-23 |
+| **A GitHub account for the agents:** a machine user with write access and its own token. Today every agent PR is authored by `cyrus-is`, and GitHub won't let Cyrus approve his own PRs. Once it exists, `staging` also requires a PR and one code-owner approval (Cyrus can bypass the review rule for PRs he writes himself) | Cyrus | Cyrus, 2026-11-23 |
 | **Branch model (in use since #44):** feature PRs squash into `staging`. `main` receives only releases: a "Release X.Y" PR from `staging` for review and CI, then a fast-forward push of `main` to `staging`, which GitHub records as merging the PR. A squash or rebase promotion would put commits on `main` that `staging` doesn't have, and the two would drift | Cyrus | Cyrus, 2026-11-23 |
-| **Gate publishing on a `pypi` environment** (#106): the workflow side is in the PR. Cyrus creates the environment with himself as required reviewer and only release tags allowed to deploy. Once #106 is on `main`, he names the environment on the PyPI trusted publishers | Cyrus, vld8 | Repo assessment, 2026-11-23 |
+| **Gate publishing on the `pypi` environment** (#106): the environment exists, with Cyrus as required reviewer and only release tags allowed to deploy. #106 makes the publish job use it. Once #106 is on `main`, Cyrus names the environment on both PyPI trusted publishers. Doing that earlier would break publishing | Cyrus, vld8 | Repo assessment, 2026-11-23 |
 | Archive `scrutineer` on PyPI | Cyrus | Rename |
 | Update the GitHub repo description, which still describes Scrutineer | Cyrus | Rename |
 | Point vld8.ai at cyrus.is/building/vld8 | Cyrus | Plan D8 |
@@ -223,8 +223,8 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 **Release day is Monday,** and only if the package itself changed since the last release and CI is green on `staging`. CI-only and docs-only weeks don't release.
 1. Commit the version bump on `staging`. `publish.yml` refuses a tag that doesn't match the built version.
 2. Open a "Release X.Y.Z" PR from `staging` to `main`, with notes drafted from the merged PRs.
-3. Cyrus approves it. Until the agent account exists, PRs are authored as `cyrus-is` and can't be approved in GitHub. Until then, approval is Cyrus's explicit go-ahead, and the next step uses his admin exemption.
-4. Fast-forward `main` to the approved commit, `git push origin <approved-sha>:main`, not to whatever `staging` has moved to since.
+3. Cyrus approves it. Until the agent account exists, PRs are authored as `cyrus-is` and can't be approved in GitHub. Until then, approval is Cyrus's explicit go-ahead.
+4. Fast-forward `main` to the approved commit, `git push origin <approved-sha>:main`, not to whatever `staging` has moved to since. `main` accepts the push only because CI already passed on that commit on `staging`.
 5. Run `gh release create vX.Y.Z --target main`. Releases are immutable: once one is published, its tag and attached files can't change, so check the target commit first.
 6. Cyrus approves the `pypi` deployment, and the package publishes.
 
