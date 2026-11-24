@@ -31,7 +31,7 @@ Every item below traces to one of these:
 | **2.0.x** | Finish the rename; repo hygiene | — | Repo changes only; no release needed |
 | **2.1** | Precision without a spec | Scan: rated findings | The held-out test passes its pre-registered rule |
 | **2.2** | Foundations: findings contract, one engine | Scan: structured findings | CI, snapshot tests, and no regression on the 2.1 eval |
-| **2.3** | Validation stage | Triage and validation | The held-out test shows precision holds or rises with no recall loss |
+| **2.3** | Validation stage | Triage and validation | A paired run on fresh seeds: precision rises, and recall stays within 2 of the unvalidated arm |
 | **2.4** | Terrain: service map v2, business rules as implemented, the context packet | Scan: system context | Rule-change and cross-module seeds are caught; no regression elsewhere |
 | **2.5–2.7** | Coverage for the 90% set | Scan: breadth | Detection snapshots, plus one live review per new block |
 | **2.8+** | MCP as its own tool; measure and prune | All | Per item |
@@ -92,14 +92,15 @@ The order: precision first, because it's the measured problem and its fix is che
 | **Optional intent sources:** `--spec <file>`, the PR body and linked issue, a design doc the diff adds. The review states which one it used and works without any. A spec counts as one more source of stated requirements, and objections to it still need evidence of need | SP-3 (input only; the walk is dropped) |
 
 **Gate:** the held-out test, pre-registered before any run.
-- **Calibrate first.** Re-score the study's existing findings under the evidence-of-need definition. That sets the expected baseline and the threshold. The old +20-point bar was calibrated on the dropped Spec-questions mechanism and no longer applies.
+- **Calibrate first.** Re-score the study's existing findings under the evidence-of-need definition. That sets the expected baseline and the precision threshold. The old +20-point bar was calibrated on the dropped Spec-questions mechanism and no longer applies.
 - **Metric:** precision over all findings (ISSUE and CONCERN), with ISSUE-only reported alongside. Recall is the number of seeded defects found.
 - **Sets:**
   - primary: real PRs with no spec, at least 15 fresh seeds across about 10 PRs, plus 2 clean PRs;
-  - secondary: spec-driven change sets, used only as a no-regression guard, where precision and recall must not drop below 2.0.0.
+  - secondary: spec-driven change sets, used only as a no-regression guard: precision and recall must not drop below 2.0.0 by more than the noise band, which is two reps differing by up to 3 defects.
 - **Runs:**
   - 2.0.0 (with no preview) and the 2.1 preview, on the same sets, under the same scoring, 2 reps each;
   - a result is inconclusive if two reps differ by more than 3 defects.
+- **Ship if:** precision is at least the calibrated threshold, and recall is at least 2.0.0's − 2 seeded defects on the same set.
 - **Judging:** the judge checks each finding's evidence against the code, not just whether the finding follows the rubric's form.
 - **Where the data lives:** private storage, because real PRs from private repos can't be committed to this public repo.
 - **If it fails:** the items stay behind their flag. Any re-test uses fresh seeds, because a set that informed a fix is no longer held out.
@@ -140,7 +141,7 @@ This is the stage that was never built.
 | **Retire the security skill's pasted-in exclusion list** and its contradictions (rate limits, CVEs, ReDoS). This happens only after the validator becomes the default, because removing the list earlier would leave default users with neither | CR-3 |
 | **SARIF export,** opt-in, for GitHub code scanning. Its states map onto still on fire, false positive and ignore | Cyrus, 2026-11-23 |
 
-**Gate:** a paired run on fresh seeds. The same saved findings JSON is scored with and without the validator. Precision rises, recall is at least the 2.2 result − 2, and every suppression is listed with its reason.
+**Gate:** a paired run on fresh seeds. The same saved findings JSON is scored with and without the validator. Precision rises, recall is at least the unvalidated arm's − 2 on the same seeds, and every suppression is listed with its reason.
 
 ## 2.4: terrain
 
@@ -181,7 +182,7 @@ Coverage means four things, not a generic checklist per language:
 **Gates:**
 - **Each new block:** detection snapshot tests, plus one live review on a real repo, recorded in Check Performance.
 - **Each ladder:** a seeded run showing the ladder's exclusions don't suppress real defects. Detection snapshots can't catch that.
-- **Flags:** each block or ladder ships behind a flag and becomes the default when its own gate passes.
+- **Flags:** blocks and ladders ship behind their milestone's preview flag (`--preview 2.5` and so on). Each one is enabled by default only after its own gate passes, and those flips land at the milestone boundary.
 
 ## 2.8 and on
 
@@ -206,7 +207,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 **One reviewable change a week** (Cyrus, 2026-11-23: "just one thing a week").
 - **Grouping:** small items from the same milestone can be grouped into one change when they're reviewed together.
 - **Splitting:** large items (the validator, the ladders, new blocks) get split into weekly slices when their turn comes.
-- So the 47 backlog items before "Later" set a pace, not a schedule.
+- So the 49 backlog items before "Later" set a pace, not a schedule.
 
 **Who runs it:** Cyrus starts each week's change, in an interactive session. No unattended loop runs it (`ENGINEERING.md`: `autonomy: interactive-only`).
 
@@ -214,10 +215,10 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 **Flags:**
 - **Changes to review output** ship behind their milestone's preview flag (`vld8 install --preview 2.1`) until the milestone's gate passes. Then the flag becomes the default. Review output means what's found, how it's rated, or how it's rendered.
-- **Changes that don't alter output** ship as is: CLI helpers, CI, docs, and JSON written alongside unchanged Markdown.
+- **Changes that don't alter output** ship as is: CI, docs, JSON written alongside unchanged Markdown, and CLI helpers no skill calls yet. Switching a skill to a helper, as `vld8 checks --changed` does, is an output change.
 - **A removal waits for its replacement to become the default.** For example, the security exclusion list goes only after the 2.3 validator is the default.
 
-**Release day is Monday,** and only if the package itself changed since the last release. CI-only and docs-only weeks don't release.
+**Release day is Monday,** and only if the package itself changed since the last release and CI is green on `staging`. CI-only and docs-only weeks don't release.
 1. Commit the version bump on `staging`. `publish.yml` refuses a tag that doesn't match the built version.
 2. Open a "Release X.Y.Z" PR from `staging` to `main`, with notes drafted from the merged PRs.
 3. Cyrus approves it. Until the agent account exists, PRs are authored as `cyrus-is` and can't be approved in GitHub. Until then, approval is Cyrus's explicit go-ahead, and the next step uses his admin exemption.
@@ -226,7 +227,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 **Version numbers:**
 - **Patch:** default output doesn't change (fixes, flagged items, infrastructure).
-- **Minor:** a milestone's or block's flag becomes the default (2.1.0, 2.2.0 and so on).
+- **Minor:** a milestone's flag becomes the default (2.1.0, 2.2.0 and so on), one minor version per milestone.
 
 **The train stops** when the milestones before "Later" are closed. The cadence is then revisited.
 

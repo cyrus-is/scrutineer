@@ -25,9 +25,9 @@ Five inputs, all from 2026-11-23. The study and the research note are private, a
 | Source | Finding that drives this plan |
 |---|---|
 | A private review-recall study (Qwen 27B and Opus as reviewers) and its proposal | Recall is good (20–23/26) but precision is poor (37–41%). ISSUE and CONCERN were never defined. About half to two thirds of the noise objected to behaviour the spec prescribed. The reviewer had no way to read the spec or the repo's rules. Cross-module contracts: 0/2. |
-| Unled whole-project design review (`cohesion-review/REPORT.md`, scratch) | Scrutineer is two products sharing a name. Its output is prose, so no triage stage can consume it. Validation is self-grading. The MCP auditor already has the target shape: structured findings, then a separate validator that can only suppress. |
-| Context audit (`context-audit/REPORT.md`, scratch) | The original effective reviews were one product repo's hand-written review commands. They had the repo's `CLAUDE.md` and gate inventory, repo-specific rules in the prompt, a standing "read the callers" step, and a sub-agent that validated each finding. Generic Scrutineer lost all four. The service map was only ever a routing layer: the generators read four fields from it. |
-| Portfolio coverage audit (`coverage-audit/`, scratch: harness and per-repo results) | The detection faults were structural: a working-tree index, root-anchored globs, no manifest parsing, a fixed depth-2 path key, no role classification, and two drifting YAMLs. Missing blocks: Cloudflare Workers (5 repos), Shell (15), AWS serverless (5), Next.js server (4), LLM/MCP apps (6), Unity (2). |
+| Unled whole-project design review (session notes, not published) | Scrutineer is two products sharing a name. Its output is prose, so no triage stage can consume it. Validation is self-grading. The MCP auditor already has the target shape: structured findings, then a separate validator that can only suppress. |
+| Context audit (session notes, not published) | The original effective reviews were one product repo's hand-written review commands. They had the repo's `CLAUDE.md` and gate inventory, repo-specific rules in the prompt, a standing "read the callers" step, and a sub-agent that validated each finding. Generic Scrutineer lost all four. The service map was only ever a routing layer: the generators read four fields from it. |
+| Coverage audit across the maintainer's repos (session notes, not published) | The detection faults were structural: a working-tree index, root-anchored globs, no manifest parsing, a fixed depth-2 path key, no role classification, and two drifting YAMLs. Missing blocks: Cloudflare Workers (5 repos), Shell (15), AWS serverless (5), Next.js server (4), LLM/MCP apps (6), Unity (2). |
 | A research note on the ~90% target (private; to be filed in the research registry) | Twelve languages reach 90% of agent-written PRs: TS, Python, JS+HTML, Rust, C#, Go, PHP, Java, C++, Shell, Kotlin. Adding C, Dart and Swift reaches ~93%. Claude Code PRs skew toward TS, Rust, Go, Shell and Swift. **The biggest gap is the verification ladders:** only Swift and Python have one. |
 
 ## 3. Target structure: three tools on one shared core
@@ -83,6 +83,7 @@ Adopted 2026-11-23 (Cyrus). This is where intent comes from, rather than a spec 
   - it compares the rules as implemented before and after the change, for example "this change alters who can delete projects: before, owners only; after, any member";
   - against a confirmed rule, that's an ISSUE. Against an unconfirmed one, it's a question.
 - **Known terrain also cuts noise.** No "guessable ID" findings when IDs are random and there's no oracle, unless the change adds one. No demands for JWT validation behind the gateway, unless a new path bypasses it.
+- **In a public repo, the confirmed rules are reconnaissance material:** an authorization matrix plus the trust translation points. So a public repo can keep confirmed rules in the encrypted store (*Storing findings and decisions*) instead of in the clear.
 - **It stands on its own as a feature.** The confirmed rules are an authorization matrix with file and line for every rule, which is what an access review or a SOC 2 audit asks for.
 
 ### Storing findings and decisions
@@ -140,12 +141,12 @@ Default: `findings.json` local, `triage.json` checked in, with SARIF export and 
 
 ## 6. Evaluation: how a change earns a release
 
-- **Code-review eval set**, mirroring `mcp-review/tests/corpus`. Seeded defects with expected findings, across Tier 1 stacks, kept out of anything used to tune prompts.
+- **Code-review eval set:** seeded defects with expected findings, across Tier 1 stacks, kept out of anything used to tune prompts. Sets built from real PRs in private repos live in private storage; synthetic sets can be committed, as `mcp-review/tests/corpus` is.
 - **For the engine changes (stages 1, 3, 4):**
   - adopt the study proposal's held-out design, Opus first with 2 reps. The **primary set is real PRs with no spec**, and the spec setting is secondary;
   - **the baseline is 2.0.0**, not 1.6.4. Otherwise the TypeScript detection fix, which has already shipped, is counted as part of the gain;
   - **score on evidence of need:** a finding is real if it shows a broken rule, a broken contract or a triggerable failure, even when it contradicts a spec;
-  - ship rule: Finding precision at least the baseline + 20 points, recall at least the baseline − 2.
+  - ship rule: precision at least the calibrated threshold, and recall at least the baseline's − 2 seeded defects on the same set. The roadmap's 2.1 gate has the details.
 - **For coverage changes:** the detection snapshots, plus one live review per new Tier 1 block on a real repo, recorded in Check Performance.
 - **Every PR:** CI runs the generator, CLI and MCP suites plus the wheel smoke test (in place since 2.0.0). Add diff-cover at 80% per `ENGINEERING.md`.
 
@@ -156,7 +157,7 @@ Phases ship through the weekly release train (`docs/ROADMAP.md`). Work that chan
 | Phase | Contents | Depends on |
 |---|---|---|
 | **P0** | **Shipped in 2.0.0** (PR #41, with the fixes from #39): rendering, TS detection, git index, install paths, tests, CI, and the rename | — |
-\1findings contract v1, emitted alongside today's Markdown, with local `findings.json` and checked-in `triage.json` (§4, *Storing findings and decisions*); `vld8 checks --changed` | P0 |
+| **P1: Foundations** | One shared analyzer module (no more copy-paste); one detection spec shared by both lenses; findings contract v1, emitted alongside today's Markdown, with local `findings.json` and checked-in `triage.json` (§4, *Storing findings and decisions*); `vld8 checks --changed` | P0 |
 | **P2: Precision and context** | First, with no engine dependency (roadmap 2.1): the evidence rubric, rules files, the verdict rule, the lens-table rule, the ambient-nondeterminism check, the callers check, and optional intent sources. Then `vld8 context` with a size budget | P0 for 2.1; P1 for `vld8 context` |
 | **P3: Validation** | Separate validator over the findings JSON (fresh context, refute, suppress-only, recorded reasons); retire the security skill's pasted-in hard-exclusion list and its contradictions (rate limits, CVEs, ReDoS) | P1 |
 | **P4: Coverage** | Two-layer detection, package roots, roles, uncovered report; Tier 1 ladders; new blocks: Workers, Shell, AWS serverless, Next.js server, LLM/MCP apps, Kotlin JVM (split from Android), Unity, HTML templates; then Tier 2 | P1 (spec), P2 (context feeds checks), P5 (checks cite terrain as evidence) |
@@ -285,7 +286,7 @@ These come after the phases above. They aren't scheduled yet.
 
 - **Context packet size.** The packet competes with the lens prompt for attention: the study showed a reviewer reading only the head of a 169K map. Mitigation: a hard size budget, with slices rather than whole files.
 - **Validator recall cost.** The field's validators raise precision and cut recall (Lu et al.: key-bug inclusion 31% → 20%), and every suppression is that cost. Mitigation: each suppression is recorded with its reason and audited on the eval, and the validator stays behind its flag until the 2.3 eval shows recall holds.
-- **Intent capture leaking private context.** Approved plans and session prompts can name private projects, and a PR description is public in a public repo. This is how private names reached early PRs here. Mitigation: the hook is opt-in, shows the text before writing it, redacts secrets, and is off by default for public repos.
+- **Intent capture leaking private context.** Approved plans and session prompts can name private projects, and a PR description is public in a public repo. Mitigation: the hook is opt-in, shows the text before writing it, redacts secrets, and is off by default for public repos.
 - **A crawled map turning the bug into the spec.** A rule read from code describes what the code does, not what was meant. Mitigation: a rule is authoritative only once a person confirms it in `vld8 map rules`. Unconfirmed rules are hints, and changes to them are questions, never ISSUEs.
 - **Coverage breadth crowding out depth.** The September data showed generic blocks yield little. Mitigation: Tier 1 entries earn deep checks only from measured findings; Tier 2 stays at detection plus ladder.
 - **Original-system bias.** The original reviews were tuned to one multi-service Go system that no longer exists. Mitigation: evaluate on the current portfolio's shapes: single Workers, Apple apps, monorepos.
