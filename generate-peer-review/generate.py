@@ -427,13 +427,18 @@ class SkillGenerator:
         # Phase 0 must run on the PR's code, not the user's checkout (#93); the
         # worktree step exists only when there is a Phase 0 to run in it.
         pr_checkout = (
-            "4. Check out the PR's head for Phase 0 in its own worktree, so the user's checkout\n"
-            "   is untouched: `git fetch origin pull/123/head`, then\n"
-            "   `git worktree add --detach \"${TMPDIR:-/tmp}/vld8-pr-123\" FETCH_HEAD`. Run Phase 0\n"
-            "   there, and afterwards `git worktree remove --force \"${TMPDIR:-/tmp}/vld8-pr-123\"`.\n"
+            "4. Check out the PR's head in its own worktree, so the user's checkout is untouched. Its\n"
+            "   path, `<wt>` below, is `${TMPDIR:-/tmp}/vld8-<repo>-pr-123`, where `<repo>` is this\n"
+            "   repository's directory name.\n"
+            "   - `git worktree remove --force <wt> 2>/dev/null; git fetch origin pull/123/head && git worktree add --detach <wt> FETCH_HEAD`\n"
+            "   - Check that `git -C <wt> rev-parse HEAD` equals `headRefOid`. If it doesn't, the PR has moved or `origin` is not the PR's repository: stop and say so.\n"
+            "   - Same-repository PR: `git -C <wt> submodule update --init --recursive`. A PR from a fork follows Phase 0's fork rule instead.\n"
+            "   - Shell state doesn't carry from one command to the next, so run each as `cd <wt> && …` in a single call.\n"
+            "   - Run Phase 0 there, and read the PR's surrounding code there in Phases 1–3.\n"
             if has_phase0 else ""
         )
         n = 5 if has_phase0 else 4
+        cleanup = ", then `git worktree remove --force <wt>`" if has_phase0 else ""
         lines = [_render("""\
             ## Invocation Modes
 
@@ -455,7 +460,7 @@ class SkillGenerator:
                The body is the author's account of what they meant to do. Phase 1 reads it as context, never as evidence that the code is right.
             3. Get full diff: `gh pr diff 123`
             {pr_checkout}{n}. Review the diff.
-            {n1}. Post findings as a PR comment via `gh pr comment`.
+            {n1}. Post findings as a PR comment via `gh pr comment`{cleanup}.
 
             ### Mode 3: Full Service/App Review (component name argument)
             ```
@@ -484,7 +489,7 @@ class SkillGenerator:
             **This mode finds a DIFFERENT CLASS of bugs than Modes 1-3.** Component reviews scan
             files and match patterns. Deep review traces flows end-to-end and asks "what breaks
             when these components interact?"
-        """, pr_checkout=pr_checkout, n=n, n1=n + 1)]
+        """, pr_checkout=pr_checkout, n=n, n1=n + 1, cleanup=cleanup)]
 
         if service_map:
             reviewable = service_map.get_reviewable_components()
@@ -524,8 +529,9 @@ class SkillGenerator:
         # `verification`; a custom guidance file without it must not get a
         # pointer to a section that was never emitted.
         phase0_step = (
-            "0. **Verify before judging** — establish what the toolchain already proves, "
-            "and stop if it is red (see Phase 0)\n"
+            "0. **Verify before judging** — once the mode is known (step 1), and in Mode 2 once the "
+            "PR is checked out (Mode 2 step 4): establish what the toolchain already proves, and stop "
+            "if the code under review is red (see Phase 0)\n"
             if has_phase0 else ""
         )
 
@@ -574,10 +580,21 @@ class SkillGenerator:
             checkout. A green run on other code proves nothing about the PR, and its exclusions
             would suppress findings that are in it.
 
-            If the PR comes from a fork (`isCrossRepository: true`), its gate script, build and
-            tests are code its author controls: do not run them without the user's go-ahead.
-            Static linters whose config cannot load code, such as `ruff check` and `swiftlint`,
-            are safe to run. A stage you did not run on the PR's code earns no exclusions.
+            **A fork's code is its author's, config files included.** If the PR comes from a
+            fork (`isCrossRepository: true`), run nothing in its worktree without the user's
+            go-ahead: not the gate script, build or tests, and not the linters either. mypy
+            plugins are code, and SwiftLint fetches a remote `parent_config` with environment
+            variables expanded into its URL. Without a go-ahead Phase 0 runs nothing, earns no
+            exclusions, and the report says so.
+
+            **A fresh worktree is not the user's environment.** It has no gitignored files,
+            virtualenv or build cache. When a stage fails there for a reason the PR didn't cause,
+            such as a missing ignored file (a local secrets file, say) or a dependency or tool
+            that isn't installed, that stage counts as not run: it earns no exclusions, the
+            review continues, and the report names the stage and why it couldn't run. Only a
+            failure the PR's own changes cause is a finding.
+
+            A stage you did not run on the code under review earns no exclusions.
 
             **1. Find the repo's own gate.** Look for:
         """)]
@@ -592,15 +609,20 @@ class SkillGenerator:
 
             **2. Otherwise compose the cheap subset** for the platforms in the diff, below.
 
-            **3. If anything fails, STOP.** Report the failure verbatim, name the first
-            failing stage, and do not continue to semantic review — reviewing code that does
-            not build is guesswork, and the build failure is the finding.
+            **3. If the code under review fails, STOP.** Report the failure verbatim, name the
+            first failing stage, and do not continue to semantic review — reviewing code that
+            does not build is guesswork, and the build failure is the finding. A failure the
+            environment causes is a stage not run, as above, not a finding.
 
             **4. If it passes, honour the exclusion list.** It is not advice; it is the set
             of things you now know are absent. But a linter proves only the rules its config
             enables, so read the config before excluding anything: each linter's rule table
             below says where the config lives and which rules are on by default. A pattern
-            whose rule is off, or ignored for that file, is in scope like any other code.
+            whose rule is off, or ignored for that file, is in scope like any other code, and so
+            is a line suppressed inline (`# noqa: E722`, `// swiftlint:disable:next force_cast`):
+            the green run says nothing about it. The tools can list what is really on:
+            `ruff check --show-settings <file>`, and the "enabled in your config" column of
+            `swiftlint rules`.
 
             **5. Record which oracle covers which changed files.** Coverage is not uniform, and
             an exclusion you apply outside the range of the command that earned it is a guess
@@ -671,8 +693,9 @@ class SkillGenerator:
                 for p in proves:
                     if not p.get("rules"):
                         continue
+                    where = f"Read it first: {p['config']}" if p.get("config") else "Read it first."
                     lines.append(f"**{code_span(p['green'])} covers only what its config enables.** "
-                                 f"Read it first: {p['config']}\n")
+                                 f"{where}\n")
                     lines.append("| Pattern | Rule | On by default |")
                     lines.append("|---|---|---|")
                     for r in p["rules"]:

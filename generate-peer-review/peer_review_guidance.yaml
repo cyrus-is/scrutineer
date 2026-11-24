@@ -1943,7 +1943,7 @@ verification:
         - green: "ruff check"
           # B006 is not in ruff's default set, and E722 drops out of any `select`
           # without E7. A green run proves only the rules the config enables (#92).
-          config: "`[tool.ruff.lint]` in pyproject.toml, or ruff.toml / .ruff.toml: `select` replaces the default set (E4, E7, E9, F); `extend-select` adds to it; `ignore` and `per-file-ignores` remove rules."
+          config: "`[tool.ruff.lint]` (or the older top-level `[tool.ruff]`) in pyproject.toml, or ruff.toml / .ruff.toml, plus any file it `extend`s: `select` replaces the default set (E4, E7, E9, F); `extend-select` adds to it; `ignore` and `per-file-ignores` remove rules."
           rules:
             - {pattern: "unused imports", rule: "F401", default: true}
             - {pattern: "unused local variables", rule: "F841", default: true}
@@ -1951,7 +1951,7 @@ verification:
             - {pattern: "bare `except:`", rule: "E722", default: true}
             - {pattern: "mutable default arguments", rule: "B006", default: false}
         - green: "mypy"
-          excludes: "type mismatches and most None-handling errors on annotated code."
+          excludes: "type mismatches on annotated code, and None-handling errors unless the config sets `strict_optional = false`. Modules under `ignore_errors` and lines with `# type: ignore` prove nothing."
       still_unproven:
         - "Whether an exception handler recovers or merely silences."
         - "Whether an async function blocks the event loop — `ruff` sees the call, not the runtime cost."

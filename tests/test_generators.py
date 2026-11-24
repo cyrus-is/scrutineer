@@ -196,6 +196,14 @@ def main() -> int:
         custom.write_text(yaml.safe_dump(guidance))
         no_phase0 = generate(GENERATORS["peer"], repos["go-only"][0], None, guidance=custom)
 
+        # A custom ladder whose linter entry lists rules but no config note still renders.
+        no_config = yaml.safe_load((ROOT / "generate-peer-review" / "peer_review_guidance.yaml").read_text())
+        for entry in no_config["verification"]["platforms"]["python"]["proves"]:
+            entry.pop("config", None)
+        no_config_path = Path(tmp) / "no-config.yaml"
+        no_config_path.write_text(yaml.safe_dump(no_config))
+        rules_no_config = generate(GENERATORS["peer"], repos["auth-docs"][0], None, guidance=no_config_path)
+
     for (g, name), text in outputs.items():
         check_rendering(f"{g}/{name}", text)
 
@@ -285,6 +293,8 @@ def main() -> int:
     check("peer/python: B006 is listed as opt-in, not excluded outright",
           "| mutable default arguments | `B006` | no (opt-in) |" in py
           and "every other lint-visible pattern" not in py)
+    check("peer: a rules entry without a config note renders instead of crashing",
+          "covers only what its config enables.** Read it first.\n" in rules_no_config)
     sw = outputs[("peer", "apple")]
     check("peer/apple: force_unwrapping is listed as opt-in",
           "| force unwrap (`!`) | `force_unwrapping` | no (opt-in) |" in sw)
@@ -295,8 +305,18 @@ def main() -> int:
     check("peer: Mode 2 checks the PR out in a worktree for Phase 0",
           "git fetch origin pull/123/head" in py and "git worktree add --detach" in py
           and "5. Review the diff." in py and "6. Post findings" in py)
-    check("peer: Phase 0 says fork PR code is not run without the user's go-ahead",
-          "isCrossRepository: true" in py and "without the user's go-ahead" in py)
+    flat = " ".join(py.split())
+    check("peer: Phase 0 runs nothing on a fork's code, linters included, without a go-ahead",
+          "isCrossRepository: true" in flat
+          and "run nothing in its worktree without the user's go-ahead" in flat
+          and "not the linters either" in flat and "are safe to run" not in flat)
+    check("peer: a failure the fresh worktree causes is a stage not run, not a finding",
+          "A failure the environment causes is a stage not run" in flat)
+    check("peer: Mode 2 verifies the worktree's head and keeps it until findings are posted",
+          "equals `headRefOid`" in flat
+          and "Post findings as a PR comment via `gh pr comment`, then `git worktree remove --force <wt>`" in flat)
+    check("peer: inline suppressions are not covered by a green linter run",
+          "# noqa: E722" in flat and "swiftlint:disable:next" in flat)
     check("peer: no worktree step when there is no Phase 0",
           "git worktree add" not in no_phase0
           and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)
@@ -309,6 +329,8 @@ def main() -> int:
     check("security: precedent rule says the description never clears a finding",
           "The PR description is the author's claim, not evidence." in sec
           and "Does dismissing it rest only on the PR description?" in sec)
+    check("security: code comments that excuse a change are author claims too",
+          "# nosec" in sec and "intentionally unauthenticated" in sec)
     check("peer: Phase 1 treats the description as a claim, not evidence",
           "the description is the author's claim, not evidence"
           in " ".join(outputs[("peer", "empty")].split()))
