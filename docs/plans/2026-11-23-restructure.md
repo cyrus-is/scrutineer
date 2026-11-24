@@ -20,15 +20,15 @@ Effective means three things:
 
 ## 2. What the evidence says
 
-Five inputs, all from 2026-11-23. Session scratch paths may be cleared; the HQ files are durable.
+Five inputs, all from 2026-11-23. The study and the research note are private, and the session scratch copies may be cleared.
 
 | Source | Finding that drives this plan |
 |---|---|
-| HQ's qwen-review-recall study and its proposal (both in the private HQ repo; the proposal is `projects/scrutineer/review-skill-improvements-2026-11-23.md`) | Recall is good (20–23/26) but precision is poor (37–41%). ISSUE and CONCERN were never defined. About half to two thirds of the noise objected to behaviour the spec prescribed. The reviewer had no way to read the spec or the repo's rules. Cross-module contracts: 0/2. |
+| A private review-recall study (Qwen 27B and Opus as reviewers) and its proposal | Recall is good (20–23/26) but precision is poor (37–41%). ISSUE and CONCERN were never defined. About half to two thirds of the noise objected to behaviour the spec prescribed. The reviewer had no way to read the spec or the repo's rules. Cross-module contracts: 0/2. |
 | Unled whole-project design review (`cohesion-review/REPORT.md`, scratch) | Scrutineer is two products sharing a name. Its output is prose, so no triage stage can consume it. Validation is self-grading. The MCP auditor already has the target shape: structured findings, then a separate validator that can only suppress. |
 | Context audit (`context-audit/REPORT.md`, scratch) | The original effective reviews were one product repo's hand-written review commands. They had the repo's `CLAUDE.md` and gate inventory, repo-specific rules in the prompt, a standing "read the callers" step, and a sub-agent that validated each finding. Generic Scrutineer lost all four. The service map was only ever a routing layer: the generators read four fields from it. |
 | Portfolio coverage audit (`coverage-audit/`, scratch: harness and per-repo results) | The detection faults were structural: a working-tree index, root-anchored globs, no manifest parsing, a fixed depth-2 path key, no role classification, and two drifting YAMLs. Missing blocks: Cloudflare Workers (5 repos), Shell (15), AWS serverless (5), Next.js server (4), LLM/MCP apps (6), Unity (2). |
-| Research desk, ~90% target (`research-90pct/ANSWER.md`, scratch; to be filed in HQ) | Twelve languages reach 90% of agent-written PRs: TS, Python, JS+HTML, Rust, C#, Go, PHP, Java, C++, Shell, Kotlin. Adding C, Dart and Swift reaches ~93%. Claude Code PRs skew toward TS, Rust, Go, Shell and Swift. **The biggest gap is the verification ladders:** only Swift and Python have one. |
+| A research note on the ~90% target (private; to be filed in the research registry) | Twelve languages reach 90% of agent-written PRs: TS, Python, JS+HTML, Rust, C#, Go, PHP, Java, C++, Shell, Kotlin. Adding C, Dart and Swift reaches ~93%. Claude Code PRs skew toward TS, Rust, Go, Shell and Swift. **The biggest gap is the verification ladders:** only Swift and Python have one. |
 
 ## 3. Target structure: three tools on one shared core
 
@@ -43,7 +43,7 @@ Five inputs, all from 2026-11-23. Session scratch paths may be cleared; the HQ f
 ```
 
 - **Service map.** This tool becomes the source of the review's system context, which it has never really been. It keeps its own lifecycle: crawl once, then refresh on merges that change architecture.
-- **Review.** One engine runs detection, the context packet, check selection, the findings contract and validation. On top of it sit two lenses with their own prompts, check sets and severity bars. `/vld8-security` stays addressable on its own, because `ENGINEERING.md` makes a security review a merge gate. **(Decision D1.)**
+- **Review.** One engine runs detection, the context packet, check selection, the findings contract and validation. On top of it sit two lenses with their own prompts, check sets and severity bars. `/vld8-security` stays addressable on its own, because `ENGINEERING.md` makes a security review a merge gate for product repos (it accepts `/security-review` or this lens). **(Decision D1.)**
 - **MCP review.** Stays in the package for now and adopts the shared findings contract. Its scope is user-level (client configs), so it installs at user scope rather than into every repo. **(Decision D5.)**
 - **Triage and validation is a shared stage, not a fourth tool.**
 - **Suggested fixes stay a `recommendation` field.** First-party tools already apply fixes (`/code-review --fix`, the claude-security plugin), so building a fix stage is last, if ever.
@@ -70,8 +70,9 @@ Adopted 2026-11-23 (Cyrus). This is where intent comes from, rather than a spec 
   - tenancy;
   - trust translation points, for example a border gateway that turns external JWT auth into internal tokens;
   - identifier properties, for example random GUIDs with no exposed oracle;
-  - data classifications;
-  - accepted risks and compensating controls.
+  - data classifications.
+
+  Accepted risks are deliberately not in the map. They're triage decisions, kept where the storage design keeps them, so a public repo doesn't publish them.
 - **What the crawl is authoritative on:** how the rules are *implemented*, not whether they're *intended*. A map read from code would otherwise turn the bug into the spec.
 - **`vld8 map rules`** reports the rules as implemented and asks about each one: intended? yes / no, bug / not sure.
   - **yes:** the rule becomes confirmed terrain in the checked-in map. A change that breaks it is an ISSUE that cites the rule.
@@ -117,7 +118,7 @@ Default: `findings.json` local, `triage.json` checked in, with SARIF export and 
 3. a few deep checks that the model wouldn't produce unprompted, measured over time;
 4. a loud fallback for everything else.
 
-**Tier 1: detection, ladder and deep checks.** This tier covers the agent-PR 90% set plus the portfolio.
+**Tier 1: detection, ladder and deep checks.** This tier covers most of the agent-PR 90% set plus the portfolio. PHP and C++ are in the 90% set but rare in the portfolio, so they sit in Tier 2.
 
 | Layer | Entries |
 |---|---|
@@ -141,7 +142,7 @@ Default: `findings.json` local, `triage.json` checked in, with SARIF export and 
 
 - **Code-review eval set**, mirroring `mcp-review/tests/corpus`. Seeded defects with expected findings, across Tier 1 stacks, kept out of anything used to tune prompts.
 - **For the engine changes (stages 1, 3, 4):**
-  - adopt the HQ proposal's held-out design (§5 there), Opus first with 2 reps. The **primary set is real PRs with no spec**, and the spec setting is secondary;
+  - adopt the study proposal's held-out design, Opus first with 2 reps. The **primary set is real PRs with no spec**, and the spec setting is secondary;
   - **the baseline is 2.0.0**, not 1.6.4. Otherwise the TypeScript detection fix, which has already shipped, is counted as part of the gain;
   - **score on evidence of need:** a finding is real if it shows a broken rule, a broken contract or a triggerable failure, even when it contradicts a spec;
   - ship rule: Finding precision at least the baseline + 20 points, recall at least the baseline − 2.
@@ -150,20 +151,28 @@ Default: `findings.json` local, `triage.json` checked in, with SARIF export and 
 
 ## 7. Phases
 
-Each phase is a release. Nothing is removed until its replacement has passed §6.
+Phases ship through the weekly release train (`docs/ROADMAP.md`). Work that changes review output ships behind a preview flag, and the minor version goes up when a milestone's flag becomes the default. Nothing is removed until its replacement is the default.
 
 | Phase | Contents | Depends on |
 |---|---|---|
 | **P0** | **Shipped in 2.0.0** (PR #41, with the fixes from #39): rendering, TS detection, git index, install paths, tests, CI, and the rename | — |
-| **P1: Foundations** | One shared analyzer module (no more copy-paste); one detection spec shared by both lenses; a globstar matcher; findings contract v1, emitted alongside today's Markdown, with local `findings.json` and checked-in `triage.json` (§4, *Storing findings and decisions*); `vld8 checks --changed` | P0 |
+\1findings contract v1, emitted alongside today's Markdown, with local `findings.json` and checked-in `triage.json` (§4, *Storing findings and decisions*); `vld8 checks --changed` | P0 |
 | **P2: Precision and context** | First, with no engine dependency (roadmap 2.1): the evidence rubric, rules files, the verdict rule, the lens-table rule, the ambient-nondeterminism check, the callers check, and optional intent sources. Then `vld8 context` with a size budget | P0 for 2.1; P1 for `vld8 context` |
 | **P3: Validation** | Separate validator over the findings JSON (fresh context, refute, suppress-only, recorded reasons); retire the security skill's pasted-in hard-exclusion list and its contradictions (rate limits, CVEs, ReDoS) | P1 |
 | **P4: Coverage** | Two-layer detection, package roots, roles, uncovered report; Tier 1 ladders; new blocks: Workers, Shell, AWS serverless, Next.js server, LLM/MCP apps, Kotlin JVM (split from Android), Unity, HTML templates; then Tier 2 | P1 (spec), P2 (context feeds checks), P5 (checks cite terrain as evidence) |
 | **P5: Terrain (service map v2)** | Business rules as implemented, with evidence; the `vld8 map rules` confirmation report; rule-change detection in reviews; `crawled_commit` and drift detection; an intra-component contracts layer; a CI refresh that opens a PR. See *Terrain* below. It now comes before coverage (roadmap 2.4) | P1, P2 |
 | **P6: MCP as its own tool** | User-scoped install; `vld8 mcp` as the front door; shared findings contract | P1 |
-| **P7: Measure and prune** | Held-out study for P2+P3; aggregate Check Performance; prune checks that never yield (starting with the March-era generic blocks); promote "Unnamed" findings to checks | P2, P3 |
+| **P7: Measure and prune** | Each gated milestone runs its own held-out eval (roadmap). P7 itself: aggregate Check Performance; prune checks that never yield (starting with the March-era generic blocks); promote "Unnamed" findings to checks | P2, P3 |
 
-P2 and P3 can run in parallel once P1 lands. P4's detection work can start in P1, but its checks should wait for P2's context packet.
+**Order (roadmap):**
+1. P2's spec-free precision work (2.1);
+2. P1 (2.2);
+3. P3 (2.3);
+4. P2's context packet together with P5 terrain (2.4);
+5. P4 coverage;
+6. P6 and P7.
+
+P4's detection work can start alongside P1, but its checks wait for terrain.
 
 ### Future features
 
@@ -247,16 +256,16 @@ These come after the phases above. They aren't scheduled yet.
 ## 8. Alternatives considered
 
 1. **Keep generate-time skills and keep patching.** Rejected. Every review pays for every detected platform. Guidance improvements need a reinstall in every repo. The output can't feed validation. And the coverage audit showed the detection faults are structural, not a list of misses.
-2. **Merge code and security review into one prompt.** Rejected. It doubles the context HQ already measured as half unused, mixes two severity bars, and removes the separately addressable security gate.
+2. **Merge code and security review into one prompt.** Rejected. It doubles the context the study already measured as half unused, mixes two severity bars, and removes the separately addressable security gate.
 3. **Become only an expertise pack that first-party engines consume** (`/code-review`, the claude-security plugin), with no engine of our own. Open; see **D2**. The expertise layer (measured checks, ladders, exclusions, repo context) is what Scrutineer has that they don't. But a thin engine of our own is still needed to measure that layer.
 4. **Split the MCP auditor into its own package now.** Deferred to P6. Shared CLI, release pipeline and findings contract are cheaper inside one package until the contract is stable.
 5. **Build the suggested-fix stage from the original pipeline.** Deprioritized. It is a commodity next to validation.
 
 ## 9. Back-out
 
-- **Each phase ships as a minor release.** Rolling back means pinning the previous version (`pip install vld8==X`). PyPI keeps every version.
-- **The generated skills stay** (a `--legacy` install flag) until the review-time path passes §6. Users can stay on them.
-- **The findings JSON is additive.** It sits next to the Markdown until P3, so consumers of the Markdown are unaffected.
+- **Output changes are opt-in until their gate passes.** Not passing the preview flag keeps the old behaviour. After a default flips, rolling back means pinning the previous version (`pip install vld8==X`); PyPI keeps every version.
+- **The generated skills stay the default** until the review-time path passes §6. The preview flag replaces the old idea of a `--legacy` flag.
+- **The findings JSON is additive.** It's written next to the Markdown. Rendering the Markdown from it is an output change, so it ships behind the 2.2 flag.
 - **Service map v2 fields are optional additions** to schema 1.1. Old maps keep validating.
 
 ## 10. Decisions needed
@@ -267,15 +276,16 @@ These come after the phases above. They aren't scheduled yet.
 | D2 | Positioning: our own engine, or an expertise pack for first-party engines | Both, in that order: a thin engine of our own, so the expertise layer can be measured; publish the layer in a form other engines can consume once the findings contract is stable |
 | D3 | ~~Positioning of the collection~~ **Decided 2026-11-23: pitch it as dev tooling** (Cyrus). Security is one lens of the review tool, not the product's label | — |
 | D7 | ~~Rename~~ **Decided 2026-11-23: rename to `vld8`** (Cyrus), read as "validate". One PyPI package, `vld8`, with the three tools as subcommands (`vld8 map`, `vld8 review`, `vld8 mcp`) and skills (`/vld8-map`, `/vld8-review`, `/vld8-mcp`); how the security lens is addressed follows D1. **Shipped early, in 2.0.0 (PR #41)**, once Cyrus had renamed the repo and registered the PyPI name, rather than waiting for P1. Keep "Cyrus's toolbox" as the tagline | Availability on 2026-11-23: `vld8` and the `-map`/`-review`/`-mcp` names are free on PyPI and npm. The GitHub account `vld8` is taken, so the repo becomes `cyrus-is/vld8`. Before P1, Cyrus registers a PyPI pending trusted publisher for `vld8` (web UI) so the name is held for this repo's release workflow. Mechanics: new PyPI package; a last `scrutineer` release that depends on it and prints a notice; GitHub repo rename (URLs redirect); the installer replaces old `/scrutineer-*` command files |
-| D4 | Run the held-out study before shipping P2/P3, or ship behind a flag and measure after | Study first for P2/P3 (they change what reaches the reader); P1 and P4 ship on CI and snapshot tests |
+| D4 | Held-out test before a milestone's default changes | Yes. Items ship earlier behind a preview flag, so testing first doesn't hold up building |
 | D5 | MCP review stays in the package until P6 | Yes |
-| D6 | Where the 90% research note lives. It is in session scratch now; the research desk could not file it in HQ | File it in `hq/research/notes/` with the desk's suggested frontmatter |
+| D6 | Where the ~90% research note lives. Today it's only in session scratch | File it in the private research registry |
 | D8 | Where the vld8.ai site lives: in this repo, on cyrus.is, or on its own | Split by what each part is. **Now:** point vld8.ai at cyrus.is/building/vld8, so the announcement post is the landing page and nothing new needs hosting. **Product docs, when they're needed:** a static site in this repo (`site/`), built from the READMEs so docs ship with the code they describe. Deploy it through the host's Git integration (Cloudflare Pages or GitHub Pages), so no deploy secret sits in a repo whose CI publishes to PyPI. On cyrus.is, every release would need a pull request to the personal site, and the docs would drift. **The false-positive submission endpoint:** its own small service and repo. It holds other people's code and needs credentials, so it shouldn't share CI, permissions or blast radius with the package. **cyrus.is keeps the story posts,** and vld8.ai links to them |
 
 ## 11. Risks
 
-- **Context packet size.** The packet competes with the lens prompt for attention: the HQ study showed a reviewer reading only the head of a 169K map. Mitigation: a hard size budget, with slices rather than whole files.
-- **Validator recall cost.** The field's validators raise precision and cut recall (Lu et al.: key-bug inclusion 31% → 20%). Mitigation: the validator may only suppress, with reasons recorded and audited; it is tuned on held-out data.
+- **Context packet size.** The packet competes with the lens prompt for attention: the study showed a reviewer reading only the head of a 169K map. Mitigation: a hard size budget, with slices rather than whole files.
+- **Validator recall cost.** The field's validators raise precision and cut recall (Lu et al.: key-bug inclusion 31% → 20%), and every suppression is that cost. Mitigation: each suppression is recorded with its reason and audited on the eval, and the validator stays behind its flag until the 2.3 eval shows recall holds.
+- **Intent capture leaking private context.** Approved plans and session prompts can name private projects, and a PR description is public in a public repo. This is how private names reached early PRs here. Mitigation: the hook is opt-in, shows the text before writing it, redacts secrets, and is off by default for public repos.
 - **A crawled map turning the bug into the spec.** A rule read from code describes what the code does, not what was meant. Mitigation: a rule is authoritative only once a person confirms it in `vld8 map rules`. Unconfirmed rules are hints, and changes to them are questions, never ISSUEs.
 - **Coverage breadth crowding out depth.** The September data showed generic blocks yield little. Mitigation: Tier 1 entries earn deep checks only from measured findings; Tier 2 stays at detection plus ladder.
 - **Original-system bias.** The original reviews were tuned to one multi-service Go system that no longer exists. Mitigation: evaluate on the current portfolio's shapes: single Workers, Apple apps, monorepos.
