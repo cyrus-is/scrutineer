@@ -30,7 +30,7 @@ coverage-deviation: none
 - CI green before merge, always.
 - `/code-review` default effort medium; higher tiers opt-in per run.
 - Priorities: correctness > security > simplicity. No style comments — the formatter owns style.
-- Product repos (Building/Live, runtime surface): `/security-review` or Scrutineer security audit required before merge.
+- Product repos (Building/Live, runtime surface): `/security-review` or vld8's `/vld8-security` required before merge.
 
 ## Testing
 
