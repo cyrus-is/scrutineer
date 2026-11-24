@@ -304,7 +304,9 @@ def main() -> int:
     # #93: Phase 0 runs on the PR's head, in a worktree, and not on a fork's code unasked.
     check("peer: Mode 2 checks the PR out in a worktree for Phase 0",
           "`git fetch origin pull/123/head`" in py
+          and "`git fetch upstream pull/123/head`" in py
           and 'git fetch "$(gh repo view --json url -q .url)" pull/123/head' in py
+          and "`--json sshUrl -q .sshUrl`" in py
           and "git worktree add --detach <wt> <headRefOid>" in py
           and "5. Review the diff." in py and "6. Post findings" in py)
     flat = " ".join(py.split())
@@ -321,7 +323,8 @@ def main() -> int:
           "# noqa: E722" in flat and "# ruff: noqa" in flat and "# ruff: disable[E722]" in flat
           and "swiftlint:disable force_cast" in flat and "`linter.rules.enabled`" in flat)
     check("peer: a linter rule proves its exact pattern, not the class of bug it is named for",
-          "not the class of bug it is named for: ruff's S608" in flat)
+          "not the class of bug it is named for: ruff's S608 flags a SQL literal formatted or concatenated in place" in flat
+          and "(`QUERY % uid`)" in flat and "passes SQL built by concatenation" not in flat)
     check("peer: a failed or mismatched PR checkout skips Phase 0 rather than halting",
           "run no Phase 0 stage, review the diff" in flat
           and "including when it stops early" in flat
@@ -329,18 +332,23 @@ def main() -> int:
     check("peer: without a worktree, Phases 1-3 read the PR's head, not the checkout",
           "contents/<path>?ref=<headRefOid>" in flat)
     check("peer: a bot's same-repo PR is treated as a fork, and the author field is fetched",
-          "isCrossRepository,author" not in flat and "body,author,headRefName" in flat
-          and "One is a bot's PR (`author.is_bot`)" in flat
+          "body,url,author,headRefName" in flat
+          and "One is a bot's PR (`author.is_bot`, which GitHub sets for app accounts" in flat
+          and "a bot runs on a personal token" in flat
           and "Same-repository PR not treated as a fork" in flat)
     check("peer: Mode 2 says how to point gh at the upstream repo",
-          "`gh repo set-default`" in flat)
+          "gh repo set-default \"$(gh repo view --json parent" in flat
+          and "saves the choice in this clone's git config" in flat)
     check("peer: Mode 2 reads the PR's commits and sizes the PR's diff, not the checkout's",
           "Mode 2: `gh pr view <number> --json commits`" in flat
           and "In Mode 2, measure the PR, not your checkout" in flat
           and "--json changedFiles,additions,deletions,commits" in flat
-          and "origin/<baseRefName>" not in flat)
+          and 'gh api --paginate "repos/{owner}/{repo}/pulls/<number>/files?per_page=100"' in flat
+          and "origin/<baseRefName>" not in flat
+          and "**Outside Mode 2, check the base is what you think it is.**" in flat)
     check("peer: no worktree step when there is no Phase 0",
           "git worktree add" not in no_phase0 and "worktree" not in no_phase0
+          and "Read surrounding code at the PR's head, never in your checkout" in no_phase0
           and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)
 
     # #94: the PR body is context, never grounds to accept a finding.
