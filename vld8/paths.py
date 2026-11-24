@@ -61,7 +61,8 @@ SECURITY_COMMAND = "vld8-security.md"
 # Milestones whose output can be turned on early with `vld8 install --preview <m>`.
 # Changes to review output ship behind their milestone's flag until its gate
 # passes (docs/ROADMAP.md, Release train); then the flag becomes the default and
-# the milestone leaves this table.
+# the milestone leaves this table. When the first one graduates, keep accepting
+# `--preview <m>` as a no-op with a note, so scripts and habits don't break.
 PREVIEW_MILESTONES = {
     "2.1": "precision without a spec",
 }

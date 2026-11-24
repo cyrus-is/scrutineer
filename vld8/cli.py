@@ -130,12 +130,16 @@ def _cmd_install(args: argparse.Namespace) -> int:
             print(f"✓ Review skills include preview output: {listed}")
             print("  Reinstall with --force and without --preview to go back to the default.")
         else:
-            print(f"✗ Preview {listed} NOT applied to {_commands(result.preview_missing)}: "
-                  "not regenerated (re-run with --force).", file=sys.stderr)
+            why = ("generation failed (see above)" if args.force
+                   else "not regenerated (re-run with --force)")
+            print(f"✗ Preview {listed} NOT applied to {_commands(result.preview_missing)}: {why}.",
+                  file=sys.stderr)
             status = 1
     if result.preview_kept:
+        undo = ("Regeneration failed (see above)." if args.force
+                else "Re-run with --force to go back to the default.")
         print(f"Note: {_commands(result.preview_kept)} still hold preview output from an earlier "
-              "install. Re-run with --force to go back to the default.")
+              f"install. {undo}")
     if result.preview_dropped:
         print(f"Note: {_commands(result.preview_dropped)} held preview output and are now back to "
               "the default. Pass --preview again to keep it.")

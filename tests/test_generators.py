@@ -376,13 +376,19 @@ def main() -> int:
         check(f"{g}: apply_previews under 2.1 swaps in its entries and strips the keys",
               mod.apply_previews(sample, frozenset({"2.1"}))
               == {"items": [{"a": 1}, {"b": 2}, "plain"]})
-        for bad_gate in (2.1, ["2.1"], True, "", "v2.1"):
+        for bad_gate in (2.1, ["2.1"], True, "", "v2.1", None):
             try:
                 mod.apply_previews({"items": [{"x": 1, "preview": bad_gate}]}, frozenset())
                 raised = False
             except ValueError:
                 raised = True
             check(f"{g}: apply_previews rejects gate value {bad_gate!r}", raised)
+        try:
+            mod.apply_previews({"items": [{"x": 1, "preview": "2.1", "replaced_in": "2.1"}]}, frozenset())
+            raised = False
+        except ValueError:
+            raised = True
+        check(f"{g}: apply_previews rejects an entry gated on and off by the same milestone", raised)
     peer_mod = load_generator(GENERATORS["peer"])
     check("peer: code_span survives inner backticks",
           peer_mod.code_span("a `b` c") == "`` a `b` c ``" and peer_mod.code_span("ls") == "`ls`")

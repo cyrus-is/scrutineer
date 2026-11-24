@@ -18,6 +18,7 @@ agentic crawl; the CLI lets :mod:`vld8.servicemap` resolve one.
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
@@ -156,6 +157,16 @@ def _has_preview(path: Path) -> bool:
         return False
 
 
+def _preview_milestones(path: Path) -> set[str]:
+    """The milestones a generated skill's preview marker names; empty if it has none."""
+    try:
+        text = path.read_text(errors="replace")
+    except OSError:
+        return set()
+    line = next((ln for ln in text.splitlines() if ln.startswith(paths.PREVIEW_MARKER)), "")
+    return set(re.findall(r"--preview (\d+\.\d+)", line))
+
+
 def install(
     target: Path | str,
     *,
@@ -242,10 +253,15 @@ def install(
     ):
         result.installed.append(paths.SECURITY_COMMAND)
 
-    # What the files now hold, not what the generators returned, decides whether
-    # a preview took effect.
+    # A preview took effect only in a file this run regenerated and whose marker
+    # names every requested milestone. A marker left by an earlier install may
+    # predate the preview content this release adds.
     if result.previews:
-        result.preview_missing = [f for f in review if not _has_preview(cmd_dir / f)]
+        wanted = set(result.previews)
+        result.preview_missing = [
+            f for f in review
+            if f not in result.installed or not wanted <= _preview_milestones(cmd_dir / f)
+        ]
     else:
         result.preview_kept = [f for f in review if f in had_preview and _has_preview(cmd_dir / f)]
         result.preview_dropped = [f for f in review if f in had_preview and not _has_preview(cmd_dir / f)]

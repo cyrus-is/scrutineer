@@ -119,6 +119,14 @@ def main() -> int:
         proc = run_cli("install", str(target), "--force", "--preview", "2.1")
         check("vld8 install --force --preview 2.1 succeeds and says so",
               proc.returncode == 0 and "include preview output: 2.1" in proc.stdout)
+        # A marker left by an earlier install doesn't count: this run must regenerate.
+        result = installer.install(target, previews=["2.1"], log=lambda *_: None)
+        check("an earlier preview marker on a skipped skill is not reported as applied",
+              result.preview_missing == review
+              and all(paths.PREVIEW_MARKER in (cmd_dir / f).read_text() for f in review))
+        proc = run_cli("install", str(target), "--preview", "2.1")
+        check("vld8 install --preview over skills an earlier preview made still fails without --force",
+              proc.returncode != 0 and "include preview output" not in proc.stdout)
         try:
             installer.install(target, force=True, previews=["9.9"], log=lambda *_: None)
             rejected = False

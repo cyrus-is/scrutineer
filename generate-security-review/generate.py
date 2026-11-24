@@ -1242,9 +1242,10 @@ def apply_previews(node, enabled: "set[str] | frozenset[str]"):
     reads this guidance at review time must apply the same filter.
     """
     def gate(value: dict, key: str):
-        milestone = value.get(key)
-        if milestone is not None and not (isinstance(milestone, str)
-                                          and re.fullmatch(r"\d+\.\d+", milestone)):
+        if key not in value:
+            return None
+        milestone = value[key]
+        if not (isinstance(milestone, str) and re.fullmatch(r"\d+\.\d+", milestone)):
             raise ValueError(f"guidance gate `{key}: {milestone!r}` must be a quoted "
                              f"milestone such as \"2.1\"")
         return milestone
@@ -1253,6 +1254,9 @@ def apply_previews(node, enabled: "set[str] | frozenset[str]"):
         if not isinstance(value, dict):
             return True
         on, off = gate(value, "preview"), gate(value, "replaced_in")
+        if on is not None and on == off:
+            raise ValueError(f"guidance entry has `preview` and `replaced_in` both {on!r}, "
+                             f"so it would never appear")
         return (on is None or on in enabled) and (off is None or off not in enabled)
 
     if isinstance(node, dict):

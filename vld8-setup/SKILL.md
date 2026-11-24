@@ -33,7 +33,7 @@ does the crawl, then hands the resulting `servicemap.json` to the shared install
 ```
 
 - `--no-servicemap`: skip the crawl and generate map-less skills (faster; no cross-service analysis).
-- `--force`: overwrite existing command files / service map without prompting.
+- `--force`: overwrite existing command files and re-crawl the service map.
 - `--preview <milestone>`: include review output still behind that milestone's preview flag, e.g. `2.1`.
   Repeatable. `vld8 install --help` lists the milestones that have one.
 
@@ -86,8 +86,8 @@ Summarize what landed in `<target>/.claude/commands/`:
 
 - `/vld8-map`, `/vld8-mcp`, `/vld8-setup` (copied)
 - `/vld8-review`, `/vld8-security` (generated; note whether they are map-aware)
-- Any preview line the installer printed, word for word: preview applied, preview NOT applied, or
-  skills that held an earlier preview and are now back to the default.
+- Any preview line the installer printed, word for word: preview applied, preview NOT applied,
+  skills that still hold an earlier preview, or skills that held one and are now back to the default.
 
 Then tell the user they can run `/vld8-review` and `/vld8-security` for reviews, and
 `/vld8-mcp <server>` to audit an MCP server.
