@@ -69,8 +69,8 @@ Phase 0 prefers the **repo's own gate script** (`run-gate.sh`, `scripts/ci.sh`, 
 available description of what "correct" means in that repo, and it usually explains why each stage
 exists. If the code under review is red, the skill stops — reviewing code that does not build is
 guesswork, and the build failure is the finding. A failure the environment causes counts as a stage
-not run. In PR mode, Phase 0 runs on the PR's head in a temporary worktree, and runs nothing on a
-fork's code without the user's go-ahead.
+not run. In PR mode, Phase 0 runs on the PR's head in a temporary worktree. Without the user's
+go-ahead it runs nothing on a fork's code, and it treats a bot's PR (Dependabot, Renovate) as a fork.
 
 Ladders live under `verification.platforms.<platform_key>` and carry four things: the commands
 (split into per-diff and per-repo), what each proves (`proves` → the exclusion list), what remains

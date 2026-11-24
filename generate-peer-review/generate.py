@@ -430,11 +430,11 @@ class SkillGenerator:
             "4. Check out the PR's head in its own worktree, so the user's checkout is untouched. Its\n"
             "   path, `<wt>` below, is `${TMPDIR:-/tmp}/vld8-<repo>-pr-123`, where `<repo>` is this\n"
             "   repository's directory name.\n"
-            "   - `git worktree remove --force <wt> 2>/dev/null; git fetch \"$(gh repo view --json url -q .url)\" pull/123/head && git worktree add --detach <wt> FETCH_HEAD`. Fetching from the repository `gh` resolves, not `origin`, works when `origin` is your fork.\n"
-            "   - Check that `git -C <wt> rev-parse HEAD` equals `headRefOid`. If the fetch fails or the commits differ (the PR moved, say), run no Phase 0 stage: review the diff, and say in the report that Phase 0 didn't run.\n"
-            "   - Same-repository PR: `git -C <wt> submodule update --init --recursive`. A PR from a fork follows Phase 0's fork rule instead.\n"
+            "   - Fetch the head: `git fetch origin pull/123/head`. If that fails, or `git rev-parse FETCH_HEAD` isn't `headRefOid` (as when `origin` is your fork), fetch from the repository `gh` resolves instead: `git fetch \"$(gh repo view --json url -q .url)\" pull/123/head`.\n"
+            "   - `git worktree remove --force <wt> 2>/dev/null; git worktree add --detach <wt> <headRefOid>`. If that fails, neither fetch brought the PR's commit: run no Phase 0 stage, review the diff, and say in the report that Phase 0 didn't run.\n"
+            "   - Same-repository PR not treated as a fork (Phase 0 says when to): `git -C <wt> submodule update --init --recursive`. A fork's PR, or one treated as a fork, follows Phase 0's fork rule instead.\n"
             "   - Shell state doesn't carry from one command to the next, so run each as `cd <wt> && …` in a single call.\n"
-            "   - Run Phase 0 there, and read the PR's surrounding code there in Phases 1–3.\n"
+            "   - Run Phase 0 there, and read the PR's surrounding code there in Phases 1–3. Without a worktree, read it at the PR's head, never in your checkout: `gh api -H 'Accept: application/vnd.github.raw' \"repos/{owner}/{repo}/contents/<path>?ref=<headRefOid>\"`.\n"
             "   - Remove it with `git worktree remove --force <wt>` when the review ends, including when it stops early.\n"
             if has_phase0 else ""
         )
@@ -457,8 +457,9 @@ class SkillGenerator:
             ```
             Reviews PR #123. Process:
             1. `git fetch origin`
-            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,headRefName,headRefOid,baseRefName,isCrossRepository`.
+            2. Get PR metadata and description: `gh pr view 123 --json number,title,body,author,headRefName,headRefOid,baseRefName,isCrossRepository`.
                The body is the author's account of what they meant to do. Phase 1 reads it as context, never as evidence that the code is right.
+               If `gh` can't find the PR, it is probably looking in your fork: run `gh repo set-default` to point it at the upstream repository, then retry.
             3. Get full diff: `gh pr diff 123`
             {pr_checkout}{n}. Review the diff.
             {n1}. Post findings as a PR comment via `gh pr comment`{cleanup}.
@@ -587,8 +588,11 @@ class SkillGenerator:
             plugins are code, and SwiftLint fetches a remote `parent_config` with environment
             variables expanded into its URL. Without a go-ahead Phase 0 runs nothing, earns no
             exclusions, and the report says so. A same-repository PR comes from someone with
-            write access, so Phase 0 runs its code as it would run the user's own. Where that
-            isn't a safe assumption (bot branches, broad write access), treat it as a fork.
+            write access, so Phase 0 runs its code as it would run the user's own, with two
+            exceptions that are treated as a fork. One is a bot's PR (`author.is_bot`):
+            Dependabot and Renovate change lockfiles, and installing them runs the new
+            packages' install scripts. The other is any PR the user says to treat that way,
+            as when write access in this repo is broad.
 
             **A fresh worktree is not the user's environment.** It has no gitignored files,
             virtualenv or build cache. When a stage fails there for a reason the PR didn't cause,
@@ -615,18 +619,22 @@ class SkillGenerator:
             **3. If the code under review fails, STOP.** Report the failure verbatim, name the
             first failing stage, and do not continue to semantic review — reviewing code that
             does not build is guesswork, and the build failure is the finding. A failure the
-            environment causes is a stage not run, as above, not a finding.
+            environment causes is a stage not run, as above, not a finding. In Mode 2, post
+            the failure and then remove the worktree.
 
             **4. If it passes, honour the exclusion list.** It is not advice; it is the set
             of things you now know are absent. But a linter proves only the rules its config
             enables, so read the config before excluding anything: each linter's rule table
             below says where the config lives and which rules are on by default. A pattern
-            whose rule is off, or ignored for that file, is in scope like any other code, and so
-            is code suppressed inline, for a line or a region (`# noqa: E722`, `# ruff: noqa`,
-            `// swiftlint:disable force_cast` up to its `enable`): the green run says nothing
-            about it. The tools can list what is on: `ruff check --show-settings <file>`
-            (`linter.rules`, with exceptions under `linter.per_file_ignores`), and the "enabled
-            in your config" column of `swiftlint rules`.
+            whose rule is off, or ignored for that file, is in scope like any other code. So is
+            suppressed code: a line (`# noqa: E722`), a region (`# ruff: disable[E722]` to its
+            `enable`, `// swiftlint:disable force_cast` to its `enable` or the end of the file)
+            or a whole file (`# ruff: noqa`). The green run says nothing about it. And a rule
+            proves only its exact pattern, not the class of bug it is named for: ruff's S608
+            flags `%`-formatted SQL but passes SQL built by concatenation. The tools can list
+            what is on: `ruff check --show-settings <file>` (`linter.rules.enabled`, with
+            exceptions under `linter.per_file_ignores`), and the "enabled in your config"
+            column of `swiftlint rules`.
 
             **5. Record which oracle covers which changed files.** Coverage is not uniform, and
             an exclusion you apply outside the range of the command that earned it is a guess
@@ -687,8 +695,10 @@ class SkillGenerator:
                 lines.append("|---|---|")
                 for p in proves:
                     excludes = (
-                        "whatever the repo's config enables, and nothing it leaves off; the rule "
-                        "table below covers the patterns most often wrongly assumed"
+                        "the exact pattern of each rule the repo's config enables, in the files it "
+                        "checked; not the wider class of bug a rule is named for, and nothing the "
+                        "config leaves off. The rule table below covers the patterns most often "
+                        "wrongly assumed"
                         if p.get("rules") else p["excludes"]
                     )
                     lines.append(f"| {code_span(p['green'])} | {excludes} |")
@@ -751,9 +761,16 @@ class SkillGenerator:
             git diff <base>...HEAD --numstat | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
             ```
 
-            In Mode 2, measure the PR, not your checkout: run these in the PR's worktree with
-            `origin/<baseRefName>` as `<base>`, or, without a worktree, count from
-            `gh pr diff <number>`.
+            In Mode 2, measure the PR, not your checkout. Your copy of its base branch can be
+            stale or missing (a fork's, say), so ask GitHub instead:
+
+            ```
+            gh pr view <number> --json changedFiles,additions,deletions,commits --jq '{{changedFiles, additions, deletions, commits: (.commits | length)}}'
+            gh pr view <number> --json files --jq '.files[] | "\\(.additions)\\t\\(.deletions)\\t\\(.path)"' | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
+            ```
+
+            `changedFiles` is the true count. If the second lists fewer files, its breakdown is
+            partial.
 
             **Check the base is what you think it is.** `git fetch` first and compare
             `git rev-parse main origin/main`. A stale local base silently inflates the diff
