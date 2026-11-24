@@ -289,7 +289,7 @@ def main() -> int:
     # #92: a linter's exclusions cover only the rules its config enables.
     py = outputs[("peer", "auth-docs")]
     check("peer/python: ruff exclusion defers to the config's rules",
-          "| `ruff check` | only the patterns whose rule the repo's config enables" in py)
+          "| `ruff check` | whatever the repo's config enables, and nothing it leaves off" in py)
     check("peer/python: B006 is listed as opt-in, not excluded outright",
           "| mutable default arguments | `B006` | no (opt-in) |" in py
           and "every other lint-visible pattern" not in py)
@@ -303,7 +303,8 @@ def main() -> int:
 
     # #93: Phase 0 runs on the PR's head, in a worktree, and not on a fork's code unasked.
     check("peer: Mode 2 checks the PR out in a worktree for Phase 0",
-          "git fetch origin pull/123/head" in py and "git worktree add --detach" in py
+          'git fetch "$(gh repo view --json url -q .url)" pull/123/head' in py
+          and "git worktree add --detach" in py
           and "5. Review the diff." in py and "6. Post findings" in py)
     flat = " ".join(py.split())
     check("peer: Phase 0 runs nothing on a fork's code, linters included, without a go-ahead",
@@ -316,7 +317,13 @@ def main() -> int:
           "equals `headRefOid`" in flat
           and "Post findings as a PR comment via `gh pr comment`, then `git worktree remove --force <wt>`" in flat)
     check("peer: inline suppressions are not covered by a green linter run",
-          "# noqa: E722" in flat and "swiftlint:disable:next" in flat)
+          "# noqa: E722" in flat and "# ruff: noqa" in flat and "swiftlint:disable force_cast" in flat)
+    check("peer: a failed or mismatched PR checkout skips Phase 0 rather than halting",
+          "run no Phase 0 stage: review the diff" in flat
+          and "including when it stops early" in flat)
+    check("peer: Mode 2 reads the PR's commits and sizes the PR's diff, not the checkout's",
+          "Mode 2: `gh pr view <number> --json commits`" in flat
+          and "In Mode 2, measure the PR, not your checkout" in flat)
     check("peer: no worktree step when there is no Phase 0",
           "git worktree add" not in no_phase0
           and "4. Review the diff." in no_phase0 and "5. Post findings" in no_phase0)

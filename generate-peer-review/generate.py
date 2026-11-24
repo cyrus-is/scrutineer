@@ -430,11 +430,12 @@ class SkillGenerator:
             "4. Check out the PR's head in its own worktree, so the user's checkout is untouched. Its\n"
             "   path, `<wt>` below, is `${TMPDIR:-/tmp}/vld8-<repo>-pr-123`, where `<repo>` is this\n"
             "   repository's directory name.\n"
-            "   - `git worktree remove --force <wt> 2>/dev/null; git fetch origin pull/123/head && git worktree add --detach <wt> FETCH_HEAD`\n"
-            "   - Check that `git -C <wt> rev-parse HEAD` equals `headRefOid`. If it doesn't, the PR has moved or `origin` is not the PR's repository: stop and say so.\n"
+            "   - `git worktree remove --force <wt> 2>/dev/null; git fetch \"$(gh repo view --json url -q .url)\" pull/123/head && git worktree add --detach <wt> FETCH_HEAD`. Fetching from the repository `gh` resolves, not `origin`, works when `origin` is your fork.\n"
+            "   - Check that `git -C <wt> rev-parse HEAD` equals `headRefOid`. If the fetch fails or the commits differ (the PR moved, say), run no Phase 0 stage: review the diff, and say in the report that Phase 0 didn't run.\n"
             "   - Same-repository PR: `git -C <wt> submodule update --init --recursive`. A PR from a fork follows Phase 0's fork rule instead.\n"
             "   - Shell state doesn't carry from one command to the next, so run each as `cd <wt> && …` in a single call.\n"
             "   - Run Phase 0 there, and read the PR's surrounding code there in Phases 1–3.\n"
+            "   - Remove it with `git worktree remove --force <wt>` when the review ends, including when it stops early.\n"
             if has_phase0 else ""
         )
         n = 5 if has_phase0 else 4
@@ -585,7 +586,9 @@ class SkillGenerator:
             go-ahead: not the gate script, build or tests, and not the linters either. mypy
             plugins are code, and SwiftLint fetches a remote `parent_config` with environment
             variables expanded into its URL. Without a go-ahead Phase 0 runs nothing, earns no
-            exclusions, and the report says so.
+            exclusions, and the report says so. A same-repository PR comes from someone with
+            write access, so Phase 0 runs its code as it would run the user's own. Where that
+            isn't a safe assumption (bot branches, broad write access), treat it as a fork.
 
             **A fresh worktree is not the user's environment.** It has no gitignored files,
             virtualenv or build cache. When a stage fails there for a reason the PR didn't cause,
@@ -619,10 +622,11 @@ class SkillGenerator:
             enables, so read the config before excluding anything: each linter's rule table
             below says where the config lives and which rules are on by default. A pattern
             whose rule is off, or ignored for that file, is in scope like any other code, and so
-            is a line suppressed inline (`# noqa: E722`, `// swiftlint:disable:next force_cast`):
-            the green run says nothing about it. The tools can list what is really on:
-            `ruff check --show-settings <file>`, and the "enabled in your config" column of
-            `swiftlint rules`.
+            is code suppressed inline, for a line or a region (`# noqa: E722`, `# ruff: noqa`,
+            `// swiftlint:disable force_cast` up to its `enable`): the green run says nothing
+            about it. The tools can list what is on: `ruff check --show-settings <file>`
+            (`linter.rules`, with exceptions under `linter.per_file_ignores`), and the "enabled
+            in your config" column of `swiftlint rules`.
 
             **5. Record which oracle covers which changed files.** Coverage is not uniform, and
             an exclusion you apply outside the range of the command that earned it is a guess
@@ -683,7 +687,8 @@ class SkillGenerator:
                 lines.append("|---|---|")
                 for p in proves:
                     excludes = (
-                        "only the patterns whose rule the repo's config enables (rule table below)"
+                        "whatever the repo's config enables, and nothing it leaves off; the rule "
+                        "table below covers the patterns most often wrongly assumed"
                         if p.get("rules") else p["excludes"]
                     )
                     lines.append(f"| {code_span(p['green'])} | {excludes} |")
@@ -746,6 +751,10 @@ class SkillGenerator:
             git diff <base>...HEAD --numstat | awk '{{split($3,a,"/"); k=a[1]"/"a[2]; add[k]+=$1; n[k]++}} END {{for (i in add) printf "%7d ins %4d files  %s\\n", add[i], n[i], i}}' | sort -rn
             ```
 
+            In Mode 2, measure the PR, not your checkout: run these in the PR's worktree with
+            `origin/<baseRefName>` as `<base>`, or, without a worktree, count from
+            `gh pr diff <number>`.
+
             **Check the base is what you think it is.** `git fetch` first and compare
             `git rev-parse main origin/main`. A stale local base silently inflates the diff
             with work that already merged — you end up reviewing other people's landed code
@@ -788,7 +797,8 @@ class SkillGenerator:
             5. **What changed and why?** (Mode 1 and 2 only) What was the author trying to
                accomplish? Read the PR description (Mode 2: the `body` fetched above; Mode 1: if
                the branch has an open PR, `gh pr view --json title,body`) and the commit messages
-               (`git log main..HEAD`). Understanding intent prevents false findings. But the
+               (Mode 1: `git log main..HEAD`; Mode 2: `gh pr view <number> --json commits`).
+               Understanding intent prevents false findings. But the
                description is the author's claim, not evidence: intent can explain a choice, and
                it never makes a defect or an unsafe change acceptable.
 
