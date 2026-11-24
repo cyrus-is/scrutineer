@@ -179,17 +179,20 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 ## Release train
 
-Weekly, until the issue backlog is empty (Cyrus, 2026-11-23). The backlog is every roadmap item as an issue under its release milestone, plus the 12 issues that were open before the roadmap, each now mapped to a release.
+**One backlog item a week,** until the issue backlog is empty (Cyrus, 2026-11-23). The backlog is every roadmap item as an issue under its release milestone, plus the 12 issues that were open before the roadmap, each now mapped to a release. At one a week, the milestones before "Later" hold 38 items, which is about 38 weeks. "Later" and the multi-tool milestone don't count toward finishing.
 
-- **Every Monday:** if `staging` has changed since the last release and CI is green, cut a release:
-  1. open a "Release X.Y.Z" PR from `staging` to `main`, with notes drafted from the merged PRs;
+- **Each week:** take the next item in roadmap order, build it on a branch, run a fresh-context review, and merge it to `staging`.
+- **Release day is Monday:** if `staging` has changed since the last release and CI is green, cut a release:
+  1. open a "Release X.Y.Z" PR from `staging` to `main`, with notes drafted from the merged PR;
   2. Cyrus approves it;
   3. fast-forward `main` to `staging`;
   4. `gh release create vX.Y.Z --target main`, which publishes to PyPI.
-- **`staging` is always releasable.** Work that changes what reaches the reader, meaning the 2.1 bundle and the 2.3 validator, stays on its feature branch, or behind an opt-in flag, until its held-out gate passes. Only then does it merge. Everything else (fixes, hygiene, coverage behind its own gates) merges when it's ready and rides the next train.
-- **Version numbers follow what shipped,** not the calendar. A week with only fixes is a patch (2.0.1). The week a theme lands, the minor version goes up (2.1.0).
+- **`staging` is always releasable.** An item that changes what reaches the reader, meaning the 2.1 items and the 2.3 validator, ships behind an opt-in flag, so it can still go out the week it's built. When the milestone's held-out test passes, the flag becomes the default and the minor version goes up (2.1.0). Everything else ships as is.
+- **Version numbers follow what shipped:**
+  - a week with only fixes or flagged items is a patch (2.0.1);
+  - the week a milestone's default changes, the minor version goes up.
 - **A quiet week ships nothing.** No empty releases.
-- **The train stops** when the backlog's milestones are closed. Cadence is then revisited.
+- **The train stops** when the milestones before "Later" are closed. Cadence is then revisited.
 
 ## Decisions this roadmap waits on
 
