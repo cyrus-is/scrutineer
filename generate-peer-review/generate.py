@@ -46,8 +46,8 @@ def _render(template: str, **values) -> str:
     return textwrap.dedent(template).format(**values)
 
 
-@functools.lru_cache(maxsize=None)
-def _glob_regex(pattern: str) -> "re.Pattern[str]":
+@functools.cache
+def _glob_regex(pattern: str) -> re.Pattern[str]:
     parts = pattern.split("**/")
     candidates = {
         parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
@@ -382,7 +382,7 @@ class ServiceMapLoader:
 
 class SkillGenerator:
 
-    def __init__(self, previews: "frozenset[str]" = frozenset()):
+    def __init__(self, previews: frozenset[str] = frozenset()):
         # Gate prose in this file with self.preview_on(<milestone>); see its docstring.
         self.previews = previews
 
@@ -776,7 +776,7 @@ class SkillGenerator:
 
         return "\n".join(lines)
 
-    def _diff_triage_section(self, service_map: "ServiceMapLoader | None") -> str:
+    def _diff_triage_section(self, service_map: ServiceMapLoader | None) -> str:
         """Measure the diff before reviewing it, and partition when it is too large.
 
         Mode 1 assumes a branch diff is a review unit. It is not always: a branch
@@ -1488,7 +1488,7 @@ def _milestone_arg(value: str) -> str:
     return value
 
 
-def apply_previews(node, enabled: "set[str] | frozenset[str]"):
+def apply_previews(node, enabled: set[str] | frozenset[str]):
     """Drop guidance that belongs to a preview milestone the install didn't turn on.
 
     Output changes ship behind their milestone's preview flag until its gate passes

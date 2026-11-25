@@ -206,7 +206,7 @@ Both generators use `servicemap.json` at the repo root when it's present. Pass `
 
 ## Requirements
 
-- Python 3.10+ and `pyyaml>=6.0`, which pip installs for you.
+- Python 3.14+ and `pyyaml>=6.0`, which pip installs for you.
 - [Claude Code](https://claude.ai/code) to run the commands.
 - `git`. Detection reads git's file list, and falls back to walking the directory outside a git repo.
 - [`gh`](https://cli.github.com) for PR mode in both reviews.

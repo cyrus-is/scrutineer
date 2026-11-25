@@ -16,14 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.13"]
+        python-version: ["3.14", "3.15"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: python -m pip install "pyyaml>=6.0,<7.0" build
+        # Temporary caps until 7-day cooling-off clears (PyYAML 6.0.4: 2026-11-27; packaging 26.4: 2026-11-30); hash-pinned constraints follow in #48.
+        run: python -m pip install "pyyaml>=6.0,<=6.0.3" build "packaging<26.4"
       - name: Generator and CLI tests
         run: |
           python tests/test_generators.py
@@ -42,11 +43,14 @@ jobs:
           python -m venv /tmp/wheel-venv
           # Both wheels at once, so the forwarding package's vld8 requirement
           # resolves to the wheel just built rather than to PyPI.
-          /tmp/wheel-venv/bin/pip install dist/vld8-*.whl dist/scrutineer-*.whl
+          # Temporary cap until PyYAML 6.0.4 clears the 7-day cooling-off bar on 2026-11-27 (#48).
+          /tmp/wheel-venv/bin/pip install "pyyaml>=6.0,<=6.0.3" dist/vld8-*.whl dist/scrutineer-*.whl
+          pkg_version=$(python -c 'import pathlib, tomllib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')
           mkdir /tmp/target && cd /tmp/target && git init -q && echo 'export const x = 1;' > index.ts
           mkdir -p .claude/commands
           printf -- '---\nname: scrutineer-mcp\n---\n' > .claude/commands/scrutineer-mcp.md
           /tmp/wheel-venv/bin/vld8 install /tmp/target
+          test "$(/tmp/wheel-venv/bin/vld8 --version)" = "vld8 $pkg_version"
           test -f .claude/commands/vld8-setup.md
           test ! -e .claude/commands/scrutineer-mcp.md
           test -f .claude/scrutineer-backup/scrutineer-mcp.md

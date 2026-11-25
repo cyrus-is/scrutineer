@@ -15,8 +15,6 @@ running, so it does the crawl itself and then hands the resulting path to the
 installer via ``service_map=``.
 """
 
-from __future__ import annotations
-
 import shutil
 import subprocess
 import sys

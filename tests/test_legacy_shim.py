@@ -4,8 +4,6 @@ It must forward every old command to vld8, keep stdout clean (skills read it),
 and require a vld8 version this repo actually builds. Dependency-free.
 """
 
-from __future__ import annotations
-
 import os
 import re
 import subprocess
