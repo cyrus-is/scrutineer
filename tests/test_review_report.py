@@ -397,11 +397,16 @@ def test_prepare_loading_and_resilience() -> None:
                 bool(report.validate_prepare_doc(doc)),
             )
 
-        # Huge node count in coverage
-        huge_cov = {"items": [1] * (report.MAX_COVERAGE_NODES + 5)}
+        # Huge node count in coverage (stays under MAX_UNRULED_COUNT per container)
+        per_bucket = 100
+        buckets = (report.MAX_COVERAGE_NODES // (per_bucket * 10)) + 2
+        huge_cov = {
+            f"g{g}": [[1] * per_bucket for _ in range(10)] for g in range(buckets)
+        }
+        cov_errs = report.validate_prepare_doc({"coverage": huge_cov})
         check(
             "validate_prepare_doc rejects oversized coverage nodes",
-            "max" in " ".join(report.validate_prepare_doc({"coverage": huge_cov})),
+            any("nodes" in err and "max" in err for err in cov_errs),
         )
 
         # Resilience: missing/invalid --findings STILL emits codeFindings.
@@ -927,6 +932,8 @@ def test_accounting_merge_rubric_prior_verdict_and_lens() -> None:
             severity="ISSUE",
             basis=None,  # model omitted basis, cf1 supplies "written rule"
             blocking=True,
+            package="requests",
+            version="2.0.0",
             candidateIds=["cand-m1"],
         )
         # Model disputes cf2
@@ -1382,6 +1389,8 @@ def test_accounting_merge_rubric_prior_verdict_and_lens() -> None:
                         quote="line1 = 1",
                         check_id="chk-pass1",
                         source="code",
+                        package="requests",
+                        version="2.0.0",
                         disposition="disputed",
                         reason="Disputed code check",
                         blocking=False,
@@ -1405,9 +1414,12 @@ def test_accounting_merge_rubric_prior_verdict_and_lens() -> None:
         )
         cm_by_chk = {f["checkId"]: f for f in r_code_model["findings"]}
         check(
-            "source=='code' in --findings merges dispute and keeps standalone code",
-            cm_by_chk["chk-pass1"]["disposition"] == "disputed"
+            "source=='code' merges dispute as 'code' and keeps standalone",
+            len(r_code_model["findings"]) == 6
+            and cm_by_chk["chk-pass1"]["source"] == "code"
+            and cm_by_chk["chk-pass1"]["disposition"] == "disputed"
             and cm_by_chk["chk-pass1"]["blocking"] is False
+            and cm_by_chk["chk-pass1"]["package"] == "requests"
             and "chk-extra-code" in cm_by_chk,
         )
 
@@ -1751,12 +1763,522 @@ def test_determinism_renderers_escaping_and_atomic_out() -> None:
             check("render_report rejects unknown format", True)
 
 
+def test_security_fixes_and_edge_coverage() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-sec-edge-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        repo.mkdir()
+        _write_repo_file(repo, "a.py", "same = 1\nother = 2\n")
+        _write_repo_file(repo, "b.py", "same = 1\n")
+        _write_repo_file(repo, "many.py", "1\n2\n3\n4\n5\n")
+
+        # 1a. source=='code' in --findings verifies citations and accounting.
+        prep_acc = _write_json(
+            root / "prep_acc.json",
+            {"schemaVersion": "1.0", "candidates": [{"candidateId": "cand-code"}]},
+        )
+        bad_code_cit = _write_json(
+            root / "bad_code_cit.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="FABRICATED_QUOTE",
+                        check_id="code-bad-cit",
+                        source="code",
+                        candidateIds=["cand-code"],
+                    )
+                ]
+            ),
+        )
+        r_bad_cc = report.build_report(
+            findings_path=bad_code_cit, prepare_path=prep_acc, repo_path=repo
+        )
+        check(
+            "source=='code' in --findings rejects bad citations and fails accounting",
+            r_bad_cc["exitCode"] == 2
+            and len(r_bad_cc["errors"]["badCitations"]) == 1
+            and r_bad_cc["findings"] == []
+            and r_bad_cc["errors"]["unaccountedCandidates"] == ["cand-code"],
+        )
+
+        # 1b. Valid source=='code' in --findings accounts for candidateIds cleanly.
+        cf_acc = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-src-code",
+            source="code",
+            severity="ISSUE",
+            basis="written rule",
+            blocking=True,
+        )
+        prep_src_code = _write_json(
+            root / "prep_src_code.json",
+            {
+                "schemaVersion": "1.0",
+                "candidates": [{"candidateId": "cand-code"}],
+                "codeFindings": [cf_acc],
+            },
+        )
+        good_code_cit = _write_json(
+            root / "good_code_cit.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-src-code",
+                        source="code",
+                        severity="ISSUE",
+                        basis="written rule",
+                        blocking=True,
+                        candidateIds=["cand-code"],
+                    )
+                ]
+            ),
+        )
+        r_good_cc = report.build_report(
+            findings_path=good_code_cit, prepare_path=prep_src_code, repo_path=repo
+        )
+        check(
+            "valid source=='code' keeps source='code' and closes candidate",
+            r_good_cc["exitCode"] == 1
+            and r_good_cc["verdict"] == "REQUEST CHANGES"
+            and len(r_good_cc["findings"]) == 1
+            and r_good_cc["findings"][0]["source"] == "code"
+            and r_good_cc["errors"]["unaccountedCandidates"] == [],
+        )
+
+        # 1c. source=='both' without matching prepare codeFinding is rejected.
+        unmatched_both = _write_json(
+            root / "unmatched_both.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="b.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-fake-both",
+                        source="both",
+                        candidateIds=["cand-code"],
+                    )
+                ]
+            ),
+        )
+        r_ub = report.build_report(
+            findings_path=unmatched_both, prepare_path=prep_acc, repo_path=repo
+        )
+        check(
+            "unmatched source=='both' in --findings is rejected before accounting",
+            r_ub["exitCode"] == 2
+            and any("source 'both'" in e for e in r_ub["errors"]["validationErrors"])
+            and r_ub["findings"] == []
+            and r_ub["errors"]["unaccountedCandidates"] == ["cand-code"],
+        )
+
+        # 2. Reasonless disposition='closed' cannot close prepare codeFinding.
+        cf_live = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-live-code",
+            source="code",
+            severity="ISSUE",
+            basis="written rule",
+            blocking=True,
+        )
+        prep_live = _write_json(
+            root / "prep_live.json",
+            {"schemaVersion": "1.0", "codeFindings": [cf_live]},
+        )
+        for bad_src in ("model", "code"):
+            try_close = _write_json(
+                root / f"try_close_{bad_src}.json",
+                _make_doc(
+                    [
+                        _make_finding(
+                            file="a.py",
+                            line_start=1,
+                            line_end=1,
+                            quote="same = 1",
+                            check_id="chk-live-code",
+                            source=bad_src,
+                            severity="ISSUE",
+                            basis="written rule",
+                            disposition="closed",
+                            blocking=False,
+                        )
+                    ]
+                ),
+            )
+            r_close = report.build_report(
+                findings_path=try_close, prepare_path=prep_live, repo_path=repo
+            )
+            check(
+                f"disposition='closed' ({bad_src}) cannot close prepare codeFinding",
+                r_close["exitCode"] == 2
+                and r_close["verdict"] == "REQUEST CHANGES"
+                and any(
+                    "disposition 'closed'" in e
+                    for e in r_close["errors"]["validationErrors"]
+                )
+                and len(r_close["findings"]) == 1
+                and r_close["findings"][0].get("disposition") != "closed"
+                and r_close["findings"][0]["blocking"] is True,
+            )
+
+        # 3. Same fingerprint in different files or lines stays site-distinct.
+        cf_a1 = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="dup-fp",
+            source="code",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+        )
+        cf_b1 = _make_finding(
+            file="b.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="dup-fp",
+            source="code",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+        )
+        prep_dup = _write_json(
+            root / "prep_dup.json",
+            {"schemaVersion": "1.0", "codeFindings": [cf_a1, cf_b1]},
+        )
+        mf_b_only = _write_json(
+            root / "mf_b_only.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="b.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="dup-fp",
+                        source="model",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    )
+                ]
+            ),
+        )
+        r_dup = report.build_report(
+            findings_path=mf_b_only, prepare_path=prep_dup, repo_path=repo
+        )
+        dup_by_file = {f["file"]: f for f in r_dup["findings"]}
+        check(
+            "same fingerprint in a.py and b.py stays separate and Pass 1 matches file",
+            len(r_dup["findings"]) == 2
+            and dup_by_file["a.py"]["source"] == "code"
+            and dup_by_file["b.py"]["source"] == "both",
+        )
+
+        # Also check Pass 1a exact (lineStart, lineEnd) preference + cf outranking mf
+        _write_repo_file(repo, "dup_lines.py", "x = 1\nx = 1\n")
+        cf_dl1 = _make_finding(
+            file="dup_lines.py",
+            line_start=1,
+            line_end=1,
+            quote="x = 1",
+            check_id="chk-dl",
+            source="code",
+            severity="ISSUE",
+            basis="written rule",
+            blocking=True,
+        )
+        cf_dl2 = _make_finding(
+            file="dup_lines.py",
+            line_start=2,
+            line_end=2,
+            quote="x = 1",
+            check_id="chk-dl",
+            source="code",
+            severity="ISSUE",
+            basis="written rule",
+            blocking=True,
+        )
+        mf_dl2_concern = _make_finding(
+            file="dup_lines.py",
+            line_start=2,
+            line_end=2,
+            quote="x = 1",
+            check_id="chk-dl",
+            source="model",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+        )
+        prep_dl = _write_json(
+            root / "prep_dl.json",
+            {"schemaVersion": "1.0", "codeFindings": [cf_dl1, cf_dl2]},
+        )
+        mod_dl = _write_json(root / "mod_dl.json", _make_doc([mf_dl2_concern]))
+        r_dl = report.build_report(
+            findings_path=mod_dl, prepare_path=prep_dl, repo_path=repo
+        )
+        dl_by_line = {f["lineStart"]: f for f in r_dl["findings"]}
+        check(
+            "Pass 1a matches exact lines and cf ISSUE outranks mf CONCERN",
+            len(r_dl["findings"]) == 2
+            and dl_by_line[1]["source"] == "code"
+            and dl_by_line[2]["source"] == "both"
+            and dl_by_line[2]["severity"] == "ISSUE"
+            and dl_by_line[2]["blocking"] is True,
+        )
+
+        # 4. Normalized blocking bit across verdict, JSON, Markdown, and SARIF.
+        code_unblk = _write_json(
+            root / "code_unblk.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-force-blk",
+                        lens="code",
+                        severity="ISSUE",
+                        basis="written rule",
+                        blocking=False,
+                    )
+                ]
+            ),
+        )
+        r_unblk = report.build_report(findings_path=code_unblk, repo_path=repo)
+        md_unblk = report.render_markdown(r_unblk)
+        json_unblk = json.loads(report.render_json(r_unblk))
+        sarif_unblk = json.loads(report.render_sarif(r_unblk))
+        check(
+            "active code ISSUE normalizes blocking=True across verdict/JSON/MD/SARIF",
+            r_unblk["verdict"] == "REQUEST CHANGES"
+            and r_unblk["exitCode"] == 1
+            and json_unblk["findings"][0]["blocking"] is True
+            and "- **Blocking:** yes" in md_unblk
+            and "1 blocking" in md_unblk
+            and sarif_unblk["runs"][0]["results"][0]["level"] == "error",
+        )
+
+        # Active code CONCERN with blocking=True -> blocking=False everywhere
+        code_blk_concern = _write_json(
+            root / "code_blk_c.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-unforce-blk",
+                        lens="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=True,
+                    )
+                ]
+            ),
+        )
+        r_blk_c = report.build_report(findings_path=code_blk_concern, repo_path=repo)
+        md_blk_c = report.render_markdown(r_blk_c)
+        json_blk_c = json.loads(report.render_json(r_blk_c))
+        sarif_blk_c = json.loads(report.render_sarif(r_blk_c))
+        check(
+            "active code CONCERN sets blocking=False across verdict/JSON/MD/SARIF",
+            r_blk_c["verdict"] == "APPROVE"
+            and r_blk_c["exitCode"] == 0
+            and json_blk_c["findings"][0]["blocking"] is False
+            and "- **Blocking:** no" in md_blk_c
+            and "0 blocking" in md_blk_c
+            and sarif_blk_c["runs"][0]["results"][0]["level"] == "warning",
+        )
+
+        # 5. prepare.json riskList and packet validation
+        check(
+            "validate_prepare_doc accepts valid riskList and packet",
+            report.validate_prepare_doc(
+                {
+                    "schemaVersion": "1.0",
+                    "riskList": ["changed auth handler", {"file": "a.py", "risk": 2}],
+                    "packet": {"diffBytes": 120, "files": ["a.py"]},
+                }
+            )
+            == [],
+        )
+        check(
+            "validate_prepare_doc rejects wrong types for riskList and packet",
+            bool(report.validate_prepare_doc({"riskList": {"bad": 1}}))
+            and bool(report.validate_prepare_doc({"packet": ["bad"]})),
+        )
+
+        # 6, 7 & 12. JSON control-char sanitization and Markdown table/link escaping
+        ctrl_doc = _write_json(
+            root / "ctrl.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-ctrl",
+                        claim="Text\x7f\x85\u2028\u2029\\_[click](https://ex) | end",
+                        evidence="Ev\x80\x9f\\|pipe",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    )
+                ]
+            ),
+        )
+        r_ctrl = report.build_report(findings_path=ctrl_doc, repo_path=repo)
+        raw_json_ctrl = report.render_json(r_ctrl)
+        check(
+            "render_json strips DEL, C1 controls, and U+2028/U+2029",
+            "\x7f" not in raw_json_ctrl
+            and "\x85" not in raw_json_ctrl
+            and "\x80" not in raw_json_ctrl
+            and "\u2028" not in raw_json_ctrl
+            and "\u2029" not in raw_json_ctrl,
+        )
+        esc_inline = report._md_escape_inline("a\\b <x> [y](z)")
+        esc_cell = report._md_escape_cell("a|b\\")
+        esc_span = report._md_code_span("foo\\|bar", in_table=True)
+        check(
+            "markdown escaping handles backslash, brackets, and code-span pipes",
+            esc_inline == "a\\\\b &lt;x&gt; \\[y\\](z)"
+            and esc_cell == "a&#124;b\\\\"
+            and esc_span == "`foo\\\\\\|bar`",
+        )
+
+        # 8. Missing branch coverage: validation errors, MAX_CITED_FILE_LINES, SARIF
+        bad_prep = _write_json(root / "bad_prep.json", {"riskList": "wrong-type"})
+        bad_prior = _write_json(
+            root / "bad_prior.json",
+            {"schemaVersion": "1.0", "findings": ["not-a-dict"]},
+        )
+        r_errs = report.build_report(
+            findings_path=ctrl_doc,
+            prepare_path=bad_prep,
+            prior_path=bad_prior,
+            repo_path=repo,
+        )
+        val_errs = r_errs["errors"]["validationErrors"]
+        check(
+            "build_report surfaces --prepare and --prior FindingsValidationError",
+            r_errs["exitCode"] == 2
+            and any(e.startswith("--prepare:") for e in val_errs)
+            and any(e.startswith("--prior:") for e in val_errs),
+        )
+
+        orig_max_lines = report.MAX_CITED_FILE_LINES
+        try:
+            report.MAX_CITED_FILE_LINES = 3
+            too_long_f = _write_json(
+                root / "too_long.json",
+                _make_doc(
+                    [
+                        _make_finding(
+                            file="many.py",
+                            line_start=1,
+                            line_end=1,
+                            quote="1",
+                            check_id="chk-lines",
+                            severity="CONCERN",
+                            basis=None,
+                            blocking=False,
+                        )
+                    ]
+                ),
+            )
+            r_long = report.build_report(findings_path=too_long_f, repo_path=repo)
+            check(
+                "MAX_CITED_FILE_LINES rejects files over line limit",
+                r_long["exitCode"] == 2 and len(r_long["errors"]["badCitations"]) == 1,
+            )
+        finally:
+            report.MAX_CITED_FILE_LINES = orig_max_lines
+
+        sarif_dup_doc = _write_json(
+            root / "sarif_dup.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="same-rule",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    ),
+                    _make_finding(
+                        file="b.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="same-rule",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    ),
+                ]
+            ),
+        )
+        r_sarif_dup = report.build_report(findings_path=sarif_dup_doc, repo_path=repo)
+        sarif_dup = json.loads(report.render_sarif(r_sarif_dup))
+        check(
+            "SARIF deduplicates rules for shared checkId",
+            len(sarif_dup["runs"][0]["tool"]["driver"]["rules"]) == 1
+            and len(sarif_dup["runs"][0]["results"]) == 2
+            and sarif_dup["runs"][0]["results"][0]["ruleIndex"] == 0
+            and sarif_dup["runs"][0]["results"][1]["ruleIndex"] == 0,
+        )
+
+        # 11. MAX_CACHE_ENTRIES evicts zero-byte error entries + regular file as dir
+        orig_entries = report.MAX_CACHE_ENTRIES
+        try:
+            report.MAX_CACHE_ENTRIES = 2
+            ecache = report._RepoFileCache(repo)
+            ecache.get_lines("missing1.py")
+            ecache.get_lines("missing2.py")
+            ecache.get_lines("missing3.py")
+            status_reg_dir, _, _ = ecache.get_lines("a.py/sub.py")
+            check(
+                "LRU cache evicts zero-byte error entries at MAX_CACHE_ENTRIES",
+                len(ecache._cache) == 2
+                and "missing1.py" not in ecache._cache
+                and status_reg_dir == "error",
+            )
+        finally:
+            report.MAX_CACHE_ENTRIES = orig_entries
+
+
 def main() -> int:
     test_cli_and_help()
     test_prepare_loading_and_resilience()
     test_citations_and_security()
     test_accounting_merge_rubric_prior_verdict_and_lens()
     test_determinism_renderers_escaping_and_atomic_out()
+    test_security_fixes_and_edge_coverage()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

@@ -1,8 +1,8 @@
 """Command-line front door.
 
-``vld8 install [target]`` installs the skill set. ``vld8 mcp …`` and
-``vld8 map …`` run the toolkit's bundled scripts, which is how the
-installed skills reach them from any repo.
+``vld8 install [target]`` installs the skill set. ``vld8 mcp …``,
+``vld8 map …``, and ``vld8 review …`` run the toolkit's bundled commands,
+which is how the installed skills reach them from any repo.
 
 Reachable two ways, both running the same shared core:
     python -m vld8 install /path/to/repo        # from a clone

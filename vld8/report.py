@@ -6,14 +6,14 @@ code/model merging, prior disposition tracking, verdict/lens assessment, and
 Markdown / JSON / SARIF 2.1.0 rendering using only the Python standard library.
 """
 
-from __future__ import annotations
-
 import copy
+import errno
 import json
 import math
 import os
 import re
 import stat
+import sys
 import tempfile
 from collections import OrderedDict
 from pathlib import Path
@@ -36,6 +36,7 @@ MAX_COVERAGE_DEPTH = 6
 MAX_CITED_FILE_BYTES = 5 * 1024 * 1024
 MAX_CITED_FILE_LINES = 200_000
 MAX_CACHE_BYTES = 64 * 1024 * 1024
+MAX_CACHE_ENTRIES = 10_000
 
 LENS_CATEGORIES: tuple[tuple[str, str], ...] = (
     ("production-reliability", "Production Reliability"),
@@ -68,6 +69,8 @@ _PREPARE_DOC_KEYS = frozenset(
         "codeFindings",
         "unruled",
         "coverage",
+        "riskList",
+        "packet",
     }
 )
 _CANDIDATE_KEYS = frozenset(
@@ -119,19 +122,25 @@ def _sanitize_text(value: Any, *, allow_newlines: bool = False) -> str:
 def _md_escape_inline(value: Any) -> str:
     """Sanitize untrusted text for single-line Markdown prose."""
     cleaned = _sanitize_text(value, allow_newlines=False)
-    return cleaned.replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        cleaned.replace("\\", "\\\\")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+    )
 
 
 def _md_escape_cell(value: Any) -> str:
     """Sanitize untrusted text for a Markdown table cell."""
-    return _md_escape_inline(value).replace("|", "\\|")
+    return _md_escape_inline(value).replace("|", "&#124;")
 
 
 def _md_code_span(value: Any, *, in_table: bool = False) -> str:
     """Wrap text in a backtick inline span safe against inner backticks."""
     cleaned = _sanitize_text(value, allow_newlines=False)
     if in_table:
-        cleaned = cleaned.replace("|", "\\|")
+        cleaned = re.sub(r"(\\*)\|", lambda m: (m.group(1) * 2) + r"\|", cleaned)
     max_ticks = max((len(m.group(0)) for m in re.finditer(r"`+", cleaned)), default=0)
     fence = "`" * (max_ticks + 1)
     if cleaned.startswith("`") or cleaned.endswith("`"):
@@ -467,6 +476,24 @@ def validate_prepare_doc(data: Any) -> list[str]:
         else:
             _validate_bounded_value(cov, "prepare.coverage", errors)
 
+    if "riskList" in data and data["riskList"] is not None:
+        risk_list = data["riskList"]
+        if not isinstance(risk_list, list):
+            errors.append(
+                f"prepare.riskList: expected array, got {type(risk_list).__name__}"
+            )
+        else:
+            _validate_bounded_value(risk_list, "prepare.riskList", errors)
+
+    if "packet" in data and data["packet"] is not None:
+        packet = data["packet"]
+        if not isinstance(packet, dict):
+            errors.append(
+                f"prepare.packet: expected object, got {type(packet).__name__}"
+            )
+        else:
+            _validate_bounded_value(packet, "prepare.packet", errors)
+
     return errors
 
 
@@ -517,7 +544,13 @@ class _RepoFileCache:
         reason: str | None,
         size: int,
     ) -> tuple[str, list[str] | None, str | None]:
-        while self._cache and self._cached_bytes + size > MAX_CACHE_BYTES:
+        if rel_file in self._cache:
+            _, _, _, old_size = self._cache.pop(rel_file)
+            self._cached_bytes -= old_size
+        while self._cache and (
+            len(self._cache) >= MAX_CACHE_ENTRIES
+            or self._cached_bytes + size > MAX_CACHE_BYTES
+        ):
             _, (_, _, _, evicted_size) = self._cache.popitem(last=False)
             self._cached_bytes -= evicted_size
         if size <= MAX_CACHE_BYTES:
@@ -531,57 +564,84 @@ class _RepoFileCache:
             self._cache[rel_file] = (status, lines, reason, size)
             return (status, lines, reason)
 
-        cur = self.repo_root
-        for part in rel_file.split("/"):
-            cur = cur / part
+        parts = rel_file.split("/")
+        dir_flags = (
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        )
+        file_flags = (
+            os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0)
+        )
+        dir_fd = -1
+        fd = -1
+        try:
+            dir_fd = os.open(
+                str(self.repo_root),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+            )
+            cur = self.repo_root
+            for part in parts[:-1]:
+                cur = cur / part
+                try:
+                    next_fd = os.open(part, dir_flags, dir_fd=dir_fd)
+                except FileNotFoundError:
+                    return self._remember(
+                        rel_file, "error", None, f"cited file not found: {rel_file}", 0
+                    )
+                except OSError as exc:
+                    if exc.errno == errno.ELOOP:
+                        return self._remember(
+                            rel_file,
+                            "error",
+                            None,
+                            f"cited path traverses symlink: {rel_file}",
+                            0,
+                        )
+                    detail = findings._safe_label(exc.strerror or str(exc))
+                    return self._remember(
+                        rel_file, "error", None, f"cannot stat {rel_file}: {detail}", 0
+                    )
+                os.close(dir_fd)
+                dir_fd = next_fd
+
+            cur = cur / parts[-1]
             try:
-                st = cur.lstat()
+                resolved = cur.resolve()
+            except (OSError, RuntimeError) as exc:
+                detail = findings._safe_label(str(exc))
+                return self._remember(
+                    rel_file, "error", None, f"cannot resolve {rel_file}: {detail}", 0
+                )
+            if not resolved.is_relative_to(self.repo_root):
+                return self._remember(
+                    rel_file,
+                    "error",
+                    None,
+                    f"cited path escapes repository root: {rel_file}",
+                    0,
+                )
+
+            try:
+                fd = os.open(parts[-1], file_flags, dir_fd=dir_fd)
             except FileNotFoundError:
                 return self._remember(
                     rel_file, "error", None, f"cited file not found: {rel_file}", 0
                 )
             except OSError as exc:
+                if exc.errno == errno.ELOOP:
+                    return self._remember(
+                        rel_file,
+                        "error",
+                        None,
+                        f"cited path traverses symlink: {rel_file}",
+                        0,
+                    )
                 detail = findings._safe_label(exc.strerror or str(exc))
                 return self._remember(
-                    rel_file, "error", None, f"cannot stat {rel_file}: {detail}", 0
+                    rel_file, "error", None, f"cannot open {rel_file}: {detail}", 0
                 )
-            if stat.S_ISLNK(st.st_mode):
-                return self._remember(
-                    rel_file,
-                    "error",
-                    None,
-                    f"cited path traverses symlink: {rel_file}",
-                    0,
-                )
+            os.close(dir_fd)
+            dir_fd = -1
 
-        try:
-            resolved = cur.resolve()
-        except (OSError, RuntimeError) as exc:
-            detail = findings._safe_label(str(exc))
-            return self._remember(
-                rel_file, "error", None, f"cannot resolve {rel_file}: {detail}", 0
-            )
-        if not resolved.is_relative_to(self.repo_root):
-            return self._remember(
-                rel_file,
-                "error",
-                None,
-                f"cited path escapes repository root: {rel_file}",
-                0,
-            )
-
-        flags = (
-            os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0)
-        )
-        try:
-            fd = os.open(str(cur), flags)
-        except OSError as exc:
-            detail = findings._safe_label(exc.strerror or str(exc))
-            return self._remember(
-                rel_file, "error", None, f"cannot open {rel_file}: {detail}", 0
-            )
-
-        try:
             st = os.fstat(fd)
             if not stat.S_ISREG(st.st_mode):
                 return self._remember(
@@ -610,6 +670,8 @@ class _RepoFileCache:
         finally:
             if fd != -1:
                 os.close(fd)
+            if dir_fd != -1:
+                os.close(dir_fd)
 
         if len(raw) > MAX_CITED_FILE_BYTES:
             return self._remember(
@@ -850,10 +912,26 @@ def _attach_class_proposal(
         return
 
 
-def _merge_pair(cf: dict[str, Any], mf: dict[str, Any]) -> dict[str, Any]:
-    """Merge a matched code finding and model finding into source='both'."""
+def _site_identity(finding: dict[str, Any]) -> tuple[str, int, int, str, str]:
+    """Return site-specific identity key including file and line range."""
+    return (
+        finding["file"],
+        finding["lineStart"],
+        finding["lineEnd"],
+        finding["checkId"],
+        finding["fingerprint"],
+    )
+
+
+def _merge_pair(
+    cf: dict[str, Any],
+    mf: dict[str, Any],
+    *,
+    merge_errors: list[str] | None = None,
+) -> dict[str, Any]:
+    """Merge a matched code finding and model/override finding."""
     merged = copy.deepcopy(mf)
-    merged["source"] = "both"
+    merged["source"] = "code" if mf.get("source") == "code" else "both"
     merged["fingerprint"] = cf["fingerprint"]
 
     if merged.get("category") is None and cf.get("category") is not None:
@@ -893,18 +971,32 @@ def _merge_pair(cf: dict[str, Any], mf: dict[str, Any]) -> dict[str, Any]:
     if merged.get("reason") is None and cf.get("reason") is not None:
         merged["reason"] = cf["reason"]
 
-    if merged.get("disposition") is None and cf.get("disposition") is not None:
+    if merged.get("disposition") == "closed":
+        if merge_errors is not None:
+            merge_errors.append(
+                f"--findings: cannot close prepare codeFinding "
+                f"{findings._safe_label(cf['checkId'])} at "
+                f"{findings._safe_label(cf['file'])}:"
+                f"{cf['lineStart']}-{cf['lineEnd']} with disposition 'closed'; "
+                "use 'disputed' or 'suppressed' with a reason"
+            )
+        if cf.get("disposition") is not None:
+            merged["disposition"] = cf["disposition"]
+        else:
+            merged.pop("disposition", None)
+    elif merged.get("disposition") is None and cf.get("disposition") is not None:
         merged["disposition"] = cf["disposition"]
 
-    if merged.get("disposition") in ("disputed", "closed"):
+    if cf["lens"] == mf["lens"] and (
+        SEVERITY_RANK[cf["severity"]] < SEVERITY_RANK[mf["severity"]]
+    ):
+        merged["severity"] = cf["severity"]
+
+    if merged.get("disposition") in ("disputed", "closed") or suppressed:
         merged["blocking"] = False
+    elif cf["lens"] == "code" and mf["lens"] == "code":
+        merged["blocking"] = merged["severity"] == "ISSUE"
     else:
-        if cf["lens"] == mf["lens"] and (
-            SEVERITY_RANK[cf["severity"]] < SEVERITY_RANK[mf["severity"]]
-        ):
-            merged["severity"] = cf["severity"]
-            if cf.get("basis") is not None and merged.get("basis") is None:
-                merged["basis"] = cf["basis"]
         merged["blocking"] = bool(cf.get("blocking") or mf.get("blocking"))
 
     return merged
@@ -914,67 +1006,146 @@ def _ranges_overlap(a: dict[str, Any], b: dict[str, Any]) -> bool:
     return a["lineStart"] <= b["lineEnd"] and b["lineStart"] <= a["lineEnd"]
 
 
+def _normalize_blocking(findings_list: list[dict[str, Any]]) -> None:
+    """Normalize finding['blocking'] consistently after downgrades and merging."""
+    for item in findings_list:
+        if not _is_active(item):
+            item["blocking"] = False
+        elif item["lens"] == "code":
+            item["blocking"] = item["severity"] == "ISSUE"
+        else:
+            item["blocking"] = bool(item.get("blocking", False))
+
+
 def _merge_findings(
     prepare_code_findings: list[dict[str, Any]],
     model_findings: list[dict[str, Any]],
     model_code_findings: list[dict[str, Any]],
     candidates_by_id: dict[str, dict[str, Any]],
     file_cache: _RepoFileCache | None,
-) -> tuple[list[dict[str, Any]], int, int, int]:
+    *,
+    has_prepare: bool = False,
+) -> tuple[list[dict[str, Any]], int, int, int, list[str], set[int]]:
     """Merge code findings and verified model findings deterministically.
 
-    Returns ``(merged_findings, code_count, model_count, both_count)`` where
-    ``code_count`` counts findings backed by code (``source in ("code", "both")``),
-    ``model_count`` counts findings backed by model (``source in ("model", "both")``),
-    and ``both_count`` counts findings with ``source == "both"``.
+    Returns ``(merged_findings, code_count, model_count, both_count,
+    merge_errors, rejected_input_ids)``.
     """
-    code_by_fp: dict[str, int] = {}
+    merge_errors: list[str] = []
+    rejected_input_ids: set[int] = set()
+
+    code_by_site: dict[tuple[str, int, int, str, str], int] = {}
     code_list: list[dict[str, Any]] = []
+    from_prepare: list[bool] = []
     for item in sorted(
         (copy.deepcopy(x) for x in prepare_code_findings),
         key=_finding_sort_key,
     ):
-        if item["fingerprint"] not in code_by_fp:
-            code_by_fp[item["fingerprint"]] = len(code_list)
+        key = _site_identity(item)
+        if key not in code_by_site:
+            code_by_site[key] = len(code_list)
             code_list.append(item)
+            from_prepare.append(True)
 
-    for extra in sorted(
-        (copy.deepcopy(x) for x in model_code_findings),
-        key=_finding_sort_key,
-    ):
-        fp = extra["fingerprint"]
-        if fp in code_by_fp:
-            idx = code_by_fp[fp]
-            if (
-                extra.get("disposition") is not None
-                or extra.get("suppressed")
-                or extra.get("class") is not None
-            ):
-                code_list[idx] = _merge_pair(code_list[idx], extra)
+    # Map verified source=='code' overrides onto prepare codeFindings by exact
+    # site first, then unambiguous (file, checkId, fingerprint).
+    code_by_fcf: dict[tuple[str, str, str], list[int]] = {}
+    for ci, cf in enumerate(code_list):
+        fcf_key = (cf["file"], cf["checkId"], cf["fingerprint"])
+        code_by_fcf.setdefault(fcf_key, []).append(ci)
+
+    matched_prepare_indices: set[int] = set()
+    unmatched_extras: list[dict[str, Any]] = []
+    for extra in sorted(model_code_findings, key=_finding_sort_key):
+        extra_copy = copy.deepcopy(extra)
+        skey = _site_identity(extra_copy)
+        ci: int | None = code_by_site.get(skey)
+        if ci is not None and ci in matched_prepare_indices:
+            ci = None
+        if ci is None:
+            fcf_candidates = [
+                idx
+                for idx in code_by_fcf.get(
+                    (
+                        extra_copy["file"],
+                        extra_copy["checkId"],
+                        extra_copy["fingerprint"],
+                    ),
+                    [],
+                )
+                if idx not in matched_prepare_indices
+            ]
+            if len(fcf_candidates) == 1:
+                ci = fcf_candidates[0]
+        if ci is not None:
+            matched_prepare_indices.add(ci)
+            code_list[ci] = _merge_pair(
+                code_list[ci], extra_copy, merge_errors=merge_errors
+            )
         else:
-            code_by_fp[fp] = len(code_list)
-            code_list.append(extra)
-    code_list.sort(key=_finding_sort_key)
+            unmatched_extras.append(extra_copy)
 
-    model_list = sorted(
-        (copy.deepcopy(item) for item in model_findings),
-        key=_finding_sort_key,
+    for extra_copy in unmatched_extras:
+        skey = _site_identity(extra_copy)
+        if skey not in code_by_site:
+            code_by_site[skey] = len(code_list)
+            code_list.append(extra_copy)
+            from_prepare.append(False)
+
+    # Sort code_list along with from_prepare flags consistently.
+    paired_code = sorted(
+        zip(code_list, from_prepare, strict=True),
+        key=lambda pair: _finding_sort_key(pair[0]),
     )
+    code_list = [pair[0] for pair in paired_code]
+    from_prepare = [pair[1] for pair in paired_code]
+
+    model_with_orig_id = sorted(
+        ((id(item), copy.deepcopy(item)) for item in model_findings),
+        key=lambda pair: _finding_sort_key(pair[1]),
+    )
+    model_orig_ids = [orig_id for orig_id, _ in model_with_orig_id]
+    model_list = [item for _, item in model_with_orig_id]
 
     used_code: set[int] = set()
     used_model: set[int] = set()
     pairs: list[tuple[int, int]] = []
 
-    # Pass 1: exact fingerprint match.
-    model_by_fp: dict[str, list[int]] = {}
-    for mi, mf in enumerate(model_list):
-        model_by_fp.setdefault(mf["fingerprint"], []).append(mi)
+    # Pass 1a: 1-to-1 exact (file, lineStart, lineEnd, checkId, fingerprint) match.
+    code_by_exact: dict[tuple[str, int, int, str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
-        matches = [
-            mi for mi in model_by_fp.get(cf["fingerprint"], []) if mi not in used_model
-        ]
-        if matches:
-            mi = matches[0]
+        if from_prepare[ci] or not has_prepare:
+            code_by_exact.setdefault(_site_identity(cf), []).append(ci)
+    model_by_exact: dict[tuple[str, int, int, str, str], list[int]] = {}
+    for mi, mf in enumerate(model_list):
+        model_by_exact.setdefault(_site_identity(mf), []).append(mi)
+    for key in sorted(set(code_by_exact) & set(model_by_exact)):
+        c_idxs = [ci for ci in code_by_exact[key] if ci not in used_code]
+        m_idxs = [mi for mi in model_by_exact[key] if mi not in used_model]
+        if len(c_idxs) == 1 and len(m_idxs) == 1:
+            ci, mi = c_idxs[0], m_idxs[0]
+            used_code.add(ci)
+            used_model.add(mi)
+            pairs.append((ci, mi))
+
+    # Pass 1b: 1-to-1 remaining (file, checkId, fingerprint) match.
+    code_by_fcf_rem: dict[tuple[str, str, str], list[int]] = {}
+    for ci, cf in enumerate(code_list):
+        if ci not in used_code and (from_prepare[ci] or not has_prepare):
+            code_by_fcf_rem.setdefault(
+                (cf["file"], cf["checkId"], cf["fingerprint"]), []
+            ).append(ci)
+    model_by_fcf_rem: dict[tuple[str, str, str], list[int]] = {}
+    for mi, mf in enumerate(model_list):
+        if mi not in used_model:
+            model_by_fcf_rem.setdefault(
+                (mf["file"], mf["checkId"], mf["fingerprint"]), []
+            ).append(mi)
+    for key in sorted(set(code_by_fcf_rem) & set(model_by_fcf_rem)):
+        c_idxs = code_by_fcf_rem[key]
+        m_idxs = model_by_fcf_rem[key]
+        if len(c_idxs) == 1 and len(m_idxs) == 1:
+            ci, mi = c_idxs[0], m_idxs[0]
             used_code.add(ci)
             used_model.add(mi)
             pairs.append((ci, mi))
@@ -987,7 +1158,7 @@ def _merge_findings(
         key = (mf["file"], mf["lineStart"], mf["lineEnd"], mf["checkId"])
         model_by_site.setdefault(key, []).append(mi)
     for ci, cf in enumerate(code_list):
-        if ci in used_code:
+        if ci in used_code or (has_prepare and not from_prepare[ci]):
             continue
         key = (cf["file"], cf["lineStart"], cf["lineEnd"], cf["checkId"])
         matches = [mi for mi in model_by_site.get(key, []) if mi not in used_model]
@@ -1000,7 +1171,7 @@ def _merge_findings(
     # Pass 3: unambiguous 1-to-1 overlapping range on (file, checkId).
     code_by_fc: dict[tuple[str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
-        if ci not in used_code:
+        if ci not in used_code and (from_prepare[ci] or not has_prepare):
             code_by_fc.setdefault((cf["file"], cf["checkId"]), []).append(ci)
     model_by_fc: dict[tuple[str, str], list[int]] = {}
     for mi, mf in enumerate(model_list):
@@ -1018,23 +1189,45 @@ def _merge_findings(
 
     merged_out: list[dict[str, Any]] = []
     for ci, mi in pairs:
-        merged_out.append(_merge_pair(code_list[ci], model_list[mi]))
+        merged_out.append(
+            _merge_pair(
+                code_list[ci],
+                model_list[mi],
+                merge_errors=merge_errors if from_prepare[ci] else None,
+            )
+        )
     for ci, cf in enumerate(code_list):
         if ci not in used_code:
             merged_out.append(cf)
     for mi, mf in enumerate(model_list):
         if mi not in used_model:
+            if has_prepare and mf.get("source") == "both":
+                rejected_input_ids.add(model_orig_ids[mi])
+                merge_errors.append(
+                    f"--findings: source 'both' finding "
+                    f"{findings._safe_label(mf['checkId'])} at "
+                    f"{findings._safe_label(mf['file'])}:"
+                    f"{mf['lineStart']}-{mf['lineEnd']} has no matching prepare "
+                    "codeFinding"
+                )
+                continue
             merged_out.append(mf)
 
     for item in merged_out:
-        if item.get("disposition") in ("disputed", "closed"):
-            item["blocking"] = False
         _attach_class_proposal(item, candidates_by_id, file_cache)
+    _normalize_blocking(merged_out)
 
     code_count = sum(1 for item in merged_out if item["source"] in ("code", "both"))
     model_count = sum(1 for item in merged_out if item["source"] in ("model", "both"))
     both_count = sum(1 for item in merged_out if item["source"] == "both")
-    return merged_out, code_count, model_count, both_count
+    return (
+        merged_out,
+        code_count,
+        model_count,
+        both_count,
+        merge_errors,
+        rejected_input_ids,
+    )
 
 
 def _mark_recurring(
@@ -1322,7 +1515,7 @@ def build_report(
                 f"--findings has {mod_tree!r}"
             )
 
-    # 5. Validate --repo directory & verify non-"code" citations from --findings.
+    # 5. Validate --repo directory & verify ALL citations from --findings.
     file_cache: _RepoFileCache | None = None
     repo_valid = False
     try:
@@ -1342,6 +1535,7 @@ def build_report(
             f"--repo cannot be resolved: {findings._safe_label(str(exc))}"
         )
 
+    verified_findings: list[dict[str, Any]] = []
     verified_model_findings: list[dict[str, Any]] = []
     model_code_findings: list[dict[str, Any]] = []
     dismissals: list[dict[str, Any]] = []
@@ -1351,9 +1545,6 @@ def build_report(
             key=lambda d: (d["candidateId"], d["reason"]),
         )
         for idx, item in enumerate(model_doc.get("findings", [])):
-            if item["source"] == "code":
-                model_code_findings.append(item)
-                continue
             if not repo_valid or file_cache is None:
                 errors["badCitations"].append(
                     {
@@ -1370,6 +1561,10 @@ def build_report(
             cit_errs = file_cache.verify_finding_citations(item, idx)
             if cit_errs:
                 errors["badCitations"].extend(cit_errs)
+                continue
+            verified_findings.append(item)
+            if item["source"] == "code":
+                model_code_findings.append(item)
             else:
                 verified_model_findings.append(item)
 
@@ -1384,12 +1579,31 @@ def build_report(
         )
     )
 
-    # 6. Candidate accounting when --prepare and --findings both loaded cleanly.
+    # 6. Merge code & verified findings, enforce rules, apply prior & downgrades.
+    (
+        merged_findings,
+        code_count,
+        model_count,
+        both_count,
+        merge_errors,
+        rejected_finding_ids,
+    ) = _merge_findings(
+        prepare_code_findings,
+        verified_model_findings,
+        model_code_findings,
+        candidates_by_id,
+        file_cache,
+        has_prepare=prepare_doc is not None,
+    )
+    errors["validationErrors"].extend(merge_errors)
+
+    # 7. Candidate accounting when --prepare and --findings both loaded cleanly.
     if prepare_doc is not None and model_doc is not None:
         declared_ids = set(candidates_by_id)
         ruled_ids: set[str] = set()
-        for item in verified_model_findings:
-            ruled_ids |= _extract_model_candidate_ids(item)
+        for item in verified_findings:
+            if id(item) not in rejected_finding_ids:
+                ruled_ids |= _extract_model_candidate_ids(item)
         dismissed_ids = {d["candidateId"] for d in dismissals}
         errors["conflictingCandidates"] = sorted(ruled_ids & dismissed_ids)
         errors["unknownCandidates"] = sorted((ruled_ids | dismissed_ids) - declared_ids)
@@ -1397,19 +1611,11 @@ def build_report(
             declared_ids - (ruled_ids | dismissed_ids)
         )
 
-    # 7. Merge code & model findings, apply prior, downgrade, sort deterministically.
-    merged_findings, code_count, model_count, both_count = _merge_findings(
-        prepare_code_findings,
-        verified_model_findings,
-        model_code_findings,
-        candidates_by_id,
-        file_cache,
-    )
-
     if prior_doc is not None:
         _mark_recurring(merged_findings, prior_doc["findings"])
 
     merged_findings, downgraded_ids = _apply_rubric_downgrades(merged_findings)
+    _normalize_blocking(merged_findings)
     sorted_findings = sorted(merged_findings, key=_finding_sort_key)
     downgrades, downgraded_numbers = _build_downgrade_records(
         sorted_findings, downgraded_ids
@@ -1468,9 +1674,32 @@ def public_json_payload(report: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in report.items() if k != "_meta"}
 
 
+def _sanitize_json_value(value: Any) -> Any:
+    """Recursively sanitize untrusted strings before JSON serialization."""
+    if isinstance(value, str):
+        return _sanitize_text(value, allow_newlines=True)
+    if isinstance(value, list):
+        return [_sanitize_json_value(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            (
+                _sanitize_text(k, allow_newlines=False) if isinstance(k, str) else k
+            ): _sanitize_json_value(v)
+            for k, v in value.items()
+        }
+    return value
+
+
 def render_json(report: dict[str, Any]) -> str:
     """Render report as deterministic, formatted camelCase JSON."""
-    return json.dumps(public_json_payload(report), indent=2, ensure_ascii=False) + "\n"
+    return (
+        json.dumps(
+            _sanitize_json_value(public_json_payload(report)),
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
 
 
 def _error_messages(errors: dict[str, list[Any]]) -> list[str]:
@@ -1644,7 +1873,11 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.append("| Lens | Rating | Notes |")
     lines.append("|---|---|---|")
     for row in report["lensAssessment"]:
-        lines.append(f"| {row['lens']} | {row['rating']} | {row['notes']} |")
+        lines.append(
+            f"| {_md_escape_cell(row['lens'])} | "
+            f"{_md_escape_cell(row['rating'])} | "
+            f"{_md_escape_cell(row['notes'])} |"
+        )
     lines.append("")
 
     if report["partial"] or report["unruled"] or report["coverage"] is not None:
@@ -1859,8 +2092,6 @@ def run_report(
     stderr: Any = None,
 ) -> int:
     """Execute ``vld8 review report`` end-to-end and return exit code (0/1/2)."""
-    import sys
-
     out_stream = sys.stdout if stdout is None else stdout
     err_stream = sys.stderr if stderr is None else stderr
 
