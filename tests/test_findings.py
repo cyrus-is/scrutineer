@@ -123,6 +123,19 @@ def test_schema_and_parity() -> None:
         == findings.VALID_SEVERITIES,
     )
     check(
+        "SECURITY_SEVERITIES and CODE_SEVERITIES partition VALID_SEVERITIES",
+        findings.CODE_SEVERITIES.isdisjoint(findings.SECURITY_SEVERITIES)
+        and (findings.CODE_SEVERITIES | findings.SECURITY_SEVERITIES)
+        == findings.VALID_SEVERITIES,
+    )
+    check(
+        "CODE_CATEGORIES contains the 8 code-lens evaluation categories",
+        len(findings.CODE_CATEGORIES) == 8
+        and {"production-reliability", "correctness", "security-invariant"}
+        & findings.CODE_CATEGORIES
+        == {"production-reliability", "correctness"},
+    )
+    check(
         "code severity rule matches CODE_SEVERITIES",
         set(defs["finding"]["allOf"][0]["then"]["properties"]["severity"]["enum"])
         == findings.CODE_SEVERITIES,
@@ -145,11 +158,28 @@ def test_schema_and_parity() -> None:
         defs["finding"]["properties"]["candidateIds"]["maxItems"]
         == findings.MAX_CANDIDATE_IDS,
     )
+    check(
+        "schema text maxLength parity matches constants",
+        defs["nonBlankText"]["maxLength"] == findings.MAX_SHORT_TEXT_LENGTH
+        and defs["nonBlankLongText"]["maxLength"] == findings.MAX_LONG_TEXT_LENGTH
+        and defs["nonBlankLine"]["maxLength"] == findings.MAX_LINE_LENGTH
+        and defs["repoRelativePath"]["maxLength"] == findings.MAX_PATH_LENGTH
+        and defs["identifier"]["maxLength"] == findings.MAX_IDENTIFIER_LENGTH
+        and defs["treeId"]["maxLength"] == findings.MAX_IDENTIFIER_LENGTH
+        and defs["finding"]["properties"]["quote"]["$ref"] == "#/$defs/nonBlankLongText"
+        and defs["finding"]["properties"]["evidence"]["$ref"]
+        == "#/$defs/nonBlankLongText"
+        and defs["siteRef"]["properties"]["quote"]["anyOf"][1]["$ref"]
+        == "#/$defs/nonBlankLongText",
+    )
 
-    # Regex parity between schema patterns and Python validator on edge cases.
+    # Regex parity between schema patterns and Python validator on edge cases
+    # without masking trailing newlines.
     path_re = re.compile(defs["repoRelativePath"]["pattern"], re.ASCII)
     id_re = re.compile(defs["identifier"]["pattern"], re.ASCII)
+    tree_re = re.compile(defs["treeId"]["pattern"], re.ASCII)
     sha_re = re.compile(defs["sha256Hex"]["pattern"], re.ASCII)
+    line_re = re.compile(defs["nonBlankLine"]["pattern"], re.ASCII)
     for sample, expected in [
         ("vld8/cli.py", True),
         (".github/workflows/test.yml", True),
@@ -170,12 +200,12 @@ def test_schema_and_parity() -> None:
         ("C:/a.py", False),
         ("a\x00b.py", False),
         ("a\nb.py", False),
+        ("a.py\n", False),
         ("a\x1bb.py", False),
     ]:
         errs: list[str] = []
         py_ok = findings._validate_repo_relative_path(sample, "p", errs)
-        # In Python `re`, `$` matches before `\n`; control-char exclusion avoids it.
-        re_ok = bool(path_re.match(sample)) and "\n" not in sample
+        re_ok = path_re.match(sample) is not None
         check(f"path parity ({sample!r})", py_ok == expected and re_ok == expected)
 
     for sample, expected in [
@@ -186,13 +216,33 @@ def test_schema_and_parity() -> None:
         ("has space", False),
         ("²superscript", False),
         ("id\nline2", False),
+        ("py-sec-01\n", False),
     ]:
         errs = []
         py_ok = findings._validate_identifier(sample, "id", errs)
-        re_ok = bool(id_re.match(sample)) and "\n" not in sample
+        re_ok = id_re.match(sample) is not None
         check(
             f"identifier parity ({sample!r})", py_ok == expected and re_ok == expected
         )
+
+    for sample, expected in [
+        ("abc123def456", True),
+        ("tree_2026.11-v1", True),
+        ("", False),
+        ("a/b", False),
+        ("a/../../outside", False),
+        ("a..b", False),
+        ("..", False),
+        (".dot", False),
+        ("-dash", False),
+        ("tree:1", False),
+        ("abc123\n", False),
+        ("²abc", False),
+    ]:
+        errs = []
+        py_ok = findings._validate_tree_id(sample, "treeId", errs)
+        re_ok = tree_re.match(sample) is not None
+        check(f"treeId parity ({sample!r})", py_ok == expected and re_ok == expected)
 
     for sample, expected in [
         (_valid_fp("0"), True),
@@ -202,13 +252,31 @@ def test_schema_and_parity() -> None:
         ("a" * 65, False),
         ("²" * 64, False),
         ("a" * 63 + "g", False),
+        ("a" * 64 + "\n", False),
     ]:
         errs = []
         py_ok = findings._validate_sha256(sample, "fp", errs)
-        re_ok = bool(sha_re.match(sample)) and "\n" not in sample
+        re_ok = sha_re.match(sample) is not None
         check(
             f"sha256 parity ({sample[:8]!r} len={len(sample)})",
             py_ok == expected and re_ok == expected,
+        )
+
+    for sample, expected in [
+        ("correctness", True),
+        ("  pyyaml  ", True),
+        ("", False),
+        ("   \t ", False),
+        ("cat\n", False),
+        ("cat\nnext", False),
+        ("cat\x00x", False),
+        ("cat\x1bx", False),
+    ]:
+        errs = []
+        py_ok = findings._validate_non_blank_line(sample, "line", errs)
+        re_ok = line_re.match(sample) is not None
+        check(
+            f"nonBlankLine parity ({sample!r})", py_ok == expected and re_ok == expected
         )
 
 
@@ -231,6 +299,38 @@ def test_valid_documents() -> None:
     check(
         "code ISSUE without basis still parses under contract v1",
         findings.validate_findings_doc(_minimal_doc([code_issue_no_basis])) == [],
+    )
+    long_doc = _minimal_doc(
+        [
+            _minimal_finding(
+                quote="q" * 5000,
+                evidence="e" * 5000,
+                **{
+                    "classFingerprint": _valid_fp("d"),
+                    "class": {
+                        "rule": "Long quote must fit 16384 budget.",
+                        "sites": [
+                            {
+                                "file": "vld8/cli.py",
+                                "lineStart": 1,
+                                "lineEnd": 1,
+                                "quote": "s" * 5000,
+                            }
+                        ],
+                        "fixSite": {
+                            "file": "vld8/cli.py",
+                            "lineStart": 1,
+                            "lineEnd": 1,
+                        },
+                        "closes": {"closed": 0, "total": 1},
+                    },
+                },
+            )
+        ]
+    )
+    check(
+        "5,000-char quote and evidence within 16,384 limit validate",
+        findings.validate_findings_doc(long_doc) == [],
     )
 
     fp = findings.compute_fingerprint(
@@ -327,6 +427,29 @@ def test_valid_documents() -> None:
         "scoped mcp document with CRITICAL and disputed reason validates",
         findings.validate_findings_doc(mcp_doc) == [],
     )
+
+    try:
+        from jsonschema import Draft202012Validator
+    except ImportError:
+        Draft202012Validator = None  # optional dev-only cross-check
+
+    if Draft202012Validator is not None:
+        validator = Draft202012Validator(findings.load_schema())
+        for sample_doc, label in [
+            (empty_doc, "empty_doc"),
+            (long_doc, "long_doc"),
+            (full_doc, "full_doc"),
+            (mcp_doc, "mcp_doc"),
+        ]:
+            check(
+                f"jsonschema accepts {label}",
+                list(validator.iter_errors(sample_doc)) == [],
+            )
+        trailing_nl = _minimal_doc([_minimal_finding(file="a.py\n")])
+        check(
+            "jsonschema rejects trailing newline in path",
+            bool(list(validator.iter_errors(trailing_nl))),
+        )
 
 
 def test_invalid_documents_and_edge_cases() -> None:
@@ -752,13 +875,34 @@ def test_invalid_documents_and_edge_cases() -> None:
 
     # ANSI/control characters in untrusted fields must be escaped in error output.
     ansi_errs = findings.validate_finding(
-        _minimal_finding(severity="\x1b[31mFAKE\x1b[0m\x00", **{"bad\x1bkey": 1})
+        _minimal_finding(
+            severity="\x1b[31mFAKE\x1b[0m\x00" + ("x" * 300),
+            **{"bad\x1bkey": 1},
+        )
     )
     joined = "\n".join(ansi_errs)
     check(
         "ANSI escape stripped/escaped in validation errors",
         "\x1b" not in joined and "\x00" not in joined,
     )
+    check(
+        "safe_label truncates long strings cleanly and bounds container repr",
+        findings._safe_label("y" * 2000).endswith("...")
+        and len(findings._safe_label(list(range(500)))) <= 64,
+    )
+    _expect_invalid(
+        "treeId path traversal rejected",
+        _minimal_doc([], treeId="a/../../outside"),
+        "treeId",
+    )
+    try:
+        findings.load_findings_file("missing-\x1b[31mfile.json")
+        check("load_findings_file escapes control chars in filename errors", False)
+    except findings.FindingsError as exc:
+        check(
+            "load_findings_file escapes control chars in filename errors",
+            "\x1b" not in str(exc),
+        )
     check(
         "direct validate_finding rejects non-dict",
         "expected object" in findings.validate_finding("bad")[0],

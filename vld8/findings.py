@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import reprlib
 import stat
 import textwrap
 from pathlib import Path
@@ -50,9 +51,7 @@ CODE_CATEGORIES = frozenset(
     }
 )
 CODE_SEVERITIES = frozenset({"ISSUE", "CONCERN"})
-SECURITY_SEVERITIES = frozenset(
-    {"CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "ISSUE", "CONCERN"}
-)
+SECURITY_SEVERITIES = frozenset({"CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"})
 VALID_SEVERITIES = CODE_SEVERITIES | SECURITY_SEVERITIES
 VALID_BASES = frozenset(
     {
@@ -112,9 +111,20 @@ _FINDING_OPTIONAL_KEYS = frozenset(
 _FINDING_KEYS = frozenset(_FINDING_REQUIRED_KEYS) | _FINDING_OPTIONAL_KEYS
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}\Z", re.ASCII)
+_TREE_ID_RE = re.compile(r"^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z", re.ASCII)
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z", re.ASCII)
 _DRIVE_PREFIX_RE = re.compile(r"^[A-Za-z]:", re.ASCII)
 _ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\))")
+
+_BOUNDED_REPR = reprlib.Repr()
+_BOUNDED_REPR.maxlevel = 2
+_BOUNDED_REPR.maxdict = 4
+_BOUNDED_REPR.maxlist = 4
+_BOUNDED_REPR.maxtuple = 4
+_BOUNDED_REPR.maxset = 4
+_BOUNDED_REPR.maxfrozenset = 4
+_BOUNDED_REPR.maxstring = 128
+_BOUNDED_REPR.maxother = 128
 
 
 class FindingsError(ValueError):
@@ -159,8 +169,13 @@ def load_schema() -> dict[str, Any]:
 
 
 def _safe_label(value: Any, *, max_len: int = 64) -> str:
-    """Render untrusted input safely for error messages without control escapes."""
-    text = value if isinstance(value, str) else repr(value)
+    """Render untrusted input safely in O(1) without terminal control escapes."""
+    if isinstance(value, str):
+        truncated = len(value) > max_len * 4
+        text = value[: max_len * 4]
+    else:
+        truncated = False
+        text = _BOUNDED_REPR.repr(value)
     text = _ANSI_RE.sub(" ", text)
     cleaned: list[str] = []
     for ch in text:
@@ -172,6 +187,8 @@ def _safe_label(value: Any, *, max_len: int = 64) -> str:
     out = "".join(cleaned)
     if len(out) > max_len:
         return out[: max_len - 3] + "..."
+    if truncated:
+        return out + "..."
     return out
 
 
@@ -190,6 +207,19 @@ def _validate_identifier(value: Any, label: str, errors: list[str]) -> bool:
     if not _IDENTIFIER_RE.match(value):
         errors.append(
             f"{label}: must be 1..{MAX_IDENTIFIER_LENGTH} ASCII identifier chars "
+            f"(got {_safe_label(value)})"
+        )
+        return False
+    return True
+
+
+def _validate_tree_id(value: Any, label: str, errors: list[str]) -> bool:
+    if not isinstance(value, str):
+        errors.append(f"{label}: expected string, got {type(value).__name__}")
+        return False
+    if not _TREE_ID_RE.match(value):
+        errors.append(
+            f"{label}: must be a safe single-segment tree identifier "
             f"(got {_safe_label(value)})"
         )
         return False
@@ -706,7 +736,7 @@ def validate_findings_doc(data: Any) -> list[str]:
             doc_lens = data["lens"]
 
     if "treeId" in data and data["treeId"] is not None:
-        _validate_identifier(data["treeId"], "root.treeId", errors)
+        _validate_tree_id(data["treeId"], "root.treeId", errors)
 
     if "findings" not in data:
         errors.append("root.findings: missing required property")
@@ -774,39 +804,38 @@ def load_findings_file(
         raise ValueError("validate must be a boolean")
 
     target = Path(path)
+    safe_name = _safe_label(target.name)
     flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
     try:
         fd = os.open(str(target), flags)
     except OSError as exc:
-        raise FindingsError(f"cannot open findings file {target.name}: {exc}") from exc
+        raise FindingsError(f"cannot open findings file {safe_name}: {exc}") from exc
 
     try:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode):
-            raise FindingsError(f"findings path is not a regular file: {target.name}")
+            raise FindingsError(f"findings path is not a regular file: {safe_name}")
         if st.st_size > max_bytes:
             raise FindingsError(
-                f"findings file {target.name} ({st.st_size} bytes) "
+                f"findings file {safe_name} ({st.st_size} bytes) "
                 f"exceeds max {max_bytes} bytes"
             )
         with os.fdopen(fd, "rb") as handle:
             fd = -1
             raw = handle.read(max_bytes + 1)
     except OSError as exc:
-        raise FindingsError(f"cannot read findings file {target.name}: {exc}") from exc
+        raise FindingsError(f"cannot read findings file {safe_name}: {exc}") from exc
     finally:
         if fd != -1:
             os.close(fd)
 
     if len(raw) > max_bytes:
-        raise FindingsError(
-            f"findings file {target.name} exceeds max {max_bytes} bytes"
-        )
+        raise FindingsError(f"findings file {safe_name} exceeds max {max_bytes} bytes")
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise FindingsError(
-            f"findings file {target.name} is not valid UTF-8: {exc}"
+            f"findings file {safe_name} is not valid UTF-8: {exc}"
         ) from exc
 
     try:
@@ -816,10 +845,10 @@ def load_findings_file(
             parse_constant=_reject_json_constant,
         )
     except (json.JSONDecodeError, RecursionError, ValueError) as exc:
-        raise FindingsError(f"invalid JSON in {target.name}: {exc}") from exc
+        raise FindingsError(f"invalid JSON in {safe_name}: {exc}") from exc
 
     if not isinstance(data, dict):
-        raise FindingsError(f"findings file {target.name} must contain a JSON object")
+        raise FindingsError(f"findings file {safe_name} must contain a JSON object")
 
     if validate:
         errors = validate_findings_doc(data)

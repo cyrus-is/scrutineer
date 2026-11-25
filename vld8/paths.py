@@ -16,8 +16,8 @@ works identically from a clone and from a published wheel.
 from pathlib import Path
 
 _PKG_DIR = Path(__file__).resolve().parent
-_BUNDLED = _PKG_DIR / "_assets"   # present in a built/installed wheel
-_SIBLINGS = _PKG_DIR.parent       # repo root — present in a clone / editable install
+_BUNDLED = _PKG_DIR / "_assets"  # present in a built/installed wheel
+_SIBLINGS = _PKG_DIR.parent  # repo root — present in a clone / editable install
 
 
 def toolkit_root() -> Path:
@@ -78,9 +78,14 @@ LEGACY_COMMANDS = {
     "scrutineer-servicemap.md": (SERVICEMAP_COMMAND, "name: scrutineer-servicemap"),
     "scrutineer-mcp.md": (MCP_COMMAND, "name: scrutineer-mcp"),
     "scrutineer-setup.md": (SETUP_COMMAND, "name: scrutineer-setup"),
-    "scrutineer-code.md": (PEER_COMMAND, "You are a TL/Principal SDE performing a peer code review."),
+    "scrutineer-code.md": (
+        PEER_COMMAND,
+        "You are a TL/Principal SDE performing a peer code review.",
+    ),
     "scrutineer-security.md": (
-        SECURITY_COMMAND, "Perform a security review focused on finding exploitable vulnerabilities"),
+        SECURITY_COMMAND,
+        "Perform a security review focused on finding exploitable vulnerabilities",
+    ),
 }
 
 # The MCP reviewer's suppressions file, relative to the target repo, and the name
@@ -97,7 +102,14 @@ SERVICEMAP_FILE = "servicemap.json"
 def missing_assets() -> list[Path]:
     """Return any required asset paths that are not present on disk."""
     required = [
-        PEER_GENERATOR, SECURITY_GENERATOR, SERVICEMAP_SKILL, MCP_SKILL, SETUP_SKILL,
-        SERVICEMAP_VALIDATOR, SERVICEMAP_SCHEMA, FINDINGS_SCHEMA, *MCP_SCRIPTS.values(),
+        PEER_GENERATOR,
+        SECURITY_GENERATOR,
+        SERVICEMAP_SKILL,
+        MCP_SKILL,
+        SETUP_SKILL,
+        SERVICEMAP_VALIDATOR,
+        SERVICEMAP_SCHEMA,
+        FINDINGS_SCHEMA,
+        *MCP_SCRIPTS.values(),
     ]
     return [p for p in required if not p.exists()]
