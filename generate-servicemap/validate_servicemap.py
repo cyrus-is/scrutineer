@@ -29,6 +29,7 @@ MAX_EVIDENCE_FILE_BYTES = 2 * 1024 * 1024
 MAX_MOVE_SCAN_LINES = 50_000
 MAX_MOVE_SCAN_SPAN = 500
 MAX_MOVE_SCAN_WORK = 2_000_000
+MAX_TOTAL_MOVE_SCAN_WORK = 2_000_000
 
 VALID_COMPONENT_TYPES = {
     "service",
@@ -159,7 +160,7 @@ def _parse_schema_version(sv: object) -> tuple[int, int, int] | None:
     if not isinstance(sv, str) or not sv:
         return None
     parts = sv.split(".")
-    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+    if len(parts) != 3 or not all(p.isascii() and p.isdigit() for p in parts):
         return None
     return (int(parts[0]), int(parts[1]), int(parts[2]))
 
@@ -167,12 +168,8 @@ def _parse_schema_version(sv: object) -> tuple[int, int, int] | None:
 def _is_valid_iso_timestamp(value: object) -> tuple[bool, str]:
     if not isinstance(value, str):
         return False, f"must be a string, got {type(value).__name__}"
-    # Keep 3.10 support for trailing Z while rejecting date-only "YYYY-MM-DDZ".
-
-    if value.endswith(("Z", "z")) and any(sep in value for sep in ("T", "t", " ")):
-        normalized = value[:-1] + "+00:00"
-    else:
-        normalized = value
+    # Normalize trailing 'z' to 'Z'; Python 3.14 rejects date-only 'YYYY-MM-DDZ'.
+    normalized = value[:-1] + "Z" if value.endswith("z") else value
     try:
         datetime.fromisoformat(normalized)
         return True, ""
@@ -227,7 +224,7 @@ def _git_origin_repo_name(repo_root: Path) -> str | None:
             text=True,
             timeout=5,
         )
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return None
     if proc.returncode != 0:
         return None
@@ -419,10 +416,10 @@ class _Validator:
                 self.error(f"{ctx} missing required field: {fld}")
 
         raw_id = comp.get("id")
-        comp_id = raw_id if isinstance(raw_id, str) and raw_id else f"<unknown-{idx}>"
+        comp_id = raw_id if _is_non_empty_str(raw_id) else f"<unknown-{idx}>"
         ctx = f"component '{comp_id}'"
 
-        if isinstance(raw_id, str) and raw_id:
+        if _is_non_empty_str(raw_id):
             if raw_id in all_ids:
                 self.error(f"{ctx}: duplicate component ID")
             all_ids.add(raw_id)
@@ -436,7 +433,7 @@ class _Validator:
         if (
             isinstance(comp_type, str)
             and comp_type in ID_PREFIXES
-            and isinstance(raw_id, str)
+            and _is_non_empty_str(raw_id)
         ):
             expected_prefix = ID_PREFIXES[comp_type]
             if not comp_id.startswith(expected_prefix):
@@ -498,7 +495,7 @@ class _Validator:
                                 self._check_enum(
                                     mech,
                                     VALID_AUTH_MECHANISMS,
-                                    ep_ctx,
+                                    f"{ep_ctx}.authentication.mechanism",
                                     warn_only=True,
                                     kind_label="auth mechanism",
                                 )
@@ -512,7 +509,7 @@ class _Validator:
                                 self._check_enum(
                                     authz_type,
                                     VALID_AUTHZ_TYPES,
-                                    ep_ctx,
+                                    f"{ep_ctx}.authorization.type",
                                     warn_only=True,
                                     kind_label="authz type",
                                 )
@@ -549,6 +546,7 @@ class _Validator:
         component_ids: set[str],
         *,
         known_repos: set[str] | None = None,
+        conn_ids: set[str] | None = None,
     ) -> None:
         ctx = f"connections[{idx}]"
         if not isinstance(conn, dict):
@@ -568,11 +566,14 @@ class _Validator:
                 self.error(f"{ctx} missing required field: {fld}")
 
         raw_id = conn.get("id")
-        conn_id = (
-            raw_id if isinstance(raw_id, str) and raw_id else f"<unknown-conn-{idx}>"
-        )
+        conn_id = raw_id if _is_non_empty_str(raw_id) else f"<unknown-conn-{idx}>"
         ctx = f"connection '{conn_id}'"
-        if "id" in conn and not _is_non_empty_str(raw_id):
+        if _is_non_empty_str(raw_id):
+            if conn_ids is not None:
+                if raw_id in conn_ids:
+                    self.error(f"{ctx}: duplicate connection ID")
+                conn_ids.add(raw_id)
+        elif "id" in conn:
             self.error(f"{ctx}: id must be a non-empty string")
 
         conn_type = conn.get("type")
@@ -861,8 +862,15 @@ class _Validator:
         else:
             connections = raw_connections
 
+        conn_ids: set[str] = set()
         for i, conn in enumerate(connections):
-            self.validate_connection(conn, i, component_ids, known_repos=known_repos)
+            self.validate_connection(
+                conn,
+                i,
+                component_ids,
+                known_repos=known_repos,
+                conn_ids=conn_ids,
+            )
 
         if "metadata" in data:
             self.validate_metadata(
@@ -896,7 +904,7 @@ def _safe_read_evidence_lines(
         if stat.S_ISLNK(st.st_mode):
             try:
                 resolved_link = cur.resolve()
-            except (OSError, RuntimeError):
+            except OSError, RuntimeError:
                 res = ("escape", None)
                 cache[rel_posix] = res
                 return res
@@ -912,7 +920,7 @@ def _safe_read_evidence_lines(
         res = ("missing", None)
         cache[rel_posix] = res
         return res
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         res = ("unreadable", None)
         cache[rel_posix] = res
         return res
@@ -951,7 +959,8 @@ def _find_moved_range(
     target_sha: str,
     *,
     rel_file: str = "",
-    move_cache: dict[tuple[str, int, str], list[int]] | None = None,
+    move_cache: dict[tuple[str, int], dict[str, list[int]]] | None = None,
+    move_budget: list[int] | None = None,
 ) -> tuple[tuple[int, int] | None, str | None]:
     span = end - start + 1
     if span <= 0 or span > len(lines):
@@ -969,17 +978,26 @@ def _find_moved_range(
             None,
             f"move scan skipped (exceeds {MAX_MOVE_SCAN_WORK} line-window budget)",
         )
-    key = (rel_file, span, target_sha)
-    if move_cache is not None and key in move_cache:
-        matches = move_cache[key]
+    index_key = (rel_file, span)
+    if move_cache is not None and index_key in move_cache:
+        digest_index = move_cache[index_key]
     else:
-        matches = [
-            idx
-            for idx in range(0, windows)
-            if hash_lines(lines[idx : idx + span]) == target_sha
-        ]
+        work = windows * span
+        if move_budget is not None and move_budget[0] + work > MAX_TOTAL_MOVE_SCAN_WORK:
+            return (
+                None,
+                "move scan skipped (exceeds cumulative "
+                f"{MAX_TOTAL_MOVE_SCAN_WORK} line-window budget)",
+            )
+        digest_index = {}
+        for idx in range(0, windows):
+            digest = hash_lines(lines[idx : idx + span])
+            digest_index.setdefault(digest, []).append(idx)
+        if move_budget is not None:
+            move_budget[0] += work
         if move_cache is not None:
-            move_cache[key] = matches
+            move_cache[index_key] = digest_index
+    matches = digest_index.get(target_sha)
     if not matches:
         return None, None
     best_idx = min(matches, key=lambda idx: (abs(idx - (start - 1)), idx))
@@ -1036,7 +1054,8 @@ def _run_evidence_checks(
                 validator.warn(msg)
 
     cache: dict[str, tuple[str, list[str] | None]] = {}
-    move_cache: dict[tuple[str, int, str], list[int]] = {}
+    move_cache: dict[tuple[str, int], dict[str, list[int]]] = {}
+    move_budget = [0]
     for ctx, entry in validator.evidence_refs:
         cite_repo = entry["repo"]
         rel_file = entry["file"]
@@ -1091,6 +1110,7 @@ def _run_evidence_checks(
             expected_sha,
             rel_file=rel_file,
             move_cache=move_cache,
+            move_budget=move_budget,
         )
         if moved is not None:
             counts["moved"] += 1

@@ -394,10 +394,58 @@ def test_schema_v12_valid_and_malformed() -> None:
         bool(SM.validate_map(["not", "dict"]).errors),
     )
 
-    # Lowercase z with time separator works on 3.10+
+    # Unicode superscripts in schema_version, whitespace component IDs,
+    # duplicate connection IDs, endpoint enum labels, and date-only lowercase z.
+    m = _base_v12_map()
+    m["schema_version"] = "1.².0"
+    check(
+        "Unicode superscript version rejected cleanly", bool(SM.validate_map(m).errors)
+    )
+
+    m = _base_v12_map()
+    m["components"][0]["id"] = "   "
+    check("whitespace-only component id rejected", bool(SM.validate_map(m).errors))
+
+    m = _base_v12_map()
+    conn_a = {
+        "id": "conn-dup",
+        "source": "svc-api",
+        "target": "app-worker",
+        "type": "http",
+        "async": False,
+        "confidence": 0.9,
+        "discovery_method": "code",
+    }
+    m["connections"] = [conn_a, dict(conn_a)]
+    check(
+        "duplicate connection ID rejected",
+        any("duplicate connection ID" in e for e in SM.validate_map(m).errors),
+    )
+
+    m = _base_v12_map()
+    m["components"][0]["endpoints"] = [
+        {
+            "method": "GET",
+            "path": "/health",
+            "public": True,
+            "confidence": 0.9,
+            "authentication": {"mechanism": "custom-bad"},
+            "authorization": {"type": "custom-authz"},
+        }
+    ]
+    ep_res = SM.validate_map(m)
+    check(
+        "endpoint enum warnings name nested fields",
+        any(".authentication.mechanism" in w for w in ep_res.warnings)
+        and any(".authorization.type" in w for w in ep_res.warnings),
+    )
+
+    # Lowercase z with time separator works on 3.14; date-only lowercase z fails.
     m = _base_v12_map()
     m["generated_at"] = "2026-11-24T12:00:00z"
     check("timestamp accepts lowercase z with T", not SM.validate_map(m).errors)
+    m["generated_at"] = "2026-11-24z"
+    check("timestamp rejects date-only lowercase z", bool(SM.validate_map(m).errors))
 
 
 def test_findings_warning_and_terminal_escaping() -> None:
@@ -1209,8 +1257,9 @@ def test_api_and_cli_edge_cases() -> None:
             len(res_nested_f.warnings) == 3,
         )
 
-        # Move-scan span/work budget and memoization
+        # Move-scan span/cumulative work budget and per-(file, span) digest index
         orig_span = SM.MAX_MOVE_SCAN_SPAN
+        orig_total = SM.MAX_TOTAL_MOVE_SCAN_WORK
         try:
             SM.MAX_MOVE_SCAN_SPAN = 1
             (renamed / "src" / "a.py").write_text("a\nb\nc\nd\n", encoding="utf-8")
@@ -1241,8 +1290,53 @@ def test_api_and_cli_edge_cases() -> None:
                 res_span.evidence_counts["changed"] == 2
                 and all("move scan skipped" in w for w in res_span.warnings),
             )
+
+            SM.MAX_MOVE_SCAN_SPAN = orig_span
+            SM.MAX_TOTAL_MOVE_SCAN_WORK = 10
+            m_idx = _base_v12_map("sample-repo")
+            # Three distinct drifted digests at span=2 fit one index pass (3*2=6<=10),
+            # while span=3 overflows the cumulative budget (2*3=6 -> 6+6>10).
+            m_idx["components"][0]["evidence"] = [
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": "1" * 64,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": "2" * 64,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": "3" * 64,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 3],
+                    "sha256": "4" * 64,
+                },
+            ]
+            res_idx = SM.validate_map(
+                m_idx,
+                check_evidence=True,
+                repo_path=renamed,
+                repo_name="sample-repo",
+                strict=False,
+            )
+            check(
+                "distinct digests reuse (file, span) index while new span caps work",
+                sum("cumulative" in w for w in res_idx.warnings) == 1
+                and res_idx.evidence_counts["changed"] == 4,
+            )
         finally:
             SM.MAX_MOVE_SCAN_SPAN = orig_span
+            SM.MAX_TOTAL_MOVE_SCAN_WORK = orig_total
 
 
 def main() -> int:
