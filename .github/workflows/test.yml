@@ -35,6 +35,7 @@ jobs:
       - name: Generator and CLI tests
         run: |
           python tests/test_generators.py
+          python tests/test_snapshots.py
           python tests/test_cli.py
           python tests/test_legacy_shim.py
           python tests/test_servicemap.py

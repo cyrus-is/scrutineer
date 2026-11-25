@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.2.0",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "repositories": [
+    {
+      "name": "servicemap-app",
+      "default_branch": "main",
+      "monorepo": true,
+      "last_crawled": "1970-01-01T00:00:00Z"
+    }
+  ],
+  "components": [
+    {
+      "id": "svc-gateway",
+      "name": "gateway",
+      "type": "service",
+      "source_repo": "servicemap-app",
+      "path": "services/gateway",
+      "language": "go",
+      "confidence": 0.95,
+      "discovery_method": "go.mod entrypoint",
+      "last_crawled": "1970-01-01T00:00:00Z",
+      "stub": false,
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "public": true,
+          "authentication": {
+            "mechanism": "none"
+          },
+          "authorization": {
+            "type": "none"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "evidence": [
+        {
+          "repo": "servicemap-app",
+          "file": "services/gateway/main.go",
+          "lines": [1, 3],
+          "sha256": "c2932f891c62e0b9b44aefea81cab9a32ee2d2d6395382318ed771d94cb3144c"
+        }
+      ]
+    },
+    {
+      "id": "app-portal",
+      "name": "portal",
+      "type": "app",
+      "source_repo": "servicemap-app",
+      "path": "apps/portal",
+      "language": "typescript",
+      "confidence": 0.95,
+      "discovery_method": "package.json",
+      "last_crawled": "1970-01-01T00:00:00Z",
+      "stub": false,
+      "evidence": [
+        {
+          "repo": "servicemap-app",
+          "file": "apps/portal/src/App.tsx",
+          "lines": [1, 3],
+          "sha256": "c5acf7649ae58d150b7af866af17c35708d750b53d3073222901c8fc4276833f"
+        }
+      ]
+    },
+    {
+      "id": "datastore-users-db",
+      "name": "users-db",
+      "type": "datastore",
+      "source_repo": "servicemap-app",
+      "path": "db/migrations",
+      "engine": "postgres",
+      "shared": true,
+      "consumers": ["svc-gateway"],
+      "confidence": 0.9,
+      "discovery_method": "SQL migration schema",
+      "last_crawled": "1970-01-01T00:00:00Z",
+      "stub": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-portal-to-gateway",
+      "source": "app-portal",
+      "target": "svc-gateway",
+      "type": "http",
+      "async": false,
+      "confidence": 0.9,
+      "discovery_method": "API client"
+    },
+    {
+      "id": "conn-gateway-to-db",
+      "source": "svc-gateway",
+      "target": "datastore-users-db",
+      "type": "database",
+      "async": false,
+      "confidence": 0.9,
+      "discovery_method": "SQL driver"
+    }
+  ],
+  "metadata": {
+    "total_components": 3,
+    "total_connections": 2,
+    "total_stubs": 0,
+    "component_counts": {
+      "service": 1,
+      "app": 1,
+      "datastore": 1
+    },
+    "low_confidence_components": [],
+    "shared_datastores": ["datastore-users-db"],
+    "unauthenticated_public_endpoints": [
+      {
+        "component": "gateway",
+        "endpoint": "GET /health"
+      }
+    ],
+    "unmonitored_services": [],
+    "repo_staleness": [
+      {
+        "repo": "servicemap-app",
+        "last_crawled": "1970-01-01T00:00:00Z",
+        "components": 3,
+        "age_days": 0
+      }
+    ]
+  }
+}
