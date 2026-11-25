@@ -35,7 +35,7 @@ def check_iso_timestamp(value, field_name):
         error(f"{field_name} must be a string, got {type(value).__name__}")
         return False
     try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        datetime.fromisoformat(value)
         return True
     except ValueError:
         error(f"{field_name} is not a valid ISO 8601 timestamp: {value}")
@@ -304,7 +304,7 @@ def main():
 
     path = sys.argv[1]
     try:
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         print(f"FATAL: Invalid JSON: {e}")

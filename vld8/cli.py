@@ -9,8 +9,6 @@ Reachable two ways, both running the same shared core:
     pip install vld8 && vld8 install .    # from PyPI
 """
 
-from __future__ import annotations
-
 import argparse
 import subprocess
 import sys

@@ -13,8 +13,6 @@ directories at the repo root. They are resolved from one of two places:
 works identically from a clone and from a published wheel.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 
 _PKG_DIR = Path(__file__).resolve().parent

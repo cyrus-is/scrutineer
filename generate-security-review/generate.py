@@ -46,8 +46,8 @@ def _render(template: str, **values) -> str:
     return textwrap.dedent(template).format(**values)
 
 
-@functools.lru_cache(maxsize=None)
-def _glob_regex(pattern: str) -> "re.Pattern[str]":
+@functools.cache
+def _glob_regex(pattern: str) -> re.Pattern[str]:
     parts = pattern.split("**/")
     candidates = {
         parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
@@ -394,7 +394,7 @@ class ServiceMapLoader:
 class SkillGenerator:
     """Generates the vld8-security.md skill file."""
 
-    def __init__(self, previews: "frozenset[str]" = frozenset()):
+    def __init__(self, previews: frozenset[str] = frozenset()):
         # Gate prose in this file with self.preview_on(<milestone>); see its docstring.
         self.previews = previews
 
@@ -1233,7 +1233,7 @@ def _milestone_arg(value: str) -> str:
     return value
 
 
-def apply_previews(node, enabled: "set[str] | frozenset[str]"):
+def apply_previews(node, enabled: set[str] | frozenset[str]):
     """Drop guidance that belongs to a preview milestone the install didn't turn on.
 
     Output changes ship behind their milestone's preview flag until its gate passes

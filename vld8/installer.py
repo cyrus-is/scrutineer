@@ -16,8 +16,6 @@ call :func:`install`. The skill passes ``service_map=`` after doing its own
 agentic crawl; the CLI lets :mod:`vld8.servicemap` resolve one.
 """
 
-from __future__ import annotations
-
 import re
 import shutil
 import subprocess

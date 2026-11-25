@@ -43,7 +43,8 @@ def main() -> int:
 
     proc = run_cli("--version")
     check("`vld8 --version` exits 0 and prints version",
-          proc.returncode == 0 and proc.stdout.strip().startswith("vld8 "))
+          proc.returncode == 0
+          and bool(re.fullmatch(r"vld8 \d+\.\d+\.\d+(?:\+unknown)?", proc.stdout.strip())))
 
     # The bundled-script subcommands reach their scripts.
     for name in sorted(paths.MCP_SCRIPTS):
