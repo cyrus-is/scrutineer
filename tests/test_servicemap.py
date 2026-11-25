@@ -660,10 +660,19 @@ def test_offline_drift_and_security() -> None:
             "sample-repo",
         )
         check(
-            "ambiguous multi-repo checkout marks citations unverifiable with note",
+            "ambiguous multi-repo checkout marks citations unverifiable with warning",
             proc_ambig.returncode == 0
             and "unverifiable=3" in proc_ambig.stdout
-            and "--repo-name" in proc_ambig.stdout,
+            and "--repo-name" in proc_ambig.stdout
+            and "All checks passed!" not in proc_ambig.stdout,
+        )
+        proc_ambig_strict = run_validate_cli(
+            str(multi_file), "--check-evidence", "--repo", str(renamed_repo), "--strict"
+        )
+        check(
+            "ambiguous multi-repo checkout fails with exit 1 under --strict",
+            proc_ambig_strict.returncode == 1
+            and "unverifiable=3" in proc_ambig_strict.stdout,
         )
         check(
             "--repo-name overrides repo identity cleanly",
@@ -1141,6 +1150,99 @@ def test_api_and_cli_edge_cases() -> None:
             ).returncode
             == 2,
         )
+        check(
+            "--repo without --check-evidence rejected",
+            run_validate_cli(str(ev_file), "--repo", str(renamed)).returncode == 2,
+        )
+        check(
+            "--repo-name without --check-evidence rejected",
+            run_validate_cli(str(ev_file), "--repo-name", "sample-repo").returncode
+            == 2,
+        )
+
+        # Nested non-git directory inside a git repo must not inherit parent origin
+        nested = renamed / "sub" / "non-git"
+        nested.mkdir(parents=True)
+        check(
+            "_git_origin_repo_name ignores parent repo for non-git subdir",
+            SM._git_origin_repo_name(nested) is None,
+        )
+
+        # Undeclared --repo-name warns or fails under --strict
+        res_undeclared = SM.validate_map(
+            ev_map,
+            check_evidence=True,
+            repo_path=nested,
+            repo_name="wrong-repo",
+            strict=True,
+        )
+        check(
+            "undeclared --repo-name fails under --strict",
+            any(
+                "does not match any declared repository" in e
+                for e in res_undeclared.errors
+            ),
+        )
+
+        # Findings-in-map warnings on repositories[], endpoints[], and env_vars[]
+        m_nested_findings = _base_v12_map()
+        m_nested_findings["repositories"][0]["description"] = "CVE-2026-99999 in repo"
+        m_nested_findings["components"][0]["endpoints"] = [
+            {
+                "method": "GET",
+                "path": "/debug",
+                "public": True,
+                "confidence": 0.9,
+                "description": "CRITICAL: unauthenticated admin access",
+            }
+        ]
+        m_nested_findings["components"][0]["env_vars"] = [
+            {
+                "name": "API_KEY",
+                "secret": True,
+                "description": "hardcoded secret in config",
+            }
+        ]
+        res_nested_f = SM.validate_map(m_nested_findings)
+        check(
+            "findings warnings fire on repositories[], endpoints[], and env_vars[]",
+            len(res_nested_f.warnings) == 3,
+        )
+
+        # Move-scan span/work budget and memoization
+        orig_span = SM.MAX_MOVE_SCAN_SPAN
+        try:
+            SM.MAX_MOVE_SCAN_SPAN = 1
+            (renamed / "src" / "a.py").write_text("a\nb\nc\nd\n", encoding="utf-8")
+            m_span = _base_v12_map("sample-repo")
+            m_span["components"][0]["evidence"] = [
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": "d" * 64,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": "d" * 64,
+                },
+            ]
+            res_span = SM.validate_map(
+                m_span,
+                check_evidence=True,
+                repo_path=renamed,
+                repo_name="sample-repo",
+                strict=False,
+            )
+            check(
+                "move scan respects span budget and reports skip reason",
+                res_span.evidence_counts["changed"] == 2
+                and all("move scan skipped" in w for w in res_span.warnings),
+            )
+        finally:
+            SM.MAX_MOVE_SCAN_SPAN = orig_span
 
 
 def main() -> int:

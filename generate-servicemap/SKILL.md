@@ -368,7 +368,8 @@ but not this list produces a map that fails the toolkit's own validator, so chec
 before writing the file.
 
 **Every component:** `id`, `name`, `type`, `confidence`, `discovery_method`, `last_crawled`,
-`stub`. Non-stub components also need `path`, except `external` ones.
+`stub`, and `source_repo` (required in `1.1+`; `null` allowed only for unresolved stubs).
+Non-stub components also need `path`, except `external` ones.
 
 **`type` must be one of:** `service`, `app`, `library`, `infrastructure`, `pipeline`,
 `datastore`, `external`.

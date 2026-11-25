@@ -27,6 +27,8 @@ from pathlib import Path
 MAX_MAP_BYTES = 50 * 1024 * 1024
 MAX_EVIDENCE_FILE_BYTES = 2 * 1024 * 1024
 MAX_MOVE_SCAN_LINES = 50_000
+MAX_MOVE_SCAN_SPAN = 500
+MAX_MOVE_SCAN_WORK = 2_000_000
 
 VALID_COMPONENT_TYPES = {
     "service",
@@ -216,6 +218,8 @@ def _declared_repos(data: dict, is_v1_1_plus: bool) -> list[str]:
 
 
 def _git_origin_repo_name(repo_root: Path) -> str | None:
+    if not (repo_root / ".git").exists():
+        return None
     try:
         proc = subprocess.run(
             ["git", "-C", str(repo_root), "remote", "get-url", "origin"],
@@ -514,6 +518,12 @@ class _Validator:
                                 )
                         else:
                             self.error(f"{ep_ctx}.authorization must be an object")
+                    self.check_findings_text(ep, ep_ctx)
+
+        if isinstance(comp.get("env_vars"), list):
+            for i, ev in enumerate(comp["env_vars"]):
+                if isinstance(ev, dict):
+                    self.check_findings_text(ev, f"{ctx}.env_vars[{i}]")
 
         if comp_type == "datastore":
             for fld in ("engine", "shared", "consumers"):
@@ -815,6 +825,7 @@ class _Validator:
                         self.check_iso_timestamp(
                             repo["last_crawled"], f"{rctx}.last_crawled"
                         )
+                    self.check_findings_text(repo, rctx)
         else:
             repo = data.get("repository", {})
             if not isinstance(repo, dict):
@@ -824,6 +835,7 @@ class _Validator:
                     self.error("repository.name is required")
                 if "monorepo" not in repo:
                     self.error("repository.monorepo is required")
+                self.check_findings_text(repo, "repository")
 
         raw_components = data.get("components", [])
         if not isinstance(raw_components, list):
@@ -933,19 +945,45 @@ def _safe_read_evidence_lines(
 
 
 def _find_moved_range(
-    lines: list[str], start: int, end: int, target_sha: str
-) -> tuple[int, int] | None:
+    lines: list[str],
+    start: int,
+    end: int,
+    target_sha: str,
+    *,
+    rel_file: str = "",
+    move_cache: dict[tuple[str, int, str], list[int]] | None = None,
+) -> tuple[tuple[int, int] | None, str | None]:
     span = end - start + 1
-    if span <= 0 or span > len(lines) or len(lines) > MAX_MOVE_SCAN_LINES:
-        return None
-    matches: list[int] = []
-    for idx in range(0, len(lines) - span + 1):
-        if hash_lines(lines[idx : idx + span]) == target_sha:
-            matches.append(idx)
+    if span <= 0 or span > len(lines):
+        return None, None
+    if len(lines) > MAX_MOVE_SCAN_LINES:
+        return None, f"move scan skipped (file exceeds {MAX_MOVE_SCAN_LINES} lines)"
+    if span > MAX_MOVE_SCAN_SPAN:
+        return (
+            None,
+            f"move scan skipped (span {span} exceeds {MAX_MOVE_SCAN_SPAN} lines)",
+        )
+    windows = len(lines) - span + 1
+    if windows * span > MAX_MOVE_SCAN_WORK:
+        return (
+            None,
+            f"move scan skipped (exceeds {MAX_MOVE_SCAN_WORK} line-window budget)",
+        )
+    key = (rel_file, span, target_sha)
+    if move_cache is not None and key in move_cache:
+        matches = move_cache[key]
+    else:
+        matches = [
+            idx
+            for idx in range(0, windows)
+            if hash_lines(lines[idx : idx + span]) == target_sha
+        ]
+        if move_cache is not None:
+            move_cache[key] = matches
     if not matches:
-        return None
+        return None, None
     best_idx = min(matches, key=lambda idx: (abs(idx - (start - 1)), idx))
-    return (best_idx + 1, best_idx + span)
+    return (best_idx + 1, best_idx + span), None
 
 
 def _run_evidence_checks(
@@ -976,16 +1014,29 @@ def _run_evidence_checks(
         validator.error(f"evidence check repo path is not a directory: {repo_root}")
         return counts, details
 
+    declared = _declared_repos(data, is_v1_1_plus)
     current_repo = resolve_repo_name(
         data, is_v1_1_plus, repo_root, explicit_name=repo_name
     )
-    if current_repo is None and validator.evidence_refs:
-        details.append(
-            "NOTE: could not determine a single repo name for this checkout; "
-            "pass --repo-name NAME to verify citations"
-        )
+    if validator.evidence_refs:
+        if current_repo is None:
+            msg = (
+                "could not determine a single repo name for this checkout; "
+                "pass --repo-name NAME to verify citations"
+            )
+            if strict:
+                validator.error(msg)
+            else:
+                validator.warn(msg)
+        elif repo_name is not None and declared and current_repo not in declared:
+            msg = f"--repo-name '{current_repo}' does not match any declared repository"
+            if strict:
+                validator.error(msg)
+            else:
+                validator.warn(msg)
 
     cache: dict[str, tuple[str, list[str] | None]] = {}
+    move_cache: dict[tuple[str, int, str], list[int]] = {}
     for ctx, entry in validator.evidence_refs:
         cite_repo = entry["repo"]
         rel_file = entry["file"]
@@ -1033,7 +1084,14 @@ def _run_evidence_checks(
             counts["verified"] += 1
             continue
 
-        moved = _find_moved_range(file_lines, start, end, expected_sha)
+        moved, skip_reason = _find_moved_range(
+            file_lines,
+            start,
+            end,
+            expected_sha,
+            rel_file=rel_file,
+            move_cache=move_cache,
+        )
         if moved is not None:
             counts["moved"] += 1
             details.append(
@@ -1052,6 +1110,8 @@ def _run_evidence_checks(
             )
         else:
             msg = f"{ctx}: cited lines {rel_file}:{start}-{end} changed (hash mismatch)"
+        if skip_reason:
+            msg = f"{msg} ({skip_reason})"
         if strict:
             validator.error(msg)
         else:
@@ -1116,14 +1176,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Repository root to verify evidence against "
-            "(default: directory containing the map)."
+            "(default: directory containing the map; requires --check-evidence)."
         ),
     )
     parser.add_argument(
         "--repo-name",
         metavar="NAME",
         default=None,
-        help="Override the repository name matched against evidence[].repo.",
+        help=(
+            "Override the repository name matched against evidence[].repo "
+            "(requires --check-evidence)."
+        ),
     )
     parser.add_argument(
         "--strict",
@@ -1139,8 +1202,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.strict and not args.check_evidence:
-        parser.error("--strict requires --check-evidence")
+    if not args.check_evidence:
+        if args.strict:
+            parser.error("--strict requires --check-evidence")
+        if args.repo is not None:
+            parser.error("--repo requires --check-evidence")
+        if args.repo_name is not None:
+            parser.error("--repo-name requires --check-evidence")
     if args.repo is not None and not args.repo.strip():
         parser.error("--repo must not be empty")
     if args.repo_name is not None and not args.repo_name.strip():
