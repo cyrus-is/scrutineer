@@ -41,6 +41,10 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
 def main() -> int:
     check("no required asset is missing", paths.missing_assets() == [])
 
+    proc = run_cli("--version")
+    check("`vld8 --version` exits 0 and prints version",
+          proc.returncode == 0 and proc.stdout.strip().startswith("vld8 "))
+
     # The bundled-script subcommands reach their scripts.
     for name in sorted(paths.MCP_SCRIPTS):
         proc = run_cli("mcp", name, "--help")

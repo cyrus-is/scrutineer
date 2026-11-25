@@ -42,11 +42,13 @@ jobs:
           python -m venv /tmp/wheel-venv
           # Both wheels at once, so the forwarding package's vld8 requirement
           # resolves to the wheel just built rather than to PyPI.
-          /tmp/wheel-venv/bin/pip install "pyyaml<=6.0.3" dist/vld8-*.whl dist/scrutineer-*.whl
+          /tmp/wheel-venv/bin/pip install "pyyaml>=6.0,<=6.0.3" dist/vld8-*.whl dist/scrutineer-*.whl
+          pkg_version=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')
           mkdir /tmp/target && cd /tmp/target && git init -q && echo 'export const x = 1;' > index.ts
           mkdir -p .claude/commands
           printf -- '---\nname: scrutineer-mcp\n---\n' > .claude/commands/scrutineer-mcp.md
           /tmp/wheel-venv/bin/vld8 install /tmp/target
+          test "$(/tmp/wheel-venv/bin/vld8 --version)" = "vld8 $pkg_version"
           test -f .claude/commands/vld8-setup.md
           test ! -e .claude/commands/scrutineer-mcp.md
           test -f .claude/scrutineer-backup/scrutineer-mcp.md
