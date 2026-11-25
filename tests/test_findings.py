@@ -6,8 +6,6 @@ Dependency-free (no pytest): run from the repo root with
     python tests/test_findings.py
 """
 
-from __future__ import annotations
-
 import copy
 import json
 import re
@@ -172,13 +170,13 @@ def test_schema_and_parity() -> None:
         == "#/$defs/nonBlankLongText",
     )
 
-    # Regex parity between schema patterns and Python validator on edge cases
-    # without masking trailing newlines.
-    path_re = re.compile(defs["repoRelativePath"]["pattern"], re.ASCII)
-    id_re = re.compile(defs["identifier"]["pattern"], re.ASCII)
-    tree_re = re.compile(defs["treeId"]["pattern"], re.ASCII)
-    sha_re = re.compile(defs["sha256Hex"]["pattern"], re.ASCII)
-    line_re = re.compile(defs["nonBlankLine"]["pattern"], re.ASCII)
+    # Regex parity between schema patterns and Python validator without re.ASCII
+    # (matching jsonschema's default Python `re` compilation).
+    path_re = re.compile(defs["repoRelativePath"]["pattern"])
+    id_re = re.compile(defs["identifier"]["pattern"])
+    tree_re = re.compile(defs["treeId"]["pattern"])
+    sha_re = re.compile(defs["sha256Hex"]["pattern"])
+    line_re = re.compile(defs["nonBlankLine"]["pattern"])
     for sample, expected in [
         ("vld8/cli.py", True),
         (".github/workflows/test.yml", True),
@@ -201,6 +199,8 @@ def test_schema_and_parity() -> None:
         ("a\nb.py", False),
         ("a.py\n", False),
         ("a\x1bb.py", False),
+        ("a\x9bb.py", False),
+        ("a\u2028b.py", False),
     ]:
         errs: list[str] = []
         py_ok = findings._validate_repo_relative_path(sample, "p", errs)
@@ -270,6 +270,10 @@ def test_schema_and_parity() -> None:
         ("cat\nnext", False),
         ("cat\x00x", False),
         ("cat\x1bx", False),
+        ("cat\x85x", False),
+        ("cat\x9bx", False),
+        ("cat\u2028x", False),
+        ("cat\u2029x", False),
     ]:
         errs = []
         py_ok = findings._validate_non_blank_line(sample, "line", errs)
@@ -433,6 +437,7 @@ def test_valid_documents() -> None:
         Draft202012Validator = None  # optional dev-only cross-check
 
     if Draft202012Validator is not None:
+        Draft202012Validator.check_schema(findings.load_schema())
         validator = Draft202012Validator(findings.load_schema())
         for sample_doc, label in [
             (empty_doc, "empty_doc"),
@@ -448,6 +453,11 @@ def test_valid_documents() -> None:
         check(
             "jsonschema rejects trailing newline in path",
             bool(list(validator.iter_errors(trailing_nl))),
+        )
+        lens_mismatch = _minimal_doc([_minimal_finding(lens="code")], lens="security")
+        check(
+            "jsonschema enforces root.lens match via allOf",
+            bool(list(validator.iter_errors(lens_mismatch))),
         )
 
 
@@ -719,7 +729,7 @@ def test_invalid_documents_and_edge_cases() -> None:
         "exceeds max",
     )
     _expect_invalid(
-        "closes.closed > total rejected",
+        "fixSite lineEnd < lineStart rejected",
         _minimal_doc(
             [
                 _minimal_finding(
@@ -729,13 +739,32 @@ def test_invalid_documents_and_edge_cases() -> None:
                             "rule": "r",
                             "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
                             "fixSite": {"file": "a.py", "lineStart": 2, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
+                        },
+                    }
+                )
+            ]
+        ),
+        "class.fixSite.lineEnd: 1 must be >= lineStart (2)",
+    )
+    _expect_invalid(
+        "closes.closed bool rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    **{
+                        "classFingerprint": _valid_fp("b"),
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
                             "closes": {"closed": True, "total": 1},
                         },
                     }
                 )
             ]
         ),
-        "closes.closed",
+        "closes.closed: expected integer >= 0",
     )
     _expect_invalid(
         "closes.closed 2 > total 1 rejected",
@@ -781,23 +810,30 @@ def test_invalid_documents_and_edge_cases() -> None:
         ),
         "fixSite.file",
     )
-    _expect_invalid(
-        "proof bad enum and multiline command rejected",
-        _minimal_doc(
-            [
-                _minimal_finding(
-                    proof={
-                        "kind": "magic",
-                        "status": "unknown",
-                        "command": "echo hi\nwhoami",
-                        "target": "x\x00y",
-                        "detail": " ",
-                    }
-                )
-            ]
+    for bad_proof, needle, label in [
+        ({"kind": "magic", "status": "verified"}, "proof.kind", "bad proof.kind"),
+        ({"kind": "test", "status": "unknown"}, "proof.status", "bad proof.status"),
+        (
+            {"kind": "test", "status": "verified", "command": "echo hi\nwhoami"},
+            "proof.command",
+            "multiline proof.command",
         ),
-        "proof.kind",
-    )
+        (
+            {"kind": "test", "status": "verified", "target": "x\x00y"},
+            "proof.target",
+            "NUL proof.target",
+        ),
+        (
+            {"kind": "test", "status": "verified", "detail": " "},
+            "proof.detail",
+            "blank proof.detail",
+        ),
+    ]:
+        _expect_invalid(
+            f"proof rejects {label}",
+            _minimal_doc([_minimal_finding(proof=bad_proof)]),
+            needle,
+        )
     _expect_invalid(
         "duplicate candidateIds rejected",
         _minimal_doc([_minimal_finding(candidateIds=["c1", "c1"])]),
@@ -821,23 +857,125 @@ def test_invalid_documents_and_edge_cases() -> None:
         ),
         "exceeds max",
     )
+    for overrides, needle, label in [
+        ({"file": 123}, "findings[0].file: expected string", "non-string file"),
+        (
+            {"checkId": 456},
+            "findings[0].checkId: expected string",
+            "non-string checkId",
+        ),
+        (
+            {"fingerprint": 789},
+            "findings[0].fingerprint: expected string",
+            "non-string fingerprint",
+        ),
+        (
+            {"category": 123},
+            "findings[0].category: expected string",
+            "non-string category",
+        ),
+        (
+            {"recommendation": 999},
+            "findings[0].recommendation: expected string",
+            "non-string recommendation",
+        ),
+        ({"claim": "x\x00y"}, "findings[0].claim: NUL byte", "NUL in claim"),
+        (
+            {"evidence": "e" * (findings.MAX_LONG_TEXT_LENGTH + 1)},
+            "findings[0].evidence: length",
+            "oversized evidence",
+        ),
+        (
+            {"package": "p" * (findings.MAX_PACKAGE_LENGTH + 1)},
+            "findings[0].package: length",
+            "oversized package",
+        ),
+        (
+            {"file": "a\ud800b.py"},
+            "findings[0].file: unpaired UTF-16 surrogates",
+            "surrogate in file",
+        ),
+        (
+            {"category": "cat\ud800"},
+            "findings[0].category: unpaired UTF-16 surrogates",
+            "surrogate in category",
+        ),
+        (
+            {"quote": "q\ud800"},
+            "findings[0].quote: unpaired UTF-16 surrogates",
+            "surrogate in quote",
+        ),
+        (
+            {"category": "cat\x9b"},
+            "findings[0].category: control characters",
+            "C1 control in category",
+        ),
+        (
+            {"file": "a\u2028b.py"},
+            "findings[0].file: control characters",
+            "U+2028 in file",
+        ),
+    ]:
+        _expect_invalid(
+            f"finding rejects {label}",
+            _minimal_doc([_minimal_finding(**overrides)]),
+            needle,
+        )
     _expect_invalid(
-        "non-string identifier, sha256, file, line, and text fields rejected",
+        "siteRef missing required file rejected",
         _minimal_doc(
             [
                 _minimal_finding(
-                    file=123,
-                    checkId=456,
-                    fingerprint=789,
-                    category=123,
-                    claim="x\x00y",
-                    evidence="e" * (findings.MAX_LONG_TEXT_LENGTH + 1),
-                    package="p" * (findings.MAX_PACKAGE_LENGTH + 1),
-                    recommendation=999,
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
+                        }
+                    },
                 )
             ]
         ),
-        "expected string",
+        "class.sites[0].file: missing required property",
+    )
+    _expect_invalid(
+        "class missing required rule rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
+                        }
+                    },
+                )
+            ]
+        ),
+        "class.rule: missing required property",
+    )
+    _expect_invalid(
+        "closes missing required closed rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"total": 1},
+                        }
+                    },
+                )
+            ]
+        ),
+        "class.closes.closed: missing required property",
     )
     _expect_invalid(
         "non-dict proof rejected",
@@ -1135,6 +1273,15 @@ def test_fingerprints() -> None:
         == "x = 1\n    y = 2",
     )
     check(
+        "normalize_code_region trims many leading blank lines in linear time",
+        findings.normalize_code_region(("\n" * 50_000) + "  x = 1\n" + ("\n" * 50_000))
+        == "x = 1",
+    )
+    check(
+        "compute_fingerprint handles non-ASCII UTF-8 code regions",
+        len(findings.compute_fingerprint("py-i18n", 'msg = "héllo — 世界"')) == 64,
+    )
+    check(
         "normalize_code_region returns empty string for blank input",
         findings.normalize_code_region("  \n\t\r\n") == "",
     )
@@ -1201,6 +1348,17 @@ def test_fingerprints() -> None:
     for fn, args, label in [
         (findings.normalize_code_region, (123,), "non-string region"),
         (findings.normalize_code_region, ("abc\x00def",), "NUL in region"),
+        (findings.normalize_code_region, ("abc\ud800def",), "surrogate in region"),
+        (
+            findings.compute_fingerprint,
+            ("ok-id", "x\ud800"),
+            "surrogate in compute_fingerprint",
+        ),
+        (
+            findings.compute_class_fingerprint,
+            ("ok-id", "a.py", "x\ud800"),
+            "surrogate in compute_class_fingerprint",
+        ),
         (findings.compute_fingerprint, ("bad id", "x = 1"), "invalid check_id"),
         (findings.compute_fingerprint, ("ok-id", "   \n"), "empty normalized region"),
     ]:

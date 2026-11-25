@@ -39,12 +39,53 @@
       "description": "Candidate IDs explicitly dismissed with a reason. candidateId values must be unique."
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "lens": { "const": "code" } },
+        "required": ["lens"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": { "properties": { "lens": { "const": "code" } } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "lens": { "const": "security" } },
+        "required": ["lens"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": { "properties": { "lens": { "const": "security" } } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "lens": { "const": "mcp" } },
+        "required": ["lens"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": { "properties": { "lens": { "const": "mcp" } } }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "repoRelativePath": {
       "type": "string",
       "minLength": 1,
       "maxLength": 1024,
-      "pattern": "^(?![A-Za-z]:)(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f]+)(?:/(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f]+))*$(?!\\n)",
+      "pattern": "^(?![A-Za-z]:)(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]+)(?:/(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]+))*$(?!\\n)",
       "description": "Repo-relative POSIX path with no leading '/', '..', '.', '//', backslashes, drive prefixes, or control characters."
     },
     "identifier": {
@@ -72,8 +113,8 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 1024,
-      "pattern": "^[^\\S\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$(?!\\n)",
-      "description": "Single-line non-blank string with no C0 or DEL control characters."
+      "pattern": "^[^\\S\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]*[^\\s\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029][^\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]*$(?!\\n)",
+      "description": "Single-line non-blank string with no C0, DEL, C1 control characters or Unicode line separators."
     },
     "nonBlankText": {
       "type": "string",

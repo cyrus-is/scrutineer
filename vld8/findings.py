@@ -1,10 +1,8 @@
 """Findings contract v1 loader, validator, and deterministic fingerprints.
 
 Implements validation and fingerprinting for ``vld8/schemas/findings-v1.json``
-using only the Python standard library (Python 3.10+).
+using only the Python standard library.
 """
-
-from __future__ import annotations
 
 import copy
 import functools
@@ -195,7 +193,14 @@ def _is_strict_int(value: Any) -> bool:
 
 
 def _has_control_char(value: str) -> bool:
-    return any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in value)
+    return any(
+        ord(ch) < 0x20 or 0x7F <= ord(ch) <= 0x9F or ch in ("\u2028", "\u2029")
+        for ch in value
+    )
+
+
+def _has_surrogate(value: str) -> bool:
+    return any(0xD800 <= ord(ch) <= 0xDFFF for ch in value)
 
 
 def _validate_identifier(value: Any, label: str, errors: list[str]) -> bool:
@@ -253,6 +258,9 @@ def _validate_non_blank_line(
     if _has_control_char(value):
         errors.append(f"{label}: control characters are not allowed")
         return False
+    if _has_surrogate(value):
+        errors.append(f"{label}: unpaired UTF-16 surrogates are not allowed")
+        return False
     if not value.strip():
         errors.append(f"{label}: must not be empty or whitespace-only")
         return False
@@ -275,6 +283,9 @@ def _validate_non_blank_text(
     if "\x00" in value:
         errors.append(f"{label}: NUL byte is not allowed")
         return False
+    if _has_surrogate(value):
+        errors.append(f"{label}: unpaired UTF-16 surrogates are not allowed")
+        return False
     if not value.strip():
         errors.append(f"{label}: must not be empty or whitespace-only")
         return False
@@ -295,6 +306,9 @@ def _validate_repo_relative_path(value: Any, label: str, errors: list[str]) -> b
         return False
     if _has_control_char(value):
         errors.append(f"{label}: control characters are not allowed in paths")
+        return False
+    if _has_surrogate(value):
+        errors.append(f"{label}: unpaired UTF-16 surrogates are not allowed in paths")
         return False
     if "\\" in value:
         errors.append(f"{label}: backslashes are not allowed in repo-relative paths")
@@ -492,15 +506,19 @@ def normalize_code_region(text: str) -> str:
         raise ValueError(f"code_region must be a string, got {type(text).__name__}")
     if "\x00" in text:
         raise ValueError("code_region must not contain NUL bytes")
+    if _has_surrogate(text):
+        raise ValueError("code_region must not contain unpaired UTF-16 surrogates")
     unified = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = [line.rstrip(" \t") for line in unified.split("\n")]
-    while lines and lines[0] == "":
-        lines.pop(0)
-    while lines and lines[-1] == "":
-        lines.pop()
-    if not lines:
+    start = 0
+    end = len(lines)
+    while start < end and lines[start] == "":
+        start += 1
+    while end > start and lines[end - 1] == "":
+        end -= 1
+    if start == end:
         return ""
-    return textwrap.dedent("\n".join(lines))
+    return textwrap.dedent("\n".join(lines[start:end]))
 
 
 def _sha256_canonical(payload: list[str]) -> str:
