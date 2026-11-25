@@ -795,7 +795,7 @@ def test_invalid_documents_and_edge_cases() -> None:
                         "class": {
                             "rule": "r",
                             "sites": [
-                                {"file": "../bad.py", "lineStart": 1, "lineEnd": 1}
+                                {"file": "src/a.py", "lineStart": 1, "lineEnd": 1}
                             ],
                             "fixSite": {
                                 "file": "/bad.py",
@@ -809,6 +809,31 @@ def test_invalid_documents_and_edge_cases() -> None:
             ]
         ),
         "fixSite.file",
+    )
+    _expect_invalid(
+        "unsafe class site path rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    **{
+                        "classFingerprint": _valid_fp("b"),
+                        "class": {
+                            "rule": "r",
+                            "sites": [
+                                {"file": "../bad.py", "lineStart": 1, "lineEnd": 1}
+                            ],
+                            "fixSite": {
+                                "file": "src/fix.py",
+                                "lineStart": 1,
+                                "lineEnd": 1,
+                            },
+                            "closes": {"closed": 0, "total": 1},
+                        },
+                    }
+                )
+            ]
+        ),
+        "class.sites[0].file",
     )
     for bad_proof, needle, label in [
         ({"kind": "magic", "status": "verified"}, "proof.kind", "bad proof.kind"),
@@ -1264,6 +1289,61 @@ def test_file_loading() -> None:
             check("rejects validate='yes'", False)
         except ValueError:
             check("rejects validate='yes'", True)
+
+        safe_out = findings._safe_label("a\ud800b\udfffc\u2028d\u2029e")
+        safe_out.encode("utf-8")
+        check(
+            "_safe_label escapes surrogates and Unicode line/paragraph separators",
+            all(tag in safe_out for tag in ("\\ud800", "\\udfff", "\\u2028", "\\u2029"))
+            and "\ud800" not in safe_out
+            and "\udfff" not in safe_out
+            and "\u2028" not in safe_out
+            and "\u2029" not in safe_out,
+        )
+
+        surrogate_key_file = root / "surrogate_key.json"
+        surrogate_key_file.write_text(
+            '{"schemaVersion":"1.0","findings":[],"bad\\ud800":1}',
+            encoding="utf-8",
+        )
+        try:
+            findings.load_findings_file(surrogate_key_file)
+            check("rejects surrogate unknown key cleanly", False)
+        except findings.FindingsValidationError as exc:
+            msg = str(exc)
+            msg.encode("utf-8")
+            check(
+                "surrogate unknown key error is UTF-8 safe and escaped",
+                "\\ud800" in msg and "\ud800" not in msg,
+            )
+
+        dup_surrogate_file = root / "dup_surrogate.json"
+        dup_surrogate_file.write_text(
+            '{"schemaVersion":"1.0","findings":[],"k\\ud800":1,"k\\ud800":2}',
+            encoding="utf-8",
+        )
+        try:
+            findings.load_findings_file(dup_surrogate_file)
+            check("rejects duplicate surrogate key cleanly", False)
+        except findings.FindingsError as exc:
+            msg = str(exc)
+            msg.encode("utf-8")
+            check(
+                "duplicate surrogate key error is UTF-8 safe and escaped",
+                "\\ud800" in msg and "\ud800" not in msg,
+            )
+
+        for sep, tag, label in [
+            ("\u2028", "\\u2028", "U+2028"),
+            ("\u2029", "\\u2029", "U+2029"),
+        ]:
+            errs = findings.validate_findings_doc(
+                {"schemaVersion": "1.0", "findings": [], f"bad{sep}key": 1}
+            )
+            check(
+                f"unknown key error escapes {label}",
+                len(errs) == 1 and tag in errs[0] and sep not in errs[0],
+            )
 
 
 def test_fingerprints() -> None:

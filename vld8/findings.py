@@ -180,6 +180,8 @@ def _safe_label(value: Any, *, max_len: int = 64) -> str:
         code = ord(ch)
         if code < 0x20 or code == 0x7F or 0x80 <= code <= 0x9F:
             cleaned.append(f"\\x{code:02x}")
+        elif 0xD800 <= code <= 0xDFFF or code in (0x2028, 0x2029):
+            cleaned.append(f"\\u{code:04x}")
         else:
             cleaned.append(ch)
     out = "".join(cleaned)
