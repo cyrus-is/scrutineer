@@ -226,24 +226,41 @@ This phase is where the map becomes genuinely valuable. Using the data from Phas
 
 1. **Service-to-service**: Match outbound HTTP/gRPC/queue calls in one service to inbound endpoint
    definitions in another. Record the protocol, whether it's sync or async, and the specific
-   endpoints involved.
-2. **Service-to-data-store**: Match database connection configs to Terraform/IaC resources that
+   endpoints involved. For HTTP calls executed via a CLI tool (`gh`, `git`, `docker`), set `"via"`
+   on the `http` connection.
+2. **Process, IPC, and file boundaries**:
+   - **Process (`type: "process"`):** Record subprocess/daemon launches (`sudo`, `launchd`, `exec`,
+     `shell`), capturing `program`, `as_user`, `via`, `environment` (`inherited` or `constructed`),
+     `passes` (`argv`/`stdin`), and optional container `mounts`.
+   - **IPC (`type: "ipc"`):** Record `unix_socket`, `stdio`, `pipe`, and `signal` channels with
+     `channel` and `channel_auth`.
+   - **File (`type: "file"`):** Record shared control files or directories used as channels with
+     `path_expr` and `mode` (`read`, `write`, `read_write`, `append`, `lock`, `watch`).
+3. **Service-to-data-store**: Match database connection configs to Terraform/IaC resources that
    provision those stores. Flag shared databases (multiple services connecting to the same store).
-3. **Service-to-external**: Catalog all third-party API dependencies.
-4. **Infrastructure-to-service**: Map Terraform resources to the services they support (e.g.,
-   `aws_ecs_service` → the service that runs on it).
-5. **Pipeline-to-service**: Map CI/CD workflows to the services they deploy.
-6. **Library-to-consumer**: Map internal library usage across all services. **Every library
+4. **Service-to-external**: Catalog all third-party API dependencies.
+5. **Infrastructure-to-service**: Map Terraform resources to the services they support (e.g.,
+   `aws_ecs_service` → the service that runs on it), including `mounts` where containers mount host paths.
+6. **Pipeline-to-service**: Map CI/CD workflows to the services they deploy.
+7. **Library-to-consumer**: Map internal library usage across all services. **Every library
    relationship must be represented in two places**: (a) the library component's `consumers`
    array AND (b) a corresponding entry in `connections[]` with `"type": "library"`. Do not
    list a consumer without creating the connection, or vice versa. Verify consistency.
 
 For each connection:
-- `source`, `target`, `type` (http, grpc, graphql, queue, database, library, infrastructure)
+- `source`, `target`, `type` (http, grpc, graphql, websocket, queue, pubsub, database, cache, storage, library, infrastructure, event, process, ipc, file)
 - `async`: boolean
 - `protocol_details`: method, path, queue name, topic, etc.
 - `auth_required`: what auth the connection uses
 - `confidence`: how certain you are this connection exists
+- `evidence[]`: `{ "repo", "file", "lines": [start, end], "sha256" }` pointing at the source lines
+  supporting the edge (also attach `evidence[]` on components). Compute `sha256` as SHA-256 over
+  `"\n".join(lines[start-1:end]).encode("utf-8")` after `.splitlines()`.
+
+**Never put findings or security observations in the map.** Do not write vulnerabilities,
+missing-auth findings, CVE/CWE callouts, or severity tags into `notes` or `description` fields in
+`servicemap.json`. Record structural topology only, and list any observations separately in your
+final report to the user.
 
 **Verify that every service listed in a datastore's `consumers` array actually connects to that
 datastore.** Read the service's startup/config code to confirm — do not assume a service uses a
@@ -326,8 +343,9 @@ a refresh. If any repo is more than 30 days stale, flag it:
 
 ### First-time crawl (no existing map)
 
-If no `servicemap.json` exists at the target path, this is a fresh map. Create the
-`repositories[]` array with a single entry for the current repo and proceed normally.
+If no `servicemap.json` exists at the target path, this is a fresh map. Create it with
+`"schema_version": "1.2.0"` and the `repositories[]` array containing a single entry for the
+current repo and proceed normally.
 
 ## Confidence Scoring Guide
 
@@ -359,19 +377,27 @@ before writing the file.
 
 **`external` additionally requires:** `vendor`, `category`, `consumers` — and takes no `path`.
 
-**Every connection:** `id`, `source`, `target`, `type`, plus `confidence` and
+**Every connection:** `id`, `source`, `target`, `type`, `async`, plus `confidence` and
 `discovery_method`. **`type` must be one of:** `http`, `grpc`, `graphql`, `websocket`,
-`queue`, `pubsub`, `event`, `database`, `cache`, `storage`, `library`, `infrastructure`.
+`queue`, `pubsub`, `event`, `database`, `cache`, `storage`, `library`, `infrastructure`,
+`process`, `ipc`, `file`.
 There is no `sdk` type — a framework dependency is `library`, and a managed data service
 reached through a vendor SDK is `storage` or `database` by what it stores.
+- `process` requires `program`, `as_user`, `via` (`sudo`/`launchd`/`exec`/`shell`),
+  `environment` (`inherited`/`constructed`), and `passes` (`argv`/`stdin`), with optional `mounts`.
+- `ipc` requires `channel` (`unix_socket`/`stdio`/`pipe`/`signal`) and `channel_auth`.
+- `file` requires `path_expr` and `mode` (`read`/`write`/`read_write`/`append`/`lock`/`watch`).
+- `http` allows optional `via` (`gh`, `git`, `docker`, etc.); `infrastructure` allows optional `mounts`.
+- Both components and connections accept `evidence[]` (`repo`, `file`, `lines: [start, end]`, `sha256`).
 
 **`metadata` requires:** `total_components`, `total_connections`, `total_stubs`,
 `component_counts`, `low_confidence_components`, `shared_datastores`,
-`unauthenticated_public_endpoints`, `unmonitored_services`.
+`unauthenticated_public_endpoints`, `unmonitored_services`, plus `repo_staleness` on 1.1+.
 
-Run `vld8 map validate <path>` when you are done (from a clone:
-`python generate-servicemap/validate_servicemap.py <path>`). Fix what it reports rather than
-shipping a map that only mostly conforms.
+Run `vld8 map validate <path> --check-evidence` when you are done (from a clone:
+`python generate-servicemap/validate_servicemap.py <path> --check-evidence`). Fix what it reports
+rather than shipping a map that only mostly conforms. Keep security/code findings out of `servicemap.json`
+and list them separately in your final report.
 
 ## Output
 
