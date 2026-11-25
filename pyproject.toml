@@ -7,7 +7,7 @@ name = "vld8"
 version = "2.0.1"
 description = "Dev tooling for Claude Code: a service map, context-aware code and security review, and an MCP-server reviewer. Formerly scrutineer."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 license = { text = "MIT" }
 dependencies = ["pyyaml>=6.0"]
 

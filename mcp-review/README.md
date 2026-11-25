@@ -229,7 +229,7 @@ contain only placeholders — no live-looking secrets are committed.
 
 ## Requirements
 
-- Python 3.10+ (uses `X | None` type syntax)
+- Python 3.14+
 - `pyyaml>=6.0`
 - [Claude Code](https://claude.ai/code) to run the `/vld8-mcp` skill
 
