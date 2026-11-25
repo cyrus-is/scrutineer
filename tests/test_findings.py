@@ -170,6 +170,70 @@ def test_schema_and_parity() -> None:
         == "#/$defs/nonBlankLongText",
     )
 
+    root_all_of = schema["allOf"]
+    ruled_lenses = {rule["if"]["properties"]["lens"]["const"] for rule in root_all_of}
+    check(
+        "root allOf lens rules match VALID_LENSES",
+        len(root_all_of) == len(findings.VALID_LENSES)
+        and ruled_lenses == findings.VALID_LENSES
+        and all(
+            rule["if"]["properties"]["lens"]["const"]
+            == rule["then"]["properties"]["findings"]["items"]["properties"]["lens"][
+                "const"
+            ]
+            for rule in root_all_of
+        ),
+    )
+
+    closes = defs["findingClass"]["properties"]["closes"]
+    check(
+        "schema property sets and additionalProperties match constants",
+        set(schema["properties"]) == findings._DOC_KEYS
+        and schema.get("additionalProperties") is False
+        and set(defs["finding"]["properties"]) == findings._FINDING_KEYS
+        and defs["finding"].get("additionalProperties") is False
+        and frozenset(findings._FINDING_REQUIRED_KEYS).isdisjoint(
+            findings._FINDING_OPTIONAL_KEYS
+        )
+        and len(findings._FINDING_REQUIRED_KEYS)
+        == len(set(findings._FINDING_REQUIRED_KEYS))
+        and set(defs["proof"]["properties"]) == findings._PROOF_KEYS
+        and defs["proof"].get("additionalProperties") is False
+        and set(defs["siteRef"]["properties"]) == findings._SITE_KEYS
+        and defs["siteRef"].get("additionalProperties") is False
+        and set(defs["findingClass"]["properties"]) == findings._CLASS_KEYS
+        and defs["findingClass"].get("additionalProperties") is False
+        and set(closes["properties"]) == findings._CLOSES_KEYS
+        and closes.get("additionalProperties") is False
+        and set(defs["dismissal"]["properties"]) == findings._DISMISSAL_KEYS
+        and defs["dismissal"].get("additionalProperties") is False,
+    )
+    check(
+        "schema required keys match constants across all object defs",
+        set(schema["required"]) == {"schemaVersion", "findings"}
+        and set(defs["finding"]["required"]) == set(findings._FINDING_REQUIRED_KEYS)
+        and set(defs["proof"]["required"]) == {"kind", "status"}
+        and set(defs["siteRef"]["required"]) == {"file", "lineStart", "lineEnd"}
+        and set(defs["findingClass"]["required"])
+        == {"rule", "sites", "fixSite", "closes"}
+        and set(closes["required"]) == {"closed", "total"}
+        and set(defs["dismissal"]["required"]) == {"candidateId", "reason"},
+    )
+    finding_props = defs["finding"]["properties"]
+    check(
+        "schema category, package, version, and sha256Hex limits match constants",
+        finding_props["category"]["anyOf"][1]["maxLength"]
+        == findings.MAX_CATEGORY_LENGTH
+        and finding_props["package"]["anyOf"][1]["maxLength"]
+        == findings.MAX_PACKAGE_LENGTH
+        and defs["finding"]["allOf"][4]["then"]["properties"]["package"]["maxLength"]
+        == findings.MAX_PACKAGE_LENGTH
+        and finding_props["version"]["anyOf"][1]["maxLength"]
+        == findings.MAX_VERSION_LENGTH
+        and defs["sha256Hex"]["minLength"] == 64
+        and defs["sha256Hex"]["maxLength"] == 64,
+    )
+
     # Regex parity between schema patterns and Python validator without re.ASCII
     # (matching jsonschema's default Python `re` compilation).
     path_re = re.compile(defs["repoRelativePath"]["pattern"])
