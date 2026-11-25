@@ -50,7 +50,7 @@ def _render(template: str, **values) -> str:
 def _glob_regex(pattern: str) -> re.Pattern[str]:
     parts = pattern.split("**/")
     candidates = {
-        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
+        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:], strict=True))
         for keeps in itertools.product((True, False), repeat=len(parts) - 1)
     }
     return re.compile("|".join(f"(?:{fnmatch.translate(c)})" for c in sorted(candidates)))
@@ -417,7 +417,7 @@ class SkillGenerator:
             cat = data["_category"]
             by_category.setdefault(cat, []).append((key, data))
 
-        for category, platforms in by_category.items():
+        for _category, platforms in by_category.items():
             for platform_key, platform_data in platforms:
                 sections.append(self._platform_checklist(
                     platform_key, platform_data, component_paths.get(platform_key, [])
@@ -1363,7 +1363,7 @@ def main():
               "include the universal checklist.")
     else:
         print(f"\nDetected {len(detected)} platform(s):")
-        for key, data in detected.items():
+        for _key, data in detected.items():
             count = len(data.get("checklist", []))
             print(f"  ✓ {data['name']:30s} ({count} checklist items)")
 
@@ -1405,7 +1405,7 @@ def main():
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /vld8-security (from Claude Code in the target repo)")
+    print("\nUsage: /vld8-security (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":

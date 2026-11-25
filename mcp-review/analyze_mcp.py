@@ -55,10 +55,9 @@ import json
 import re
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit, urlunsplit, parse_qs
+from urllib.parse import parse_qs, urlsplit, urlunsplit
 
 import yaml
-
 
 # ---------------------------------------------------------------------------
 # Helpers

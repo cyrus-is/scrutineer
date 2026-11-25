@@ -17,7 +17,6 @@ installer via ``service_map=``.
 
 import shutil
 import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,8 +26,8 @@ from .paths import SERVICEMAP_FILE
 @dataclass
 class ServiceMapResult:
     path: Path | None  # resolved servicemap.json, or None if there is no map
-    method: str        # "reuse" | "crawl" | "skip"
-    note: str          # human-readable explanation for the install summary
+    method: str  # "reuse" | "crawl" | "skip"
+    note: str  # human-readable explanation for the install summary
 
 
 def claude_available() -> bool:
@@ -58,17 +57,24 @@ def acquire(
     if service_map is not None:
         resolved = service_map if service_map.is_absolute() else (target / service_map)
         if not resolved.is_file():
-            raise FileNotFoundError(f"--service-map points at a missing file: {resolved}")
-        return ServiceMapResult(resolved, "reuse", f"using supplied service map ({resolved})")
+            raise FileNotFoundError(
+                f"--service-map points at a missing file: {resolved}"
+            )
+        return ServiceMapResult(
+            resolved, "reuse", f"using supplied service map ({resolved})"
+        )
 
     # An existing map at the repo root is reused before considering a crawl.
     existing = _existing_map(target)
     if existing is not None:
-        return ServiceMapResult(existing, "reuse", f"reusing existing {SERVICEMAP_FILE}")
+        return ServiceMapResult(
+            existing, "reuse", f"reusing existing {SERVICEMAP_FILE}"
+        )
 
     if not crawl:
         return ServiceMapResult(
-            None, "skip",
+            None,
+            "skip",
             "no service map — generating map-less skills "
             "(run /vld8-map then re-run to add cross-service awareness)",
         )
@@ -81,7 +87,9 @@ def acquire(
         )
 
     produced = _crawl(target, log=log)
-    return ServiceMapResult(produced, "crawl", f"crawled service map via `claude -p` -> {produced}")
+    return ServiceMapResult(
+        produced, "crawl", f"crawled service map via `claude -p` -> {produced}"
+    )
 
 
 def _crawl(target: Path, *, log=print) -> Path:
@@ -100,7 +108,9 @@ def _crawl(target: Path, *, log=print) -> Path:
             check=True,
         )
     except subprocess.CalledProcessError as exc:  # pragma: no cover - depends on CLI
-        raise RuntimeError(f"`claude -p` crawl failed (exit {exc.returncode}).") from exc
+        raise RuntimeError(
+            f"`claude -p` crawl failed (exit {exc.returncode})."
+        ) from exc
 
     if not out.is_file():
         raise RuntimeError(

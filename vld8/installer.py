@@ -34,13 +34,19 @@ def _default_log(msg: str = "") -> None:
 @dataclass
 class InstallResult:
     target: Path
-    installed: list[str] = field(default_factory=list)   # command files written
-    retired: list[str] = field(default_factory=list)     # scrutineer-era files moved to the backup folder
-    moved_suppressions: bool = False                     # renamed the MCP suppressions file
-    previews: list[str] = field(default_factory=list)    # preview milestones the generators got
-    preview_missing: list[str] = field(default_factory=list)  # review skills that lack the requested preview
-    preview_kept: list[str] = field(default_factory=list)     # not regenerated; still hold an earlier preview
-    preview_dropped: list[str] = field(default_factory=list)  # regenerated without the preview they held
+    installed: list[str] = field(default_factory=list)  # command files written
+    # scrutineer-era files moved to the backup folder
+    retired: list[str] = field(default_factory=list)
+    # renamed the MCP suppressions file
+    moved_suppressions: bool = False
+    # preview milestones the generators got
+    previews: list[str] = field(default_factory=list)
+    # review skills that lack the requested preview
+    preview_missing: list[str] = field(default_factory=list)
+    # not regenerated; still hold an earlier preview
+    preview_kept: list[str] = field(default_factory=list)
+    # regenerated without the preview they held
+    preview_dropped: list[str] = field(default_factory=list)
     service_map_note: str = ""
     skipped_crawl: bool = False
 
@@ -60,7 +66,7 @@ def _copy_skill(src: Path, dest: Path, *, force: bool, log) -> bool:
 
 
 def _backup_path(backup_dir: Path, name: str) -> Path:
-    """A path in ``backup_dir`` for ``name`` that doesn't overwrite an earlier backup."""
+    """Return a non-colliding backup path in ``backup_dir`` for ``name``."""
     dest = backup_dir / name
     n = 1
     while dest.exists():
@@ -90,7 +96,10 @@ def _retire_legacy(target: Path, cmd_dir: Path, log) -> list[str]:
             log(f"  kept {old} (could not read it: {exc})")
             continue
         if marker not in text:
-            log(f"  kept {old} (scrutineer did not write it; delete it by hand if it is stale)")
+            log(
+                f"  kept {old} (scrutineer did not write it; delete it by hand "
+                "if it is stale)"
+            )
             continue
         backup_dir.mkdir(parents=True, exist_ok=True)
         dest = _backup_path(backup_dir, old)
@@ -107,8 +116,10 @@ def _migrate_suppressions(target: Path, log) -> bool:
     if not old.is_file():
         return False
     if new.exists():
-        log(f"  kept {paths.LEGACY_SUPPRESSIONS_FILE}: {paths.SUPPRESSIONS_FILE} already exists; "
-            "merge any entries you still need by hand")
+        log(
+            f"  kept {paths.LEGACY_SUPPRESSIONS_FILE}: {paths.SUPPRESSIONS_FILE} "
+            "already exists; merge any entries you still need by hand"
+        )
         return False
     old.rename(new)
     log(f"  ✓ moved {paths.LEGACY_SUPPRESSIONS_FILE} → {paths.SUPPRESSIONS_FILE}")
@@ -161,7 +172,10 @@ def _preview_milestones(path: Path) -> set[str]:
         text = path.read_text(errors="replace")
     except OSError:
         return set()
-    line = next((ln for ln in text.splitlines() if ln.startswith(paths.PREVIEW_MARKER)), "")
+    line = next(
+        (ln for ln in text.splitlines() if ln.startswith(paths.PREVIEW_MARKER)),
+        "",
+    )
     return set(re.findall(r"--preview (\d+\.\d+)", line))
 
 
@@ -215,13 +229,23 @@ def install(
     # 1. Copy the static skills first — the servicemap skill must be present
     #    before a headless crawl can invoke /vld8-map.
     log("Copying static skills…")
-    if _copy_skill(paths.SERVICEMAP_SKILL, cmd_dir / paths.SERVICEMAP_COMMAND, force=force, log=log):
+    if _copy_skill(
+        paths.SERVICEMAP_SKILL,
+        cmd_dir / paths.SERVICEMAP_COMMAND,
+        force=force,
+        log=log,
+    ):
         result.installed.append(paths.SERVICEMAP_COMMAND)
     if _copy_skill(paths.MCP_SKILL, cmd_dir / paths.MCP_COMMAND, force=force, log=log):
         result.installed.append(paths.MCP_COMMAND)
     # The setup skill too, so a pip-only install can later re-crawl the map and
     # regenerate the review skills with /vld8-setup.
-    if _copy_skill(paths.SETUP_SKILL, cmd_dir / paths.SETUP_COMMAND, force=force, log=log):
+    if _copy_skill(
+        paths.SETUP_SKILL,
+        cmd_dir / paths.SETUP_COMMAND,
+        force=force,
+        log=log,
+    ):
         result.installed.append(paths.SETUP_COMMAND)
 
     # 2. Resolve a service map (existing / crawl / skip).
@@ -241,13 +265,23 @@ def install(
     had_preview = {f for f in review if _has_preview(cmd_dir / f)}
     log("Generating review skills…")
     if _run_generator(
-        paths.PEER_GENERATOR, target, f".claude/commands/{paths.PEER_COMMAND}", sm,
-        force=force, previews=result.previews, log=log,
+        paths.PEER_GENERATOR,
+        target,
+        f".claude/commands/{paths.PEER_COMMAND}",
+        sm,
+        force=force,
+        previews=result.previews,
+        log=log,
     ):
         result.installed.append(paths.PEER_COMMAND)
     if _run_generator(
-        paths.SECURITY_GENERATOR, target, f".claude/commands/{paths.SECURITY_COMMAND}", sm,
-        force=force, previews=result.previews, log=log,
+        paths.SECURITY_GENERATOR,
+        target,
+        f".claude/commands/{paths.SECURITY_COMMAND}",
+        sm,
+        force=force,
+        previews=result.previews,
+        log=log,
     ):
         result.installed.append(paths.SECURITY_COMMAND)
 
@@ -257,12 +291,18 @@ def install(
     if result.previews:
         wanted = set(result.previews)
         result.preview_missing = [
-            f for f in review
-            if f not in result.installed or not wanted <= _preview_milestones(cmd_dir / f)
+            f
+            for f in review
+            if f not in result.installed
+            or not wanted <= _preview_milestones(cmd_dir / f)
         ]
     else:
-        result.preview_kept = [f for f in review if f in had_preview and _has_preview(cmd_dir / f)]
-        result.preview_dropped = [f for f in review if f in had_preview and not _has_preview(cmd_dir / f)]
+        result.preview_kept = [
+            f for f in review if f in had_preview and _has_preview(cmd_dir / f)
+        ]
+        result.preview_dropped = [
+            f for f in review if f in had_preview and not _has_preview(cmd_dir / f)
+        ]
 
     # 4. Retire the scrutineer-* files this install replaces, so the old and new
     #    commands don't both appear in Claude Code.

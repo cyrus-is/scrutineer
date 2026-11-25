@@ -65,3 +65,23 @@ exclude = [
     "mcp-review/tests/**",
     "**/.DS_Store",
 ]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"generate-peer-review/generate.py" = ["E501"]      # Embedded Markdown prompt templates exceed 88 columns.
+"generate-security-review/generate.py" = ["E501"]  # Embedded Markdown prompt templates exceed 88 columns.
+"legacy/scrutineer/scrutineer/cli.py" = ["E501"]   # Frozen forwarding package; pre-existing long notice line.
+"mcp-review/analyze_mcp.py" = ["E501"]             # Pre-existing long regexes and guidance strings.
+"mcp-review/capture_runtime.py" = ["E501"]         # Pre-existing long lines in runtime capture harness.
+"mcp-review/fetch_source.py" = ["E501"]            # Pre-existing long lines in archive source fetcher.
+"mcp-review/validate_findings.py" = ["E501"]       # Pre-existing long lines in MCP findings validator.
+"mcp-review/tests/**/*.py" = ["E501"]              # Pre-existing long fixture and test assertion lines.
+"tests/test_cli.py" = ["E501"]                     # Pre-existing long CLI test assertion lines.
+"tests/test_generators.py" = ["E501"]              # Pre-existing long generator test assertion lines.
+"tests/test_legacy_shim.py" = ["E501"]             # Pre-existing long forwarding-shim test lines.

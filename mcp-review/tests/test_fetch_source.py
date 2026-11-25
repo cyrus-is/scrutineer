@@ -14,6 +14,8 @@ suite never touches the network — the network resolve/download path sits behin
 a seam (resolve_*/http_get) and is exercised only under --fetch in real use.
 """
 
+import base64
+import hashlib
 import io
 import json
 import shutil
@@ -262,7 +264,6 @@ b = {"ecosystem": "npm", "name": "pkg", "resolved_version": "1.2.3", "content_sh
 check("manifest digest stable", F.digest(b) == F.digest(dict(reversed(list(b.items())))))
 
 # --- npm integrity verification (SRI) ---------------------------------------
-import base64, hashlib  # noqa: E402
 _payload = b"hello mcp"
 _sri = "sha512-" + base64.b64encode(hashlib.sha512(_payload).digest()).decode()
 check("npm integrity verifies", F.verify_npm_integrity(_payload, _sri) is True)

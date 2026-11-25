@@ -50,7 +50,7 @@ def _render(template: str, **values) -> str:
 def _glob_regex(pattern: str) -> re.Pattern[str]:
     parts = pattern.split("**/")
     candidates = {
-        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:]))
+        parts[0] + "".join(("**/" if keep else "") + p for keep, p in zip(keeps, parts[1:], strict=True))
         for keeps in itertools.product((True, False), repeat=len(parts) - 1)
     }
     return re.compile("|".join(f"(?:{fnmatch.translate(c)})" for c in sorted(candidates)))
@@ -937,7 +937,7 @@ class SkillGenerator:
             cat = data["_category"]
             by_category.setdefault(cat, []).append((key, data))
 
-        for category, platforms in by_category.items():
+        for _category, platforms in by_category.items():
             for platform_key, platform_data in platforms:
                 checks = platform_data.get("preflight_checks", [])
                 if not checks:
@@ -1033,7 +1033,7 @@ class SkillGenerator:
 
         """)]
 
-        for key, data in detected.items():
+        for _key, data in detected.items():
             areas = data.get("focus_areas", [])
             if not areas:
                 continue
@@ -1071,7 +1071,7 @@ class SkillGenerator:
     def _change_type_modifiers(self, detected: dict) -> str:
         # Collect all change type signals from detected platforms
         all_signals: dict[str, list[str]] = {}
-        for key, data in detected.items():
+        for _key, data in detected.items():
             for signal in data.get("change_type_signals", []):
                 ct = signal["type"]
                 all_signals.setdefault(ct, []).extend(signal["patterns"])
@@ -1622,7 +1622,7 @@ def main():
         print("\nNo known platforms detected. The generated skill will only include universal lenses.")
     else:
         print(f"\nDetected {len(detected)} platform(s):")
-        for key, data in detected.items():
+        for _key, data in detected.items():
             checks = len(data.get("preflight_checks", []))
             areas = len(data.get("focus_areas", []))
             print(f"  ✓ {data['name']:30s} ({checks} pre-flight checks, {areas} focus areas)")
@@ -1665,11 +1665,11 @@ def main():
     print(f"  Platforms: {len(detected)}")
     print(f"  Pre-flight checks: {check_count}")
     print(f"  Focus areas: {area_count}")
-    print(f"  Evaluation lenses: 8 (always)")
+    print("  Evaluation lenses: 8 (always)")
     if service_map:
         reviewable = service_map.get_reviewable_components()
         print(f"  Reviewable components: {len(reviewable)} (from service map)")
-    print(f"\nUsage: /vld8-review (from Claude Code in the target repo)")
+    print("\nUsage: /vld8-review (from Claude Code in the target repo)")
 
 
 if __name__ == "__main__":
