@@ -85,3 +85,27 @@ select = ["E", "F", "W", "I", "B", "UP"]
 "tests/test_cli.py" = ["E501"]                     # Pre-existing long CLI test assertion lines.
 "tests/test_generators.py" = ["E501"]              # Pre-existing long generator test assertion lines.
 "tests/test_legacy_shim.py" = ["E501"]             # Pre-existing long forwarding-shim test lines.
+
+[tool.ruff.format]
+# Pre-existing files pending a dedicated formatting pass (#149); all new files and
+# vld8/, generate-servicemap/, legacy/, tests/test_{findings,servicemap}.py are
+# checked by `ruff format --check .` in CI.
+exclude = [
+    "generate-peer-review/generate.py",
+    "generate-security-review/generate.py",
+    "mcp-review/analyze_mcp.py",
+    "mcp-review/capture_runtime.py",
+    "mcp-review/fetch_source.py",
+    "mcp-review/validate_findings.py",
+    "mcp-review/tests/corpus/capture_tools.py",
+    "mcp-review/tests/corpus/top100/survey_build.py",
+    "mcp-review/tests/corpus/top100/validate_all.py",
+    "mcp-review/tests/fixtures/servers/drift_server.py",
+    "mcp-review/tests/fixtures/servers/exfil_server.py",
+    "mcp-review/tests/test_analyze_mcp.py",
+    "mcp-review/tests/test_capture_runtime.py",
+    "mcp-review/tests/test_fetch_source.py",
+    "tests/test_cli.py",
+    "tests/test_generators.py",
+    "tests/test_legacy_shim.py",
+]

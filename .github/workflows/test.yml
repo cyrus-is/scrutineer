@@ -29,7 +29,9 @@ jobs:
           python -m pip install --require-hashes --only-binary=:all: build cython hatchling ruff setuptools wheel
           python -m pip install --require-hashes --no-build-isolation pyyaml
       - name: Lint
-        run: ruff check .
+        run: |
+          ruff check .
+          ruff format --check .
       - name: Generator and CLI tests
         run: |
           python tests/test_generators.py
