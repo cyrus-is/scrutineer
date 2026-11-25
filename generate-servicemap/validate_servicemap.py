@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import bisect
 import hashlib
 import json
 import math
@@ -30,6 +31,7 @@ MAX_MOVE_SCAN_LINES = 50_000
 MAX_MOVE_SCAN_SPAN = 500
 MAX_MOVE_SCAN_WORK = 2_000_000
 MAX_TOTAL_MOVE_SCAN_WORK = 2_000_000
+MAX_TOTAL_EXACT_HASH_LINES = 2_000_000
 
 VALID_COMPONENT_TYPES = {
     "service",
@@ -1000,7 +1002,14 @@ def _find_moved_range(
     matches = digest_index.get(target_sha)
     if not matches:
         return None, None
-    best_idx = min(matches, key=lambda idx: (abs(idx - (start - 1)), idx))
+    target_idx = start - 1
+    pos = bisect.bisect_left(matches, target_idx)
+    candidates = []
+    if pos > 0:
+        candidates.append(matches[pos - 1])
+    if pos < len(matches):
+        candidates.append(matches[pos])
+    best_idx = min(candidates, key=lambda idx: (abs(idx - target_idx), idx))
     return (best_idx + 1, best_idx + span), None
 
 
@@ -1054,6 +1063,8 @@ def _run_evidence_checks(
                 validator.warn(msg)
 
     cache: dict[str, tuple[str, list[str] | None]] = {}
+    exact_cache: dict[tuple[str, int, int], str] = {}
+    exact_budget = 0
     move_cache: dict[tuple[str, int], dict[str, list[int]]] = {}
     move_budget = [0]
     for ctx, entry in validator.evidence_refs:
@@ -1096,12 +1107,30 @@ def _run_evidence_checks(
                 validator.warn(msg)
             continue
 
-        if (
-            end <= len(file_lines)
-            and hash_lines(file_lines[start - 1 : end]) == expected_sha
-        ):
-            counts["verified"] += 1
-            continue
+        if end <= len(file_lines):
+            exact_key = (rel_file, start, end)
+            if exact_key in exact_cache:
+                actual_sha = exact_cache[exact_key]
+            else:
+                span = end - start + 1
+                if exact_budget + span > MAX_TOTAL_EXACT_HASH_LINES:
+                    counts["error"] += 1
+                    msg = (
+                        f"{ctx}: exact evidence verification skipped "
+                        f"(exceeds cumulative {MAX_TOTAL_EXACT_HASH_LINES} "
+                        f"hashed-line budget)"
+                    )
+                    if strict:
+                        validator.error(msg)
+                    else:
+                        validator.warn(msg)
+                    continue
+                actual_sha = hash_lines(file_lines[start - 1 : end])
+                exact_budget += span
+                exact_cache[exact_key] = actual_sha
+            if actual_sha == expected_sha:
+                counts["verified"] += 1
+                continue
 
         moved, skip_reason = _find_moved_range(
             file_lines,

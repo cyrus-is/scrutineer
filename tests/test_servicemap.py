@@ -332,6 +332,30 @@ def test_schema_v12_valid_and_malformed() -> None:
     m["connections"] = [_make_file_conn(path_expr="")]
     bad_cases.append(("file empty path_expr", m))
 
+    for missing in ("path_expr", "mode"):
+        m = _base_v12_map()
+        c = _make_file_conn()
+        c.pop(missing)
+        m["connections"] = [c]
+        bad_cases.append((f"file missing {missing}", m))
+
+    for fld in ("program", "as_user"):
+        m = _base_v12_map()
+        m["connections"] = [_make_process_conn(**{fld: "   "})]
+        bad_cases.append((f"process empty {fld}", m))
+
+    m = _base_v12_map()
+    m["connections"] = [_make_process_conn(passes="bad")]
+    bad_cases.append(("process passes non-dict", m))
+
+    m = _base_v12_map()
+    m["connections"] = [_make_process_conn(passes={"stdin": 123})]
+    bad_cases.append(("process passes.stdin invalid type", m))
+
+    m = _base_v12_map()
+    m["connections"] = [_make_ipc_conn(channel_auth="   ")]
+    bad_cases.append(("ipc empty channel_auth", m))
+
     m = _base_v12_map()
     m["connections"] = [
         {
@@ -1257,9 +1281,12 @@ def test_api_and_cli_edge_cases() -> None:
             len(res_nested_f.warnings) == 3,
         )
 
-        # Move-scan span/cumulative work budget and per-(file, span) digest index
+        # Move-scan span/lines/work/cumulative budgets, bisect tie-break, & exact cache
         orig_span = SM.MAX_MOVE_SCAN_SPAN
+        orig_lines = SM.MAX_MOVE_SCAN_LINES
+        orig_work = SM.MAX_MOVE_SCAN_WORK
         orig_total = SM.MAX_TOTAL_MOVE_SCAN_WORK
+        orig_exact = SM.MAX_TOTAL_EXACT_HASH_LINES
         try:
             SM.MAX_MOVE_SCAN_SPAN = 1
             (renamed / "src" / "a.py").write_text("a\nb\nc\nd\n", encoding="utf-8")
@@ -1292,6 +1319,94 @@ def test_api_and_cli_edge_cases() -> None:
             )
 
             SM.MAX_MOVE_SCAN_SPAN = orig_span
+            SM.MAX_MOVE_SCAN_LINES = 2
+            res_lines = SM.validate_map(
+                m_span,
+                check_evidence=True,
+                repo_path=renamed,
+                repo_name="sample-repo",
+                strict=False,
+            )
+            check(
+                "move scan respects MAX_MOVE_SCAN_LINES cap",
+                any("exceeds 2 lines" in w for w in res_lines.warnings),
+            )
+
+            SM.MAX_MOVE_SCAN_LINES = orig_lines
+            SM.MAX_MOVE_SCAN_WORK = 2
+            res_work = SM.validate_map(
+                m_span,
+                check_evidence=True,
+                repo_path=renamed,
+                repo_name="sample-repo",
+                strict=False,
+            )
+            check(
+                "move scan respects MAX_MOVE_SCAN_WORK cap",
+                any("exceeds 2 line-window budget" in w for w in res_work.warnings),
+            )
+
+            SM.MAX_MOVE_SCAN_WORK = orig_work
+            # Exact-position cache hit and cumulative exact hash budget
+            exact_sha = SM.hash_lines(["a", "b"])
+            SM.MAX_TOTAL_EXACT_HASH_LINES = 2
+            m_exact = _base_v12_map("sample-repo")
+            m_exact["components"][0]["evidence"] = [
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": exact_sha,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [1, 2],
+                    "sha256": exact_sha,
+                },
+                {
+                    "repo": "sample-repo",
+                    "file": "src/a.py",
+                    "lines": [3, 4],
+                    "sha256": exact_sha,
+                },
+            ]
+            res_exact = SM.validate_map(
+                m_exact,
+                check_evidence=True,
+                repo_path=renamed,
+                repo_name="sample-repo",
+                strict=False,
+            )
+            check(
+                "exact cache reuses repeated slice and enforces cumulative hash budget",
+                res_exact.evidence_counts["verified"] == 2
+                and res_exact.evidence_counts["error"] == 1
+                and any(
+                    "exact evidence verification skipped" in w
+                    for w in res_exact.warnings
+                ),
+            )
+            SM.MAX_TOTAL_EXACT_HASH_LINES = orig_exact
+
+            # bisect tie-breaking prefers earlier line on equidistant match
+            (renamed / "src" / "dup.py").write_text("x\ny\nx\ny\nx\n", encoding="utf-8")
+            dup_sha = SM.hash_lines(["x"])
+            moved_eq, skip_eq = SM._find_moved_range(
+                ["x", "y", "x", "y", "x"], 3, 3, dup_sha, rel_file="src/dup.py"
+            )
+            check(
+                "bisect picks equidistant earlier match when tied",
+                skip_eq is None and moved_eq == (3, 3),
+            )
+            moved_tie, _ = SM._find_moved_range(
+                ["x", "y", "x"], 2, 2, dup_sha, rel_file="src/dup_tie.py"
+            )
+            check(
+                "bisect breaks exact distance tie toward lower line number",
+                moved_tie == (1, 1),
+            )
+
             SM.MAX_TOTAL_MOVE_SCAN_WORK = 10
             m_idx = _base_v12_map("sample-repo")
             # Three distinct drifted digests at span=2 fit one index pass (3*2=6<=10),
@@ -1336,7 +1451,10 @@ def test_api_and_cli_edge_cases() -> None:
             )
         finally:
             SM.MAX_MOVE_SCAN_SPAN = orig_span
+            SM.MAX_MOVE_SCAN_LINES = orig_lines
+            SM.MAX_MOVE_SCAN_WORK = orig_work
             SM.MAX_TOTAL_MOVE_SCAN_WORK = orig_total
+            SM.MAX_TOTAL_EXACT_HASH_LINES = orig_exact
 
 
 def main() -> int:
