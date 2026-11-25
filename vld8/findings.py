@@ -640,7 +640,12 @@ def validate_finding(
         )
 
     if "severity" in finding:
-        allowed_sev = CODE_SEVERITIES if lens_val == "code" else VALID_SEVERITIES
+        if lens_val == "code":
+            allowed_sev = CODE_SEVERITIES
+        elif lens_val in ("security", "mcp"):
+            allowed_sev = SECURITY_SEVERITIES
+        else:
+            allowed_sev = VALID_SEVERITIES
         _validate_enum(finding["severity"], f"{prefix}.severity", allowed_sev, errors)
 
     if "basis" in finding and finding["basis"] is not None:

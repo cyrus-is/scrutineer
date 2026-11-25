@@ -85,8 +85,8 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 1024,
-      "pattern": "^(?![A-Za-z]:)(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]+)(?:/(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]+))*$(?!\\n)",
-      "description": "Repo-relative POSIX path with no leading '/', '..', '.', '//', backslashes, drive prefixes, or control characters."
+      "pattern": "^(?![A-Za-z]:)(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\ud800-\\udfff]+)(?:/(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\ud800-\\udfff]+))*$(?!\\n)",
+      "description": "Repo-relative POSIX path with no leading '/', '..', '.', '//', backslashes, drive prefixes, control characters, or unpaired surrogates."
     },
     "identifier": {
       "type": "string",
@@ -113,22 +113,22 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 1024,
-      "pattern": "^[^\\S\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]*[^\\s\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029][^\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]*$(?!\\n)",
-      "description": "Single-line non-blank string with no C0, DEL, C1 control characters or Unicode line separators."
+      "pattern": "^[^\\S\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\ud800-\\udfff]*[^\\s\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\ud800-\\udfff][^\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\ud800-\\udfff]*$(?!\\n)",
+      "description": "Single-line non-blank string with no C0, DEL, C1 control characters, Unicode line separators, or unpaired surrogates."
     },
     "nonBlankText": {
       "type": "string",
       "minLength": 1,
       "maxLength": 4096,
-      "pattern": "^\\s*[^\\s\\u0000][^\\u0000]*$",
-      "description": "Short non-blank text (max 4,096 chars, single or multi-line) with no NUL bytes."
+      "pattern": "^\\s*[^\\s\\u0000\\ud800-\\udfff][^\\u0000\\ud800-\\udfff]*$",
+      "description": "Short non-blank text (max 4,096 chars, single or multi-line) with no NUL bytes or unpaired surrogates."
     },
     "nonBlankLongText": {
       "type": "string",
       "minLength": 1,
       "maxLength": 16384,
-      "pattern": "^\\s*[^\\s\\u0000][^\\u0000]*$",
-      "description": "Long non-blank text (max 16,384 chars, single or multi-line) with no NUL bytes."
+      "pattern": "^\\s*[^\\s\\u0000\\ud800-\\udfff][^\\u0000\\ud800-\\udfff]*$",
+      "description": "Long non-blank text (max 16,384 chars, single or multi-line) with no NUL bytes or unpaired surrogates."
     },
     "lens": {
       "type": "string",
@@ -286,7 +286,7 @@
         "severity": {
           "type": "string",
           "enum": ["ISSUE", "CONCERN", "CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"],
-          "description": "Severity level (code lens permits ISSUE/CONCERN; security/mcp accept CRITICAL-INFO or ISSUE/CONCERN)."
+          "description": "Severity level (code lens permits ISSUE/CONCERN; security and mcp lenses permit CRITICAL/HIGH/MEDIUM/LOW/INFO)."
         },
         "basis": {
           "anyOf": [
@@ -365,6 +365,34 @@
           "then": {
             "properties": {
               "severity": { "type": "string", "enum": ["ISSUE", "CONCERN"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "lens": { "const": "security" } },
+            "required": ["lens"]
+          },
+          "then": {
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "lens": { "const": "mcp" } },
+            "required": ["lens"]
+          },
+          "then": {
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+              }
             }
           }
         },

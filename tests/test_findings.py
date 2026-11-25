@@ -132,10 +132,24 @@ def test_schema_and_parity() -> None:
         & findings.CODE_CATEGORIES
         == {"production-reliability", "correctness"},
     )
+    finding_all_of = defs["finding"]["allOf"]
+    expected_lens_sevs = {
+        "code": findings.CODE_SEVERITIES,
+        "security": findings.SECURITY_SEVERITIES,
+        "mcp": findings.SECURITY_SEVERITIES,
+    }
+    lens_sev_rules = {
+        rule["if"]["properties"]["lens"]["const"]: set(
+            rule["then"]["properties"]["severity"]["enum"]
+        )
+        for rule in finding_all_of
+        if rule.get("if", {}).get("required") == ["lens"]
+        and "severity" in rule.get("then", {}).get("properties", {})
+    }
     check(
-        "code severity rule matches CODE_SEVERITIES",
-        set(defs["finding"]["allOf"][0]["then"]["properties"]["severity"]["enum"])
-        == findings.CODE_SEVERITIES,
+        "finding allOf lens severity rules match constants",
+        set(lens_sev_rules) == findings.VALID_LENSES
+        and lens_sev_rules == expected_lens_sevs,
     )
     check(
         "schema maxItems findings matches constant",
@@ -219,6 +233,11 @@ def test_schema_and_parity() -> None:
         and set(closes["required"]) == {"closed", "total"}
         and set(defs["dismissal"]["required"]) == {"candidateId", "reason"},
     )
+    version_pkg_rules = [
+        rule
+        for rule in finding_all_of
+        if rule.get("if", {}).get("required") == ["version"]
+    ]
     finding_props = defs["finding"]["properties"]
     check(
         "schema category, package, version, and sha256Hex limits match constants",
@@ -226,7 +245,8 @@ def test_schema_and_parity() -> None:
         == findings.MAX_CATEGORY_LENGTH
         and finding_props["package"]["anyOf"][1]["maxLength"]
         == findings.MAX_PACKAGE_LENGTH
-        and defs["finding"]["allOf"][4]["then"]["properties"]["package"]["maxLength"]
+        and len(version_pkg_rules) == 1
+        and version_pkg_rules[0]["then"]["properties"]["package"]["maxLength"]
         == findings.MAX_PACKAGE_LENGTH
         and finding_props["version"]["anyOf"][1]["maxLength"]
         == findings.MAX_VERSION_LENGTH
@@ -241,6 +261,8 @@ def test_schema_and_parity() -> None:
     tree_re = re.compile(defs["treeId"]["pattern"])
     sha_re = re.compile(defs["sha256Hex"]["pattern"])
     line_re = re.compile(defs["nonBlankLine"]["pattern"])
+    text_re = re.compile(defs["nonBlankText"]["pattern"])
+    long_text_re = re.compile(defs["nonBlankLongText"]["pattern"])
     for sample, expected in [
         ("vld8/cli.py", True),
         (".github/workflows/test.yml", True),
@@ -265,6 +287,8 @@ def test_schema_and_parity() -> None:
         ("a\x1bb.py", False),
         ("a\x9bb.py", False),
         ("a\u2028b.py", False),
+        ("a\ud800b.py", False),
+        ("a\udfffb.py", False),
     ]:
         errs: list[str] = []
         py_ok = findings._validate_repo_relative_path(sample, "p", errs)
@@ -338,12 +362,45 @@ def test_schema_and_parity() -> None:
         ("cat\x9bx", False),
         ("cat\u2028x", False),
         ("cat\u2029x", False),
+        ("cat\ud800x", False),
+        ("cat\udfffx", False),
     ]:
         errs = []
         py_ok = findings._validate_non_blank_line(sample, "line", errs)
         re_ok = line_re.match(sample) is not None
         check(
             f"nonBlankLine parity ({sample!r})", py_ok == expected and re_ok == expected
+        )
+
+    for sample, expected in [
+        ("ok", True),
+        ("multi\nline\ntext", True),
+        ("héllo — 世界", True),
+        ("\\ud800", True),
+        ("ud80f", True),
+        ("", False),
+        ("   \n\t ", False),
+        ("a\x00b", False),
+        ("a\ud800b", False),
+        ("a\ud800\n", False),
+        ("a\n\ud800", False),
+        ("\ud800", False),
+        ("a\udfff", False),
+    ]:
+        short_errs: list[str] = []
+        long_errs: list[str] = []
+        py_short_ok = findings._validate_non_blank_text(sample, "text", short_errs)
+        py_long_ok = findings._validate_non_blank_text(
+            sample, "longText", long_errs, max_len=findings.MAX_LONG_TEXT_LENGTH
+        )
+        re_short_ok = text_re.match(sample) is not None
+        re_long_ok = long_text_re.match(sample) is not None
+        check(
+            f"nonBlankText/LongText parity ({sample!r})",
+            py_short_ok == expected
+            and py_long_ok == expected
+            and re_short_ok == expected
+            and re_long_ok == expected,
         )
 
 
@@ -523,6 +580,25 @@ def test_valid_documents() -> None:
             "jsonschema enforces root.lens match via allOf",
             bool(list(validator.iter_errors(lens_mismatch))),
         )
+        sec_issue = _minimal_doc(
+            [_minimal_finding(lens="security", severity="ISSUE")], lens="security"
+        )
+        check(
+            "jsonschema rejects ISSUE under security lens",
+            bool(list(validator.iter_errors(sec_issue))),
+        )
+        mcp_concern = _minimal_doc(
+            [_minimal_finding(lens="mcp", severity="CONCERN")], lens="mcp"
+        )
+        check(
+            "jsonschema rejects CONCERN under mcp lens",
+            bool(list(validator.iter_errors(mcp_concern))),
+        )
+        surrogate_claim = _minimal_doc([_minimal_finding(claim="bad\ud800")])
+        check(
+            "jsonschema rejects unpaired surrogate in claim",
+            bool(list(validator.iter_errors(surrogate_claim))),
+        )
 
 
 def test_invalid_documents_and_edge_cases() -> None:
@@ -678,10 +754,30 @@ def test_invalid_documents_and_edge_cases() -> None:
             ".file",
         )
 
-    # Code-lens severity constraint and cross-field rules
+    # Per-lens severity constraints and cross-field rules
     _expect_invalid(
         "code lens rejects CRITICAL",
         _minimal_doc([_minimal_finding(lens="code", severity="CRITICAL")]),
+        "severity",
+    )
+    _expect_invalid(
+        "security lens rejects ISSUE",
+        _minimal_doc([_minimal_finding(lens="security", severity="ISSUE")]),
+        "severity",
+    )
+    _expect_invalid(
+        "security lens rejects CONCERN",
+        _minimal_doc([_minimal_finding(lens="security", severity="CONCERN")]),
+        "severity",
+    )
+    _expect_invalid(
+        "mcp lens rejects ISSUE",
+        _minimal_doc([_minimal_finding(lens="mcp", severity="ISSUE")]),
+        "severity",
+    )
+    _expect_invalid(
+        "mcp lens rejects CONCERN",
+        _minimal_doc([_minimal_finding(lens="mcp", severity="CONCERN")]),
         "severity",
     )
     _expect_invalid(
