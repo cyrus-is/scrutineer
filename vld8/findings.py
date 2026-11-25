@@ -144,7 +144,7 @@ class FindingsValidationError(FindingsError):
 
 def schema_path() -> Path:
     """Return the path to the bundled findings-v1 JSON Schema."""
-    return paths.FINDINGS_SCHEMA
+    return SCHEMA_PATH
 
 
 @functools.lru_cache(maxsize=1)
@@ -185,10 +185,8 @@ def _safe_label(value: Any, *, max_len: int = 64) -> str:
         else:
             cleaned.append(ch)
     out = "".join(cleaned)
-    if len(out) > max_len:
+    if truncated or len(out) > max_len:
         return out[: max_len - 3] + "..."
-    if truncated:
-        return out + "..."
     return out
 
 
@@ -411,6 +409,7 @@ def _validate_finding_class(value: Any, prefix: str, errors: list[str]) -> None:
             errors.append(f"{prefix}.{req}: missing required property")
     if "rule" in value:
         _validate_non_blank_text(value["rule"], f"{prefix}.rule", errors)
+    sites_len: int | None = None
     if "sites" in value:
         sites = value["sites"]
         if not isinstance(sites, list):
@@ -422,6 +421,7 @@ def _validate_finding_class(value: Any, prefix: str, errors: list[str]) -> None:
                 f"{prefix}.sites: length {len(sites)} exceeds max {MAX_CLASS_SITES}"
             )
         else:
+            sites_len = len(sites)
             for idx, site in enumerate(sites):
                 _validate_site_ref(site, f"{prefix}.sites[{idx}]", errors)
     if "fixSite" in value:
@@ -448,6 +448,11 @@ def _validate_finding_class(value: Any, prefix: str, errors: list[str]) -> None:
             if closed_ok and total_ok and closed > total:
                 errors.append(
                     f"{prefix}.closes.closed: {closed} must be <= total ({total})"
+                )
+            if total_ok and sites_len is not None and total < sites_len:
+                errors.append(
+                    f"{prefix}.closes.total: {total} must be >= "
+                    f"len(sites) ({sites_len})"
                 )
 
 
@@ -808,8 +813,9 @@ def load_findings_file(
     flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
     try:
         fd = os.open(str(target), flags)
-    except OSError as exc:
-        raise FindingsError(f"cannot open findings file {safe_name}: {exc}") from exc
+    except (OSError, ValueError) as exc:
+        detail = _safe_label(getattr(exc, "strerror", None) or str(exc))
+        raise FindingsError(f"cannot open findings file {safe_name}: {detail}") from exc
 
     try:
         st = os.fstat(fd)
@@ -824,7 +830,8 @@ def load_findings_file(
             fd = -1
             raw = handle.read(max_bytes + 1)
     except OSError as exc:
-        raise FindingsError(f"cannot read findings file {safe_name}: {exc}") from exc
+        detail = _safe_label(exc.strerror or str(exc))
+        raise FindingsError(f"cannot read findings file {safe_name}: {detail}") from exc
     finally:
         if fd != -1:
             os.close(fd)

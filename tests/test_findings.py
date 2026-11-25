@@ -84,7 +84,6 @@ def test_schema_and_parity() -> None:
         "schemaVersion const matches SCHEMA_VERSION",
         schema["properties"]["schemaVersion"]["const"] == findings.SCHEMA_VERSION,
     )
-    check("load_schema returns defensive copy", True)
     schema["title"] = "mutated"
     check(
         "mutating returned schema does not mutate cache",
@@ -841,37 +840,167 @@ def test_invalid_documents_and_edge_cases() -> None:
         "expected string",
     )
     _expect_invalid(
-        "non-dict proof, class, site, closes, and missing keys rejected",
+        "non-dict proof rejected",
+        _minimal_doc([_minimal_finding(proof="bad")]),
+        "proof: expected object",
+    )
+    _expect_invalid(
+        "empty proof missing kind and status rejected",
+        _minimal_doc([_minimal_finding(proof={})]),
+        "proof.kind: missing required property",
+    )
+    _expect_invalid(
+        "non-dict class rejected",
+        _minimal_doc(
+            [_minimal_finding(classFingerprint=_valid_fp("c"), **{"class": "bad"})]
+        ),
+        "class: expected object",
+    )
+    _expect_invalid(
+        "non-list class.sites rejected",
         _minimal_doc(
             [
-                _minimal_finding(proof="bad"),
-                _minimal_finding(proof={}),
-                _minimal_finding(classFingerprint=_valid_fp("c"), **{"class": "bad"}),
                 _minimal_finding(
                     classFingerprint=_valid_fp("c"),
                     **{
                         "class": {
+                            "rule": "r",
                             "sites": "not-list",
-                            "fixSite": {},
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
+                        }
+                    },
+                )
+            ]
+        ),
+        "class.sites: expected array",
+    )
+    _expect_invalid(
+        "non-dict class.closes rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
                             "closes": "not-dict",
                         }
                     },
-                ),
+                )
+            ]
+        ),
+        "class.closes: expected object",
+    )
+    _expect_invalid(
+        "non-dict siteRef in class.sites rejected",
+        _minimal_doc(
+            [
                 _minimal_finding(
                     classFingerprint=_valid_fp("c"),
                     **{
                         "class": {
                             "rule": "r",
                             "sites": ["not-site"],
-                            "fixSite": "not-site",
-                            "closes": {"total": 0},
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
                         }
                     },
-                ),
+                )
             ]
         ),
-        "expected",
+        "class.sites[0]: expected object",
     )
+    _expect_invalid(
+        "non-dict class.fixSite rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": "not-site",
+                            "closes": {"closed": 0, "total": 1},
+                        }
+                    },
+                )
+            ]
+        ),
+        "class.fixSite: expected object",
+    )
+    _expect_invalid(
+        "invalid closes.total=0 rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [{"file": "a.py", "lineStart": 1, "lineEnd": 1}],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 0},
+                        }
+                    },
+                )
+            ]
+        ),
+        "class.closes.total: expected integer >= 1",
+    )
+    _expect_invalid(
+        "closes.total smaller than len(sites) rejected",
+        _minimal_doc(
+            [
+                _minimal_finding(
+                    classFingerprint=_valid_fp("c"),
+                    **{
+                        "class": {
+                            "rule": "r",
+                            "sites": [
+                                {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                                {"file": "b.py", "lineStart": 2, "lineEnd": 2},
+                            ],
+                            "fixSite": {"file": "a.py", "lineStart": 1, "lineEnd": 1},
+                            "closes": {"closed": 0, "total": 1},
+                        }
+                    },
+                )
+            ]
+        ),
+        "must be >= len(sites)",
+    )
+    _expect_invalid(
+        "non-string treeId rejected",
+        _minimal_doc([], treeId=123),
+        "treeId: expected string",
+    )
+    stripped_label = findings._safe_label("\x1b[31m\x1b[0m" * 60 + "z" * 20)
+    check(
+        "safe_label bounds length after ANSI stripping",
+        len(stripped_label) <= 64
+        and stripped_label.endswith("...")
+        and "\x1b" not in stripped_label,
+    )
+    try:
+        findings.load_findings_file("bad\x00.json")
+        check("load_findings_file rejects embedded NUL path as FindingsError", False)
+    except findings.FindingsError as exc:
+        check(
+            "load_findings_file rejects embedded NUL path as FindingsError",
+            "\x00" not in str(exc),
+        )
+    try:
+        findings.load_findings_file("x" * 500)
+        check("load_findings_file bounds long path in FindingsError", False)
+    except findings.FindingsError as exc:
+        check(
+            "load_findings_file bounds long path in FindingsError",
+            len(str(exc)) < 200,
+        )
 
     # ANSI/control characters in untrusted fields must be escaped in error output.
     ansi_errs = findings.validate_finding(
