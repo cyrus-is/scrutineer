@@ -58,7 +58,7 @@ Every item below traces to one of these:
 ## 2.0.x: finish the rename, repo hygiene
 
 **Done (2026-11-23):**
-- `main` is the default branch, so the landing page matches what `pip install vld8` installs. `staging` was the default for a few hours, then the change was reverted. Both branches block force-pushes and deletion, require linear history, and require the `test (3.10)` and `test (3.13)` checks. The rules apply to admins too. No reviews are required. A direct push is accepted only for a commit that has already passed CI.
+- `main` is the default branch, so the landing page matches what `pip install vld8` installs. `staging` was the default for a few hours, then the change was reverted. Both branches block force-pushes and deletion, require linear history, and require the `test (3.14)` and `test (3.15)` checks (switched from `test (3.10)` and `test (3.13)` on 2026-11-25, when the 3.14 floor landed). The rules apply to admins too. No reviews are required. A direct push is accepted only for a commit that has already passed CI.
 - Repo hardening: release tags can't be moved or deleted, and releases are immutable. Dependabot opens one grouped PR a week against `staging` for the pinned actions (#106). Actions are limited to GitHub's own plus the PyPI publish action, each pinned to a commit. CodeQL, secret scanning and push protection are on.
 - Publishing only from `main`: `publish.yml` refuses a release tag whose commit isn't on `main` (#43). It reached `main` by a fast-forward promotion (#44), the first under the branch model below.
 - The plan landed on `staging` (#45), replacing draft #40.
@@ -68,6 +68,9 @@ Every item below traces to one of these:
 - `ENGINEERING.md` names `/vld8-security` instead of the Scrutineer audit (#120), following the shared standard's rename.
 - 2.0.1 released (#108, #109, #113).
 - Publishing is gated on the `pypi` environment: the publish job uses it (#106), and both PyPI trusted publishers name it.
+
+**Done (2026-11-25):**
+- Python floor 3.14, with CI testing 3.14 and 3.15 (#142, for #124; D15). The required checks on `staging` and `main` are now `test (3.14)` and `test (3.15)`. It ships in 2.0.2, with the release-notes callout the version rules require.
 
 **Open:**
 
@@ -79,7 +82,6 @@ Every item below traces to one of these:
 | Update the GitHub repo description, which still describes Scrutineer | Cyrus | Rename |
 | Point vld8.ai at cyrus.is/building/vld8 | Cyrus | Plan D8 |
 | **Map schema 1.2** (#123): <br>• `process`, `ipc` and `file` edges, with what crosses each boundary; <br>• `evidence[]` on edges and components, with drift computed by `vld8 map validate`; <br>• the crawl writes observations as findings, never in the map's notes. <br>Needs no fact store. Ships in 2.0.2 | vld8 | Design §7 |
-| **Python floor 3.14; CI tests 3.14 and 3.15** (#124, D15). `requires-python` and the test matrix change in one PR; Cyrus switches the required checks to `test (3.14)` and `test (3.15)` before it merges. Ships in 2.0.2, with the release-notes callout the version rules require | vld8, Cyrus | D15 |
 | **The replay** (#125), on consumer loops' recorded history (private):<br>• the candidate lister is frozen before the test changes are chosen, and no change that informed the design is eligible;<br>• three arms: the old prompt, today's thorough prompt, and that prompt plus vld8's code findings and candidates;<br>• win, partial, tie and loss outcomes are fixed before any run.<br>The result decides how much of 2.2's candidate machinery gets built | vld8 | Design §15 |
 | Add a ruff config and a lint step to CI | vld8 | STD |
 | Add a diff-coverage gate at 80% to CI | vld8 | STD |
