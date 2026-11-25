@@ -31,6 +31,7 @@ jobs:
           python tests/test_cli.py
           python tests/test_legacy_shim.py
           python tests/test_servicemap.py
+          python tests/test_findings.py
       - name: MCP review tests
         working-directory: mcp-review
         run: |

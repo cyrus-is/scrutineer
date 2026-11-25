@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cyrus-is/vld8/schemas/findings-v1.json",
+  "title": "vld8 Findings Contract v1",
+  "description": "Machine-readable findings document emitted and validated by vld8 review tools. Uses camelCase JSON keys per ENGINEERING.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "findings"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Findings contract schema version."
+    },
+    "lens": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/lens" }
+      ],
+      "description": "Optional top-level lens scope. When non-null, every finding in findings[] must share this lens."
+    },
+    "treeId": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/identifier" }
+      ],
+      "description": "Reviewed git tree identifier when tied to a repository snapshot."
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Ordered list of code, model, or merged findings."
+    },
+    "dismissals": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/dismissal" },
+      "description": "Candidate IDs explicitly dismissed with a reason. candidateId values must be unique."
+    }
+  },
+  "$defs": {
+    "repoRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?![A-Za-z]:)(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f]+)(?:/(?:(?![.]{1,2}(?:/|$))[^/\\\\\\u0000-\\u001f\\u007f]+))*$",
+      "description": "Repo-relative POSIX path with no leading '/', '..', '.', '//', backslashes, drive prefixes, or control characters."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+      "description": "ASCII identifier used for checkId, treeId, and candidateId."
+    },
+    "sha256Hex": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase 64-character hexadecimal SHA-256 digest."
+    },
+    "nonBlankLine": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^\\S\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$",
+      "description": "Single-line non-blank string with no C0 or DEL control characters."
+    },
+    "nonBlankText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^\\s*[^\\s\\u0000][^\\u0000]*$",
+      "description": "Non-blank text (single or multi-line) with no NUL bytes."
+    },
+    "lens": {
+      "type": "string",
+      "enum": ["code", "security", "mcp"],
+      "description": "Review lens that produced the finding."
+    },
+    "basis": {
+      "type": "string",
+      "enum": [
+        "written rule",
+        "confirmed map rule",
+        "stated requirement",
+        "followed contract",
+        "reachable trigger",
+        "security invariant"
+      ],
+      "description": "Evidence rubric basis supporting an ISSUE rating."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["code", "model", "both"],
+      "description": "Origin of the finding: deterministic code check, model judgment, or both merged."
+    },
+    "disposition": {
+      "type": "string",
+      "enum": ["open", "closed", "partly-closed", "disputed", "recurring"],
+      "description": "Re-review disposition across runs."
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "status"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["test", "probe", "query", "canary", "linter", "sarif", "osv", "rule"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["verified", "unverified", "failed", "not-run"]
+        },
+        "detail": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankText" }
+          ]
+        },
+        "command": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankLine" }
+          ],
+          "description": "Descriptive command metadata only; never executed automatically."
+        },
+        "target": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankLine" }
+          ]
+        }
+      }
+    },
+    "siteRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "lineStart", "lineEnd"],
+      "description": "Citation to a file line range where lineEnd >= lineStart.",
+      "properties": {
+        "file": { "$ref": "#/$defs/repoRelativePath" },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "quote": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankText", "maxLength": 16384 }
+          ]
+        },
+        "candidateId": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/identifier" }
+          ]
+        }
+      }
+    },
+    "findingClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "sites", "fixSite", "closes"],
+      "description": "Defect-class grouping across sites with a canonical fix site and closure count.",
+      "properties": {
+        "rule": { "$ref": "#/$defs/nonBlankText" },
+        "sites": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/siteRef" }
+        },
+        "fixSite": { "$ref": "#/$defs/siteRef" },
+        "closes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["closed", "total"],
+          "description": "Count of sites closed out of total sites in the class (closed <= total).",
+          "properties": {
+            "closed": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "dismissal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "reason"],
+      "properties": {
+        "candidateId": { "$ref": "#/$defs/identifier" },
+        "reason": { "$ref": "#/$defs/nonBlankText" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "lineStart",
+        "lineEnd",
+        "quote",
+        "lens",
+        "checkId",
+        "claim",
+        "evidence",
+        "severity",
+        "blocking",
+        "source",
+        "fingerprint"
+      ],
+      "description": "Single review finding. Enforce lineEnd >= lineStart and all conditional rules in allOf.",
+      "properties": {
+        "file": { "$ref": "#/$defs/repoRelativePath" },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "quote": { "$ref": "#/$defs/nonBlankText", "maxLength": 16384 },
+        "lens": { "$ref": "#/$defs/lens" },
+        "checkId": { "$ref": "#/$defs/identifier" },
+        "category": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankLine", "maxLength": 128 }
+          ],
+          "description": "Sub-lens or category; code-lens canonical categories are production-reliability, correctness, data-integrity, error-handling, architecture, operability, performance, maintainability."
+        },
+        "claim": { "$ref": "#/$defs/nonBlankText" },
+        "evidence": { "$ref": "#/$defs/nonBlankText", "maxLength": 16384 },
+        "severity": {
+          "type": "string",
+          "enum": ["ISSUE", "CONCERN", "CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+        },
+        "basis": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/basis" }
+          ]
+        },
+        "blocking": { "type": "boolean" },
+        "source": { "$ref": "#/$defs/source" },
+        "proof": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/proof" }
+          ]
+        },
+        "class": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/findingClass" }
+          ]
+        },
+        "classFingerprint": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256Hex" }
+          ]
+        },
+        "disposition": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/disposition" }
+          ]
+        },
+        "suppressed": {
+          "type": "boolean",
+          "default": false
+        },
+        "reason": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankText" }
+          ]
+        },
+        "package": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankLine", "maxLength": 256 }
+          ]
+        },
+        "version": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankLine", "maxLength": 128 }
+          ]
+        },
+        "candidateIds": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "recommendation": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/nonBlankText" }
+          ]
+        },
+        "fingerprint": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "lens": { "const": "code" } },
+            "required": ["lens"]
+          },
+          "then": {
+            "properties": {
+              "severity": { "type": "string", "enum": ["ISSUE", "CONCERN"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "suppressed": { "const": true } },
+            "required": ["suppressed"]
+          },
+          "then": {
+            "required": ["reason"],
+            "properties": {
+              "reason": { "$ref": "#/$defs/nonBlankText" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "disposition": { "const": "disputed" } },
+            "required": ["disposition"]
+          },
+          "then": {
+            "required": ["reason"],
+            "properties": {
+              "reason": { "$ref": "#/$defs/nonBlankText" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "class": { "type": "object" } },
+            "required": ["class"]
+          },
+          "then": {
+            "required": ["classFingerprint"],
+            "properties": {
+              "classFingerprint": { "$ref": "#/$defs/sha256Hex" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "version": { "type": "string" } },
+            "required": ["version"]
+          },
+          "then": {
+            "required": ["package"],
+            "properties": {
+              "package": { "$ref": "#/$defs/nonBlankLine", "maxLength": 256 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
