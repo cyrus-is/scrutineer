@@ -40,7 +40,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Claim extraction — the inferred signals worth validating. Config findings
 # (shell_wrapper, unpinned_source, creds_in_url ...) are deterministic facts,

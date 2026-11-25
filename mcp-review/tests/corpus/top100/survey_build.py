@@ -17,7 +17,9 @@ full agentic verdict — stated as such in the methodology. The DATA column is t
 analyzer's own data_profile.rating. Headline stats lead on raw provenance facts,
 which are fully reproducible and judgment-free.
 """
-import json, glob, os, sys
+import json
+import os
+import sys
 from collections import Counter
 
 # Import the validator's claim extractor so we can recompute ratings from the

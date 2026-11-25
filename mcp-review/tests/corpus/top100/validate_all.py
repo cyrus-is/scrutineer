@@ -5,7 +5,12 @@ Captured (has a tool surface) -> validate via `validate_findings.py --run`.
 Config-only (no surface) -> copied through (no capability/data claims to validate).
 Output: analysis_validated/<slug>.json (carries validation.validated_out).
 """
-import glob, json, os, shutil, subprocess, sys
+import glob
+import json
+import os
+import shutil
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))

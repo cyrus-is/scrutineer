@@ -333,7 +333,9 @@ def resolve_github(owner: str, repo: str, ref: str) -> dict:
     exact = bool(_GIT_SHA.match(ref))
     # Percent-encode each path segment so an exotic owner/repo/ref cannot inject
     # extra path structure (the host stays pinned to codeload.github.com).
-    seg = lambda x: quote(x, safe="")
+    def seg(x: str) -> str:
+        return quote(x, safe="")
+
     return {
         "ecosystem": "github",
         "name": f"{owner}/{repo}",
@@ -416,35 +418,46 @@ def safe_extract_tar(data: bytes, dest: Path) -> dict:
                 _reject(report, member.name, "entry_cap")
                 break
             if member.issym():
-                _reject(report, member.name, "symlink"); continue
+                _reject(report, member.name, "symlink")
+                continue
             if member.islnk():
-                _reject(report, member.name, "hardlink"); continue
+                _reject(report, member.name, "hardlink")
+                continue
             if member.ischr() or member.isblk() or member.isfifo() or member.isdev():
-                _reject(report, member.name, "special_file"); continue
+                _reject(report, member.name, "special_file")
+                continue
             target = _name_target(member.name, dest_real)
             if target is None:
                 reason = "absolute_path" if (member.name or "").startswith(("/", "\\")) else "path_escape"
-                _reject(report, member.name, reason); continue
+                _reject(report, member.name, reason)
+                continue
             if member.isdir():
                 os.makedirs(target, exist_ok=True)
                 report["root_dirs"].append(Path(member.name.replace("\\", "/")).parts[0]
                                            if member.name.strip("/") else "")
                 continue
             if not member.isfile():
-                _reject(report, member.name, "special_file"); continue
+                _reject(report, member.name, "special_file")
+                continue
             if member.size > MAX_ENTRY_BYTES:
-                _reject(report, member.name, "entry_too_large"); continue
+                _reject(report, member.name, "entry_too_large")
+                continue
             if report["total_bytes"] + member.size > MAX_TOTAL_BYTES:
-                _reject(report, member.name, "total_too_large"); break
+                _reject(report, member.name, "total_too_large")
+                break
             try:
                 src = tar.extractfile(member)
                 payload = src.read(MAX_ENTRY_BYTES + 1) if src is not None else None
             except (OSError, tarfile.TarError):
-                _reject(report, member.name, "unreadable"); continue
+                _reject(report, member.name, "unreadable")
+                continue
             if payload is None:
-                _reject(report, member.name, "unreadable"); continue
-            if len(payload) > MAX_ENTRY_BYTES:        # actual bytes, not the (forgeable) header size
-                _reject(report, member.name, "entry_too_large"); continue
+                _reject(report, member.name, "unreadable")
+                continue
+            if len(payload) > MAX_ENTRY_BYTES:
+                # actual bytes, not the (forgeable) header size
+                _reject(report, member.name, "entry_too_large")
+                continue
             if not _safe_write(target, dest_real, payload, report, member.name):
                 continue
             report["extracted"] += 1
@@ -464,30 +477,38 @@ def safe_extract_zip(data: bytes, dest: Path) -> dict:
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         for info in zf.infolist():
             if report["extracted"] + len(report["rejected"]) >= MAX_ENTRIES:
-                _reject(report, info.filename, "entry_cap"); break
+                _reject(report, info.filename, "entry_cap")
+                break
             name = info.filename
             mode = (info.external_attr >> 16) & 0xFFFF
             if mode and stat.S_ISLNK(mode):
-                _reject(report, name, "symlink"); continue
+                _reject(report, name, "symlink")
+                continue
             target = _name_target(name, dest_real)
             if target is None:
                 reason = "absolute_path" if name.startswith(("/", "\\")) else "path_escape"
-                _reject(report, name, reason); continue
+                _reject(report, name, reason)
+                continue
             if name.endswith("/"):
                 os.makedirs(target, exist_ok=True)
                 report["root_dirs"].append(Path(name.replace("\\", "/")).parts[0])
                 continue
             if info.file_size > MAX_ENTRY_BYTES:
-                _reject(report, name, "entry_too_large"); continue
+                _reject(report, name, "entry_too_large")
+                continue
             if report["total_bytes"] + info.file_size > MAX_TOTAL_BYTES:
-                _reject(report, name, "total_too_large"); break
+                _reject(report, name, "total_too_large")
+                break
             try:
                 with zf.open(info) as src:
                     payload = src.read(MAX_ENTRY_BYTES + 1)
             except (OSError, zipfile.BadZipFile, RuntimeError):
-                _reject(report, name, "unreadable"); continue
-            if len(payload) > MAX_ENTRY_BYTES:        # actual decompressed bytes, not the declared size
-                _reject(report, name, "entry_too_large"); continue
+                _reject(report, name, "unreadable")
+                continue
+            if len(payload) > MAX_ENTRY_BYTES:
+                # actual decompressed bytes, not the declared size
+                _reject(report, name, "entry_too_large")
+                continue
             if not _safe_write(target, dest_real, payload, report, name):
                 continue
             report["extracted"] += 1

@@ -30,11 +30,14 @@ def _add_mcp_parser(sub: argparse._SubParsersAction) -> None:
         "mcp",
         help="Run an MCP-review script (used by /vld8-mcp).",
         description=(
-            "Run one of the bundled MCP-review scripts. Everything after the script name "
-            "is passed to it unchanged; `vld8 mcp analyze --help` shows its options."
+            "Run one of the bundled MCP-review scripts. Everything after the script "
+            "name is passed to it unchanged; `vld8 mcp analyze --help` shows its "
+            "options."
         ),
     )
-    p.add_argument("script", choices=sorted(paths.MCP_SCRIPTS), help="Which script to run.")
+    p.add_argument(
+        "script", choices=sorted(paths.MCP_SCRIPTS), help="Which script to run."
+    )
     p.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for the script.")
     p.set_defaults(func=lambda a: _run_script(paths.MCP_SCRIPTS[a.script], a.args))
 
@@ -43,11 +46,15 @@ def _add_map_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "map",
         help="Service-map helpers (used by /vld8-map).",
-        description="`validate PATH` checks a service map; `schema` prints the schema's path.",
+        description=(
+            "`validate PATH` checks a service map; `schema` prints the schema's path."
+        ),
     )
     actions = p.add_subparsers(dest="action", required=True)
     v = actions.add_parser("validate", help="Validate a servicemap.json.")
-    v.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for the validator.")
+    v.add_argument(
+        "args", nargs=argparse.REMAINDER, help="Arguments for the validator."
+    )
     v.set_defaults(func=lambda a: _run_script(paths.SERVICEMAP_VALIDATOR, a.args))
     s = actions.add_parser("schema", help="Print the path of the service-map schema.")
     s.set_defaults(func=_cmd_schema)
@@ -71,31 +78,48 @@ def _add_install_parser(sub: argparse._SubParsersAction) -> None:
         ),
     )
     p.add_argument(
-        "target", nargs="?", default=".",
+        "target",
+        nargs="?",
+        default=".",
         help="Repo to install into (default: current directory).",
     )
     sm = p.add_mutually_exclusive_group()
     sm.add_argument(
-        "--crawl", action="store_true",
-        help="If no servicemap.json exists, run a headless `claude -p` crawl to create one.",
+        "--crawl",
+        action="store_true",
+        help=(
+            "If no servicemap.json exists, run a headless `claude -p` crawl to "
+            "create one."
+        ),
     )
     sm.add_argument(
-        "--service-map", "-s", metavar="PATH", default=None,
+        "--service-map",
+        "-s",
+        metavar="PATH",
+        default=None,
         help="Use an existing service map at PATH instead of discovering/crawling.",
     )
     p.add_argument(
-        "--force", "-f", action="store_true",
+        "--force",
+        "-f",
+        action="store_true",
         help="Overwrite existing command files.",
     )
     p.add_argument(
-        "--preview", action="append", default=[], metavar="MILESTONE",
+        "--preview",
+        action="append",
+        default=[],
+        metavar="MILESTONE",
         choices=sorted(paths.PREVIEW_MILESTONES),
         help=(
             "Include review output that is still behind a milestone's preview flag "
-            "(available: " + ", ".join(
+            "(available: "
+            + ", ".join(
                 f"{m}, {desc}" for m, desc in sorted(paths.PREVIEW_MILESTONES.items())
-            ) + "). Repeatable. Add --force if the review skills already exist. "
-            "Reinstalling with --force and without --preview goes back to the default output."
+            )
+            + "). Repeatable. Add --force if the review skills already exist. "
+            "Reinstalling with --force and without --preview goes back to the "
+            "default output."
         ),
     )
     p.set_defaults(func=_cmd_install)
@@ -123,31 +147,54 @@ def _cmd_install(args: argparse.Namespace) -> int:
         print("Nothing was written (all targets existed; re-run with --force).")
     status = 0
     if result.previews:
-        listed = ", ".join(f"{m} ({paths.PREVIEW_MILESTONES[m]})" for m in result.previews)
+        listed = ", ".join(
+            f"{m} ({paths.PREVIEW_MILESTONES[m]})" for m in result.previews
+        )
         if not result.preview_missing:
             print(f"✓ Review skills include preview output: {listed}")
-            print("  Reinstall with --force and without --preview to go back to the default.")
+            print(
+                "  Reinstall with --force and without --preview to go back to "
+                "the default."
+            )
         else:
-            why = ("generation failed (see above)" if args.force
-                   else "not regenerated (re-run with --force)")
-            print(f"✗ Preview {listed} NOT applied to {_commands(result.preview_missing)}: {why}.",
-                  file=sys.stderr)
+            why = (
+                "generation failed (see above)"
+                if args.force
+                else "not regenerated (re-run with --force)"
+            )
+            print(
+                f"✗ Preview {listed} NOT applied to "
+                f"{_commands(result.preview_missing)}: {why}.",
+                file=sys.stderr,
+            )
             status = 1
     if result.preview_kept:
-        undo = ("Regeneration failed (see above)." if args.force
-                else "Re-run with --force to go back to the default.")
-        print(f"Note: {_commands(result.preview_kept)} still hold preview output from an earlier "
-              f"install. {undo}")
+        undo = (
+            "Regeneration failed (see above)."
+            if args.force
+            else "Re-run with --force to go back to the default."
+        )
+        print(
+            f"Note: {_commands(result.preview_kept)} still hold preview output "
+            f"from an earlier install. {undo}"
+        )
     if result.preview_dropped:
-        print(f"Note: {_commands(result.preview_dropped)} held preview output and are now back to "
-              "the default. Pass --preview again to keep it.")
+        print(
+            f"Note: {_commands(result.preview_dropped)} held preview output and "
+            "are now back to the default. Pass --preview again to keep it."
+        )
     if result.moved_suppressions:
         print(f"✓ Moved the MCP suppressions file to {paths.SUPPRESSIONS_FILE}")
     if result.retired:
-        print(f"✓ Moved the scrutineer-era commands they replace to {paths.LEGACY_BACKUP_DIR}/:")
+        print(
+            "✓ Moved the scrutineer-era commands they replace to "
+            f"{paths.LEGACY_BACKUP_DIR}/:"
+        )
         for name in result.retired:
             print(f"    /{name[:-3]}")
-        print("  Delete that folder once you've copied over any edits you made to them.")
+        print(
+            "  Delete that folder once you've copied over any edits you made to them."
+        )
     if result.skipped_crawl:
         print(
             "\nNote: skills were generated without a service map. For cross-service\n"
@@ -164,7 +211,10 @@ def _commands(files: list[str]) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vld8",
-        description="Dev tooling for Claude Code: service map, code and security review, MCP review.",
+        description=(
+            "Dev tooling for Claude Code: service map, code and security review, "
+            "MCP review."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"vld8 {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)

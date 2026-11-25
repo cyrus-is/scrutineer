@@ -8,3 +8,13 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /requirements
+    target-branch: staging
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      ci-python:
+        patterns: ["*"]

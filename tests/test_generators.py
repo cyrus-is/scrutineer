@@ -26,6 +26,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from vld8 import paths  # noqa: E402  (the preview milestone table)
+
 GENERATORS = {
     "peer": ROOT / "generate-peer-review" / "generate.py",
     "security": ROOT / "generate-security-review" / "generate.py",
@@ -161,12 +162,20 @@ def check_rendering(label: str, text: str) -> None:
     is a section Markdown will show as a code block. List continuations legitimately
     reach 4 spaces, so anything deeper means a template's dedent went wrong.
     """
-    bad_headings = [n for n, l in lines_outside_fences(text) if re.match(r"^ +#{1,6} ", l)]
+    bad_headings = [
+        n for n, line in lines_outside_fences(text) if re.match(r"^ +#{1,6} ", line)
+    ]
     check(f"{label}: every heading starts at column 0 {bad_headings[:3]}", not bad_headings)
-    deep = [n for n, l in lines_outside_fences(text) if l.strip() and len(l) - len(l.lstrip(" ")) > 4]
+    deep = [
+        n
+        for n, line in lines_outside_fences(text)
+        if line.strip() and len(line) - len(line.lstrip(" ")) > 4
+    ]
     check(f"{label}: nothing outside a fence is indented more than 4 spaces {deep[:3]}", not deep)
     check(f"{label}: code fences are balanced", text.count("```") % 2 == 0)
-    sublabels = [n for n, l in lines_outside_fences(text) if re.match(r"^\d+[a-z]\. ", l)]
+    sublabels = [
+        n for n, line in lines_outside_fences(text) if re.match(r"^\d+[a-z]\. ", line)
+    ]
     check(f"{label}: no '2b.'-style list markers, which Markdown doesn't number {sublabels[:3]}",
           not sublabels)
 
@@ -180,7 +189,7 @@ def load_generator(path: Path):
 
 def detection_line(text: str, platform: str) -> str:
     """The Process step-3 line naming where a platform was found ('' if absent)."""
-    return next((l for l in text.splitlines() if l.endswith(f"→ **{platform}**")), "")
+    return next((line for line in text.splitlines() if line.endswith(f"→ **{platform}**")), "")
 
 
 def main() -> int:
@@ -310,8 +319,8 @@ def main() -> int:
               mac and "iOS/" not in mac)
 
     # Phase 0 commands that contain backticks render as one code span.
-    swift_cmd = next((l for l in outputs[("peer", "apple")].splitlines()
-                      if "swiftlint lint --strict" in l), "")
+    swift_cmd = next((line for line in outputs[("peer", "apple")].splitlines()
+                      if "swiftlint lint --strict" in line), "")
     check("peer/apple: swiftlint command rendered with a double-backtick span",
           swift_cmd.startswith("- `` swiftlint"))
 
