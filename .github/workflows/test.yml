@@ -14,6 +14,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
     strategy:
       matrix:
         python-version: ["3.14", "3.15"]
@@ -23,8 +25,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        # Temporary caps until 7-day cooling-off clears (PyYAML 6.0.4: 2026-11-27; packaging 26.4: 2026-11-30); hash-pinned constraints follow in #48.
-        run: python -m pip install "pyyaml>=6.0,<=6.0.3" build "packaging<26.4"
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: build cython hatchling ruff setuptools wheel
+          python -m pip install --require-hashes --no-build-isolation pyyaml
+      - name: Lint
+        run: ruff check .
       - name: Generator and CLI tests
         run: |
           python tests/test_generators.py
@@ -40,29 +45,31 @@ jobs:
           python tests/test_capture_runtime.py
       - name: Wheel install smoke test
         run: |
-          python -m build --wheel --outdir dist .
-          python -m build --wheel --outdir dist legacy/scrutineer
-          python -m venv /tmp/wheel-venv
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+          python -m build --wheel --no-isolation --outdir "$work/dist" .
+          python -m build --wheel --no-isolation --outdir "$work/dist" legacy/scrutineer
+          python -m pip wheel --require-hashes --no-build-isolation --no-deps --wheel-dir "$work/dist" pyyaml
+          python -m venv "$work/wheel-venv"
           # Both wheels at once, so the forwarding package's vld8 requirement
           # resolves to the wheel just built rather than to PyPI.
-          # Temporary cap until PyYAML 6.0.4 clears the 7-day cooling-off bar on 2026-11-27 (#48).
-          /tmp/wheel-venv/bin/pip install "pyyaml>=6.0,<=6.0.3" dist/vld8-*.whl dist/scrutineer-*.whl
+          PIP_CONSTRAINT= "$work/wheel-venv/bin/pip" install --no-index --find-links "$work/dist" "$work/dist"/vld8-*.whl "$work/dist"/scrutineer-*.whl
           pkg_version=$(python -c 'import pathlib, tomllib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')
-          mkdir /tmp/target && cd /tmp/target && git init -q && echo 'export const x = 1;' > index.ts
+          mkdir "$work/target" && cd "$work/target" && git init -q && echo 'export const x = 1;' > index.ts
           mkdir -p .claude/commands
           printf -- '---\nname: scrutineer-mcp\n---\n' > .claude/commands/scrutineer-mcp.md
-          /tmp/wheel-venv/bin/vld8 install /tmp/target
-          test "$(/tmp/wheel-venv/bin/vld8 --version)" = "vld8 $pkg_version"
+          "$work/wheel-venv/bin/vld8" install "$work/target"
+          test "$("$work/wheel-venv/bin/vld8" --version)" = "vld8 $pkg_version"
           test -f .claude/commands/vld8-setup.md
           test ! -e .claude/commands/scrutineer-mcp.md
           test -f .claude/scrutineer-backup/scrutineer-mcp.md
           # `! grep` would never fail the step under `set -e`, so test explicitly.
           if grep -l '\.venv/bin/python' .claude/commands/*.md; then exit 1; fi
           if grep -il 'scrutineer' .claude/commands/*.md; then exit 1; fi
-          /tmp/wheel-venv/bin/vld8 mcp analyze --help > /dev/null
-          test -f "$(/tmp/wheel-venv/bin/vld8 map schema)"
+          "$work/wheel-venv/bin/vld8" mcp analyze --help > /dev/null
+          test -f "$("$work/wheel-venv/bin/vld8" map schema)"
           echo '{}' > bad.json
-          if /tmp/wheel-venv/bin/vld8 map validate bad.json > /dev/null; then exit 1; fi
+          if "$work/wheel-venv/bin/vld8" map validate bad.json > /dev/null; then exit 1; fi
           # The old command still works through the forwarding package.
-          test -f "$(/tmp/wheel-venv/bin/scrutineer servicemap schema 2>/dev/null)"
-          /tmp/wheel-venv/bin/scrutineer mcp analyze --help > /dev/null
+          test -f "$("$work/wheel-venv/bin/scrutineer" servicemap schema 2>/dev/null)"
+          "$work/wheel-venv/bin/scrutineer" mcp analyze --help > /dev/null
