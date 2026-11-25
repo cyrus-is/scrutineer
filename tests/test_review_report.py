@@ -2362,6 +2362,306 @@ def test_security_fixes_and_edge_coverage() -> None:
             and r_cfp_keep["findings"][0]["disposition"] == "recurring",
         )
 
+        # Round 3 #1: duplicate source=='code' collisions cannot bypass accounting.
+        prep_dup_cc = _write_json(
+            root / "prep_dup_cc.json",
+            {
+                "schemaVersion": "1.0",
+                "candidates": [
+                    {"candidateId": "cand-kept"},
+                    {"candidateId": "cand-vanish"},
+                ],
+                "codeFindings": [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-dup-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    )
+                ],
+            },
+        )
+        mod_dup_cc = _write_json(
+            root / "mod_dup_cc.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-dup-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                        candidateIds=["cand-kept"],
+                    ),
+                    _make_finding(
+                        file="a.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="same = 1",
+                        check_id="chk-dup-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                        candidateIds=["cand-vanish"],
+                    ),
+                ]
+            ),
+        )
+        r_dup_cc = report.build_report(
+            findings_path=mod_dup_cc, prepare_path=prep_dup_cc, repo_path=repo
+        )
+        check(
+            "duplicate source=='code' with prepare rejects second and unaccounted cand",
+            r_dup_cc["exitCode"] == 2
+            and len(r_dup_cc["findings"]) == 1
+            and any(
+                "duplicate source 'code'" in e
+                for e in r_dup_cc["errors"]["validationErrors"]
+            )
+            and r_dup_cc["errors"]["unaccountedCandidates"] == ["cand-vanish"],
+        )
+
+        # Standalone duplicate source=='code' (without matching prepare)
+        prep_vanish = _write_json(
+            root / "prep_vanish.json",
+            {
+                "schemaVersion": "1.0",
+                "candidates": [
+                    {"candidateId": "cand-kept"},
+                    {"candidateId": "cand-vanish"},
+                ],
+            },
+        )
+        r_dup_cc_solo = report.build_report(
+            findings_path=mod_dup_cc, prepare_path=prep_vanish, repo_path=repo
+        )
+        check(
+            "standalone duplicate source=='code' rejects duplicate and cand-vanish",
+            r_dup_cc_solo["exitCode"] == 2
+            and len(r_dup_cc_solo["findings"]) == 1
+            and any(
+                "duplicate source 'code'" in e
+                for e in r_dup_cc_solo["errors"]["validationErrors"]
+            )
+            and r_dup_cc_solo["errors"]["unaccountedCandidates"] == ["cand-vanish"],
+        )
+
+        _write_repo_file(repo, "shift.py", "val = 1\nval = 1\n")
+        prep_shift_cc = _write_json(
+            root / "prep_shift_cc.json",
+            {
+                "schemaVersion": "1.0",
+                "candidates": [
+                    {"candidateId": "cand-kept"},
+                    {"candidateId": "cand-vanish"},
+                ],
+                "codeFindings": [
+                    _make_finding(
+                        file="shift.py",
+                        line_start=1,
+                        line_end=1,
+                        quote="val = 1",
+                        check_id="chk-shift-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                    )
+                ],
+            },
+        )
+        mod_shift_cc = _write_json(
+            root / "mod_shift_cc.json",
+            _make_doc(
+                [
+                    _make_finding(
+                        file="shift.py",
+                        line_start=2,
+                        line_end=2,
+                        quote="val = 1",
+                        check_id="chk-shift-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                        candidateIds=["cand-kept"],
+                    ),
+                    _make_finding(
+                        file="shift.py",
+                        line_start=2,
+                        line_end=2,
+                        quote="val = 1",
+                        check_id="chk-shift-cc",
+                        source="code",
+                        severity="CONCERN",
+                        basis=None,
+                        blocking=False,
+                        candidateIds=["cand-vanish"],
+                    ),
+                ]
+            ),
+        )
+        r_shift_cc = report.build_report(
+            findings_path=mod_shift_cc, prepare_path=prep_shift_cc, repo_path=repo
+        )
+        check(
+            "shifted code_by_lfcf merge rejects second duplicate at shifted site",
+            r_shift_cc["exitCode"] == 2
+            and len(r_shift_cc["findings"]) == 1
+            and any(
+                "duplicate source 'code'" in e
+                for e in r_shift_cc["errors"]["validationErrors"]
+            )
+            and r_shift_cc["errors"]["unaccountedCandidates"] == ["cand-vanish"],
+        )
+
+        # Round 3 #2: linear KMP dedent quote matching (blanks, mixed ws, scale)
+        blank_mixed_lines = [
+            "def outer():",
+            "    if cond:",
+            "\t  x = 1",
+            "",
+            "\t\ty = 2",
+            "    return x",
+        ]
+        check(
+            "KMP dedent matcher verifies blank lines & mixed whitespace",
+            report._verify_quote_in_lines(
+                blank_mixed_lines, 1, len(blank_mixed_lines), "  x = 1\n\n\ty = 2"
+            )
+            is None,
+        )
+        check(
+            "KMP dedent matcher rejects equal bodies with shifted indent",
+            report._verify_quote_in_lines(
+                ["    hdr", "        x = 1", "        y = 2", "    end"],
+                1,
+                4,
+                "x = 1\n  y = 2",
+            )
+            is not None,
+        )
+        large_cited = ["    x = 1"] * 10_000
+        large_bad_quote = "\n".join(["x = 1"] * 999 + ["    x = 1"])
+        large_good_cited = large_cited + ["    a", "        b"] * 500
+        large_good_quote = "\n".join(["a", "    b"] * 500)
+        check(
+            "KMP dedent matcher handles adversarial 10k x 1k lines and tail hits",
+            report._verify_quote_in_lines(large_cited, 1, 10_000, large_bad_quote)
+            is not None
+            and report._verify_quote_in_lines(
+                large_good_cited, 1, len(large_good_cited), large_good_quote
+            )
+            is None,
+        )
+
+        # Round 3 #3 & #4: cf['class'] overrides conflicting mf classFingerprint;
+        # Pass 1b shifted merge, non-code lens merge, and cf->mf class/package backfill.
+        _write_repo_file(repo, "fix_cls.py", "def fix():\n    return 1\n")
+        cfp_code_cls = _cfp("chk-cls-ov", "fix_cls.py", "def fix():")
+        cfp_model_other = _cfp("chk-cls-ov", "other.py", "def other():")
+        cf_with_cls_pkg = _make_finding(
+            file="shift.py",
+            line_start=1,
+            line_end=1,
+            quote="val = 1",
+            check_id="chk-cls-ov",
+            source="code",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+            package="demo-pkg",
+            version="1.2.3",
+            classFingerprint=cfp_code_cls,
+            **{
+                "class": {
+                    "rule": "From code",
+                    "sites": [{"file": "shift.py", "lineStart": 1, "lineEnd": 1}],
+                    "fixSite": {"file": "fix_cls.py", "lineStart": 1, "lineEnd": 2},
+                    "closes": {"closed": 0, "total": 1},
+                }
+            },
+        )
+        mf_shifted_nocls = _make_finding(
+            file="shift.py",
+            line_start=2,
+            line_end=2,
+            quote="val = 1",
+            check_id="chk-cls-ov",
+            source="model",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+            package="demo-pkg",
+            version="1.2.3",
+            classFingerprint=cfp_model_other,
+        )
+        cf_pkg_only = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-pkg-sec",
+            lens="security",
+            category="supply-chain",
+            severity="HIGH",
+            basis="security invariant",
+            blocking=True,
+            source="code",
+            package="sec-pkg",
+            version="0.9.0",
+        )
+        mf_sec_med = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-pkg-sec",
+            lens="security",
+            category="supply-chain",
+            severity="MEDIUM",
+            basis="written rule",
+            blocking=False,
+            source="model",
+        )
+        prep_cov_r3 = _write_json(
+            root / "prep_cov_r3.json",
+            {
+                "schemaVersion": "1.0",
+                "codeFindings": [cf_with_cls_pkg, cf_pkg_only],
+            },
+        )
+        mod_cov_r3 = _write_json(
+            root / "mod_cov_r3.json",
+            _make_doc([mf_shifted_nocls, mf_sec_med]),
+        )
+        r_cov_r3 = report.build_report(
+            findings_path=mod_cov_r3, prepare_path=prep_cov_r3, repo_path=repo
+        )
+        r3_by_chk = {f["checkId"]: f for f in r_cov_r3["findings"]}
+        check(
+            "Pass 1b shifted merge + cf class/classFingerprint + security lens merge",
+            len(r_cov_r3["findings"]) == 2
+            and r3_by_chk["chk-cls-ov"]["source"] == "both"
+            and r3_by_chk["chk-cls-ov"]["class"]["rule"] == "From code"
+            and r3_by_chk["chk-cls-ov"]["classFingerprint"] == cfp_code_cls
+            and r3_by_chk["chk-pkg-sec"]["source"] == "both"
+            and r3_by_chk["chk-pkg-sec"]["severity"] == "HIGH"
+            and r3_by_chk["chk-pkg-sec"]["blocking"] is True
+            and r3_by_chk["chk-pkg-sec"]["package"] == "sec-pkg"
+            and r3_by_chk["chk-pkg-sec"]["version"] == "0.9.0",
+        )
+
 
 def main() -> int:
     test_cli_and_help()

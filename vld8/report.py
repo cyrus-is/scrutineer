@@ -786,6 +786,81 @@ class _RepoFileCache:
         return failures
 
 
+def _split_indent(trimmed_line: str) -> tuple[str, str]:
+    """Split a right-trimmed line into leading whitespace and stripped body."""
+    body = trimmed_line.lstrip(" \t")
+    return trimmed_line[: len(trimmed_line) - len(body)], body
+
+
+def _indent_delta(prev_indent: str, cur_indent: str) -> tuple[str, str]:
+    """Return relative indent delta invariant under uniform block indentation."""
+    prefix_len = len(os.path.commonprefix([prev_indent, cur_indent]))
+    return prev_indent[prefix_len:], cur_indent[prefix_len:]
+
+
+def _dedent_line_tokens(
+    trimmed_lines: list[str],
+) -> list[tuple[str, tuple[str, str] | None]]:
+    """Tokenize right-trimmed lines by body and relative indent to prior line."""
+    tokens: list[tuple[str, tuple[str, str] | None]] = []
+    last_ne_indent: str | None = None
+    for line in trimmed_lines:
+        if line == "":
+            tokens.append(("", None))
+            continue
+        indent, body = _split_indent(line)
+        rel_ws = (
+            None if last_ne_indent is None else _indent_delta(last_ne_indent, indent)
+        )
+        tokens.append((body, rel_ws))
+        last_ne_indent = indent
+    return tokens
+
+
+def _has_dedent_window_match(
+    trimmed_cited: list[str],
+    quote_lines: list[str],
+    norm_quote: str,
+) -> bool:
+    """Linear-time O(L + Q) KMP check for a uniformly indented multi-line quote."""
+    q_tokens = _dedent_line_tokens(quote_lines)
+    c_tokens = _dedent_line_tokens(trimmed_cited)
+    pat = q_tokens[1:]
+    m = len(pat)
+    first_body = q_tokens[0][0]
+
+    lps = [0] * m
+    length = 0
+    idx = 1
+    while idx < m:
+        if pat[idx] == pat[length]:
+            length += 1
+            lps[idx] = length
+            idx += 1
+        elif length > 0:
+            length = lps[length - 1]
+        else:
+            lps[idx] = 0
+            idx += 1
+
+    j = 0
+    for i in range(1, len(c_tokens)):
+        tok = c_tokens[i]
+        while j > 0 and tok != pat[j]:
+            j = lps[j - 1]
+        if tok == pat[j]:
+            j += 1
+            if j == m:
+                offset = i - m
+                if c_tokens[offset][0] == first_body:
+                    span = len(quote_lines)
+                    window = "\n".join(trimmed_cited[offset : offset + span])
+                    if findings.normalize_code_region(window) == norm_quote:
+                        return True
+                j = lps[j - 1]
+    return False
+
+
 def _verify_quote_in_lines(
     lines: list[str],
     line_start: int,
@@ -816,16 +891,16 @@ def _verify_quote_in_lines(
             return None
         return f"quote not found in cited lines {line_start}-{line_end}"
 
-    trimmed_cited = "\n".join(ln.rstrip(" \t") for ln in cited)
+    trimmed_lines = [ln.rstrip(" \t") for ln in cited]
+    trimmed_cited = "\n".join(trimmed_lines)
     if norm_quote in trimmed_cited:
         return None
 
     span = len(quote_lines)
-    if span <= len(cited):
-        for offset in range(len(cited) - span + 1):
-            window = "\n".join(cited[offset : offset + span])
-            if findings.normalize_code_region(window) == norm_quote:
-                return None
+    if span <= len(trimmed_lines) and _has_dedent_window_match(
+        trimmed_lines, quote_lines, norm_quote
+    ):
+        return None
 
     return f"quote does not match cited lines {line_start}-{line_end}"
 
@@ -948,8 +1023,8 @@ def _merge_pair(
 
     if merged.get("class") is None and cf.get("class") is not None:
         merged["class"] = copy.deepcopy(cf["class"])
-        if merged.get("classFingerprint") is None:
-            merged["classFingerprint"] = cf.get("classFingerprint")
+        if cf.get("classFingerprint") is not None:
+            merged["classFingerprint"] = cf["classFingerprint"]
     elif (
         merged.get("classFingerprint") is None
         and cf.get("classFingerprint") is not None
@@ -1063,42 +1138,65 @@ def _merge_findings(
         lfcf_key = (cf["lens"], cf["file"], cf["checkId"], cf["fingerprint"])
         code_by_lfcf.setdefault(lfcf_key, []).append(ci)
 
+    occupied_code_sites = set(code_by_site)
+    extra_with_orig_id = sorted(
+        ((id(item), copy.deepcopy(item)) for item in model_code_findings),
+        key=lambda pair: (
+            _finding_sort_key(pair[1]),
+            json.dumps(pair[1], sort_keys=True, ensure_ascii=False),
+        ),
+    )
+
     matched_prepare_indices: set[int] = set()
-    unmatched_extras: list[dict[str, Any]] = []
-    for extra in sorted(model_code_findings, key=_finding_sort_key):
-        extra_copy = copy.deepcopy(extra)
+    remaining_after_exact: list[tuple[int, dict[str, Any]]] = []
+    for orig_id, extra_copy in extra_with_orig_id:
         skey = _site_identity(extra_copy)
-        ci: int | None = code_by_site.get(skey)
-        if ci is not None and ci in matched_prepare_indices:
-            ci = None
-        if ci is None:
-            lfcf_candidates = [
-                idx
-                for idx in code_by_lfcf.get(
-                    (
-                        extra_copy["lens"],
-                        extra_copy["file"],
-                        extra_copy["checkId"],
-                        extra_copy["fingerprint"],
-                    ),
-                    [],
-                )
-                if idx not in matched_prepare_indices
-            ]
-            if len(lfcf_candidates) == 1:
-                ci = lfcf_candidates[0]
-        if ci is not None:
+        ci = code_by_site.get(skey)
+        if ci is not None and ci not in matched_prepare_indices:
             matched_prepare_indices.add(ci)
             code_list[ci] = _merge_pair(
                 code_list[ci], extra_copy, merge_errors=merge_errors
             )
         else:
-            unmatched_extras.append(extra_copy)
+            remaining_after_exact.append((orig_id, extra_copy))
 
-    for extra_copy in unmatched_extras:
+    unmatched_extras: list[tuple[int, dict[str, Any]]] = []
+    for orig_id, extra_copy in remaining_after_exact:
+        lfcf_candidates = [
+            idx
+            for idx in code_by_lfcf.get(
+                (
+                    extra_copy["lens"],
+                    extra_copy["file"],
+                    extra_copy["checkId"],
+                    extra_copy["fingerprint"],
+                ),
+                [],
+            )
+            if idx not in matched_prepare_indices
+        ]
+        if len(lfcf_candidates) == 1:
+            ci = lfcf_candidates[0]
+            matched_prepare_indices.add(ci)
+            code_list[ci] = _merge_pair(
+                code_list[ci], extra_copy, merge_errors=merge_errors
+            )
+            occupied_code_sites.add(_site_identity(code_list[ci]))
+        else:
+            unmatched_extras.append((orig_id, extra_copy))
+
+    for orig_id, extra_copy in unmatched_extras:
         skey = _site_identity(extra_copy)
-        if skey not in code_by_site:
-            code_by_site[skey] = len(code_list)
+        if skey in occupied_code_sites:
+            rejected_input_ids.add(orig_id)
+            merge_errors.append(
+                f"--findings: duplicate source 'code' finding "
+                f"{findings._safe_label(extra_copy['checkId'])} at "
+                f"{findings._safe_label(extra_copy['file'])}:"
+                f"{extra_copy['lineStart']}-{extra_copy['lineEnd']}"
+            )
+        else:
+            occupied_code_sites.add(skey)
             code_list.append(extra_copy)
             from_prepare.append(False)
 
