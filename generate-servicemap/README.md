@@ -56,10 +56,11 @@ Platform detection does not use the map; both generators detect platforms from t
 
 ## Validation
 
-After generating, validate the output (optionally checking `evidence[]` hashes offline):
+After generating, validate the output (optionally checking `evidence[]` hashes offline; pass
+`--repo <repo-root>` when the map sits in a subdirectory such as `tools/servicemap.json`):
 
 ```bash
-python3 validate_servicemap.py path/to/servicemap.json --check-evidence
+python3 validate_servicemap.py path/to/servicemap.json --check-evidence --repo . [--repo-name NAME] [--strict]
 ```
 
 ## Incremental updates

@@ -6,7 +6,7 @@ and summary statistics.
 
 Usage:
     python validate_servicemap.py <path-to-servicemap.json> \
-        [--check-evidence [--repo PATH] [--strict]]
+        [--check-evidence [--repo PATH] [--repo-name NAME] [--strict]]
 """
 
 from __future__ import annotations
@@ -242,8 +242,9 @@ def resolve_repo_name(
     repo_root: Path,
     explicit_name: str | None = None,
 ) -> str | None:
-    if explicit_name:
-        return explicit_name
+    if explicit_name is not None:
+        stripped = explicit_name.strip()
+        return stripped or None
     declared = _declared_repos(data, is_v1_1_plus)
     origin_name = _git_origin_repo_name(repo_root)
     if origin_name and origin_name in declared:
@@ -315,7 +316,33 @@ class _Validator:
             if "read_only" in mount and not isinstance(mount["read_only"], bool):
                 self.error(f"{mctx}.read_only must be a boolean")
 
-    def validate_evidence_list(self, evidence: object, ctx: str) -> None:
+    def _check_enum(
+        self,
+        value: object,
+        valid: set[str],
+        label: str,
+        *,
+        warn_only: bool = False,
+        kind_label: str = "value",
+    ) -> bool:
+        if not isinstance(value, str):
+            self.error(f"{label} must be a string, got {type(value).__name__}")
+            return False
+        if value not in valid:
+            if warn_only:
+                self.warn(f"{label}: unknown {kind_label} '{value}'")
+            else:
+                self.error(f"{label} must be one of {sorted(valid)}, got '{value}'")
+            return False
+        return True
+
+    def validate_evidence_list(
+        self,
+        evidence: object,
+        ctx: str,
+        *,
+        known_repos: set[str] | None = None,
+    ) -> None:
         if not isinstance(evidence, list):
             self.error(f"{ctx}.evidence must be a list")
             return
@@ -325,8 +352,14 @@ class _Validator:
                 self.error(f"{ectx} must be an object")
                 continue
             valid_entry = True
-            if not _is_non_empty_str(entry.get("repo")):
+            repo_val = entry.get("repo")
+            if not _is_non_empty_str(repo_val):
                 self.error(f"{ectx}.repo must be a non-empty string")
+                valid_entry = False
+            elif known_repos is not None and repo_val not in known_repos:
+                self.error(
+                    f"{ectx}.repo '{repo_val}' does not match any declared repository"
+                )
                 valid_entry = False
             file_val = entry.get("file")
             if not isinstance(file_val, str) or not _is_safe_rel_posix(file_val):
@@ -393,9 +426,8 @@ class _Validator:
             self.error(f"{ctx}: id must be a non-empty string")
 
         comp_type = comp.get("type")
-        if comp_type is not None and comp_type not in VALID_COMPONENT_TYPES:
-            valid = sorted(VALID_COMPONENT_TYPES)
-            self.error(f"{ctx}: invalid type '{comp_type}'. Valid: {valid}")
+        if "type" in comp:
+            self._check_enum(comp_type, VALID_COMPONENT_TYPES, f"{ctx} type")
 
         if (
             isinstance(comp_type, str)
@@ -458,17 +490,27 @@ class _Validator:
                         auth = ep["authentication"]
                         if isinstance(auth, dict):
                             mech = auth.get("mechanism")
-                            if mech and mech not in VALID_AUTH_MECHANISMS:
-                                self.warn(f"{ep_ctx}: unknown auth mechanism '{mech}'")
+                            if mech is not None and mech != "":
+                                self._check_enum(
+                                    mech,
+                                    VALID_AUTH_MECHANISMS,
+                                    ep_ctx,
+                                    warn_only=True,
+                                    kind_label="auth mechanism",
+                                )
                         else:
                             self.error(f"{ep_ctx}.authentication must be an object")
                     if "authorization" in ep:
                         authz = ep["authorization"]
                         if isinstance(authz, dict):
                             authz_type = authz.get("type")
-                            if authz_type and authz_type not in VALID_AUTHZ_TYPES:
-                                self.warn(
-                                    f"{ep_ctx}: unknown authz type '{authz_type}'"
+                            if authz_type is not None and authz_type != "":
+                                self._check_enum(
+                                    authz_type,
+                                    VALID_AUTHZ_TYPES,
+                                    ep_ctx,
+                                    warn_only=True,
+                                    kind_label="authz type",
                                 )
                         else:
                             self.error(f"{ep_ctx}.authorization must be an object")
@@ -488,10 +530,15 @@ class _Validator:
         self.check_findings_text(comp, ctx)
 
         if "evidence" in comp:
-            self.validate_evidence_list(comp["evidence"], ctx)
+            self.validate_evidence_list(comp["evidence"], ctx, known_repos=known_repos)
 
     def validate_connection(
-        self, conn: object, idx: int, component_ids: set[str]
+        self,
+        conn: object,
+        idx: int,
+        component_ids: set[str],
+        *,
+        known_repos: set[str] | None = None,
     ) -> None:
         ctx = f"connections[{idx}]"
         if not isinstance(conn, dict):
@@ -510,26 +557,26 @@ class _Validator:
             if fld not in conn:
                 self.error(f"{ctx} missing required field: {fld}")
 
+        raw_id = conn.get("id")
         conn_id = (
-            conn.get("id")
-            if isinstance(conn.get("id"), str) and conn.get("id")
-            else f"<unknown-conn-{idx}>"
+            raw_id if isinstance(raw_id, str) and raw_id else f"<unknown-conn-{idx}>"
         )
         ctx = f"connection '{conn_id}'"
+        if "id" in conn and not _is_non_empty_str(raw_id):
+            self.error(f"{ctx}: id must be a non-empty string")
 
         conn_type = conn.get("type")
-        if conn_type is not None and conn_type not in VALID_CONNECTION_TYPES:
-            valid = sorted(VALID_CONNECTION_TYPES)
-            self.error(f"{ctx}: invalid type '{conn_type}'. Valid: {valid}")
+        if "type" in conn:
+            self._check_enum(conn_type, VALID_CONNECTION_TYPES, f"{ctx} type")
 
         source = conn.get("source")
         target = conn.get("target")
-        if source is not None and (
-            not isinstance(source, str) or source not in component_ids
+        if "source" in conn and (
+            not isinstance(source, str) or not source or source not in component_ids
         ):
             self.error(f"{ctx}: source '{source}' does not match any component ID")
-        if target is not None and (
-            not isinstance(target, str) or target not in component_ids
+        if "target" in conn and (
+            not isinstance(target, str) or not target or target not in component_ids
         ):
             self.error(f"{ctx}: target '{target}' does not match any component ID")
 
@@ -556,7 +603,7 @@ class _Validator:
         self.check_findings_text(conn, ctx)
 
         if "evidence" in conn:
-            self.validate_evidence_list(conn["evidence"], ctx)
+            self.validate_evidence_list(conn["evidence"], ctx, known_repos=known_repos)
 
     def _validate_process_connection(self, conn: dict, ctx: str) -> None:
         for fld in ("program", "as_user", "via", "environment", "passes"):
@@ -566,15 +613,14 @@ class _Validator:
             self.error(f"{ctx}.program must be a non-empty string")
         if "as_user" in conn and not _is_non_empty_str(conn["as_user"]):
             self.error(f"{ctx}.as_user must be a non-empty string")
-        via = conn.get("via")
-        if "via" in conn and via not in VALID_PROCESS_VIA:
-            self.error(
-                f"{ctx}.via must be one of {sorted(VALID_PROCESS_VIA)}, got '{via}'"
+        if "via" in conn:
+            self._check_enum(conn.get("via"), VALID_PROCESS_VIA, f"{ctx}.via")
+        if "environment" in conn:
+            self._check_enum(
+                conn.get("environment"),
+                VALID_PROCESS_ENVIRONMENTS,
+                f"{ctx}.environment",
             )
-        env = conn.get("environment")
-        if "environment" in conn and env not in VALID_PROCESS_ENVIRONMENTS:
-            valid = sorted(VALID_PROCESS_ENVIRONMENTS)
-            self.error(f"{ctx}.environment must be one of {valid}, got '{env}'")
         if "passes" in conn:
             passes = conn["passes"]
             if not isinstance(passes, dict):
@@ -607,10 +653,8 @@ class _Validator:
         for fld in ("channel", "channel_auth"):
             if fld not in conn:
                 self.error(f"{ctx}: ipc connection missing required field '{fld}'")
-        channel = conn.get("channel")
-        if "channel" in conn and channel not in VALID_IPC_CHANNELS:
-            valid = sorted(VALID_IPC_CHANNELS)
-            self.error(f"{ctx}.channel must be one of {valid}, got '{channel}'")
+        if "channel" in conn:
+            self._check_enum(conn.get("channel"), VALID_IPC_CHANNELS, f"{ctx}.channel")
         if "channel_auth" in conn and not _is_non_empty_str(conn["channel_auth"]):
             self.error(f"{ctx}.channel_auth must be a non-empty string")
 
@@ -620,11 +664,8 @@ class _Validator:
                 self.error(f"{ctx}: file connection missing required field '{fld}'")
         if "path_expr" in conn and not _is_non_empty_str(conn["path_expr"]):
             self.error(f"{ctx}.path_expr must be a non-empty string")
-        mode = conn.get("mode")
-        if "mode" in conn and mode not in VALID_FILE_MODES:
-            self.error(
-                f"{ctx}.mode must be one of {sorted(VALID_FILE_MODES)}, got '{mode}'"
-            )
+        if "mode" in conn:
+            self._check_enum(conn.get("mode"), VALID_FILE_MODES, f"{ctx}.mode")
 
     def validate_metadata(
         self,
@@ -692,7 +733,9 @@ class _Validator:
                 self.error(f"{ctx}.component_counts must be an object")
             else:
                 actual_counts = Counter(
-                    c.get("type") for c in components if isinstance(c, dict)
+                    c.get("type")
+                    for c in components
+                    if isinstance(c, dict) and isinstance(c.get("type"), str)
                 )
                 for comp_type, count in comp_counts.items():
                     if actual_counts.get(comp_type, 0) != count:
@@ -709,7 +752,7 @@ class _Validator:
 
         sv = data.get("schema_version", "")
         parsed = _parse_schema_version(sv)
-        if sv and not parsed:
+        if "schema_version" in data and parsed is None:
             self.error(f"schema_version must be semver (e.g., '1.0.0'), got '{sv}'")
 
         is_v1_1_plus = parsed is not None and (parsed[0], parsed[1]) >= (1, 1)
@@ -733,8 +776,14 @@ class _Validator:
             known_repos = {
                 r["name"]
                 for r in data["repositories"]
-                if isinstance(r, dict) and isinstance(r.get("name"), str)
+                if isinstance(r, dict) and _is_non_empty_str(r.get("name"))
             }
+        elif (
+            not is_v1_1_plus
+            and isinstance(data.get("repository"), dict)
+            and _is_non_empty_str(data["repository"].get("name"))
+        ):
+            known_repos = {data["repository"]["name"]}
 
         if "generated_at" in data:
             self.check_iso_timestamp(data["generated_at"], "generated_at")
@@ -801,7 +850,7 @@ class _Validator:
             connections = raw_connections
 
         for i, conn in enumerate(connections):
-            self.validate_connection(conn, i, component_ids)
+            self.validate_connection(conn, i, component_ids, known_repos=known_repos)
 
         if "metadata" in data:
             self.validate_metadata(
@@ -1092,6 +1141,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.strict and not args.check_evidence:
         parser.error("--strict requires --check-evidence")
+    if args.repo is not None and not args.repo.strip():
+        parser.error("--repo must not be empty")
+    if args.repo_name is not None and not args.repo_name.strip():
+        parser.error("--repo-name must not be empty")
 
     path = Path(args.map_path)
     try:

@@ -1051,8 +1051,96 @@ def test_api_and_cli_edge_cases() -> None:
         m_bad_meta["metadata"]["component_counts"] = "bad"
         edge_cases.append(("malformed repo_staleness and component_counts", m_bad_meta))
 
+        # Unhashable (list) enum/type values must never raise TypeError
+        m_list_comp_type = _base_v12_map()
+        m_list_comp_type["components"][0]["type"] = ["service"]
+        edge_cases.append(("unhashable component type list", m_list_comp_type))
+
+        m_list_auth = _base_v12_map()
+        m_list_auth["components"][0]["endpoints"] = [
+            {
+                "method": "GET",
+                "path": "/x",
+                "public": True,
+                "confidence": 0.9,
+                "authentication": {"mechanism": ["jwt"]},
+                "authorization": {"type": ["rbac"]},
+            }
+        ]
+        edge_cases.append(("unhashable endpoint auth enum list", m_list_auth))
+
+        m_list_conn_type = _base_v12_map()
+        m_list_conn_type["connections"] = [_make_process_conn(type=["process"])]
+        edge_cases.append(("unhashable connection type list", m_list_conn_type))
+
+        m_list_via = _base_v12_map()
+        m_list_via["connections"] = [_make_process_conn(via=["exec"])]
+        edge_cases.append(("unhashable process via list", m_list_via))
+
+        m_list_env = _base_v12_map()
+        m_list_env["connections"] = [_make_process_conn(environment=["inherited"])]
+        edge_cases.append(("unhashable process environment list", m_list_env))
+
+        m_list_chan = _base_v12_map()
+        m_list_chan["connections"] = [_make_ipc_conn(channel=["pipe"])]
+        edge_cases.append(("unhashable ipc channel list", m_list_chan))
+
+        m_list_mode = _base_v12_map()
+        m_list_mode["connections"] = [_make_file_conn(mode=["read"])]
+        edge_cases.append(("unhashable file mode list", m_list_mode))
+
+        # Null or empty required identity / version / type fields
+        for bad_sv in ("", None):
+            m_sv = _base_v12_map()
+            m_sv["schema_version"] = bad_sv
+            edge_cases.append((f"schema_version={bad_sv!r}", m_sv))
+
+        m_null_ctype = _base_v12_map()
+        m_null_ctype["components"][0]["type"] = None
+        edge_cases.append(("component type null", m_null_ctype))
+
+        m_null_conn = _base_v12_map()
+        m_null_conn["connections"] = [
+            {
+                "id": "",
+                "source": None,
+                "target": None,
+                "type": None,
+                "async": False,
+                "confidence": 0.5,
+                "discovery_method": "m",
+            }
+        ]
+        edge_cases.append(("connection empty id and null endpoints/type", m_null_conn))
+
+        # evidence[].repo must match a declared repository
+        m_bad_ev_repo = _base_v12_map()
+        m_bad_ev_repo["components"][0]["evidence"] = [
+            {
+                "repo": "typo-repo",
+                "file": "src/a.py",
+                "lines": [1, 2],
+                "sha256": "0" * 64,
+            }
+        ]
+        edge_cases.append(("evidence.repo not in repositories[]", m_bad_ev_repo))
+
         for label, payload in edge_cases:
             check(f"edge case rejected: {label}", bool(SM.validate_map(payload).errors))
+
+        # Empty --repo and --repo-name flags are rejected
+        check(
+            "empty --repo flag rejected",
+            run_validate_cli(str(ev_file), "--check-evidence", "--repo", "").returncode
+            == 2,
+        )
+        check(
+            "empty --repo-name flag rejected",
+            run_validate_cli(
+                str(ev_file), "--check-evidence", "--repo-name", ""
+            ).returncode
+            == 2,
+        )
 
 
 def main() -> int:

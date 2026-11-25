@@ -395,7 +395,8 @@ reached through a vendor SDK is `storage` or `database` by what it stores.
 `unauthenticated_public_endpoints`, `unmonitored_services`, plus `repo_staleness` on 1.1+.
 
 Run `vld8 map validate <path> --check-evidence` when you are done (from a clone:
-`python generate-servicemap/validate_servicemap.py <path> --check-evidence`). Fix what it reports
+`python generate-servicemap/validate_servicemap.py <path> --check-evidence`); if `<path>` is in
+a subdirectory (such as `tools/servicemap.json`), also pass `--repo .`. Fix what it reports
 rather than shipping a map that only mostly conforms. Keep security/code findings out of `servicemap.json`
 and list them separately in your final report.
 
