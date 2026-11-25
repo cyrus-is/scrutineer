@@ -184,6 +184,8 @@ The installed skills reach vld8's bundled scripts through the CLI, so they work 
 vld8 mcp analyze|fetch|validate|capture [args]             # the MCP review scripts
 vld8 map validate servicemap.json [--check-evidence]       # check a map (and optional evidence hashes)
 vld8 map schema                                            # print the schema's path
+vld8 checks (--changed PATH... | --diff RANGE) [--lens code|security|both] [--repo PATH]  # select guidance checks
+vld8 review size (--diff RANGE | --pr NUMBER) [--repo PATH] [--service-map PATH]          # size a diff or PR
 vld8 review report --findings m.json [--prepare p.json] [--prior old.json] [--repo PATH] [--format md|json|sarif] [--out FILE]  # verify, merge, and render findings
 ```
 

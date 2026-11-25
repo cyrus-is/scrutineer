@@ -1,8 +1,8 @@
 """Command-line front door.
 
 ``vld8 install [target]`` installs the skill set. ``vld8 mcp …``,
-``vld8 map …``, and ``vld8 review …`` run the toolkit's bundled commands,
-which is how the installed skills reach them from any repo.
+``vld8 map …``, ``vld8 checks …``, and ``vld8 review …`` run the toolkit's
+bundled commands, which is how the installed skills reach them from any repo.
 
 Reachable two ways, both running the same shared core:
     python -m vld8 install /path/to/repo        # from a clone
@@ -10,11 +10,12 @@ Reachable two ways, both running the same shared core:
 """
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 
-from . import __version__, installer, paths, report
+from . import __version__, checks, installer, paths, report
 
 
 def _run_script(script: Path, args: list[str]) -> int:
@@ -208,13 +209,111 @@ def _commands(files: list[str]) -> str:
     return ", ".join(f"/{name[:-3]}" for name in files)
 
 
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"expected positive integer, got {value!r}"
+        ) from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError(f"expected integer >= 1, got {parsed}")
+    return parsed
+
+
+def _add_checks_parser(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser(
+        "checks",
+        help="Select guidance checks for changed files or a git diff.",
+        description=(
+            "Return the peer-review and/or security-review guidance blocks "
+            "matching changed paths."
+        ),
+    )
+    target = p.add_mutually_exclusive_group(required=True)
+    target.add_argument(
+        "--changed",
+        nargs="+",
+        metavar="PATH",
+        help="Repo-relative POSIX path(s) to match against guidance blocks.",
+    )
+    target.add_argument(
+        "--diff",
+        metavar="RANGE",
+        help="Git diff range (e.g. main...HEAD) to inspect for changed files.",
+    )
+    p.add_argument(
+        "--lens",
+        choices=sorted(checks.VALID_LENSES),
+        default="both",
+        help="Which review guidance lens to select (default: both).",
+    )
+    p.add_argument(
+        "--repo",
+        default=".",
+        metavar="PATH",
+        help="Repository root directory (default: current directory).",
+    )
+    p.set_defaults(func=_cmd_checks)
+
+
+def _cmd_checks(args: argparse.Namespace) -> int:
+    try:
+        payload = checks.select_checks(
+            changed=args.changed,
+            diff_range=args.diff,
+            lens=args.lens,
+            repo=args.repo,
+        )
+    except checks.ChecksError as exc:
+        print(f"ERROR: {checks.safe_error_text(str(exc))}", file=sys.stderr)
+        return 1
+    print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+    return 0
+
+
 def _add_review_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "review",
-        help="Code-first review helpers (report).",
-        description="Run code-first review engine commands.",
+        help="Code-first review helpers (size, report).",
+        description="Deterministic review preparation and reporting helpers.",
     )
-    actions = p.add_subparsers(dest="action", required=True)
+    actions = p.add_subparsers(dest="review_action", required=True)
+    size_p = actions.add_parser(
+        "size",
+        help="Measure a diff or PR and suggest review partitions.",
+        description=(
+            "Compute file/line/commit counts, sizing tier, and partition "
+            "suggestions for a git range or GitHub PR."
+        ),
+    )
+    target = size_p.add_mutually_exclusive_group(required=True)
+    target.add_argument(
+        "--diff",
+        metavar="RANGE",
+        help="Git diff range (e.g. main...HEAD).",
+    )
+    target.add_argument(
+        "--pr",
+        type=_positive_int,
+        metavar="NUMBER",
+        help="GitHub pull request number (>= 1).",
+    )
+    size_p.add_argument(
+        "--repo",
+        default=".",
+        metavar="PATH",
+        help="Repository root directory (default: current directory).",
+    )
+    size_p.add_argument(
+        "--service-map",
+        "-s",
+        default=None,
+        metavar="PATH",
+        help="Path to servicemap.json (auto-discovered at <repo>/servicemap.json).",
+    )
+    size_p.set_defaults(func=_cmd_review_size)
+
     rep = actions.add_parser(
         "report",
         help="Verify, merge, and render a review report.",
@@ -263,6 +362,21 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
     rep.set_defaults(func=_cmd_review_report)
 
 
+def _cmd_review_size(args: argparse.Namespace) -> int:
+    try:
+        payload = checks.size_review(
+            diff_range=args.diff,
+            pr_number=args.pr,
+            repo=args.repo,
+            service_map=args.service_map,
+        )
+    except checks.ChecksError as exc:
+        print(f"ERROR: {checks.safe_error_text(str(exc))}", file=sys.stderr)
+        return 1
+    print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+    return 0
+
+
 def _cmd_review_report(args: argparse.Namespace) -> int:
     return report.run_report(
         findings_path=args.findings,
@@ -287,6 +401,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_install_parser(sub)
     _add_mcp_parser(sub)
     _add_map_parser(sub)
+    _add_checks_parser(sub)
     _add_review_parser(sub)
     return parser
 

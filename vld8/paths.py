@@ -31,7 +31,9 @@ _ROOT = toolkit_root()
 
 # Generators (run as subprocesses) and the copy-in static skills.
 PEER_GENERATOR = _ROOT / "generate-peer-review" / "generate.py"
+PEER_GUIDANCE = _ROOT / "generate-peer-review" / "peer_review_guidance.yaml"
 SECURITY_GENERATOR = _ROOT / "generate-security-review" / "generate.py"
+SECURITY_GUIDANCE = _ROOT / "generate-security-review" / "security_guidance.yaml"
 SERVICEMAP_SKILL = _ROOT / "generate-servicemap" / "SKILL.md"
 MCP_SKILL = _ROOT / "mcp-review" / "SKILL.md"
 SETUP_SKILL = _ROOT / "vld8-setup" / "SKILL.md"
@@ -103,7 +105,9 @@ def missing_assets() -> list[Path]:
     """Return any required asset paths that are not present on disk."""
     required = [
         PEER_GENERATOR,
+        PEER_GUIDANCE,
         SECURITY_GENERATOR,
+        SECURITY_GUIDANCE,
         SERVICEMAP_SKILL,
         MCP_SKILL,
         SETUP_SKILL,

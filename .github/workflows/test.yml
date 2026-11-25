@@ -40,6 +40,7 @@ jobs:
           python tests/test_servicemap.py
           python tests/test_findings.py
           python tests/test_review_report.py
+          python tests/test_checks.py
       - name: MCP review tests
         working-directory: mcp-review
         run: |
@@ -70,6 +71,10 @@ jobs:
           if grep -l '\.venv/bin/python' .claude/commands/*.md; then exit 1; fi
           if grep -il 'scrutineer' .claude/commands/*.md; then exit 1; fi
           "$work/wheel-venv/bin/vld8" mcp analyze --help > /dev/null
+          "$work/wheel-venv/bin/vld8" checks --help > /dev/null
+          "$work/wheel-venv/bin/vld8" checks --changed index.ts --repo "$work/target" > /dev/null
+          "$work/wheel-venv/bin/vld8" review size --help > /dev/null
+          "$work/wheel-venv/bin/vld8" review report --help > /dev/null
           test -f "$("$work/wheel-venv/bin/vld8" map schema)"
           echo '{}' > bad.json
           if "$work/wheel-venv/bin/vld8" map validate bad.json > /dev/null; then exit 1; fi
