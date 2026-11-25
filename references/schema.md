@@ -1,16 +1,20 @@
 # servicemap.json Schema Reference
 
-**Schema Version**: 1.1.0
+**Schema Version**: 1.2.0
 
 This document defines the complete schema for `servicemap.json`. Downstream skills and applications
 can depend on this structure. Fields marked **(required)** must always be present. Fields marked
 **(optional)** may be omitted. Fields marked **(stub-safe)** are the minimum required for stub entries.
 
+**No findings in the map:** `servicemap.json` records topology and evidence only. Never write security
+vulnerabilities, code-review findings, or severity tags into `notes` or `description` fields; report
+them separately outside the map.
+
 ## Root Object
 
 ```json
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "generated_at": "2026-03-14T12:00:00Z",
   "repositories": [ ],
   "components": [ ],
@@ -110,6 +114,7 @@ Every component shares these base fields regardless of type.
 | `tags` | array of strings | optional | Freeform tags for categorization. |
 | `ownership` | object | optional | See Ownership section. |
 | `observability` | object | optional | See Observability section. |
+| `evidence` | array of objects | optional | Source citations backing this component (see `evidence[]` below). |
 
 ---
 
@@ -441,15 +446,93 @@ with no observability fields is a blind spot.
 | `id` | string | yes | Unique identifier. Convention: `conn-{source}-to-{target}`. |
 | `source` | string | yes | Component ID of the caller/producer. |
 | `target` | string | yes | Component ID of the callee/consumer/store. |
-| `type` | enum | yes | `http`, `grpc`, `graphql`, `websocket`, `queue`, `pubsub`, `database`, `cache`, `storage`, `library`, `infrastructure`, `event`. |
+| `type` | enum | yes | `http`, `grpc`, `graphql`, `websocket`, `queue`, `pubsub`, `database`, `cache`, `storage`, `library`, `infrastructure`, `event`, `process`, `ipc`, `file`. |
 | `async` | boolean | yes | Whether this is an asynchronous interaction (queues, events, pub/sub). |
 | `protocol` | string | optional | Wire protocol: `http/1.1`, `http/2`, `tcp`, `amqp`, `kafka`, etc. |
+| `via` | string | conditional | Optional on `http` connections for CLI-mediated network calls (`gh`, `git`, `docker`). Required on `process` connections. |
 | `protocol_details` | object | optional | Freeform details specific to the connection type. For HTTP: methods, paths. For queues: queue names, topics. For databases: driver, pool size, SSL. |
 | `auth_required` | object | optional | How this connection authenticates. Same structure as endpoint authentication. |
 | `endpoints_involved` | array | optional | For HTTP connections: which specific endpoints on the target are called. |
-| `description` | string | optional | What this connection is for. |
+| `description` | string | optional | What this connection is for (never findings or vulnerabilities). |
 | `confidence` | number | yes | 0.0–1.0. |
 | `discovery_method` | string | yes | How this connection was identified. |
+| `evidence` | array of objects | optional | Source citations backing this connection (see `evidence[]` below). |
+
+### Type-Specific Connection Fields (Schema 1.2+)
+
+#### `type: "process"`
+
+Captures process launches across component or privilege boundaries (`sudo`, `launchd`, `exec`, `shell`).
+
+```json
+{
+  "id": "conn-worker-to-helper",
+  "source": "svc-worker",
+  "target": "app-helper-cli",
+  "type": "process",
+  "async": false,
+  "program": "helper-cli",
+  "as_user": "service-account",
+  "via": "exec",
+  "environment": "constructed",
+  "passes": {
+    "argv": ["--config", "config/job.toml"],
+    "stdin": "job_payload"
+  },
+  "mounts": [
+    {"source": "state/work", "target": "work", "read_only": false}
+  ],
+  "confidence": 0.95,
+  "discovery_method": "subprocess.run call in worker/runner.py"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `program` | string | yes | Executable or program invoked. |
+| `as_user` | string | yes | OS user or role the child process runs as (e.g., `root`, `current`, `service-account`). |
+| `via` | enum | yes | Launch mechanism: `sudo`, `launchd`, `exec`, `shell`. |
+| `environment` | enum | yes | `inherited` (inherits caller env) or `constructed` (explicit allowlisted env). |
+| `passes` | object | yes | Data passed across the boundary; allowed keys: `argv` (array of strings or null), `stdin` (string, array of strings, or null). |
+| `mounts` | array | optional | Container/sandbox mounts (`source`, `target`, optional `read_only`). Also allowed on `infrastructure` connections. |
+
+#### `type: "ipc"`
+
+Captures local inter-process communication channels.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `channel` | enum | yes | One of: `unix_socket`, `stdio`, `pipe`, `signal`. |
+| `channel_auth` | string | yes | How the channel authenticates peers (e.g., `uid_peercred`, `socket_mode_0600`, `parent_child_fd`, `none`). |
+
+#### `type: "file"`
+
+Captures shared control files or directories used as an integration channel.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `path_expr` | string | yes | Path or pattern of the shared file/directory channel (e.g., `state/queue/*.json`). |
+| `mode` | enum | yes | Access pattern: `read`, `write`, `read_write`, `append`, `lock`, `watch`. |
+
+#### `evidence[]` (Components and Connections)
+
+Links any component or connection to exact source lines so `vld8 map validate --check-evidence` can detect drift offline.
+
+```json
+{
+  "repo": "my-platform",
+  "file": "services/worker/runner.py",
+  "lines": [42, 48],
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repo` | string | yes | Repository name matching `repositories[].name`. Citations to other repos are reported as unverifiable when validating one checkout. |
+| `file` | string | yes | Safe repo-relative POSIX path (no leading `/`, no `..`, no backslashes). |
+| `lines` | `[int, int]` | yes | 1-based inclusive `[start, end]` line range (`1 <= start <= end`). |
+| `sha256` | string | yes | 64-char lowercase hex SHA-256 of `"\n".join(lines[start-1:end]).encode("utf-8")` after splitting lines with `.splitlines()`. |
 
 ---
 
@@ -566,7 +649,8 @@ When running `/vld8-map` against a new repo that points to an existing servicema
 
 | Version | Status | Notes |
 |---------|--------|-------|
-| 1.1.0 | Current | Multi-repo support: `repository` → `repositories[]`, `source_repo` on components, `repo_staleness` in metadata, scoped stale-marking. |
+| 1.2.0 | Current | Additive edge types (`process`, `ipc`, `file`), `http.via`, `mounts`, and `evidence[]` line hashes for offline drift checking; findings stay out of the map. |
+| 1.1.0 | Supported | Multi-repo support: `repository` → `repositories[]`, `source_repo` on components, `repo_staleness` in metadata, scoped stale-marking. |
 | 1.0.0 | Deprecated | Initial schema. Single-repo only. |
 
 **Versioning rules:**

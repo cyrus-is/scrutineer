@@ -31,10 +31,10 @@ An agentic crawl of your repository that writes `servicemap.json`. The file is a
 The crawl has four phases:
 1. **Discovery:** find every component (services, apps, libraries, infrastructure, datastores).
 2. **Deep dive:** each component's endpoints, auth, config and dependencies.
-3. **Trace connections:** how the components talk to each other (HTTP, gRPC, queues, databases).
-4. **Assemble:** validate and write `servicemap.json`, with a confidence score on each entry.
+3. **Trace connections:** how the components talk to each other (HTTP, gRPC, queues, databases, plus `process`, `ipc`, and `file` boundaries, CLI-mediated `http` calls with `via`, and container `mounts`), with `evidence[]` line hashes.
+4. **Assemble:** validate and write `servicemap.json` (schema 1.2.0), with a confidence score on each entry. Findings and security observations are reported separately and never written into the map.
 
-Re-running it updates the map in place. Fields marked `"manual_override": true` are kept, and connections that belong to other repos are preserved. The schema is in [`references/schema.md`](references/schema.md), and `vld8 map validate servicemap.json` checks a map against it.
+Re-running it updates the map in place. Fields marked `"manual_override": true` are kept, and connections that belong to other repos are preserved. The schema is in [`references/schema.md`](references/schema.md), and `vld8 map validate servicemap.json` checks a map against it (`--check-evidence [--repo PATH] [--strict]` recomputes `evidence[]` SHA-256 line hashes offline to detect moved or drifted citations).
 
 The map is useful on its own as architecture documentation, and it feeds the reviews:
 - the code review uses its components to scope component reviews and to split large diffs;
@@ -181,9 +181,9 @@ The regenerated commands end with a comment that names the preview, and the inst
 The installed skills reach vld8's bundled scripts through the CLI, so they work in any repo:
 
 ```bash
-vld8 mcp analyze|fetch|validate|capture [args]   # the MCP review scripts
-vld8 map validate servicemap.json                # check a map against the schema
-vld8 map schema                                  # print the schema's path
+vld8 mcp analyze|fetch|validate|capture [args]             # the MCP review scripts
+vld8 map validate servicemap.json [--check-evidence]       # check a map (and optional evidence hashes)
+vld8 map schema                                            # print the schema's path
 ```
 
 ### From a clone

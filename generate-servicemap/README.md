@@ -39,11 +39,11 @@ From Claude Code in your repo:
 
 ## What it produces
 
-A `servicemap.json` (schema v1.0.0) containing:
+A `servicemap.json` (schema v1.2.0) containing:
 
-- **Components**: services, apps, libraries, infrastructure modules, CI/CD pipelines, data stores, external dependencies — each with language, framework, endpoints, auth/authz detail, env vars, container config, observability surface, and confidence scores
-- **Connections**: every inter-component relationship (HTTP, gRPC, database, queue, pub/sub, etc.) with protocol details, auth requirements, and confidence
-- **Metadata**: summary statistics, shared datastores, unauthenticated endpoints, unmonitored services, low-confidence detections
+- **Components**: services, apps, libraries, infrastructure modules, CI/CD pipelines, data stores, external dependencies — each with language, framework, endpoints, auth/authz detail, env vars, container config, observability surface, confidence scores, and optional `evidence[]` line hashes
+- **Connections**: every inter-component relationship (HTTP with optional `via`, gRPC, database, queue, pub/sub, `process`, `ipc`, `file`, `infrastructure` with optional `mounts`, etc.) with protocol details, auth requirements, confidence, and optional `evidence[]`
+- **Metadata**: summary statistics, shared datastores, unauthenticated endpoints, unmonitored services, low-confidence detections, repo staleness
 
 ## Downstream consumers
 
@@ -56,10 +56,11 @@ Platform detection does not use the map; both generators detect platforms from t
 
 ## Validation
 
-After generating, validate the output:
+After generating, validate the output (optionally checking `evidence[]` hashes offline; pass
+`--repo <repo-root>` when the map sits in a subdirectory such as `tools/servicemap.json`):
 
 ```bash
-python3 validate_servicemap.py path/to/servicemap.json
+python3 validate_servicemap.py path/to/servicemap.json --check-evidence --repo . [--repo-name NAME] [--strict]
 ```
 
 ## Incremental updates
