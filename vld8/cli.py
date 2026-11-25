@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import __version__, installer, paths
+from . import __version__, installer, paths, report
 
 
 def _run_script(script: Path, args: list[str]) -> int:
@@ -208,6 +208,72 @@ def _commands(files: list[str]) -> str:
     return ", ".join(f"/{name[:-3]}" for name in files)
 
 
+def _add_review_parser(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser(
+        "review",
+        help="Code-first review helpers (report).",
+        description="Run code-first review engine commands.",
+    )
+    actions = p.add_subparsers(dest="action", required=True)
+    rep = actions.add_parser(
+        "report",
+        help="Verify, merge, and render a review report.",
+        description=(
+            "Check candidate accounting, verify citations against --repo, "
+            "enforce rubric form, merge code and model findings, and render "
+            "md, json, or sarif."
+        ),
+    )
+    rep.add_argument(
+        "--findings",
+        metavar="PATH",
+        default=None,
+        help="Model findings JSON file (Findings Contract v1).",
+    )
+    rep.add_argument(
+        "--prepare",
+        metavar="PATH",
+        default=None,
+        help="Optional prepare.json file from `vld8 review prepare`.",
+    )
+    rep.add_argument(
+        "--prior",
+        metavar="PATH",
+        default=None,
+        help="Optional prior findings JSON file for re-review dispositions.",
+    )
+    rep.add_argument(
+        "--repo",
+        metavar="PATH",
+        default=".",
+        help="Repository root for citation checks (default: current directory).",
+    )
+    rep.add_argument(
+        "--format",
+        choices=sorted(report.VALID_FORMATS),
+        default="md",
+        help="Output format: md, json, or sarif (default: md).",
+    )
+    rep.add_argument(
+        "--out",
+        metavar="FILE",
+        default=None,
+        help="Write rendered report atomically to FILE instead of stdout.",
+    )
+    rep.set_defaults(func=_cmd_review_report)
+
+
+def _cmd_review_report(args: argparse.Namespace) -> int:
+    return report.run_report(
+        findings_path=args.findings,
+        prepare_path=args.prepare,
+        prior_path=args.prior,
+        repo_path=args.repo,
+        fmt=args.format,
+        out_path=args.out,
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vld8",
@@ -221,6 +287,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_install_parser(sub)
     _add_mcp_parser(sub)
     _add_map_parser(sub)
+    _add_review_parser(sub)
     return parser
 
 
