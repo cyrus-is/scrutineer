@@ -2271,6 +2271,97 @@ def test_security_fixes_and_edge_coverage() -> None:
         finally:
             report.MAX_CACHE_ENTRIES = orig_entries
 
+        # Round 2 regressions: cross-lens separation and classFingerprint backfill.
+        sec_cf = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            lens="security",
+            check_id="shared-id",
+            category="injection",
+            severity="CRITICAL",
+            basis="security invariant",
+            blocking=True,
+            source="code",
+        )
+        code_mf = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            lens="code",
+            check_id="shared-id",
+            category="correctness",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+            source="model",
+        )
+        prep_xlens = _write_json(
+            root / "prep_xlens.json",
+            {"schemaVersion": "1.0", "codeFindings": [sec_cf]},
+        )
+        mod_xlens = _write_json(root / "mod_xlens.json", _make_doc([code_mf]))
+        r_xlens = report.build_report(
+            findings_path=mod_xlens, prepare_path=prep_xlens, repo_path=repo
+        )
+        xlens_by_lens = {f["lens"]: f for f in r_xlens["findings"]}
+        check(
+            "cross-lens findings at same site stay separate without downgrading",
+            len(r_xlens["findings"]) == 2
+            and xlens_by_lens["security"]["severity"] == "CRITICAL"
+            and xlens_by_lens["security"]["blocking"] is True
+            and xlens_by_lens["code"]["severity"] == "CONCERN"
+            and xlens_by_lens["code"]["blocking"] is False
+            and r_xlens["verdict"] == "REQUEST CHANGES"
+            and r_xlens["exitCode"] == 1,
+        )
+
+        # classFingerprint on cf without class is preserved across merge + prior
+        cfp_only = _cfp("chk-cfp-only", "a.py", "same = 1")
+        cf_cfp = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-cfp-only",
+            source="code",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+            classFingerprint=cfp_only,
+        )
+        mf_nocfp = _make_finding(
+            file="a.py",
+            line_start=1,
+            line_end=1,
+            quote="same = 1",
+            check_id="chk-cfp-only",
+            source="model",
+            severity="CONCERN",
+            basis=None,
+            blocking=False,
+        )
+        prep_cfp = _write_json(
+            root / "prep_cfp.json",
+            {"schemaVersion": "1.0", "codeFindings": [cf_cfp]},
+        )
+        mod_cfp = _write_json(root / "mod_cfp.json", _make_doc([mf_nocfp]))
+        prior_cfp = _write_json(root / "prior_cfp.json", _make_doc([cf_cfp]))
+        r_cfp_keep = report.build_report(
+            findings_path=mod_cfp,
+            prepare_path=prep_cfp,
+            prior_path=prior_cfp,
+            repo_path=repo,
+        )
+        check(
+            "_merge_pair backfills standalone classFingerprint without class",
+            len(r_cfp_keep["findings"]) == 1
+            and r_cfp_keep["findings"][0]["classFingerprint"] == cfp_only
+            and r_cfp_keep["findings"][0]["disposition"] == "recurring",
+        )
+
 
 def main() -> int:
     test_cli_and_help()

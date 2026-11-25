@@ -912,9 +912,12 @@ def _attach_class_proposal(
         return
 
 
-def _site_identity(finding: dict[str, Any]) -> tuple[str, int, int, str, str]:
-    """Return site-specific identity key including file and line range."""
+def _site_identity(
+    finding: dict[str, Any],
+) -> tuple[str, str, int, int, str, str]:
+    """Return site-specific identity key scoped by lens, file, line, check, fp."""
     return (
+        finding["lens"],
         finding["file"],
         finding["lineStart"],
         finding["lineEnd"],
@@ -945,7 +948,13 @@ def _merge_pair(
 
     if merged.get("class") is None and cf.get("class") is not None:
         merged["class"] = copy.deepcopy(cf["class"])
-        merged["classFingerprint"] = cf.get("classFingerprint")
+        if merged.get("classFingerprint") is None:
+            merged["classFingerprint"] = cf.get("classFingerprint")
+    elif (
+        merged.get("classFingerprint") is None
+        and cf.get("classFingerprint") is not None
+    ):
+        merged["classFingerprint"] = cf["classFingerprint"]
 
     if merged.get("recommendation") is None and cf.get("recommendation") is not None:
         merged["recommendation"] = cf["recommendation"]
@@ -1034,7 +1043,7 @@ def _merge_findings(
     merge_errors: list[str] = []
     rejected_input_ids: set[int] = set()
 
-    code_by_site: dict[tuple[str, int, int, str, str], int] = {}
+    code_by_site: dict[tuple[str, str, int, int, str, str], int] = {}
     code_list: list[dict[str, Any]] = []
     from_prepare: list[bool] = []
     for item in sorted(
@@ -1048,11 +1057,11 @@ def _merge_findings(
             from_prepare.append(True)
 
     # Map verified source=='code' overrides onto prepare codeFindings by exact
-    # site first, then unambiguous (file, checkId, fingerprint).
-    code_by_fcf: dict[tuple[str, str, str], list[int]] = {}
+    # site first, then unambiguous (lens, file, checkId, fingerprint).
+    code_by_lfcf: dict[tuple[str, str, str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
-        fcf_key = (cf["file"], cf["checkId"], cf["fingerprint"])
-        code_by_fcf.setdefault(fcf_key, []).append(ci)
+        lfcf_key = (cf["lens"], cf["file"], cf["checkId"], cf["fingerprint"])
+        code_by_lfcf.setdefault(lfcf_key, []).append(ci)
 
     matched_prepare_indices: set[int] = set()
     unmatched_extras: list[dict[str, Any]] = []
@@ -1063,10 +1072,11 @@ def _merge_findings(
         if ci is not None and ci in matched_prepare_indices:
             ci = None
         if ci is None:
-            fcf_candidates = [
+            lfcf_candidates = [
                 idx
-                for idx in code_by_fcf.get(
+                for idx in code_by_lfcf.get(
                     (
+                        extra_copy["lens"],
                         extra_copy["file"],
                         extra_copy["checkId"],
                         extra_copy["fingerprint"],
@@ -1075,8 +1085,8 @@ def _merge_findings(
                 )
                 if idx not in matched_prepare_indices
             ]
-            if len(fcf_candidates) == 1:
-                ci = fcf_candidates[0]
+            if len(lfcf_candidates) == 1:
+                ci = lfcf_candidates[0]
         if ci is not None:
             matched_prepare_indices.add(ci)
             code_list[ci] = _merge_pair(
@@ -1111,12 +1121,12 @@ def _merge_findings(
     used_model: set[int] = set()
     pairs: list[tuple[int, int]] = []
 
-    # Pass 1a: 1-to-1 exact (file, lineStart, lineEnd, checkId, fingerprint) match.
-    code_by_exact: dict[tuple[str, int, int, str, str], list[int]] = {}
+    # Pass 1a: 1-to-1 exact (lens, file, lineStart, lineEnd, checkId, fp) match.
+    code_by_exact: dict[tuple[str, str, int, int, str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
         if from_prepare[ci] or not has_prepare:
             code_by_exact.setdefault(_site_identity(cf), []).append(ci)
-    model_by_exact: dict[tuple[str, int, int, str, str], list[int]] = {}
+    model_by_exact: dict[tuple[str, str, int, int, str, str], list[int]] = {}
     for mi, mf in enumerate(model_list):
         model_by_exact.setdefault(_site_identity(mf), []).append(mi)
     for key in sorted(set(code_by_exact) & set(model_by_exact)):
@@ -1128,39 +1138,39 @@ def _merge_findings(
             used_model.add(mi)
             pairs.append((ci, mi))
 
-    # Pass 1b: 1-to-1 remaining (file, checkId, fingerprint) match.
-    code_by_fcf_rem: dict[tuple[str, str, str], list[int]] = {}
+    # Pass 1b: 1-to-1 remaining (lens, file, checkId, fingerprint) match.
+    code_by_lfcf_rem: dict[tuple[str, str, str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
         if ci not in used_code and (from_prepare[ci] or not has_prepare):
-            code_by_fcf_rem.setdefault(
-                (cf["file"], cf["checkId"], cf["fingerprint"]), []
+            code_by_lfcf_rem.setdefault(
+                (cf["lens"], cf["file"], cf["checkId"], cf["fingerprint"]), []
             ).append(ci)
-    model_by_fcf_rem: dict[tuple[str, str, str], list[int]] = {}
+    model_by_lfcf_rem: dict[tuple[str, str, str, str], list[int]] = {}
     for mi, mf in enumerate(model_list):
         if mi not in used_model:
-            model_by_fcf_rem.setdefault(
-                (mf["file"], mf["checkId"], mf["fingerprint"]), []
+            model_by_lfcf_rem.setdefault(
+                (mf["lens"], mf["file"], mf["checkId"], mf["fingerprint"]), []
             ).append(mi)
-    for key in sorted(set(code_by_fcf_rem) & set(model_by_fcf_rem)):
-        c_idxs = code_by_fcf_rem[key]
-        m_idxs = model_by_fcf_rem[key]
+    for key in sorted(set(code_by_lfcf_rem) & set(model_by_lfcf_rem)):
+        c_idxs = code_by_lfcf_rem[key]
+        m_idxs = model_by_lfcf_rem[key]
         if len(c_idxs) == 1 and len(m_idxs) == 1:
             ci, mi = c_idxs[0], m_idxs[0]
             used_code.add(ci)
             used_model.add(mi)
             pairs.append((ci, mi))
 
-    # Pass 2: exact (file, lineStart, lineEnd, checkId).
-    model_by_site: dict[tuple[str, int, int, str], list[int]] = {}
+    # Pass 2: exact (lens, file, lineStart, lineEnd, checkId).
+    model_by_site: dict[tuple[str, str, int, int, str], list[int]] = {}
     for mi, mf in enumerate(model_list):
         if mi in used_model:
             continue
-        key = (mf["file"], mf["lineStart"], mf["lineEnd"], mf["checkId"])
+        key = (mf["lens"], mf["file"], mf["lineStart"], mf["lineEnd"], mf["checkId"])
         model_by_site.setdefault(key, []).append(mi)
     for ci, cf in enumerate(code_list):
         if ci in used_code or (has_prepare and not from_prepare[ci]):
             continue
-        key = (cf["file"], cf["lineStart"], cf["lineEnd"], cf["checkId"])
+        key = (cf["lens"], cf["file"], cf["lineStart"], cf["lineEnd"], cf["checkId"])
         matches = [mi for mi in model_by_site.get(key, []) if mi not in used_model]
         if matches:
             mi = matches[0]
@@ -1168,18 +1178,22 @@ def _merge_findings(
             used_model.add(mi)
             pairs.append((ci, mi))
 
-    # Pass 3: unambiguous 1-to-1 overlapping range on (file, checkId).
-    code_by_fc: dict[tuple[str, str], list[int]] = {}
+    # Pass 3: unambiguous 1-to-1 overlapping range on (lens, file, checkId).
+    code_by_lfc: dict[tuple[str, str, str], list[int]] = {}
     for ci, cf in enumerate(code_list):
         if ci not in used_code and (from_prepare[ci] or not has_prepare):
-            code_by_fc.setdefault((cf["file"], cf["checkId"]), []).append(ci)
-    model_by_fc: dict[tuple[str, str], list[int]] = {}
+            code_by_lfc.setdefault((cf["lens"], cf["file"], cf["checkId"]), []).append(
+                ci
+            )
+    model_by_lfc: dict[tuple[str, str, str], list[int]] = {}
     for mi, mf in enumerate(model_list):
         if mi not in used_model:
-            model_by_fc.setdefault((mf["file"], mf["checkId"]), []).append(mi)
-    for key in sorted(set(code_by_fc) & set(model_by_fc)):
-        c_idxs = code_by_fc[key]
-        m_idxs = model_by_fc[key]
+            model_by_lfc.setdefault((mf["lens"], mf["file"], mf["checkId"]), []).append(
+                mi
+            )
+    for key in sorted(set(code_by_lfc) & set(model_by_lfc)):
+        c_idxs = code_by_lfc[key]
+        m_idxs = model_by_lfc[key]
         if len(c_idxs) == 1 and len(m_idxs) == 1:
             ci, mi = c_idxs[0], m_idxs[0]
             if _ranges_overlap(code_list[ci], model_list[mi]):
