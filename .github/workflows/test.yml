@@ -42,6 +42,7 @@ jobs:
           python tests/test_findings.py
           python tests/test_review_report.py
           python tests/test_checks.py
+          python tests/test_prepare_trust.py
       - name: MCP review tests
         working-directory: mcp-review
         run: |
