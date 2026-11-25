@@ -16,6 +16,7 @@ import os
 import re
 import stat
 import subprocess
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -34,6 +35,8 @@ MAX_COMMAND_STDERR_BYTES = 1024 * 1024
 MAX_PR_API_BYTES = 50 * 1024 * 1024
 MAX_PR_LISTED_FILES = 3500
 MAX_CONTENT_FILE_BYTES = 1024 * 1024
+MAX_TEXT_CACHE_BYTES = 64 * 1024 * 1024
+MAX_TEXT_CACHE_ENTRIES = 10_000
 MAX_SERVICEMAP_BYTES = 10 * 1024 * 1024
 MAX_GUIDANCE_BYTES = 10 * 1024 * 1024
 MAX_GLOB_STARS = 8
@@ -92,6 +95,7 @@ CONTENT_EXTS = frozenset(
 
 _NON_PLATFORM_SECTIONS = frozenset({"cross_cutting", "verification"})
 _MILESTONE_RE = re.compile(r"^\d+\.\d+\Z", re.ASCII)
+_GIT_OID_RE = re.compile(r"^[0-9a-f]{40,64}\Z")
 
 
 class ChecksError(ValueError):
@@ -173,7 +177,13 @@ def resolve_repo_root(repo: str | Path) -> tuple[Path, str]:
             f"cannot access repo directory {safe_error_text(raw)}: "
             f"{safe_error_text(exc)}"
         ) from exc
-    label = "." if raw == "." else (resolved.name or ".")
+    label = (
+        "."
+        if raw == "."
+        else safe_error_text(
+            resolved.name or ".", max_len=findings.MAX_IDENTIFIER_LENGTH
+        )
+    )
     return resolved, label
 
 
@@ -353,7 +363,7 @@ def _read_explicit_regular_file(
     return raw
 
 
-@functools.cache
+@functools.lru_cache(maxsize=1024)
 def _glob_regex(pattern: str) -> re.Pattern[str]:
     """Compile a guidance glob where ``**/`` matches zero or more directories.
 
@@ -440,17 +450,117 @@ def _load_guidance(path: Path) -> dict[str, Any]:
     return filtered
 
 
-def _read_repo_text_cached(
+def _diff_target_tree_ref(diff_range: str) -> str | None:
+    """Return right-hand tree ref for range diffs, or None for working-tree diff."""
+    if "..." in diff_range:
+        _, rhs = diff_range.split("...", 1)
+        target = rhs or "HEAD"
+    elif ".." in diff_range:
+        _, rhs = diff_range.split("..", 1)
+        target = rhs or "HEAD"
+    else:
+        return None
+    validate_git_ref_or_range(target)
+    return target
+
+
+def _read_git_tree_regular_file(
     repo_root: Path,
+    tree_ref: str,
     rel_path: str,
-    cache: dict[str, str | None],
-) -> str | None:
-    if rel_path not in cache:
-        raw = _read_repo_regular_file(
-            repo_root, rel_path, max_bytes=MAX_CONTENT_FILE_BYTES
+    *,
+    max_bytes: int,
+) -> bytes | None:
+    """Read a regular non-symlink blob from ``tree_ref`` bounded by ``max_bytes``."""
+    validate_repo_relative_path(rel_path)
+    ls_raw = _run_command(
+        [
+            "git",
+            "-C",
+            str(repo_root),
+            "ls-tree",
+            "--full-tree",
+            "-r",
+            "-z",
+            "-l",
+            tree_ref,
+            "--",
+            f":(literal){rel_path}",
+        ],
+        cwd=repo_root,
+    )
+    if not ls_raw:
+        return None
+    for rec in ls_raw.split(b"\x00"):
+        if not rec:
+            continue
+        meta, sep, path_bytes = rec.partition(b"\t")
+        if not sep:
+            continue
+        entry_path = path_bytes.decode("utf-8", "surrogateescape")
+        if entry_path != rel_path:
+            continue
+        parts = meta.decode("ascii", "replace").split()
+        if len(parts) != 4:
+            return None
+        mode, obj_type, oid, size_str = parts
+        if (
+            mode not in ("100644", "100755")
+            or obj_type != "blob"
+            or not _GIT_OID_RE.match(oid)
+            or not size_str.isdigit()
+            or int(size_str) > max_bytes
+        ):
+            return None
+        return _run_command(
+            ["git", "-C", str(repo_root), "cat-file", "blob", oid],
+            cwd=repo_root,
+            max_stdout_bytes=max_bytes,
         )
-        cache[rel_path] = None if raw is None else raw.decode("utf-8", errors="ignore")
-    return cache[rel_path]
+    return None
+
+
+class _BoundedTextCache:
+    """Bounded LRU text cache for working-tree or git-tree content reads."""
+
+    def __init__(self, repo_root: Path, *, tree_ref: str | None = None) -> None:
+        self.repo_root = repo_root.resolve()
+        self.tree_ref = tree_ref
+        self._cache: OrderedDict[str, tuple[str | None, int]] = OrderedDict()
+        self._cached_bytes = 0
+
+    def get_text(self, rel_path: str) -> str | None:
+        if rel_path in self._cache:
+            text, size = self._cache.pop(rel_path)
+            self._cache[rel_path] = (text, size)
+            return text
+        if self.tree_ref is not None:
+            raw = _read_git_tree_regular_file(
+                self.repo_root,
+                self.tree_ref,
+                rel_path,
+                max_bytes=MAX_CONTENT_FILE_BYTES,
+            )
+        else:
+            raw = _read_repo_regular_file(
+                self.repo_root, rel_path, max_bytes=MAX_CONTENT_FILE_BYTES
+            )
+        if raw is None:
+            text: str | None = None
+            size = 0
+        else:
+            text = raw.decode("utf-8", errors="ignore")
+            size = len(raw)
+        while self._cache and (
+            len(self._cache) >= MAX_TEXT_CACHE_ENTRIES
+            or self._cached_bytes + size > MAX_TEXT_CACHE_BYTES
+        ):
+            _, (_, evicted_size) = self._cache.popitem(last=False)
+            self._cached_bytes -= evicted_size
+        if size <= MAX_TEXT_CACHE_BYTES:
+            self._cache[rel_path] = (text, size)
+            self._cached_bytes += size
+        return text
 
 
 def _normalize_code_checks(items: Any) -> list[dict[str, Any]]:
@@ -540,8 +650,7 @@ def _evaluate_block(
     key: str,
     data: dict[str, Any],
     changed_paths: list[str],
-    repo_root: Path,
-    text_cache: dict[str, str | None],
+    text_cache: _BoundedTextCache,
 ) -> dict[str, Any] | None:
     """Match one platform guidance block against ``changed_paths``.
 
@@ -576,7 +685,7 @@ def _evaluate_block(
         for rel in content_candidates:
             if PurePosixPath(rel).suffix.lower() not in exts:
                 continue
-            text = _read_repo_text_cached(repo_root, rel, text_cache)
+            text = text_cache.get_text(rel)
             if not text:
                 continue
             for pat, regex in compiled:
@@ -670,10 +779,12 @@ def select_checks(
         if not changed:
             raise ChecksError("changed must include at least one path")
         mode = "changed"
+        tree_ref: str | None = None
         changed_paths = sorted({validate_repo_relative_path(p) for p in changed})
     else:
         assert diff_range is not None
         mode = "diff"
+        tree_ref = _diff_target_tree_ref(diff_range)
         changed_paths = _git_changed_paths(repo_root, diff_range)
 
     guidance_sources: list[tuple[str, Path]] = []
@@ -682,7 +793,7 @@ def select_checks(
     if lens in ("security", "both"):
         guidance_sources.append(("security", paths.SECURITY_GUIDANCE))
 
-    text_cache: dict[str, str | None] = {}
+    text_cache = _BoundedTextCache(repo_root, tree_ref=tree_ref)
     blocks: list[dict[str, Any]] = []
     all_matched: set[str] = set()
 
@@ -700,7 +811,6 @@ def select_checks(
                     key=key,
                     data=pdata,
                     changed_paths=changed_paths,
-                    repo_root=repo_root,
                     text_cache=text_cache,
                 )
                 if block is not None:
@@ -992,11 +1102,24 @@ def _extract_component_prefixes(
         name = comp.get("name")
         comp_id = comp.get("id")
         if isinstance(name, str) and name.strip():
-            label = name.strip()
+            raw_label = name
         elif isinstance(comp_id, str) and comp_id.strip():
-            label = comp_id.strip()
+            raw_label = comp_id
         else:
             continue
+
+        if findings._has_control_char(raw_label):
+            raise ChecksError("service map component label contains control characters")
+        if findings._has_surrogate(raw_label):
+            raise ChecksError(
+                "service map component label contains unpaired UTF-16 surrogates"
+            )
+        label = raw_label.strip()
+        if len(label) > findings.MAX_IDENTIFIER_LENGTH:
+            raise ChecksError(
+                f"service map component label exceeds max "
+                f"{findings.MAX_IDENTIFIER_LENGTH} characters"
+            )
 
         candidates: list[str] = []
         for single_key in ("path", "root_path"):
@@ -1049,11 +1172,19 @@ def _build_partitions(
         [_match_component(e.path, prefixes) for e in entries] if prefixes else []
     )
     use_service_map = any(m is not None for m in matched_components)
+    matched_names = {m for m in matched_components if m is not None}
+    fallback_name = "other"
+    if fallback_name in matched_names:
+        fallback_name = "unmapped"
+        suffix = 2
+        while fallback_name in matched_names:
+            fallback_name = f"unmapped-{suffix}"
+            suffix += 1
 
     buckets: dict[str, dict[str, Any]] = {}
     for idx, entry in enumerate(entries):
         if use_service_map:
-            name = matched_components[idx] or "other"
+            name = matched_components[idx] or fallback_name
         else:
             name = _default_partition_key(entry.path)
         bucket = buckets.get(name)

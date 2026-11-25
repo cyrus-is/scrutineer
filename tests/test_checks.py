@@ -19,7 +19,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from vld8 import checks, paths  # noqa: E402
+from vld8 import checks, findings, paths  # noqa: E402
 
 _results: list[tuple[str, bool]] = []
 
@@ -1219,8 +1219,28 @@ def test_cli_integration() -> None:
             and data_size.get("tier") == "small",
         )
 
+        p_diff_ok = _run_cli(
+            "checks",
+            "--diff",
+            "HEAD~1..HEAD",
+            "--repo",
+            str(repo),
+        )
+        data_diff = json.loads(p_diff_ok.stdout) if p_diff_ok.returncode == 0 else {}
+        check(
+            "`vld8 checks --diff HEAD~1..HEAD` exits 0 with diff mode JSON",
+            p_diff_ok.returncode == 0
+            and data_diff.get("mode") == "diff"
+            and data_diff.get("changedPaths") == ["a.py", "b.ts"]
+            and any(b["key"] == "python" for b in data_diff.get("blocks", [])),
+        )
+
         p_bad_pr = _run_cli("review", "size", "--pr", "0", "--repo", str(repo))
-        check("`vld8 review size --pr 0` exits non-zero", p_bad_pr.returncode != 0)
+        p_alpha_pr = _run_cli("review", "size", "--pr", "abc", "--repo", str(repo))
+        check(
+            "`vld8 review size --pr 0` and `--pr abc` exit non-zero",
+            p_bad_pr.returncode != 0 and p_alpha_pr.returncode != 0,
+        )
 
         p_bad_sm = _run_cli(
             "review",
@@ -1238,6 +1258,209 @@ def test_cli_integration() -> None:
         )
 
 
+def test_round1_review_regressions() -> None:
+    # Finding 5: bounded _glob_regex LRU cache
+    check(
+        "_glob_regex uses bounded lru_cache(maxsize=1024)",
+        checks._glob_regex.cache_info().maxsize == 1024,
+    )
+
+    with tempfile.TemporaryDirectory(prefix="vld8-r1-regress-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        _init_git_repo(repo)
+        _commit_files(repo, {"auth.py": "x = 1\n", "README.md": "hi\n"}, "base")
+
+        # Finding 2: range diffs read right-hand git tree, not working tree on disk.
+        _git(repo, "checkout", "-qb", "feat")
+        _commit_files(
+            repo,
+            {
+                "auth.py": "def verify(t, k):\n    return jwt.verify(t, k)\n",
+                "big.py": (b"# " + b"a" * (checks.MAX_CONTENT_FILE_BYTES + 32))
+                + b"\njwt.verify(a, b)\n",
+            },
+            "feat adds jwt and huge blob",
+        )
+        # Also commit a git symlink pointing to auth.py (mode 120000).
+        (repo / "link_auth.py").symlink_to("auth.py")
+        _git(repo, "add", "link_auth.py")
+        _git(repo, "commit", "-qm", "add symlink")
+
+        # Checkout main where auth.py has NO jwt, so working tree disagrees with feat.
+        _git(repo, "checkout", "-q", "main")
+        range_res = checks.select_checks(diff_range="main...feat", repo=repo)
+        jwt_blocks = [
+            b
+            for b in range_res["blocks"]
+            if b["lens"] == "security" and b["key"] == "jwt"
+        ]
+        check(
+            "main...feat inspects target tree (not disk) and skips symlinks/oversized",
+            len(jwt_blocks) == 1 and jwt_blocks[0]["matchedPaths"] == ["auth.py"],
+        )
+
+        # Single-ref diff_range compares against working tree on disk.
+        (repo / "auth.py").write_text(
+            "def verify(t, k):\n    return jwt.verify(t, k)\n", encoding="utf-8"
+        )
+        single_res = checks.select_checks(diff_range="main", repo=repo)
+        check(
+            "single-ref diff_range reads uncommitted working tree changes",
+            any(
+                b["lens"] == "security" and b["key"] == "jwt"
+                for b in single_res["blocks"]
+            ),
+        )
+        (repo / "auth.py").write_text("x = 1\n", encoding="utf-8")
+
+        # Empty right-hand range defaults to HEAD; leading-dash rhs rejected.
+        _git(repo, "checkout", "-q", "feat")
+        rhs_empty = checks.select_checks(diff_range="main...", repo=repo)
+        check(
+            "empty right-hand range main... resolves target HEAD tree",
+            any(
+                b["lens"] == "security" and b["key"] == "jwt"
+                for b in rhs_empty["blocks"]
+            ),
+        )
+        _expect_error(
+            "range with leading-dash right-hand ref is rejected",
+            checks.select_checks,
+            diff_range="main..-n",
+            repo=repo,
+        )
+
+        # Finding 3: _BoundedTextCache bounds bytes and zero-byte miss entries.
+        orig_bytes = checks.MAX_TEXT_CACHE_BYTES
+        orig_entries = checks.MAX_TEXT_CACHE_ENTRIES
+        try:
+            checks.MAX_TEXT_CACHE_BYTES = 12
+            checks.MAX_TEXT_CACHE_ENTRIES = 2
+            tcache = checks._BoundedTextCache(repo)
+            _commit_files(repo, {"c1.py": "12345678\n", "c2.py": "abcdefgh\n"}, "c")
+            t1 = tcache.get_text("c1.py")
+            t2 = tcache.get_text("c2.py")
+            check(
+                "_BoundedTextCache evicts under byte cap",
+                t1 == "12345678\n"
+                and t2 == "abcdefgh\n"
+                and len(tcache._cache) == 1
+                and "c2.py" in tcache._cache,
+            )
+            tcache.get_text("missing1.py")
+            tcache.get_text("missing2.py")
+            tcache.get_text("missing3.py")
+            check(
+                "_BoundedTextCache evicts zero-byte miss entries under entry cap",
+                len(tcache._cache) == 2 and "c2.py" not in tcache._cache,
+            )
+        finally:
+            checks.MAX_TEXT_CACHE_BYTES = orig_bytes
+            checks.MAX_TEXT_CACHE_ENTRIES = orig_entries
+
+        # Finding 4: symlinked --repo target basename with C1 controls is escaped.
+        ctrl_target = root / "evil\x9b31m"
+        ctrl_target.mkdir()
+        ctrl_link = root / "safe-link"
+        ctrl_link.symlink_to(ctrl_target)
+        _, ctrl_label = checks.resolve_repo_root(ctrl_link)
+        ctrl_checks = checks.select_checks(changed=["README.md"], repo=ctrl_link)
+        check(
+            "resolve_repo_root sanitizes resolved symlink target basename",
+            "\x9b" not in ctrl_label
+            and "\x9b" not in ctrl_checks["repo"]
+            and "\\x9b" in ctrl_checks["repo"],
+        )
+
+        # Finding 1: servicemap labels reject controls, surrogates, and length.
+        bad_labels = [
+            ("\ud800evil", "surrogate name"),
+            ("evil\u009b31m\u007f\u2028", "C1/DEL/U+2028 name"),
+            ("\x1b[31m", "ANSI name"),
+            ("a" * (findings.MAX_IDENTIFIER_LENGTH + 1), "oversized name"),
+        ]
+        for idx, (bad_name, desc) in enumerate(bad_labels):
+            bad_sm = root / f"bad_label_{idx}.json"
+            bad_sm.write_text(
+                json.dumps(
+                    {
+                        "components": [
+                            {"id": "svc-1", "name": bad_name, "path": "auth.py"}
+                        ]
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+                errors="surrogatepass",
+            )
+            try:
+                checks.size_review(
+                    diff_range="main...feat", repo=repo, service_map=bad_sm
+                )
+                check(f"reject unsafe component label ({desc})", False)
+            except checks.ChecksError:
+                check(f"reject unsafe component label ({desc})", True)
+
+        id_bad_sm = root / "bad_id_only.json"
+        id_bad_sm.write_text(
+            json.dumps({"components": [{"id": "evil\x9b31m", "path": "auth.py"}]}),
+            encoding="utf-8",
+        )
+        _expect_error(
+            "reject unsafe component id when name is omitted",
+            checks.size_review,
+            diff_range="main...feat",
+            repo=repo,
+            service_map=id_bad_sm,
+        )
+
+        # Also test auto-discovered servicemap with C1 CSI fails CLI cleanly (exit 1).
+        (repo / "servicemap.json").write_text(
+            json.dumps(
+                {
+                    "components": [
+                        {"id": "svc-bad", "name": "evil\x9b31m", "path": "auth.py"}
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        p_bad_label = _run_cli(
+            "review", "size", "--diff", "main...feat", "--repo", str(repo)
+        )
+        check(
+            "CLI size exits 1 with clean error on unsafe servicemap label",
+            p_bad_label.returncode == 1
+            and "ERROR:" in p_bad_label.stderr
+            and "\x9b" not in p_bad_label.stdout
+            and "\x9b" not in p_bad_label.stderr,
+        )
+        (repo / "servicemap.json").unlink()
+
+        # Finding 6: fallback bucket disambiguates component named 'other'.
+        other_sm = root / "other_sm.json"
+        other_sm.write_text(
+            json.dumps(
+                {
+                    "components": [
+                        {"id": "c-other", "name": "other", "path": "auth.py"},
+                        {"id": "c-unmap", "name": "unmapped", "path": "c1.py"},
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        other_res = checks.size_review(
+            diff_range="main...feat", repo=repo, service_map=other_sm
+        )
+        other_names = {p["name"] for p in other_res["partitions"]}
+        check(
+            "fallback bucket avoids merging into component named 'other' or 'unmapped'",
+            {"other", "unmapped", "unmapped-2"} <= other_names,
+        )
+
+
 def main() -> int:
     # Ensure no leftover environment overrides break deterministic cwd checks.
     os.environ.pop("GIT_DIR", None)
@@ -1248,6 +1471,7 @@ def main() -> int:
     test_size_diff_tiers_renames_binary_and_servicemap()
     test_size_pr_mocked_gh()
     test_cli_integration()
+    test_round1_review_regressions()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)
