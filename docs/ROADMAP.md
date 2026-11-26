@@ -1,15 +1,25 @@
 # vld8 roadmap: from 2.0 to the original pipeline
 
-**Status:** approved 2026-11-23; revised 2026-11-24 for the code-first conversion (`docs/plans/2026-11-24-code-first-engine.md`). Approving the revision counts as the design review, per `ENGINEERING.md`.
+**Status:** approved 2026-11-23; revised 2026-11-24 for the code-first conversion (`docs/plans/2026-11-24-code-first-engine.md`). Approving the revision counts as the design review, per `ENGINEERING.md`. Progress updated 2026-11-26.
 
 **Design:**
 - The restructure plan, `docs/plans/2026-11-23-restructure.md` (landed in PR #45), holds the reasoning, the alternatives and the risks.
 - The code-first engine design, `docs/plans/2026-11-24-code-first-engine.md`, reshapes releases 2.1–2.4.
 - This roadmap puts both in order and says what each release has to prove.
 
-**Where we are:**
-- vld8 2.0.0 shipped the rename, the generator fixes and the install fixes.
-- 2.0.1 fixed three review-guidance defects found by validation (#92–#94) and added `vld8 install --preview` (#81).
+**Where we are (2026-11-26):**
+- **Released:**
+  - vld8 2.0.0 shipped the rename, the generator fixes and the install fixes.
+  - 2.0.1 fixed three review-guidance defects found by validation (#92–#94) and added `vld8 install --preview` (#81).
+- **Ready to release:** 2.0.2 is on `staging`, with map schema 1.2 and the Python 3.14 floor. It waits on Cyrus's go-ahead.
+- **Built, not yet in use:** 2.1's verbs are on `staging`:
+  - the findings contract;
+  - `vld8 review prepare` and `vld8 review report`;
+  - trust and state;
+  - `vld8 checks --changed`.
+
+  No skill calls them yet. Next come the skills switch behind `--preview 2.1` (#129), the remaining precision items, and the gate work (the eval set and held-out test).
+- **Not started:** 2.2 and later. 2.2 waits on the replay (#125), which decides how much of its candidate machinery gets built.
 
 **The goal is the pipeline Scrutineer was meant to be:**
 
@@ -71,6 +81,18 @@ Every item below traces to one of these:
 
 **Done (2026-11-25):**
 - Python floor 3.14, with CI testing 3.14 and 3.15 (#142, for #124; D15). The required checks on `staging` and `main` are now `test (3.14)` and `test (3.15)`. It ships in 2.0.2, with the release-notes callout the version rules require.
+- **Map schema 1.2** (#143, for #123):
+  - `process`, `ipc` and `file` edges;
+  - `evidence[]` on edges and components;
+  - `vld8 map validate --check-evidence`, which recomputes each evidence hash offline and reports drifted, moved and missing evidence.
+
+  The crawl skill records evidence and keeps findings out of the map. It ships in 2.0.2.
+- **CI lint and pinned dependencies** (#148, for #46 and #48):
+  - ruff in CI;
+  - a hash-pinned `requirements/ci-constraints.txt` applied through `PIP_CONSTRAINT`, so isolated builds are covered too;
+  - Dependabot for that file, with a cooldown.
+
+  Seventeen older files are excluded from the format check until #149 formats them.
 
 **Open:**
 
@@ -81,12 +103,12 @@ Every item below traces to one of these:
 | Archive `scrutineer` on PyPI | Cyrus | Rename |
 | Update the GitHub repo description, which still describes Scrutineer | Cyrus | Rename |
 | Point vld8.ai at cyrus.is/building/vld8 | Cyrus | Plan D8 |
-| **Map schema 1.2** (#123): <br>• `process`, `ipc` and `file` edges, with what crosses each boundary; <br>• `evidence[]` on edges and components, with drift computed by `vld8 map validate`; <br>• the crawl writes observations as findings, never in the map's notes. <br>Needs no fact store. Ships in 2.0.2 | vld8 | Design §7 |
+| **Release 2.0.2:** schema 1.2 and the Python floor are on `staging`. The notes must name 2.0.1 as the last release for Python 3.10–3.13 | Cyrus | Release train |
 | **The replay** (#125), on consumer loops' recorded history (private):<br>• the candidate lister is frozen before the test changes are chosen, and no change that informed the design is eligible;<br>• three arms: the old prompt, today's thorough prompt, and that prompt plus vld8's code findings and candidates;<br>• win, partial, tie and loss outcomes are fixed before any run.<br>The result decides how much of 2.2's candidate machinery gets built | vld8 | Design §15 |
-| Add a ruff config and a lint step to CI | vld8 | STD |
-| Add a diff-coverage gate at 80% to CI | vld8 | STD |
-| Pin CI dependencies with a constraints file. There's no lockfile today | vld8 | STD |
-| Write `decisions/` records for: the MCP auditor built instead of the triage layer (April, written up after the fact); the rename (D7); dev-tooling positioning (D3) | vld8 | STD, CR-8 |
+| Add a diff-coverage gate at 80% to CI (#47) | vld8 | STD |
+| Write `decisions/` records for: the MCP auditor built instead of the triage layer (April, written up after the fact); the rename (D7); dev-tooling positioning (D3) (#49). Also the design's decisions D9–D16 (design §17) | vld8 | STD, CR-8 |
+| **Fixes to today's generated skills,** found by validation and review: <br>• detection (#95–#98, #100, #104); <br>• Mode 2 and Phase 0 (#101, #110, #111); <br>• install and setup (#102, #103); <br>• the preview flag (#112); <br>• the publish workflow's floor check (#99); <br>• servicemap docs (#145) | vld8 | Validation |
+| **Hardening filed during the 2.0.x work:** <br>• formatting the remaining files (#149); <br>• pinning `build` in the publish workflow and widening Dependabot (#150); <br>• MCP review file handling (#147, #151); <br>• generator hardening (#155); <br>• test isolation from the host's git config (#160) | vld8 | Reviews |
 
 ## 2.1: the verbs, and precision without a spec
 
@@ -106,18 +128,29 @@ Every item below traces to one of these:
 
 **What ships:** the three verbs, with 2.1's precision items placed where they belong (design §9). They sit behind the 2.1 preview flag (see *Release train*), and today's generated skills stay the default until the gate passes.
 
-| Item | Source |
-|---|---|
-| **The eval set and the held-out harness** (#83, #57). They come first, because every later gate is measured with them | Gate support |
-| **Findings contract v1** (#58): file, lines, lens, `checkId`, claim, evidence, severity, basis; plus `class` (rule, `sites[]`, `fix_site`, "closes N of N"), `source` (code, model, both), `proof`, `blocking`, `disposition`, and fingerprints per site and per class. Written alongside today's Markdown at first | CR-1, design §9 |
-| **Choose JSON key casing on purpose.** `ENGINEERING.md` says camelCase, but the MCP output and the service map use snake_case. Convert, or record the deviation | CR-1 |
-| **`vld8 review report`** (#126): <br>• checks the accounting (every candidate ruled on), the citations (file, line and quote exist) and the rubric form; <br>• sets the verdict from ISSUEs only (#51); the lens table cites findings only (#55); <br>• renders md, json and SARIF; exits 0 clean, 1 blocking, 2 incomplete or invalid | SP-2, SP-6, design §9 |
-| **`vld8 review prepare`** (#127): <br>• PR checkout in a temporary worktree, fork and bot detection, diff sizing (the #93 behaviour, moved into code); <br>• check selection at review time (#61); rules files (#52); optional intent sources (#56); <br>• modes 1–4; the context packet with a size budget | SP-3, SP-4, CR-4, SP-8, design §9 |
-| **Trust and state** (#128): <br>• config, check packs and commands come only from the trusted base ref or from outside the repo; <br>• state lives in the git common dir; <br>• `--evidence` counts only when it names the reviewed tree; <br>• `--prior` records a disposition for each earlier finding | Design §6, §10 |
-| **Evidence rule** (#50): ISSUE only with evidence of need. That means it breaks a written rule, a confirmed map rule or a stated requirement; departs from a contract two named sites follow; has a traced, reachable trigger; or breaks a security invariant. Otherwise it's at most a CONCERN, which must name a concrete scenario. One vocabulary for the code review; the security lens keeps CRITICAL–LOW, mapped by the contract | SP-2, Cyrus |
-| **Ambient-nondeterminism check** (#54) in the lens prompt | SP-5 |
-| **The skills switch** to prepare → lens prompt → report behind `--preview 2.1` (#129), with the snapshot harness (#84) | Release train, gate support |
-| **Storage** (#59): run outputs (`prepare.json`, `prompt.md`, findings JSON) go under `<git-common-dir>/vld8/runs/<tree id>/`, never in the worktree, which supersedes plan §4's `.vld8/findings.json`. `triage.json`, which holds people's decisions, stays checked in | Cyrus, 2026-11-23; design §6 |
+**Built (2026-11-25 and 26), on `staging`,** as CLI helpers no skill calls yet:
+- findings contract v1 with fingerprints (#144);
+- `vld8 review report` (#152);
+- `vld8 checks --changed` and `vld8 review size` (#153);
+- trust and state (#157);
+- the context packet (#163);
+- `vld8 review prepare` with `prepare.json`, `prompt.md` and `--tier fast` (#166);
+- golden-output snapshots of the generated skills (#156).
+
+`prepare` reads a PR's head and base as git objects with no checkout, and fails closed if the base can't be fetched. It pins every ref to a commit id and keeps all run state outside the worktree. Its review follow-ups are tracked under 2.1.
+
+| Item | State | Source |
+|---|---|---|
+| **The eval set and the held-out harness** (#83, #57). They come first, because every later gate is measured with them | Open. Needs private data, so the Claude session does it with Cyrus | Gate support |
+| **Findings contract v1** (#58): file, lines, lens, `checkId`, claim, evidence, severity, basis; plus `class` (rule, `sites[]`, `fix_site`, "closes N of N"), `source` (code, model, both), `proof`, `blocking`, `disposition`, and fingerprints per site and per class. Written alongside today's Markdown at first | **Built** (#144). Follow-ups: control characters (#154); fingerprints a model can compute (#169) | CR-1, design §9 |
+| **Choose JSON key casing on purpose.** `ENGINEERING.md` says camelCase, but the MCP output and the service map use snake_case. Convert, or record the deviation | **Decided** (#144): new contracts use camelCase; the service map and MCP output stay snake_case, recorded as deviations | CR-1 |
+| **`vld8 review report`** (#126): <br>• checks the accounting (every candidate ruled on), the citations (file, line and quote exist) and the rubric form; <br>• sets the verdict from ISSUEs only (#51); the lens table cites findings only (#55); <br>• renders md, json and SARIF; exits 0 clean, 1 blocking, 2 incomplete or invalid | **Built** (#152). Follow-ups: checking citations against the reviewed tree's objects (#170); symlink and size hardening (#161, #164, #165) | SP-2, SP-6, design §9 |
+| **`vld8 review prepare`** (#127): <br>• the PR head and base read as git objects, fork and bot detection, diff sizing (the #93 behaviour, moved into code); <br>• check selection at review time (#61); rules files (#52); optional intent sources (#56); <br>• modes 1–4; the context packet with a size budget | **Built** (#153, #163, #166). Follow-ups: #162, #168, #169, #171 | SP-3, SP-4, CR-4, SP-8, design §9 |
+| **Trust and state** (#128): <br>• config, check packs and commands come only from the trusted base ref or from outside the repo; <br>• state lives in the git common dir; <br>• `--evidence` counts only when it names the reviewed tree; <br>• `--prior` records a disposition for each earlier finding | **Built** (#152 for `--prior`, #157, #166). Follow-ups: #167, #172 | Design §6, §10 |
+| **Evidence rule** (#50): ISSUE only with evidence of need. That means it breaks a written rule, a confirmed map rule or a stated requirement; departs from a contract two named sites follow; has a traced, reachable trigger; or breaks a security invariant. Otherwise it's at most a CONCERN, which must name a concrete scenario. One vocabulary for the code review; the security lens keeps CRITICAL–LOW, mapped by the contract | **Partly built:** the contract carries `basis`, and `report` downgrades an ISSUE without one. The rule's wording in the lens prompt is open | SP-2, Cyrus |
+| **Ambient-nondeterminism check** (#54) in the lens prompt | Open | SP-5 |
+| **The skills switch** to prepare → lens prompt → report behind `--preview 2.1` (#129), with the snapshot harness (#84) | Open; unblocked now the verbs exist. Snapshots of the generated skills are built (#156); snapshots of `prepare` and `report` are #158 | Release train, gate support |
+| **Storage** (#59): run outputs (`prepare.json`, `prompt.md`, findings JSON) go under `<git-common-dir>/vld8/runs/<tree id>/`, never in the worktree, which supersedes plan §4's `.vld8/findings.json`. `triage.json`, which holds people's decisions, stays checked in | **Partly built:** run outputs are stored there (#157, #166). The checked-in `triage.json` is open | Cyrus, 2026-11-23; design §6 |
 
 **Gate:** the held-out test, pre-registered before any run.
 - **Calibrate first** (#82). Re-score the study's existing findings under the evidence-of-need definition. That sets the expected baseline and the precision threshold. The old +20-point bar was calibrated on the dropped Spec-questions mechanism and no longer applies.
@@ -188,7 +221,7 @@ The service map becomes the system's known terrain, and the reviews read it. Des
 | **Business rules as implemented in the map:** <br>• authorization (who can do what to which resource), including capability grants such as sudoers rules, tool allow-lists and command allow-lists; <br>• tenancy; trust translation points; identifier properties; data classifications. <br>Each comes with evidence and a confidence. Accepted risks are *not* in the map; they're triage decisions | Cyrus, CTX, design §7 |
 | **`vld8 map rules`:** reports the rules as implemented and asks yes / no, bug / not sure for each. Yes is confirmed terrain in the checked-in map. A bug is a finding, stored like findings and never in the map. Not sure stays a hint | Cyrus |
 | **Rule-change detection in reviews:** compare the rules as implemented before and after the diff. A change to a confirmed rule is an ISSUE; a change to an unconfirmed rule is a question | Cyrus |
-| **`crawled_commit`,** plus a CI refresh that opens a PR. Drift detection itself lands with schema 1.2 (2.0.x) | CTX |
+| **`crawled_commit`,** plus a CI refresh that opens a PR. Drift detection itself landed with schema 1.2 (#143) | CTX |
 | **Terrain slice in the context packet:** Modes 1 and 2 read only the touched components' terrain; Modes 3 and 4 keep the full map | SP-10 |
 | **Intent capture,** opt-in: a Claude Code hook that writes the approved plan into the PR description; an experimental reader for local session prompts. **Leak risk:** plans and prompts can name private projects, and a PR description is public in a public repo. The hook shows the text before writing, redacts secrets, and is off by default for public repos | Cyrus |
 | **Intra-component contracts layer:** the map records contracts between modules inside one deployable, which is where the study's cross-module bugs lived | SP (map granularity) |
@@ -244,6 +277,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
   - `vld8 cvm`, which finds agent steps that should be code (#119);
   - `vld8 smartci`, which measures and restructures CI (#121).
 - **The test lens:** a third lens for test quality (design D13).
+- **The review in CI** (#146): a review a pipeline can call. It needs a design discussion first: the runner, credentials, fork-PR trust, output, and carrying `--prior` across pushes.
 
 ## Release train
 
@@ -252,7 +286,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 - **Splitting:** large items (the validator, the ladders, new blocks) get split into weekly slices when their turn comes.
 - So the backlog's item count sets a pace, not a schedule. Fixes found by validation join the 2.0.x milestone as they're filed, so the count moves.
 
-**Who runs it:** Cyrus starts each change, in an interactive session. No unattended loop runs it (`ENGINEERING.md`: `autonomy: interactive-only`).
+**Who runs it:** Cyrus starts each working session, interactively. Coding agents build the queued changes and merge each one into `staging` once a fresh-context review of its head is clean, escalating to Cyrus when reviews don't converge. Releases to `main` stay with Cyrus. No unattended loop runs it (`ENGINEERING.md`: `autonomy: interactive-only`).
 
 **The backlog:** every vld8-owned roadmap item is an issue under its release milestone, along with the eval and gate-support work. The milestones were swept to match the 2026-11-24 revision: issues moved to their new releases, shipped items closed, and the new items got issues (#123–#141).
 
@@ -280,7 +314,7 @@ These are in the plan's future-features list. They wait until validation (2.3) i
 
 | # | Decision | Needed before |
 |---|---|---|
-| D1 | One engine with two lenses, or one merged review | Decided when the code-first design is approved (design §17) |
+| D1 | One engine with two lenses, or one merged review | **Decided** 2026-11-25 (#90): one engine with two lenses, adopted with the design (#122) |
 | D2 | Positioning: our own engine, or an expertise pack for other engines | 2.8 (MCP split), and before publishing the contract |
 | D4 | Held-out test before a milestone's default changes (items ship earlier behind a flag) | 2.1's default flip |
 | D5 | MCP review stays in the package until it becomes its own tool | 2.8 |
