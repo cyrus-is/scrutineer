@@ -325,7 +325,7 @@ def test_pr_mode_trust_and_evidence() -> None:
 
             return _fake
 
-        # Trusted PR mode checks out worktree, cleans up, reads base rules/config.
+        # Trusted PR mode reads the PR as git objects and base rules/config.
         with mock.patch(
             "vld8.checks._run_command",
             side_effect=_make_gh_mock(
@@ -964,7 +964,8 @@ def test_scope_section_partitions_and_output_contract() -> None:
         repo = root / "repo"
         state_dir = root / "state"
         _init_git_repo(repo)
-        base_oid = _commit_files(repo, {"README.md": "x\n"})
+        base_oid = _commit_files(repo, {"README.md": "x\n", "old/gone.py": "G = 1\n"})
+        _git(repo, "rm", "-q", "old/gone.py")
         head_oid = _commit_files(
             repo,
             {
@@ -990,13 +991,21 @@ def test_scope_section_partitions_and_output_contract() -> None:
         )
         check(
             "prepare.json lists scoped paths and each partition's slice",
-            sorted(scoped) == ["api/handlers/a.py", "api/handlers/b.py", "web/ui/c.ts"]
+            sorted(scoped)
+            == ["api/handlers/a.py", "api/handlers/b.py", "old/gone.py", "web/ui/c.ts"]
             and rebuilt == sorted(scoped)
             and all(part["pathCount"] == part["files"] for part in parts)
             and cov["diffRange"] == f"{base_oid}...{head_oid}",
             json.dumps(cov["sizing"]),
         )
         prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
+        check(
+            "deleted files are recorded and marked in the prompt",
+            cov["deletedPaths"] == ["old/gone.py"]
+            and cov["deletedPathsTotal"] == 1
+            and "- `old/gone.py` *(deleted)*" in prompt,
+            json.dumps(cov.get("deletedPaths")),
+        )
         check(
             "prompt gives the diff command and lists files by partition",
             f"git diff {base_oid}...{head_oid} --" in prompt
@@ -1021,7 +1030,7 @@ def test_scope_section_partitions_and_output_contract() -> None:
         capped_prompt = (capped.prompt_path or Path()).read_text(encoding="utf-8")
         check(
             "prompt caps the file list and points at prepare.json",
-            "(+1 more in `prepare.json` at `coverage.scopedPaths`)" in capped_prompt,
+            "(+2 more in `prepare.json` at `coverage.scopedPaths`)" in capped_prompt,
         )
         deep = prepare.prepare_review(
             repo=repo, deep=True, state_dir=state_dir, run_id="scope-deep"
@@ -1031,7 +1040,12 @@ def test_scope_section_partitions_and_output_contract() -> None:
             "deep mode has no diff command and reads files at HEAD",
             "commit(s)" not in deep_prompt
             and deep.prepare_doc["coverage"]["diffRange"] is None
-            and "`git show HEAD:<path>`" in deep_prompt
+            and f"git show {deep.prepare_doc['coverage']['targetRef']}:<path>"
+            in deep_prompt
+            and "HEAD"
+            not in deep_prompt.split("## What to Review")[1].split(
+                "## Repository Rules Files"
+            )[0]
             and "git diff"
             not in deep_prompt.split("## What to Review")[1].split(
                 "### Files in Scope"
@@ -1411,22 +1425,72 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
             needle="merge-base failed",
         )
 
+        # A tag named like the remote-tracking ref must never stand in for it.
+        _git(clone_repo, "tag", "origin/main", pr_oid)
+
         def no_base_fetch(argv: list[str], **kwargs: Any) -> bytes:
             if "--refmap=" in argv:
                 raise checks.ChecksError("offline")
             return fake(argv, **kwargs)
 
         with mock.patch("vld8.checks._run_command", side_effect=no_base_fetch):
-            offline = prepare.prepare_review(
-                repo=clone_repo, pr_number=7, state_dir=state_dir, run_id="pr-off"
+            _expect_error(
+                "an unfetchable base fails closed instead of guessing locally",
+                prepare.prepare_review,
+                repo=clone_repo,
+                pr_number=7,
+                state_dir=state_dir,
+                run_id="pr-off",
+                needle="cannot fetch the PR base branch",
             )
+        with mock.patch("vld8.checks._run_command", side_effect=fake):
+            tagged = prepare.prepare_review(
+                repo=clone_repo, pr_number=7, state_dir=state_dir, run_id="pr-tag"
+            )
+        tcov = tagged.prepare_doc["coverage"]
         check(
-            "an unfetchable base falls back to the local one with a warning",
-            any(
-                "could not fetch the PR base branch" in w
-                for w in offline.prepare_doc["coverage"]["warnings"]
+            "a tag named origin/main changes neither the base nor the warning",
+            tcov["baseRef"] != pr_oid
+            and tcov["scopedPaths"] == [".gitattributes", "mine.py"]
+            and any(f"({stale_base[:12]}) differs" in w for w in tcov["warnings"]),
+            json.dumps(tcov["warnings"]),
+        )
+        env = trust._scrubbed_git_env()
+        with mock.patch(
+            "vld8.trust._resolve_gh_repo_url",
+            side_effect=trust.TrustError("gh unavailable"),
+        ):
+            _expect_error(
+                "a gh-url source whose URL can't be resolved fails closed",
+                prepare._fetch_pr_base,
+                clone_repo,
+                "gh-url",
+                "main",
+                env=env,
+                warnings=[],
+                needle="cannot resolve the PR repository's URL",
             )
-            and "others.py" in offline.prepare_doc["coverage"]["scopedPaths"],
+        _expect_error(
+            "no usable remote fails closed",
+            prepare._fetch_pr_base,
+            clone_repo,
+            None,
+            "main",
+            env=env,
+            warnings=[],
+            needle="no usable remote",
+        )
+        _git(clone_repo, "remote", "add", "upstream", str(upstream_bare))
+        _git(clone_repo, "update-ref", "refs/remotes/upstream/main", stale_base)
+        up_warn: list[str] = []
+        up_base = prepare._fetch_pr_base(
+            clone_repo, "upstream", "main", env=env, warnings=up_warn
+        )
+        check(
+            "an upstream-served PR compares against upstream's tracking ref",
+            up_base == _git(work_repo, "rev-parse", "main")
+            and any("local upstream/main" in w for w in up_warn),
+            json.dumps(up_warn),
         )
         prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
         check(

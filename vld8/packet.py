@@ -241,7 +241,6 @@ def _lookup_git_tree_blobs(
                 str(repo_root),
                 "ls-tree",
                 "--full-tree",
-                "-r",
                 "-z",
                 "-l",
                 tree_ref,

@@ -34,6 +34,10 @@ MAX_RISK_ITEMS = 64
 MAX_RISK_SAMPLE_PATHS = 10
 MAX_PROMPT_PATHS = 1000
 MAX_PROMPT_CODE_FINDINGS = 100
+# Deleted paths are a subset of scopedPaths listed in the same order; the cap
+# keeps prepare.json under the report validator's 10,000-node limit, and it
+# covers every deletion among the MAX_PROMPT_PATHS files the prompt lists.
+MAX_DELETED_PATHS = 2000
 
 # Rubric order for the code lens; tests check it covers findings.CODE_CATEGORIES.
 RUBRIC_CATEGORIES: tuple[str, ...] = (
@@ -211,116 +215,107 @@ def _fetch_pr_base(
 ) -> str:
     """Return the commit of the PR's base branch, fetched from the PR's remote.
 
-    The local ``origin/<base>`` can be behind, and diffing against a stale
-    base counts commits the PR merged or rebased onto as part of the PR. The
-    branch is fetched into a private, per-run ref that is deleted afterwards:
-    ``FETCH_HEAD`` is shared, so a concurrent fetch could otherwise swap in
-    another commit, such as the PR head, as the trusted base.
+    Fails closed: rules and config are read from this commit, so a base that
+    can't be fetched is an error, never a guess from local names (a tag named
+    ``origin/main`` would win git's lookup). The branch is fetched into a
+    private, per-run ref that is deleted afterwards, because ``FETCH_HEAD`` is
+    shared and a concurrent fetch could swap in another commit.
     """
-    remote: str | None = (
-        fetch_source if fetch_source in ("origin", "upstream") else None
-    )
-    fetch_problem = "no remote served the PR head"
-    if fetch_source == "gh-url":
+    if fetch_source in ("origin", "upstream"):
+        remote: str | None = fetch_source
+    elif fetch_source == "gh-url":
         try:
             remote = trust._resolve_gh_repo_url(repo_root)
-        except trust.TrustError:
-            remote = None
-            fetch_problem = "could not resolve the PR repository's URL"
-    local_candidates = [f"origin/{base_name}", base_name]
-    if fetch_source == "upstream":
-        local_candidates.insert(0, f"upstream/{base_name}")
-    local: str | None = None
-    for cand in local_candidates:
+        except trust.TrustError as exc:
+            raise PrepareError(
+                f"cannot fetch the PR base branch: cannot resolve the PR "
+                f"repository's URL: {exc}"
+            ) from exc
+    else:
+        remote = None
+    if remote is None or remote.startswith("-"):
+        raise PrepareError("cannot fetch the PR base branch: no usable remote")
+
+    tmp_ref = f"refs/vld8/tmp/base-{secrets.token_hex(8)}"
+    try:
+        checks._run_command(
+            [
+                "git",
+                "-C",
+                str(repo_root),
+                "fetch",
+                "--no-tags",
+                "--no-write-fetch-head",
+                "--refmap=",
+                remote,
+                f"+refs/heads/{base_name}:{tmp_ref}",
+            ],
+            cwd=repo_root,
+            env=env,
+        )
+        fetched = _resolve_commit(repo_root, tmp_ref, env=env, label="PR base")
+    except checks.ChecksError as exc:
+        raise PrepareError(
+            f"cannot fetch the PR base branch {checks.safe_error_text(base_name)}: "
+            f"{exc}"
+        ) from exc
+    finally:
         try:
-            out = checks._run_command(
-                [
-                    "git",
-                    "-C",
-                    str(repo_root),
-                    "rev-parse",
-                    "--verify",
-                    "--quiet",
-                    f"{cand}^{{commit}}",
-                ],
+            checks._run_command(
+                ["git", "-C", str(repo_root), "update-ref", "-d", tmp_ref],
                 cwd=repo_root,
                 env=env,
             )
         except checks.ChecksError:
-            continue
-        oid = out.decode("utf-8", "replace").strip()
-        if checks._GIT_OID_RE.match(oid):
-            local = oid
-            break
+            pass
 
-    fetched: str | None = None
-    if remote is not None and not remote.startswith("-"):
-        tmp_ref = f"refs/vld8/tmp/base-{secrets.token_hex(8)}"
+    if fetch_source in ("origin", "upstream"):
+        # Fully qualified, so a tag can't stand in for the remote-tracking ref.
         try:
-            checks._run_command(
-                [
-                    "git",
-                    "-C",
-                    str(repo_root),
-                    "fetch",
-                    "--no-tags",
-                    "--no-write-fetch-head",
-                    "--refmap=",
-                    remote,
-                    f"+refs/heads/{base_name}:{tmp_ref}",
-                ],
-                cwd=repo_root,
+            local = _resolve_commit(
+                repo_root,
+                f"refs/remotes/{fetch_source}/{base_name}",
                 env=env,
+                label="local base",
             )
-            out = checks._run_command(
-                [
-                    "git",
-                    "-C",
-                    str(repo_root),
-                    "rev-parse",
-                    "--verify",
-                    "--quiet",
-                    f"{tmp_ref}^{{commit}}",
-                ],
-                cwd=repo_root,
-                env=env,
-            )
-            oid = out.decode("utf-8", "replace").strip()
-            if checks._GIT_OID_RE.match(oid):
-                fetched = oid
-            else:
-                fetch_problem = "unexpected commit id for the fetched base"
-        except checks.ChecksError as exc:
-            fetch_problem = str(exc)
-        finally:
-            try:
-                checks._run_command(
-                    ["git", "-C", str(repo_root), "update-ref", "-d", tmp_ref],
-                    cwd=repo_root,
-                    env=env,
-                )
-            except checks.ChecksError:
-                pass
-
-    if fetched is not None:
+        except PrepareError:
+            local = None
         if local is not None and local != fetched:
             packet._append_warning(
                 warnings,
-                f"local base {base_name} ({local[:12]}) differs from the remote's "
-                f"({fetched[:12]}); diffed against the remote's",
+                f"local {fetch_source}/{base_name} ({local[:12]}) differs from the "
+                f"remote's ({fetched[:12]}); diffed against the remote's",
             )
-        return fetched
-    if local is None:
-        raise PrepareError(
-            f"cannot resolve the PR base branch {checks.safe_error_text(base_name)}: "
-            f"{checks.safe_error_text(fetch_problem)}"
+    return fetched
+
+
+def _deleted_paths(
+    repo_root: Path, diff_range: str, *, env: dict[str, str]
+) -> set[str]:
+    """Paths the diff deletes, so the prompt doesn't send runners to read them."""
+    try:
+        raw = checks._run_command(
+            [
+                "git",
+                "-C",
+                str(repo_root),
+                "diff",
+                "--name-only",
+                "-z",
+                "--diff-filter=D",
+                diff_range,
+                "--",
+            ],
+            cwd=repo_root,
+            env=env,
         )
-    packet._append_warning(
-        warnings,
-        f"could not fetch the PR base branch ({fetch_problem}); diffed against "
-        f"the local {base_name}, which may be behind",
-    )
-    return local
+        return {
+            checks.validate_repo_relative_path(tok.decode("utf-8", "surrogateescape"))
+            for tok in raw.split(b"\x00")
+            if tok
+        }
+    except checks.ChecksError as exc:
+        raise PrepareError(str(exc)) from exc
 
 
 def _has_merge_base(
@@ -919,14 +914,24 @@ def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
                 ]
             )
     else:
+        target = report._md_code_span(cov["targetRef"])
         lines.append(
-            "Review the files below as of `HEAD`, the reviewed tree. Read them with "
-            "`git show HEAD:<path>`, so uncommitted edits don't change what you "
-            "review."
+            f"Review the files below as of commit {target}, the reviewed tree. Read "
+            f"them with `git show {cov['targetRef']}:<path>`, so later commits and "
+            "uncommitted edits don't change what you review."
         )
 
     scoped = cov.get("scopedPaths", [])
+    deleted = set(cov.get("deletedPaths", []))
     lines.extend(["", "### Files in Scope", ""])
+    if deleted:
+        lines.extend(
+            [
+                "Files marked *(deleted)* don't exist in the reviewed tree; read "
+                "them at the base if you need them.",
+                "",
+            ]
+        )
     if not scoped:
         lines.append("No files are in scope.")
         return lines
@@ -945,7 +950,8 @@ def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
         for rel in scoped[start : start + count]:
             if listed >= MAX_PROMPT_PATHS:
                 break
-            lines.append(f"- {report._md_code_span(rel)}")
+            gone = " *(deleted)*" if rel in deleted else ""
+            lines.append(f"- {report._md_code_span(rel)}{gone}")
             listed += 1
         lines.append("")
     if listed < len(scoped):
@@ -1036,8 +1042,8 @@ def _render_output_contract(lens: str, tree_id: str) -> list[str]:
         "inclusive;",
         "  - `quote`: the text of those lines, copied verbatim from the reviewed tree;",
         f'  - `lens`: `"{lens}"`; `checkId`: an applicable check ID above, or a '
-        "short identifier of your own (letters, digits and `._:/-`, up to 128 "
-        "characters);",
+        "short identifier of your own: up to 128 letters, digits and `._:/-`, "
+        "starting with a letter or digit;",
         "  - `claim` and `evidence`: what is wrong, and how you know;",
         f"  - `severity`: one of {severities};",
         f"  - `basis`: one of {bases}. {basis_rule}",
@@ -1589,6 +1595,12 @@ def _compute_run_outputs(
             part["pathCount"] = len(members)
             partitions.append(part)
         ordered_paths.extend(members)
+    deleted_set = (
+        _deleted_paths(resolved_repo, diff_range_used, env=env)
+        if diff_range_used is not None
+        else set()
+    )
+    deleted_list = [rel for rel in ordered_paths if rel in deleted_set]
 
     sizing = {
         "filesTotal": total_files,
@@ -1644,6 +1656,8 @@ def _compute_run_outputs(
         "diffRange": diff_range_used,
         "target": checks.safe_error_text(target_label, max_len=256),
         "scopedPaths": ordered_paths,
+        "deletedPaths": deleted_list[:MAX_DELETED_PATHS],
+        "deletedPathsTotal": len(deleted_list),
         "skippedVendoredFiles": vendored_skipped,
         "config": config_prov,
         "serviceMap": service_map_prov,
@@ -1885,20 +1899,8 @@ def prepare_review(
             else base_commit
         )
         target_label = diff_range
-    elif component is not None:
-        mode = "component"
-        pr_meta = None
-        effective_trusted = not untrusted
-        trusted_packet_arg = effective_trusted
-        target_ref = _resolve_commit(resolved_repo, "HEAD", env=env, label="HEAD")
-        clean_base = (
-            _resolve_commit(resolved_repo, base_ref, env=env)
-            if base_ref is not None
-            else (target_ref if effective_trusted else None)
-        )
-        target_label = _validate_component_name(component)
     else:
-        mode = "deep"
+        mode = "component" if component is not None else "deep"
         pr_meta = None
         effective_trusted = not untrusted
         trusted_packet_arg = effective_trusted
@@ -1908,7 +1910,9 @@ def prepare_review(
             if base_ref is not None
             else (target_ref if effective_trusted else None)
         )
-        target_label = "--deep"
+        target_label = (
+            _validate_component_name(component) if component is not None else "--deep"
+        )
 
     cfg, cfg_prov = _load_trusted_prepare_config(
         resolved_repo,
