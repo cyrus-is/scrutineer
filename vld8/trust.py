@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from . import checks, findings
+from . import checks, findings, report
 
 SCHEMA_VERSION = "1.0"
 
@@ -33,10 +33,18 @@ MAX_EVIDENCE_ITEMS = 10_000
 MAX_SARIF_RUNS = 32
 MAX_REMOTE_URL_LENGTH = 2048
 
-_GIT_OID_RE = re.compile(r"^[0-9a-f]{40,64}\Z", re.ASCII)
-_SAFE_RUN_ID_RE = re.compile(r"^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z", re.ASCII)
 _SSH_SCP_URL_RE = re.compile(
     r"^git@[A-Za-z0-9][A-Za-z0-9._-]*:[A-Za-z0-9._/@-]+\Z", re.ASCII
+)
+_GIT_ENV_OVERRIDES = frozenset(
+    {
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_COMMON_DIR",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    }
 )
 
 _EVIDENCE_DOC_KEYS = frozenset(
@@ -97,6 +105,11 @@ class WorktreeHandle:
     reason: str | None = None
 
 
+def _scrubbed_git_env() -> dict[str, str]:
+    """Return process env without git repo/worktree override variables."""
+    return {k: v for k, v in os.environ.items() if k not in _GIT_ENV_OVERRIDES}
+
+
 def _run_git_or_gh(
     argv: list[str],
     *,
@@ -104,12 +117,14 @@ def _run_git_or_gh(
     timeout: float = checks.MAX_COMMAND_TIMEOUT_S,
     max_stdout_bytes: int = checks.MAX_COMMAND_STDOUT_BYTES,
 ) -> bytes:
+    env = _scrubbed_git_env() if argv and argv[0] == "git" else None
     try:
         return checks._run_command(
             argv,
             cwd=cwd,
             timeout=timeout,
             max_stdout_bytes=max_stdout_bytes,
+            env=env,
         )
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
@@ -136,7 +151,7 @@ def _validate_tree_id_value(tree_id: Any) -> str:
 
 
 def _validate_run_id_value(run_id: Any) -> str:
-    if not isinstance(run_id, str) or not _SAFE_RUN_ID_RE.match(run_id):
+    if not isinstance(run_id, str) or not findings._TREE_ID_RE.match(run_id):
         raise TrustError(
             f"runId: must be a safe single-segment identifier "
             f"(got {checks.safe_error_text(run_id)})"
@@ -162,16 +177,21 @@ def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> 
     _reject_symlink(root, label=label)
     if root.exists() and not root.is_dir():
         raise TrustError(f"{label} is not a directory")
-    root.mkdir(parents=True, exist_ok=True)
-    cur = root
-    for segment in parts:
-        cur = cur / segment
-        _reject_symlink(cur, label=f"{label}/{segment}")
-        if cur.exists() and not cur.is_dir():
-            raise TrustError(f"{label}/{segment} is not a directory")
-        cur.mkdir(exist_ok=True)
-    resolved_root = root.resolve()
-    resolved_cur = cur.resolve()
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        cur = root
+        for segment in parts:
+            cur = cur / segment
+            _reject_symlink(cur, label=f"{label}/{segment}")
+            if cur.exists() and not cur.is_dir():
+                raise TrustError(f"{label}/{segment} is not a directory")
+            cur.mkdir(exist_ok=True)
+        resolved_root = root.resolve()
+        resolved_cur = cur.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise TrustError(
+            f"cannot prepare {label} directory: {checks.safe_error_text(exc)}"
+        ) from exc
     if not resolved_cur.is_relative_to(resolved_root):
         raise TrustError(f"{label} escapes base directory")
     return resolved_cur
@@ -265,7 +285,7 @@ def atomic_write_json(out_path: Path, data: Any) -> None:
             )
             + "\n"
         )
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, RecursionError) as exc:
         raise TrustError(
             f"cannot serialize JSON output: {checks.safe_error_text(exc)}"
         ) from exc
@@ -323,11 +343,16 @@ def prepare_run_dir(
     run_id: str | None = None,
 ) -> Path:
     """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely."""
+    raw_state = os.fspath(state_dir) if isinstance(state_dir, Path) else state_dir
+    if not isinstance(raw_state, str) or not raw_state.strip():
+        raise TrustError("state-dir must be a non-empty path")
+    if findings._has_control_char(raw_state) or findings._has_surrogate(raw_state):
+        raise TrustError("state-dir contains invalid control characters or surrogates")
     clean_tree_id = _validate_tree_id_value(tree_id)
     clean_run_id = (
         secrets.token_hex(8) if run_id is None else _validate_run_id_value(run_id)
     )
-    base = Path(state_dir)
+    base = Path(raw_state)
     return _ensure_safe_dir_tree(
         base, ("runs", clean_tree_id, clean_run_id), label="state-dir"
     )
@@ -352,7 +377,7 @@ def compute_tree_id(repo_root: str | Path, ref: str = "HEAD") -> str:
         cwd=resolved_repo,
     )
     tree_oid = out.decode("utf-8", errors="replace").strip()
-    if not _GIT_OID_RE.match(tree_oid):
+    if not checks._GIT_OID_RE.match(tree_oid):
         raise TrustError(f"unexpected git tree OID: {checks.safe_error_text(tree_oid)}")
     return tree_oid
 
@@ -443,10 +468,15 @@ def fetch_pr_metadata(
     title = data["title"]
     body = data["body"]
     url = data["url"]
-    if not isinstance(title, str) or "\x00" in title or findings._has_surrogate(title):
+    if (
+        not isinstance(title, str)
+        or findings._has_control_char(title)
+        or findings._has_surrogate(title)
+    ):
         raise TrustError("gh pr view title is invalid")
     if not isinstance(body, str) or "\x00" in body or findings._has_surrogate(body):
         raise TrustError("gh pr view body is invalid")
+    body = report._sanitize_text(body, allow_newlines=True)
     if (
         not isinstance(url, str)
         or not url.startswith("https://")
@@ -470,7 +500,7 @@ def fetch_pr_metadata(
         raise TrustError("gh pr view url must be a safe https:// URL")
 
     head_oid = data["headRefOid"]
-    if not isinstance(head_oid, str) or not _GIT_OID_RE.match(head_oid):
+    if not isinstance(head_oid, str) or not checks._GIT_OID_RE.match(head_oid):
         raise TrustError("gh pr view headRefOid must be a 40-64 char hex OID")
 
     head_ref = _validate_single_git_ref(data["headRefName"], label="headRefName")
@@ -667,7 +697,7 @@ def checkout_pr_worktree(
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
 
-    if not _GIT_OID_RE.match(meta.head_ref_oid):
+    if not checks._GIT_OID_RE.match(meta.head_ref_oid):
         raise TrustError("PRMetadata head_ref_oid is invalid")
 
     fetched, source, fetch_err = _fetch_pr_head(
@@ -692,12 +722,16 @@ def checkout_pr_worktree(
     added = False
 
     try:
-        subprocess.run(
-            ["git", "-C", str(resolved_repo), "worktree", "prune"],
-            capture_output=True,
-            check=False,
-            timeout=checks.MAX_COMMAND_TIMEOUT_S,
-        )
+        try:
+            subprocess.run(
+                ["git", "-C", str(resolved_repo), "worktree", "prune"],
+                env=_scrubbed_git_env(),
+                capture_output=True,
+                check=False,
+                timeout=checks.MAX_COMMAND_TIMEOUT_S,
+            )
+        except OSError, subprocess.SubprocessError:
+            pass
         try:
             _run_git_or_gh(
                 [
@@ -760,27 +794,111 @@ def checkout_pr_worktree(
         )
     finally:
         if added:
+            try:
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(resolved_repo),
+                        "worktree",
+                        "remove",
+                        "--force",
+                        str(wt_dir),
+                    ],
+                    env=_scrubbed_git_env(),
+                    capture_output=True,
+                    check=False,
+                    timeout=checks.MAX_COMMAND_TIMEOUT_S,
+                )
+            except OSError, subprocess.SubprocessError:
+                pass
+        shutil.rmtree(tmp_root, ignore_errors=True)
+        try:
             subprocess.run(
-                [
-                    "git",
-                    "-C",
-                    str(resolved_repo),
-                    "worktree",
-                    "remove",
-                    "--force",
-                    str(wt_dir),
-                ],
+                ["git", "-C", str(resolved_repo), "worktree", "prune"],
+                env=_scrubbed_git_env(),
                 capture_output=True,
                 check=False,
                 timeout=checks.MAX_COMMAND_TIMEOUT_S,
             )
-        shutil.rmtree(tmp_root, ignore_errors=True)
-        subprocess.run(
-            ["git", "-C", str(resolved_repo), "worktree", "prune"],
-            capture_output=True,
-            check=False,
-            timeout=checks.MAX_COMMAND_TIMEOUT_S,
+        except OSError, subprocess.SubprocessError:
+            pass
+
+
+def _parse_toml_bytes(raw: bytes, *, source_label: str) -> dict[str, Any]:
+    try:
+        return tomllib.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError, RecursionError) as exc:
+        raise TrustError(
+            f"invalid TOML in {source_label}: {checks.safe_error_text(exc)}"
+        ) from exc
+
+
+def load_trusted_file(
+    repo_root: str | Path,
+    *,
+    base_ref: str | None = None,
+    external_path: str | Path | None = None,
+    rel_path: str | None = None,
+    max_bytes: int = MAX_CONFIG_BYTES,
+    label: str = "trusted file",
+) -> tuple[bytes | None, dict[str, Any]]:
+    """Read raw config, pack, query, or command spec from base_ref or external_path."""
+    if (base_ref is None) == (external_path is None):
+        raise TrustError("exactly one of base_ref or external_path must be specified")
+    try:
+        resolved_repo, _ = checks.resolve_repo_root(repo_root)
+    except checks.ChecksError as exc:
+        raise TrustError(str(exc)) from exc
+
+    if external_path is not None:
+        ext_path, _ = _validate_external_path(
+            external_path,
+            resolved_repo,
+            repo_root,
+            label=label,
         )
+        try:
+            raw = checks._read_explicit_regular_file(
+                ext_path, max_bytes=max_bytes, label=label
+            )
+        except checks.ChecksError as exc:
+            raise TrustError(str(exc)) from exc
+        return raw, {
+            "source": "external",
+            "ref": None,
+            "path": checks.safe_error_text(ext_path.name or label),
+        }
+
+    if rel_path is None:
+        raise TrustError(f"rel_path is required when reading {label} from base_ref")
+    try:
+        clean_rel = checks.validate_repo_relative_path(rel_path)
+    except checks.ChecksError as exc:
+        raise TrustError(str(exc)) from exc
+    git_ref = _validate_single_git_ref(base_ref, label="baseRef")
+    try:
+        raw_git = checks._read_git_tree_regular_file(
+            resolved_repo,
+            git_ref,
+            clean_rel,
+            max_bytes=max_bytes,
+            raise_on_oversized=True,
+            env=_scrubbed_git_env(),
+        )
+    except checks.ChecksError as exc:
+        raise TrustError(str(exc)) from exc
+    if raw_git is None:
+        return None, {
+            "source": "default",
+            "ref": git_ref,
+            "path": None,
+        }
+    return raw_git, {
+        "source": "base-ref",
+        "ref": git_ref,
+        "path": clean_rel,
+    }
 
 
 def load_trusted_config(
@@ -792,67 +910,76 @@ def load_trusted_config(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load TOML configuration strictly from an external path or trusted git base ref.
 
-    Never reads working-tree or PR-head configuration files on disk.
+    Never reads working-tree files or defaults implicitly to ``HEAD``; callers
+    must pass ``base_ref`` or ``external_config``.
     """
-    try:
-        resolved_repo, _ = checks.resolve_repo_root(repo_root)
-        clean_rel = checks.validate_repo_relative_path(config_rel_path)
-    except checks.ChecksError as exc:
-        raise TrustError(str(exc)) from exc
-
-    if external_config is not None:
-        ext_path, _ = _validate_external_path(
-            external_config,
-            resolved_repo,
-            repo_root,
-            label="trusted config",
-        )
-        try:
-            raw = checks._read_explicit_regular_file(
-                ext_path, max_bytes=MAX_CONFIG_BYTES, label="trusted config"
-            )
-        except checks.ChecksError as exc:
-            raise TrustError(str(exc)) from exc
-        try:
-            parsed = tomllib.loads(raw.decode("utf-8"))
-        except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
-            raise TrustError(
-                f"invalid TOML in external config: {checks.safe_error_text(exc)}"
-            ) from exc
-        return parsed, {
-            "source": "external",
-            "ref": None,
-            "path": checks.safe_error_text(ext_path.name or "config"),
-        }
-
-    git_ref = (
-        _validate_single_git_ref(base_ref, label="baseRef")
-        if base_ref is not None
-        else "HEAD"
+    raw, prov = load_trusted_file(
+        repo_root,
+        base_ref=base_ref,
+        external_path=external_config,
+        rel_path=config_rel_path,
+        max_bytes=MAX_CONFIG_BYTES,
+        label="trusted config",
     )
+    if raw is None:
+        return {}, prov
+    source_label = (
+        "external config"
+        if prov["source"] == "external"
+        else f"{prov['path']} at {prov['ref']}"
+    )
+    return _parse_toml_bytes(raw, source_label=source_label), prov
+
+
+def _validate_dest_dir(
+    dest_dir: str | Path,
+    resolved_repo: Path,
+    raw_repo_root: str | Path,
+) -> Path:
+    """Allow external dest dirs or validated ``<git-common-dir>/vld8/runs/...``."""
+    raw = os.fspath(dest_dir) if isinstance(dest_dir, Path) else dest_dir
+    if not isinstance(raw, str) or not raw.strip():
+        raise TrustError("dest-dir must be a non-empty path")
+    if findings._has_control_char(raw) or findings._has_surrogate(raw):
+        raise TrustError("dest-dir contains invalid control characters or surrogates")
+    dest_path = Path(raw)
+    _reject_symlink(dest_path, label="dest-dir")
     try:
-        raw_git = checks._read_git_tree_regular_file(
-            resolved_repo, git_ref, clean_rel, max_bytes=MAX_CONFIG_BYTES
-        )
-    except checks.ChecksError as exc:
-        raise TrustError(str(exc)) from exc
-    if raw_git is None:
-        return {}, {
-            "source": "default",
-            "ref": git_ref if base_ref is not None else None,
-            "path": None,
-        }
-    try:
-        parsed_git = tomllib.loads(raw_git.decode("utf-8"))
-    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        resolved_dest = dest_path.resolve()
+    except (OSError, RuntimeError) as exc:
         raise TrustError(
-            f"invalid TOML in {clean_rel} at {git_ref}: {checks.safe_error_text(exc)}"
+            f"cannot resolve dest-dir: {checks.safe_error_text(exc)}"
         ) from exc
-    return parsed_git, {
-        "source": "base-ref",
-        "ref": git_ref,
-        "path": clean_rel,
-    }
+    abs_dest = Path(os.path.abspath(dest_path))
+    abs_repo = Path(os.path.abspath(raw_repo_root))
+    in_repo = (
+        resolved_dest.is_relative_to(resolved_repo)
+        or abs_dest.is_relative_to(resolved_repo)
+        or abs_dest.is_relative_to(abs_repo)
+    )
+    if not in_repo:
+        return resolved_dest
+
+    default_state_dir = resolve_state_dir(resolved_repo, state_dir=None)
+    runs_dir = default_state_dir / "runs"
+    _reject_symlink(runs_dir, label="runs-dir")
+    runs_root = runs_dir.resolve()
+    unres_git = abs_repo / ".git"
+    allowed_abs_bases = [runs_dir, runs_root]
+    if unres_git.exists() and not unres_git.is_symlink() and unres_git.is_dir():
+        allowed_abs_bases.append(unres_git / "vld8" / "runs")
+    if not resolved_dest.is_relative_to(runs_root) or not any(
+        abs_dest.is_relative_to(base) for base in allowed_abs_bases
+    ):
+        raise TrustError(
+            "dest-dir must reside outside repo_root or under <git-common-dir>/vld8/runs"
+        )
+    rel = resolved_dest.relative_to(runs_root)
+    cur = runs_root
+    for segment in rel.parts:
+        cur = cur / segment
+        _reject_symlink(cur, label=f"dest-dir/{segment}")
+    return resolved_dest
 
 
 def extract_base_tool_config(
@@ -868,17 +995,16 @@ def extract_base_tool_config(
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
     clean_base = _validate_single_git_ref(base_ref, label="baseRef")
-
-    _, resolved_dest = _validate_external_path(
-        dest_dir,
-        resolved_repo,
-        repo_root,
-        label="dest-dir",
-    )
+    resolved_dest = _validate_dest_dir(dest_dir, resolved_repo, repo_root)
 
     try:
         raw = checks._read_git_tree_regular_file(
-            resolved_repo, clean_base, clean_rel, max_bytes=MAX_CONFIG_BYTES
+            resolved_repo,
+            clean_base,
+            clean_rel,
+            max_bytes=MAX_CONFIG_BYTES,
+            raise_on_oversized=True,
+            env=_scrubbed_git_env(),
         )
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
@@ -894,7 +1020,9 @@ def extract_base_tool_config(
     return out_file
 
 
-def _parse_sarif_evidence(data: dict[str, Any]) -> tuple[Any, list[str], list[Any]]:
+def _parse_sarif_evidence(
+    data: dict[str, Any],
+) -> tuple[Any, list[str], list[Any], bool]:
     version = data.get("version")
     if version != "2.1.0":
         raise TrustError(
@@ -917,19 +1045,47 @@ def _parse_sarif_evidence(data: dict[str, Any]) -> tuple[Any, list[str], list[An
     tools: list[str] = []
     results_out: list[dict[str, Any]] = []
     run_tree_ids: list[Any] = []
+    execution_failed = False
     for idx, run in enumerate(runs):
         if not isinstance(run, dict):
             raise TrustError(f"evidence SARIF runs[{idx}] must be an object")
         run_props = run.get("properties")
         if isinstance(run_props, dict) and "treeId" in run_props:
             run_tree_ids.append(run_props.get("treeId"))
+        raw_invocations = run.get("invocations")
+        if raw_invocations is not None:
+            if not isinstance(raw_invocations, list):
+                raise TrustError(
+                    f"evidence SARIF runs[{idx}].invocations must be an array"
+                )
+            if len(raw_invocations) > MAX_EVIDENCE_ITEMS:
+                raise TrustError(
+                    f"evidence SARIF runs[{idx}].invocations exceed max "
+                    f"{MAX_EVIDENCE_ITEMS}"
+                )
+            for inv_idx, inv in enumerate(raw_invocations):
+                if not isinstance(inv, dict):
+                    raise TrustError(
+                        f"evidence SARIF runs[{idx}].invocations[{inv_idx}] "
+                        "must be an object"
+                    )
+                if "executionSuccessful" in inv:
+                    exec_ok = inv["executionSuccessful"]
+                    if not isinstance(exec_ok, bool):
+                        raise TrustError(
+                            f"evidence SARIF runs[{idx}].invocations[{inv_idx}]."
+                            "executionSuccessful must be a boolean"
+                        )
+                    if exec_ok is False:
+                        execution_failed = True
         driver = (
             run.get("tool", {}).get("driver", {})
             if isinstance(run.get("tool"), dict)
             else {}
         )
-        if isinstance(driver, dict) and isinstance(driver.get("name"), str):
-            tools.append(checks.safe_error_text(driver["name"], max_len=128))
+        driver_name = driver.get("name") if isinstance(driver, dict) else None
+        if isinstance(driver_name, str) and driver_name.strip():
+            tools.append(checks.safe_error_text(driver_name.strip(), max_len=128))
         raw_results = run.get("results", [])
         if not isinstance(raw_results, list):
             raise TrustError(f"evidence SARIF runs[{idx}].results must be an array")
@@ -938,18 +1094,24 @@ def _parse_sarif_evidence(data: dict[str, Any]) -> tuple[Any, list[str], list[An
         for entry in raw_results:
             if not isinstance(entry, dict):
                 raise TrustError("evidence SARIF result entry must be an object")
+            rule_id = entry.get("ruleId")
+            if rule_id is not None and not isinstance(rule_id, str):
+                raise TrustError("evidence SARIF result ruleId must be a string")
+            level = entry.get("level")
+            if level is not None and not isinstance(level, str):
+                raise TrustError("evidence SARIF result level must be a string")
             msg_obj = entry.get("message")
             msg_text = msg_obj.get("text") if isinstance(msg_obj, dict) else None
             results_out.append(
                 {
                     "ruleId": (
-                        checks.safe_error_text(entry.get("ruleId"), max_len=128)
-                        if entry.get("ruleId") is not None
+                        checks.safe_error_text(rule_id, max_len=128)
+                        if rule_id is not None
                         else None
                     ),
                     "level": (
-                        checks.safe_error_text(entry.get("level"), max_len=32)
-                        if entry.get("level") is not None
+                        checks.safe_error_text(level, max_len=32)
+                        if level is not None
                         else None
                     ),
                     "message": (
@@ -973,7 +1135,7 @@ def _parse_sarif_evidence(data: dict[str, Any]) -> tuple[Any, list[str], list[An
         tree_id = None
     else:
         tree_id = all_tree_ids[0] if all_tree_ids else None
-    return tree_id, sorted(set(tools)), results_out
+    return tree_id, sorted(set(tools)), results_out, execution_failed
 
 
 def _validate_bounded_str_list(raw_list: Any, *, label: str) -> list[str]:
@@ -1014,15 +1176,18 @@ def load_evidence(
 
     if "runs" in data:
         fmt = "sarif"
-        tree_id, tools, sarif_results = _parse_sarif_evidence(data)
+        tree_id, tools, sarif_results, execution_failed = _parse_sarif_evidence(data)
         exclusions: list[str] = []
         ev_findings: list[dict[str, Any]] = []
     else:
         fmt = "vld8"
-        unknown = set(data) - _EVIDENCE_DOC_KEYS
+        execution_failed = False
+        unknown = sorted(set(data) - _EVIDENCE_DOC_KEYS)
         if unknown:
+            shown = [checks.safe_error_text(key, max_len=64) for key in unknown[:5]]
+            extra = f" (+{len(unknown) - 5} more)" if len(unknown) > 5 else ""
             raise TrustError(
-                f"unknown keys in evidence object: {', '.join(sorted(unknown))}"
+                f"unknown keys in evidence object: {', '.join(shown)}{extra}"
             )
         sv = data.get("schemaVersion")
         if sv is not None and sv != SCHEMA_VERSION:
@@ -1052,6 +1217,27 @@ def load_evidence(
                 )
             ev_findings.append(item)
         sarif_results = []
+
+    if fmt == "sarif" and execution_failed:
+        got_label = (
+            checks.safe_error_text(tree_id, max_len=128)
+            if isinstance(tree_id, str)
+            else None
+        )
+        return {
+            "schemaVersion": SCHEMA_VERSION,
+            "accepted": False,
+            "format": fmt,
+            "treeId": got_label,
+            "expectedTreeId": clean_expected,
+            "tools": [],
+            "exclusions": [],
+            "findings": [],
+            "sarifResults": [],
+            "reason": (
+                "evidence SARIF includes an invocation with executionSuccessful=false"
+            ),
+        }
 
     if not isinstance(tree_id, str) or not tree_id or tree_id != clean_expected:
         got_label = (
@@ -1089,9 +1275,9 @@ def load_evidence(
     }
 
 
-def can_run_repo_tools(trusted: bool) -> bool:
+def can_run_repo_tools(trusted: Any) -> bool:
     """Return True only when execution against the reviewed PR/repo is permitted."""
-    return bool(trusted)
+    return trusted is True
 
 
 def run_trusted_command(
@@ -1108,6 +1294,12 @@ def run_trusted_command(
         raise TrustError(
             "refusing to run repo tools or linters on untrusted PR (fork or bot)"
         )
+    if (
+        not isinstance(argv, list)
+        or not argv
+        or not all(isinstance(arg, str) for arg in argv)
+    ):
+        raise TrustError("command argv must be a non-empty list of strings")
     try:
         return checks._run_command(
             argv,

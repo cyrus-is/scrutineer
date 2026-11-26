@@ -378,39 +378,63 @@ def test_pr_metadata_fork_bot_and_worktree() -> None:
             and str(wt_seen) not in _git(clone_repo, "worktree", "list"),
         )
 
-        # Untrusted fork PR never triggers `git submodule` calls.
-        fork_meta = trust.PRMetadata(
-            number=7,
-            title="Fork PR",
-            body="",
-            url="https://github.com/org/repo/pull/7",
-            author_login="bob",
-            author_is_bot=False,
-            head_ref_name="feat",
-            head_ref_oid=pr_oid,
-            base_ref_name="main",
-            is_cross_repository=True,
-            trusted=False,
-            untrusted_reasons=("fork",),
-        )
-        orig_run = checks._run_command
-        seen_cmds: list[list[str]] = []
-
-        def _spy_run(argv: list[str], **kwargs: Any) -> bytes:
-            seen_cmds.append(list(argv))
-            return orig_run(argv, **kwargs)
-
-        with mock.patch("vld8.checks._run_command", side_effect=_spy_run):
-            with trust.checkout_pr_worktree(clone_repo, fork_meta) as wt_fork:
-                check(
-                    "fork PR worktree checks out without initializing submodules",
-                    wt_fork.available is True
-                    and wt_fork.submodules_initialized is False,
+        # Untrusted fork and same-repo bot PRs with .gitmodules skip submodules.
+        _git(work_repo, "checkout", "-q", "feat")
+        sub_gm_oid = _commit_files(
+            work_repo,
+            {
+                ".gitmodules": (
+                    '[submodule "ext"]\n'
+                    "\tpath = ext\n"
+                    "\turl = https://example.invalid/sub.git\n"
                 )
-        check(
-            "fork PR never executes git submodule command",
-            not any("submodule" in cmd for cmd in seen_cmds),
+            },
+            "pr with gitmodules",
         )
+        _git(work_repo, "push", "-q", "origin", f"{sub_gm_oid}:refs/pull/77/head")
+        orig_run = checks._run_command
+        for kind, is_cross, is_bot, reasons in [
+            ("fork", True, False, ("fork",)),
+            ("same-repo bot", False, True, ("bot",)),
+        ]:
+            untrusted_meta = trust.PRMetadata(
+                number=77,
+                title=f"{kind} PR",
+                body="",
+                url="https://github.com/org/repo/pull/77",
+                author_login="dependabot[bot]" if is_bot else "bob",
+                author_is_bot=is_bot,
+                head_ref_name="feat",
+                head_ref_oid=sub_gm_oid,
+                base_ref_name="main",
+                is_cross_repository=is_cross,
+                trusted=False,
+                untrusted_reasons=reasons,
+            )
+            seen_cmds: list[list[str]] = []
+
+            def _make_spy(cmd_log: list[list[str]]) -> Any:
+                def _spy(argv: list[str], **kwargs: Any) -> bytes:
+                    cmd_log.append(list(argv))
+                    return orig_run(argv, **kwargs)
+
+                return _spy
+
+            with mock.patch(
+                "vld8.checks._run_command", side_effect=_make_spy(seen_cmds)
+            ):
+                with trust.checkout_pr_worktree(clone_repo, untrusted_meta) as wt_u:
+                    check(
+                        f"{kind} PR worktree checks out without submodules",
+                        wt_u.available is True
+                        and wt_u.path is not None
+                        and (wt_u.path / ".gitmodules").is_file()
+                        and wt_u.submodules_initialized is False,
+                    )
+            check(
+                f"{kind} PR never executes git submodule command",
+                not any("submodule" in cmd for cmd in seen_cmds),
+            )
 
         # Unfetchable headRefOid fails gracefully with available=False (never fallback).
         missing_meta = trust.PRMetadata(
@@ -998,16 +1022,31 @@ def test_extended_trust_and_edge_branches() -> None:
             123,  # type: ignore[arg-type]
         )
 
-        # load_trusted_config base_ref=None reads HEAD + rejects broken TOML.
-        head_cfg, head_prov = trust.load_trusted_config(repo)
+        # load_trusted_config requires explicit base_ref XOR external_config.
+        _expect_error(
+            "load_trusted_config rejects omitted base_ref and external_config",
+            trust.load_trusted_config,
+            repo,
+        )
+        ext_ok_cfg = root / "ext_ok_cfg.toml"
+        ext_ok_cfg.write_text("[ext]\nok = true\n", encoding="utf-8")
+        _expect_error(
+            "load_trusted_config rejects passing both base_ref and external_config",
+            trust.load_trusted_config,
+            repo,
+            base_ref="HEAD",
+            external_config=ext_ok_cfg,
+        )
+        head_cfg, head_prov = trust.load_trusted_config(repo, base_ref="HEAD")
         check(
-            "load_trusted_config defaults to HEAD tree",
+            "load_trusted_config reads HEAD tree when base_ref='HEAD' is explicit",
             head_cfg == {"head": {"ok": True}} and head_prov["source"] == "base-ref",
         )
         _expect_error(
             "load_trusted_config rejects invalid TOML in base_ref",
             trust.load_trusted_config,
             repo,
+            base_ref="HEAD",
             config_rel_path="bad.toml",
         )
         bad_ext_toml = root / "bad_ext.toml"
@@ -1208,6 +1247,309 @@ def test_extended_trust_and_edge_branches() -> None:
                 bp,
                 expected_tree_id=tree_id,
             )
+
+        # Round 1 review fixes (#157 / #128).
+        check(
+            "can_run_repo_tools rejects non-bool truthy values",
+            trust.can_run_repo_tools("false") is False
+            and trust.can_run_repo_tools(1) is False
+            and trust.can_run_repo_tools(True) is True,
+        )
+        _expect_error(
+            "run_trusted_command rejects bare string argv",
+            trust.run_trusted_command,
+            "git",  # type: ignore[arg-type]
+            cwd=repo,
+            trusted=True,
+        )
+        _expect_error(
+            "run_trusted_command rejects non-bool truthy trusted arg",
+            trust.run_trusted_command,
+            ["git", "--version"],
+            cwd=repo,
+            trusted="false",  # type: ignore[arg-type]
+        )
+
+        # SARIF executionSuccessful=false & malformed invocations / fields.
+        failed_sarif = root / "failed_inv.sarif"
+        failed_sarif.write_text(
+            json.dumps(
+                {
+                    "version": "2.1.0",
+                    "runs": [
+                        {
+                            "properties": {"treeId": tree_id},
+                            "tool": {"driver": {"name": "ruff"}},
+                            "invocations": [{"executionSuccessful": False}],
+                            "results": [],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        ev_failed_inv = trust.load_evidence(failed_sarif, expected_tree_id=tree_id)
+        check(
+            "load_evidence rejects SARIF invocation with executionSuccessful=false",
+            ev_failed_inv["accepted"] is False
+            and "executionSuccessful=false" in (ev_failed_inv["reason"] or ""),
+        )
+
+        blank_driver_sarif = root / "blank_driver.sarif"
+        blank_driver_sarif.write_text(
+            json.dumps(
+                {
+                    "version": "2.1.0",
+                    "runs": [
+                        {
+                            "properties": {"treeId": tree_id},
+                            "tool": {"driver": {"name": "   "}},
+                            "invocations": [{"executionSuccessful": True}],
+                            "results": [],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        ev_blank_driver = trust.load_evidence(
+            blank_driver_sarif, expected_tree_id=tree_id
+        )
+        check(
+            "SARIF blank driver.name is ignored cleanly",
+            ev_blank_driver["accepted"] is True and ev_blank_driver["tools"] == [],
+        )
+
+        for label, bad_payload in [
+            (
+                "sarif non-list invocations",
+                {"version": "2.1.0", "runs": [{"invocations": {}}]},
+            ),
+            (
+                "sarif non-bool executionSuccessful",
+                {
+                    "version": "2.1.0",
+                    "runs": [{"invocations": [{"executionSuccessful": "false"}]}],
+                },
+            ),
+            (
+                "sarif non-str ruleId",
+                {"version": "2.1.0", "runs": [{"results": [{"ruleId": 123}]}]},
+            ),
+            (
+                "sarif non-str level",
+                {"version": "2.1.0", "runs": [{"results": [{"level": ["warn"]}]}]},
+            ),
+        ]:
+            bp_s = root / "bad_sarif_r1.sarif"
+            bp_s.write_text(json.dumps(bad_payload), encoding="utf-8")
+            _expect_error(
+                f"load_evidence rejects {label}",
+                trust.load_evidence,
+                bp_s,
+                expected_tree_id=tree_id,
+            )
+
+        ansi_keys_ev = root / "ansi_keys.json"
+        ansi_keys_ev.write_text(
+            json.dumps(
+                {
+                    "treeId": tree_id,
+                    "\x1b[31mINJECT\x1b[0m": 1,
+                    "k2": 2,
+                    "k3": 3,
+                    "k4": 4,
+                    "k5": 5,
+                    "k6": 6,
+                }
+            ),
+            encoding="utf-8",
+        )
+        try:
+            trust.load_evidence(ansi_keys_ev, expected_tree_id=tree_id)
+            check("load_evidence sanitizes and bounds unknown JSON keys", False)
+        except trust.TrustError as exc:
+            msg = str(exc)
+            check(
+                "load_evidence sanitizes and bounds unknown JSON keys",
+                "\x1b" not in msg and "(+1 more)" in msg,
+            )
+
+        # Allow <git-common-dir>/vld8/runs/... on standard clones.
+        std_state_dir = trust.resolve_state_dir(repo)
+        std_run_dir = trust.prepare_run_dir(std_state_dir, tree_id, run_id="std1")
+        _commit_files(repo, {"pyproject.toml": "[tool.x]\nv = 1\n"}, "add toolcfg")
+        std_cfg = trust.extract_base_tool_config(
+            repo, "HEAD", "pyproject.toml", std_run_dir / "toolcfg"
+        )
+        check(
+            "extract_base_tool_config allows <git-common-dir>/vld8/runs/... on clones",
+            std_cfg is not None and std_cfg.is_file(),
+        )
+        _expect_error(
+            "extract_base_tool_config still rejects .git/hooks",
+            trust.extract_base_tool_config,
+            repo,
+            "HEAD",
+            "pyproject.toml",
+            repo / ".git" / "hooks",
+        )
+        sym_to_runs = repo / "sym_to_runs"
+        sym_to_runs.symlink_to(std_run_dir)
+        _expect_error(
+            "extract_base_tool_config rejects repo symlink into .git/vld8/runs",
+            trust.extract_base_tool_config,
+            repo,
+            "HEAD",
+            "pyproject.toml",
+            sym_to_runs / "toolcfg",
+        )
+
+        # prepare_run_dir state_dir validation + deep RecursionError guards.
+        _expect_error(
+            "prepare_run_dir rejects blank state_dir",
+            trust.prepare_run_dir,
+            "   ",
+            tree_id,
+            run_id="r1",
+        )
+        _commit_files(
+            repo,
+            {"deep.toml": "x = " + ("[" * 5000) + ("]" * 5000) + "\n"},
+            "deep toml",
+        )
+        _expect_error(
+            "load_trusted_config wraps TOML RecursionError into TrustError",
+            trust.load_trusted_config,
+            repo,
+            base_ref="HEAD",
+            config_rel_path="deep.toml",
+        )
+        cyclic: dict[str, Any] = {}
+        cyclic["self"] = cyclic
+        _expect_error(
+            "atomic_write_json wraps cyclic JSON error into TrustError",
+            trust.atomic_write_json,
+            root / "cyclic.json",
+            cyclic,
+        )
+        with mock.patch("vld8.trust.json.dumps", side_effect=RecursionError("depth")):
+            _expect_error(
+                "atomic_write_json wraps JSON RecursionError into TrustError",
+                trust.atomic_write_json,
+                root / "deep_json.json",
+                {"a": 1},
+            )
+
+        # Oversized file in base_ref raises TrustError cleanly via load_trusted_file.
+        _commit_files(
+            repo,
+            {"huge.txt": "a" * (trust.MAX_CONFIG_BYTES + 16)},
+            "oversized base file",
+        )
+        _expect_error(
+            "load_trusted_file raises TrustError on oversized base-ref file",
+            trust.load_trusted_file,
+            repo,
+            base_ref="HEAD",
+            rel_path="huge.txt",
+        )
+        raw_head_toml, raw_prov = trust.load_trusted_file(
+            repo, base_ref="HEAD", rel_path=".vld8.toml"
+        )
+        check(
+            "load_trusted_file reads base-ref bytes cleanly",
+            raw_head_toml is not None and raw_prov["source"] == "base-ref",
+        )
+
+        # PR title rejects controls; PR body escapes ANSI while keeping newlines.
+        with mock.patch(
+            "vld8.checks._run_command",
+            return_value=json.dumps(
+                {
+                    "number": 12,
+                    "title": "Bad\nTitle",
+                    "body": "Body",
+                    "url": "https://github.com/org/repo/pull/12",
+                    "author": {"login": "alice"},
+                    "headRefName": "feat",
+                    "headRefOid": head_oid,
+                    "baseRefName": "main",
+                    "isCrossRepository": False,
+                }
+            ).encode("utf-8"),
+        ):
+            _expect_error(
+                "fetch_pr_metadata rejects newline in title",
+                trust.fetch_pr_metadata,
+                repo,
+                12,
+            )
+
+        with mock.patch(
+            "vld8.checks._run_command",
+            return_value=json.dumps(
+                {
+                    "number": 12,
+                    "title": "Clean title",
+                    "body": "Line 1\x1b[31mRED\x1b[0m\n\tLine 2\x07",
+                    "url": "https://github.com/org/repo/pull/12",
+                    "author": {"login": "alice"},
+                    "headRefName": "feat",
+                    "headRefOid": head_oid,
+                    "baseRefName": "main",
+                    "isCrossRepository": False,
+                }
+            ).encode("utf-8"),
+        ):
+            san_meta = trust.fetch_pr_metadata(repo, 12)
+            san_dict = san_meta.to_dict()
+            check(
+                "fetch_pr_metadata escapes ANSI/controls in body and keeps newlines",
+                "\x1b" not in san_dict["body"]
+                and "\x07" not in san_dict["body"]
+                and "\\x07" in san_dict["body"]
+                and "\n\tLine 2" in san_dict["body"],
+            )
+
+        # checkout_pr_worktree removes tmp_root even if git worktree remove times out.
+        orig_subproc_run = trust.subprocess.run
+
+        def _timeout_remove(argv: list[str], **kwargs: Any) -> Any:
+            if len(argv) >= 5 and argv[3] == "worktree" and argv[4] == "remove":
+                raise trust.subprocess.TimeoutExpired(argv, 1.0)
+            return orig_subproc_run(argv, **kwargs)
+
+        timed_out_wt: Path | None = None
+        with mock.patch("vld8.trust.subprocess.run", side_effect=_timeout_remove):
+            with trust.checkout_pr_worktree(repo, valid_meta) as wt_to:
+                timed_out_wt = wt_to.path
+                check("worktree created before timeout probe", wt_to.available)
+        check(
+            "checkout_pr_worktree removes tempdir even when worktree remove times out",
+            timed_out_wt is not None and not timed_out_wt.parent.exists(),
+        )
+
+        # GIT_DIR override in env must not hijack resolve_state_dir / compute_tree_id.
+        expected_cur_tree = trust.compute_tree_id(repo, "HEAD")
+        other_repo = root / "other_git_env_repo"
+        _init_git_repo(other_repo)
+        _commit_files(other_repo, {"other.txt": "hi\n"}, "other")
+        prev_git_dir = os.environ.get("GIT_DIR")
+        os.environ["GIT_DIR"] = str(other_repo / ".git")
+        try:
+            env_state = trust.resolve_state_dir(repo)
+            env_tree = trust.compute_tree_id(repo, "HEAD")
+            check(
+                "trust git calls ignore caller GIT_DIR override",
+                env_state == (repo.resolve() / ".git" / "vld8")
+                and env_tree == expected_cur_tree,
+            )
+        finally:
+            if prev_git_dir is None:
+                os.environ.pop("GIT_DIR", None)
+            else:
+                os.environ["GIT_DIR"] = prev_git_dir
 
 
 def main() -> int:
