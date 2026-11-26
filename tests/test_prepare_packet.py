@@ -18,7 +18,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from vld8 import findings, packet, report, trust  # noqa: E402
+from vld8 import checks, findings, packet, report, trust  # noqa: E402
 
 _results: list[tuple[str, bool]] = []
 
@@ -206,7 +206,7 @@ def test_rules_discovery_and_trust_boundaries() -> None:
         check(
             "oversized working-tree rules file warns and skips cleanly",
             "ENGINEERING.md" not in [e["path"] for e in entries_wt_big]
-            and any("oversized" in w for w in warns_wt_big),
+            and any("ENGINEERING.md" in w and "exceeds max" in w for w in warns_wt_big),
         )
 
         # Validation guards.
@@ -656,11 +656,495 @@ def test_evidence_budget_quoting_and_prepare_contract() -> None:
             )
 
 
+def test_round1_regressions_and_bounds() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-pkt-r1-") as tmp:
+        root = Path(tmp)
+
+        # 1. Site-identity dedup preserves distinct sites sharing a fingerprint.
+        repo_dedup = root / "repo_dedup"
+        _init_git_repo(repo_dedup)
+        head_dedup = _commit_files(
+            repo_dedup, {"a.py": "x = 1\n", "b.py": "x = 1\n"}, "dedup"
+        )
+        tid_dedup = trust.compute_tree_id(repo_dedup, head_dedup)
+        fa = _make_code_finding(fp_seed="dup")
+        fa["file"] = "a.py"
+        fa["lineStart"] = 10
+        fa["lineEnd"] = 10
+        fb = dict(fa)
+        fb["file"] = "b.py"
+        fb["lineStart"] = 20
+        fb["lineEnd"] = 20
+        ev1 = root / "ev_sites_1.json"
+        ev1.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": "1.0",
+                    "treeId": tid_dedup,
+                    "tools": ["ruff"],
+                    "findings": [fa, fb],
+                }
+            ),
+            encoding="utf-8",
+        )
+        ev2 = root / "ev_sites_2.json"
+        ev2.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": "1.0",
+                    "treeId": tid_dedup,
+                    "tools": ["ruff"],
+                    "findings": [dict(fa)],
+                }
+            ),
+            encoding="utf-8",
+        )
+        _, merged_sites, _ = packet.collect_evidence(
+            [ev1, ev2], expected_tree_id=tid_dedup
+        )
+        check(
+            "collect_evidence preserves distinct sites with matching fingerprint",
+            len(merged_sites) == 2
+            and {(f["file"], f["lineStart"]) for f in merged_sites}
+            == {("a.py", 10), ("b.py", 20)},
+        )
+        fc = dict(fa)
+        fc["file"] = "c.py"
+        ev3 = root / "ev_sites_3.json"
+        ev3.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": "1.0",
+                    "treeId": tid_dedup,
+                    "tools": ["semgrep"],
+                    "findings": [fc],
+                }
+            ),
+            encoding="utf-8",
+        )
+        with mock.patch.object(findings, "MAX_FINDINGS_COUNT", 2):
+            capped_ev, capped_findings, capped_warns = packet.collect_evidence(
+                [ev1, ev3], expected_tree_id=tid_dedup
+            )
+        check(
+            "collect_evidence emits findings cap warning at most once across files",
+            len(capped_findings) == 2
+            and capped_ev["findingsCount"] == 2
+            and len(capped_warns) == 1
+            and "capped at 2" in capped_warns[0],
+        )
+
+        # 2. Fail-closed PR trust gating when trusted is omitted or contradicted.
+        repo_trust = root / "repo_trust"
+        _init_git_repo(repo_trust)
+        base_trust = _commit_files(
+            repo_trust,
+            {
+                "CLAUDE.md": "Base rule\n",
+                "SPEC.md": "Repo spec\n",
+                "docs/plans/change.md": "Untrusted plan\n",
+                "src/app.py": "v = 1\n",
+            },
+            "init",
+        )
+        _commit_files(
+            repo_trust,
+            {
+                "CLAUDE.md": "Tampered PR rule\n",
+                "docs/plans/change.md": "PR plan change\n",
+            },
+            "pr",
+        )
+        tid_trust = trust.compute_tree_id(repo_trust, "HEAD")
+        pr_fork = trust.PRMetadata(
+            number=11,
+            title="Fork PR",
+            body="Body text",
+            url="https://github.com/org/repo/pull/11",
+            author_login="ext",
+            author_is_bot=False,
+            head_ref_name="feat",
+            head_ref_oid=base_trust,
+            base_ref_name="main",
+            is_cross_repository=True,
+            trusted=False,
+            untrusted_reasons=("fork",),
+        )
+        pr_bot = trust.PRMetadata(
+            number=12,
+            title="Bot PR",
+            body="Automated bump",
+            url="https://github.com/org/repo/pull/12",
+            author_login="renovate[bot]",
+            author_is_bot=True,
+            head_ref_name="bot",
+            head_ref_oid=base_trust,
+            base_ref_name="main",
+            is_cross_repository=False,
+            trusted=True,
+            untrusted_reasons=(),
+        )
+        pr_human = trust.PRMetadata(
+            number=13,
+            title="Human PR",
+            body="Trusted PR",
+            url="https://github.com/org/repo/pull/13",
+            author_login="alice",
+            author_is_bot=False,
+            head_ref_name="human",
+            head_ref_oid=base_trust,
+            base_ref_name="main",
+            is_cross_repository=False,
+            trusted=True,
+            untrusted_reasons=(),
+        )
+
+        fork_pkt_res = packet.build_context_packet(
+            repo_trust,
+            tree_id=tid_trust,
+            changed_paths=["docs/plans/change.md", "src/app.py"],
+            pr_meta=pr_fork,
+        )
+        fork_intent = {x["kind"]: x for x in fork_pkt_res.packet["intentSources"]}
+        check(
+            "build_context_packet fails closed on fork PR when trusted is omitted",
+            fork_pkt_res.packet["rulesFiles"] == []
+            and any("untrusted" in w for w in fork_pkt_res.packet["warnings"])
+            and fork_intent["pr-body"]["trustLevel"] == "untrusted"
+            and fork_intent["design-doc"]["trustLevel"] == "untrusted",
+        )
+        bot_intent, _, _ = packet.collect_intent_sources(
+            repo_trust,
+            pr_meta=pr_bot,
+            changed_paths=["docs/plans/change.md"],
+        )
+        check(
+            "collect_intent_sources treats bot PR as untrusted when trusted=None",
+            {x["kind"]: x["trustLevel"] for x in bot_intent}
+            == {"pr-body": "untrusted", "design-doc": "untrusted"},
+        )
+        _expect_error(
+            "build_context_packet rejects trusted=True for fork PR",
+            packet.build_context_packet,
+            repo_trust,
+            tree_id=tid_trust,
+            pr_meta=pr_fork,
+            trusted=True,
+            needle="untrusted, fork, or bot",
+        )
+        _expect_error(
+            "collect_intent_sources rejects trusted=True for bot PR",
+            packet.collect_intent_sources,
+            repo_trust,
+            pr_meta=pr_bot,
+            trusted=True,
+            needle="untrusted, fork, or bot",
+        )
+        _expect_error(
+            "collect_intent_sources rejects non-bool/None trusted",
+            packet.collect_intent_sources,
+            repo_trust,
+            trusted="yes",  # type: ignore[arg-type]
+        )
+        _expect_error(
+            "fork PR with omitted trusted rejects in-repo --spec",
+            packet.build_context_packet,
+            repo_trust,
+            tree_id=tid_trust,
+            spec_path=repo_trust / "SPEC.md",
+            pr_meta=pr_fork,
+        )
+        downgraded = packet.build_context_packet(
+            repo_trust,
+            tree_id=tid_trust,
+            changed_paths=["docs/plans/change.md"],
+            pr_meta=pr_human,
+            trusted=False,
+        )
+        check(
+            "explicit trusted=False downgrades human PR trustLevel",
+            downgraded.packet["rulesFiles"] == []
+            and all(
+                x["trustLevel"] == "untrusted"
+                for x in downgraded.packet["intentSources"]
+            ),
+        )
+
+        # 3. High-volume tools & exclusions truncate cleanly under validate_prepare_doc.
+        many_tools = [f"tool-{i:03d}" for i in range(packet.MAX_EVIDENCE_TOOLS + 10)]
+        many_exclusions = [f"rule:{i:05d}" for i in range(9_995)]
+        ev_huge = root / "ev_huge.json"
+        ev_huge.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": "1.0",
+                    "treeId": tid_dedup,
+                    "tools": many_tools,
+                    "exclusions": many_exclusions,
+                    "findings": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        huge_pkt_res = packet.build_context_packet(
+            repo_dedup,
+            tree_id=tid_dedup,
+            evidence_paths=ev_huge,
+        )
+        huge_ev = huge_pkt_res.packet["evidence"]
+        huge_prepare = {
+            "schemaVersion": "1.0",
+            "lens": "code",
+            "treeId": tid_dedup,
+            "partial": huge_pkt_res.packet["budget"]["partial"],
+            "candidates": [],
+            "codeFindings": [],
+            "unruled": [],
+            "coverage": {},
+            "riskList": [],
+            "packet": huge_pkt_res.packet,
+        }
+        check(
+            "high-volume evidence truncates and passes prepare contract",
+            huge_ev["toolsCount"] == packet.MAX_EVIDENCE_TOOLS + 10
+            and huge_ev["toolsTruncated"] is True
+            and len(huge_ev["tools"]) == packet.MAX_EVIDENCE_TOOLS
+            and huge_ev["exclusionsCount"] == 9_995
+            and huge_ev["exclusionsTruncated"] is True
+            and len(huge_ev["exclusions"]) == packet.MAX_EVIDENCE_EXCLUSIONS
+            and report.validate_prepare_doc(huge_prepare) == []
+            and any(
+                "evidence tools truncated" in w for w in huge_pkt_res.packet["warnings"]
+            )
+            and any(
+                "evidence exclusions truncated" in w
+                for w in huge_pkt_res.packet["warnings"]
+            ),
+        )
+
+        # 4. Symlinked parent directory does not leak outside oversized file metadata.
+        outside_dir = root / "outside_secret"
+        outside_dir.mkdir()
+        (outside_dir / "CLAUDE.md").write_text("S" * 4096, encoding="utf-8")
+        (repo_dedup / "linked_sub").symlink_to(outside_dir)
+        (repo_dedup / "big_local.md").write_text("L" * 1024, encoding="utf-8")
+        link_rules, link_warns = packet.collect_rules_files(
+            repo_dedup,
+            changed_paths=["linked_sub/mod.py"],
+            base_ref=None,
+            max_file_bytes=256,
+        )
+        check(
+            "symlinked parent dir skips silently without leaking oversized warning",
+            "linked_sub/CLAUDE.md" not in [r["path"] for r in link_rules]
+            and not any("linked_sub/CLAUDE.md" in w for w in link_warns),
+        )
+        resolved_dedup, _ = checks.resolve_repo_root(repo_dedup)
+        checks_default = checks._read_repo_regular_file(
+            resolved_dedup, "big_local.md", max_bytes=256
+        )
+        raised_checks = False
+        try:
+            checks._read_repo_regular_file(
+                resolved_dedup, "big_local.md", max_bytes=256, raise_on_oversized=True
+            )
+        except checks.ChecksError as exc:
+            raised_checks = "exceeds max 256 bytes" in str(exc)
+        check(
+            "checks._read_repo_regular_file respects raise_on_oversized",
+            checks_default is None
+            and raised_checks
+            and checks._read_repo_regular_file(
+                resolved_dedup,
+                "linked_sub/CLAUDE.md",
+                max_bytes=256,
+                raise_on_oversized=True,
+            )
+            is None,
+        )
+
+        # 5. MAX_CHANGED_PATHS limit and batched git ls-tree lookup in base_ref mode.
+        _expect_error(
+            "collect_rules_files rejects changed_paths past MAX_CHANGED_PATHS",
+            packet.collect_rules_files,
+            repo_dedup,
+            changed_paths=[f"d{i}/f.py" for i in range(packet.MAX_CHANGED_PATHS + 1)],
+            needle="exceeds max",
+        )
+        repo_batch = root / "repo_batch"
+        _init_git_repo(repo_batch)
+        batch_files: dict[str, str] = {
+            "CLAUDE.md": "root\n",
+            "pkg/d000/CLAUDE.md": "rule0\n",
+            "pkg/d050/AGENTS.md": "rule50\n",
+            "pkg/d104/ENGINEERING.md": "rule104\n",
+        }
+        changed_batch: list[str] = []
+        for idx in range(105):
+            rel = f"pkg/d{idx:03d}/app.py"
+            batch_files[rel] = f"x = {idx}\n"
+            changed_batch.append(rel)
+        batch_oid = _commit_files(repo_batch, batch_files, "many dirs")
+
+        ls_tree_calls = 0
+        orig_run_cmd = checks._run_command
+
+        def _counting_run_cmd(argv: list[str], **kwargs: Any) -> bytes:
+            nonlocal ls_tree_calls
+            if "ls-tree" in argv:
+                ls_tree_calls += 1
+            return orig_run_cmd(argv, **kwargs)
+
+        with mock.patch("vld8.checks._run_command", side_effect=_counting_run_cmd):
+            batch_rules, batch_warns = packet.collect_rules_files(
+                repo_batch, changed_paths=changed_batch, base_ref=batch_oid
+            )
+        check(
+            "base_ref rules discovery batches git ls-tree calls cleanly",
+            ls_tree_calls <= 3
+            and not batch_warns
+            and [r["path"] for r in batch_rules]
+            == [
+                "CLAUDE.md",
+                "pkg/d000/CLAUDE.md",
+                "pkg/d050/AGENTS.md",
+                "pkg/d104/ENGINEERING.md",
+            ],
+        )
+        with mock.patch.object(packet, "MAX_RULES_FILES", 2):
+            cap_base, warns_cap_base = packet.collect_rules_files(
+                repo_batch, changed_paths=changed_batch, base_ref=batch_oid
+            )
+            cap_wt, warns_cap_wt = packet.collect_rules_files(
+                repo_batch, changed_paths=changed_batch, base_ref=None
+            )
+        check(
+            "MAX_RULES_FILES caps both base-ref and working-tree modes",
+            len(cap_base) == 2
+            and len(cap_wt) == 2
+            and any("capped at 2 files" in w for w in warns_cap_base)
+            and any("capped at 2 files" in w for w in warns_cap_wt),
+        )
+        with mock.patch.object(packet, "MAX_RULES_DIRS", 3):
+            _, warns_dirs = packet.collect_rules_files(
+                repo_batch, changed_paths=changed_batch, base_ref=batch_oid
+            )
+        check(
+            "MAX_RULES_DIRS caps scanned directories with warning",
+            any("capped at 3 directories" in w for w in warns_dirs),
+        )
+
+        # 6. Budget exhaustion zeroes remainder so tiny later items do not jump ahead.
+        repo_prio = root / "repo_prio"
+        _init_git_repo(repo_prio)
+        prio_oid = _commit_files(
+            repo_prio,
+            {
+                "CLAUDE.md": "A" * 1018,
+                "AGENTS.md": "B" * 50,
+                "docs/plans/spec-tiny.md": "C" * 4,
+            },
+            "priority",
+        )
+        prio_res = packet.build_context_packet(
+            repo_prio,
+            tree_id=trust.compute_tree_id(repo_prio, prio_oid),
+            changed_paths=["docs/plans/spec-tiny.md"],
+            base_ref=prio_oid,
+            target_ref=prio_oid,
+            budget_chars=1024,
+        )
+        prio_pkt = prio_res.packet
+        check(
+            "exhausted budget drops small trailing item and reports exact usedChars",
+            prio_pkt["rulesFiles"][0]["includedChars"] == 1018
+            and prio_pkt["rulesFiles"][1]["includedChars"] == 0
+            and prio_pkt["rulesFiles"][1]["truncated"] is True
+            and prio_pkt["intentSources"][0]["includedChars"] == 0
+            and prio_pkt["intentSources"][0]["truncated"] is True
+            and prio_pkt["budget"]["usedChars"] == 1018,
+        )
+
+        # 7. Deduped in-repo --spec, worktree doc warnings, caps, issue edge cases.
+        repo_edge = root / "repo_edge"
+        _init_git_repo(repo_edge)
+        doc_files: dict[str, str] = {"SPEC.md": "Shared spec/design doc\n"}
+        for idx in range(packet.MAX_DESIGN_DOCS + 2):
+            doc_files[f"docs/plans/p-{idx:02d}.md"] = f"Plan {idx}\n"
+        _commit_files(repo_edge, doc_files, "docs")
+        (repo_edge / "docs/plans/p-00.md").write_text("O" * 1024, encoding="utf-8")
+
+        changed_docs = ["SPEC.md"] + [
+            f"docs/plans/p-{i:02d}.md" for i in range(packet.MAX_DESIGN_DOCS + 2)
+        ]
+        orig_run_git_or_gh = trust._run_git_or_gh
+
+        def _fake_edge_issues(argv: list[str], **kwargs: Any) -> bytes:
+            if argv[:2] != ["gh", "issue"]:
+                return orig_run_git_or_gh(argv, **kwargs)
+            num_s = argv[3]
+            if num_s == "1":
+                return json.dumps(
+                    {"number": 1, "title": "Blank body", "body": "  \n\t "}
+                ).encode("utf-8")
+            if num_s == "2":
+                return json.dumps(
+                    {"number": 99999, "title": "Mismatch", "body": "bad"}
+                ).encode("utf-8")
+            return json.dumps(
+                {"number": int(num_s), "title": "Long body", "body": "Z" * 1000}
+            ).encode("utf-8")
+
+        issue_refs = " ".join(f"#{i}" for i in range(1, 22))
+        pr_many_issues = trust.PRMetadata(
+            number=77,
+            title="Many",
+            body=issue_refs,
+            url="https://github.com/org/repo/pull/77",
+            author_login="alice",
+            author_is_bot=False,
+            head_ref_name="f",
+            head_ref_oid="a" * 40,
+            base_ref_name="main",
+            is_cross_repository=False,
+            trusted=True,
+            untrusted_reasons=(),
+        )
+        with (
+            mock.patch("vld8.trust._run_git_or_gh", side_effect=_fake_edge_issues),
+            mock.patch.object(packet, "MAX_INTENT_SOURCES", 19),
+        ):
+            edge_intent, edge_links, edge_warns = packet.collect_intent_sources(
+                repo_edge,
+                spec_path=repo_edge / "SPEC.md",
+                pr_meta=pr_many_issues,
+                changed_paths=changed_docs,
+                target_ref=None,
+                fetch_linked_issues=True,
+                max_file_bytes=256,
+            )
+        spec_paths = [x for x in edge_intent if x["path"] == "SPEC.md"]
+        issue_entries = [x for x in edge_intent if x["kind"] == "linked-issue"]
+        check(
+            "deduplicates in-repo --spec, warns worktree oversized doc, enforces caps",
+            len(spec_paths) == 1
+            and spec_paths[0]["kind"] == "spec"
+            and len(edge_links) == packet.MAX_LINKED_ISSUES
+            and any("changed design docs capped" in w for w in edge_warns)
+            and any("docs/plans/p-00.md" in w for w in edge_warns)
+            and any("intent sources capped at 19" in w for w in edge_warns)
+            and issue_entries[0]["content"] == "Title: Blank body"
+            and len(issue_entries[1]["content"].encode("utf-8")) <= 300
+            and any("invalid gh issue payload" in w for w in edge_warns),
+        )
+
+
 def main() -> int:
     os.environ.pop("GIT_DIR", None)
     test_rules_discovery_and_trust_boundaries()
     test_intent_sources_spec_pr_body_and_design_docs()
     test_evidence_budget_quoting_and_prepare_contract()
+    test_round1_regressions_and_bounds()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

@@ -11,7 +11,6 @@ import hashlib
 import json
 import os
 import re
-import stat
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,11 +35,16 @@ MAX_SECTION_TEXT_CHARS = findings.MAX_LONG_TEXT_LENGTH
 MAX_RULE_FILE_BYTES = 256 * 1024
 _MAX_ALLOWED_FILE_BYTES = 2 * 1024 * 1024
 
+MAX_CHANGED_PATHS = 5_000
+MAX_RULES_DIRS = 2_000
+_GIT_LS_TREE_BATCH_SIZE = 400
 MAX_RULES_FILES = 64
 MAX_INTENT_SOURCES = 32
 MAX_DESIGN_DOCS = 16
 MAX_LINKED_ISSUES = 16
 MAX_EVIDENCE_FILES = 16
+MAX_EVIDENCE_TOOLS = 256
+MAX_EVIDENCE_EXCLUSIONS = 2_000
 MAX_SARIF_PACKET_RESULTS = 200
 MAX_WARNINGS = 128
 
@@ -112,6 +116,10 @@ def _validate_changed_paths(changed_paths: Sequence[str]) -> list[str]:
         changed_paths, Sequence
     ):
         raise PacketError("changed_paths must be a sequence of repo-relative paths")
+    if len(changed_paths) > MAX_CHANGED_PATHS:
+        raise PacketError(
+            f"changed_paths count {len(changed_paths)} exceeds max {MAX_CHANGED_PATHS}"
+        )
     cleaned: list[str] = []
     seen: set[str] = set()
     for raw_path in changed_paths:
@@ -125,7 +133,35 @@ def _validate_changed_paths(changed_paths: Sequence[str]) -> list[str]:
     return cleaned
 
 
-def _decode_and_sanitize_text(raw: bytes, *, source_label: str) -> tuple[str, str]:
+def _pr_meta_is_trusted(pr_meta: trust.PRMetadata) -> bool:
+    return (
+        trust.can_run_repo_tools(pr_meta.trusted)
+        and pr_meta.is_cross_repository is False
+        and pr_meta.author_is_bot is False
+    )
+
+
+def _resolve_effective_trusted(
+    trusted: bool | None,
+    pr_meta: trust.PRMetadata | None,
+) -> bool:
+    if trusted is not None and not isinstance(trusted, bool):
+        raise PacketError("trusted must be a boolean or None")
+    if pr_meta is not None and not isinstance(pr_meta, trust.PRMetadata):
+        raise PacketError("pr_meta must be a PRMetadata instance or None")
+    if pr_meta is None:
+        return True if trusted is None else trusted
+    pr_trusted = _pr_meta_is_trusted(pr_meta)
+    if trusted is True and not pr_trusted:
+        raise PacketError(
+            "trusted=True cannot be used with an untrusted, fork, or bot PR"
+        )
+    if trusted is False:
+        return False
+    return pr_trusted
+
+
+def _decode_and_sanitize_text(raw: bytes) -> tuple[str, str]:
     text = report._sanitize_text(
         raw.decode("utf-8", errors="replace"), allow_newlines=True
     )
@@ -163,6 +199,61 @@ def format_quoted_block(text: str, *, info: str = "") -> str:
         return f"{header}\n{fence}"
     body = clean_text if clean_text.endswith("\n") else f"{clean_text}\n"
     return f"{header}\n{body}{fence}"
+
+
+def _lookup_git_tree_blobs(
+    repo_root: Path,
+    tree_ref: str,
+    candidate_paths: Sequence[str],
+) -> dict[str, tuple[str, int]]:
+    """Batch-lookup regular non-symlink blobs in ``tree_ref`` via ``git ls-tree``."""
+    if not candidate_paths:
+        return {}
+    pathspecs = [f":(literal){rel}" for rel in candidate_paths]
+    try:
+        ls_raw = trust._run_git_or_gh(
+            [
+                "git",
+                "-C",
+                str(repo_root),
+                "ls-tree",
+                "--full-tree",
+                "-r",
+                "-z",
+                "-l",
+                tree_ref,
+                "--",
+                *pathspecs,
+            ],
+            cwd=repo_root,
+        )
+    except trust.TrustError as exc:
+        raise PacketError(str(exc)) from exc
+
+    wanted = set(candidate_paths)
+    found: dict[str, tuple[str, int]] = {}
+    for rec in ls_raw.split(b"\x00"):
+        if not rec:
+            continue
+        meta, sep, path_bytes = rec.partition(b"\t")
+        if not sep:
+            continue
+        entry_path = path_bytes.decode("utf-8", "surrogateescape")
+        if entry_path not in wanted:
+            continue
+        parts = meta.decode("ascii", "replace").split()
+        if len(parts) != 4:
+            continue
+        mode, obj_type, oid, size_str = parts
+        if (
+            mode not in ("100644", "100755")
+            or obj_type != "blob"
+            or not checks._GIT_OID_RE.match(oid)
+            or not size_str.isdigit()
+        ):
+            continue
+        found[entry_path] = (oid, int(size_str))
+    return found
 
 
 def collect_rules_files(
@@ -205,64 +296,97 @@ def collect_rules_files(
             dirs.add("/".join(parts[:depth]))
 
     ordered_dirs = sorted(dirs, key=lambda d: (0 if not d else d.count("/") + 1, d))
+    if len(ordered_dirs) > MAX_RULES_DIRS:
+        ordered_dirs = ordered_dirs[:MAX_RULES_DIRS]
+        _append_warning(
+            warnings,
+            f"rules directory scan capped at {MAX_RULES_DIRS} directories",
+        )
+
+    candidates: list[tuple[str, str]] = [
+        (scope_dir, f"{scope_dir}/{fname}" if scope_dir else fname)
+        for scope_dir in ordered_dirs
+        for fname in RULES_FILENAMES
+    ]
     entries: list[dict[str, Any]] = []
     capped = False
 
-    for scope_dir in ordered_dirs:
-        for fname in RULES_FILENAMES:
-            rel_path = f"{scope_dir}/{fname}" if scope_dir else fname
-            raw: bytes | None = None
-            if clean_base is not None:
-                try:
-                    raw = checks._read_git_tree_regular_file(
-                        resolved_repo,
-                        clean_base,
-                        rel_path,
-                        max_bytes=file_cap,
-                        raise_on_oversized=True,
-                        env=trust._scrubbed_git_env(),
+    if clean_base is not None:
+        for start in range(0, len(candidates), _GIT_LS_TREE_BATCH_SIZE):
+            batch = candidates[start : start + _GIT_LS_TREE_BATCH_SIZE]
+            blobs = _lookup_git_tree_blobs(
+                resolved_repo,
+                clean_base,
+                [rel for _, rel in batch],
+            )
+            for scope_dir, rel_path in batch:
+                blob_info = blobs.get(rel_path)
+                if blob_info is None:
+                    continue
+                oid, blob_size = blob_info
+                if blob_size > file_cap:
+                    _append_warning(
+                        warnings,
+                        f"skipped rules file {rel_path}: git tree file "
+                        f"{checks.safe_error_text(rel_path)} ({blob_size} bytes) "
+                        f"exceeds max {file_cap} bytes",
                     )
-                except checks.ChecksError as exc:
+                    continue
+                if len(entries) >= MAX_RULES_FILES:
+                    capped = True
+                    break
+                try:
+                    raw = trust._run_git_or_gh(
+                        ["git", "-C", str(resolved_repo), "cat-file", "blob", oid],
+                        cwd=resolved_repo,
+                        max_stdout_bytes=file_cap,
+                    )
+                except trust.TrustError as exc:
                     _append_warning(warnings, f"skipped rules file {rel_path}: {exc}")
                     continue
-            else:
-                raw = checks._read_repo_regular_file(
-                    resolved_repo, rel_path, max_bytes=file_cap
+                content, digest = _decode_and_sanitize_text(raw)
+                entries.append(
+                    {
+                        "path": rel_path,
+                        "scope": scope_dir or "root",
+                        "source": "base-ref",
+                        "ref": clean_base,
+                        "sha256": digest,
+                        "totalChars": len(content),
+                        "content": content,
+                    }
                 )
-                if raw is None:
-                    candidate = resolved_repo / rel_path
-                    try:
-                        st = candidate.lstat()
-                    except OSError:
-                        st = None
-                    if st is not None and stat.S_ISREG(st.st_mode):
-                        if st.st_size > file_cap:
-                            _append_warning(
-                                warnings,
-                                f"skipped oversized rules file {rel_path} "
-                                f"({st.st_size} > {file_cap} bytes)",
-                            )
-                    continue
-
+            if capped:
+                break
+    else:
+        for scope_dir, rel_path in candidates:
+            try:
+                raw = checks._read_repo_regular_file(
+                    resolved_repo,
+                    rel_path,
+                    max_bytes=file_cap,
+                    raise_on_oversized=True,
+                )
+            except checks.ChecksError as exc:
+                _append_warning(warnings, f"skipped rules file {rel_path}: {exc}")
+                continue
             if raw is None:
                 continue
             if len(entries) >= MAX_RULES_FILES:
                 capped = True
                 break
-            content, digest = _decode_and_sanitize_text(raw, source_label=rel_path)
+            content, digest = _decode_and_sanitize_text(raw)
             entries.append(
                 {
                     "path": rel_path,
                     "scope": scope_dir or "root",
-                    "source": "base-ref" if clean_base is not None else "working-tree",
-                    "ref": clean_base,
+                    "source": "working-tree",
+                    "ref": None,
                     "sha256": digest,
                     "totalChars": len(content),
                     "content": content,
                 }
             )
-        if capped:
-            break
 
     if capped:
         _append_warning(
@@ -352,14 +476,14 @@ def _read_spec_source(
             clean_rel = checks.validate_repo_relative_path(rel_spec)
         except checks.ChecksError as exc:
             raise PacketError(str(exc)) from exc
-        raw = checks._read_repo_regular_file(
-            resolved_repo, clean_rel, max_bytes=file_cap
-        )
-        if raw is None:
-            raise PacketError(
-                f"spec file missing, symlinked, or exceeds {file_cap} bytes: "
-                f"{clean_rel}"
+        try:
+            raw = checks._read_repo_regular_file(
+                resolved_repo, clean_rel, max_bytes=file_cap, raise_on_oversized=True
             )
+        except checks.ChecksError as exc:
+            raise PacketError(f"spec file {exc}") from exc
+        if raw is None:
+            raise PacketError(f"spec file missing or symlinked: {clean_rel}")
         source_kind = "repo"
         display_path = clean_rel
     else:
@@ -374,7 +498,7 @@ def _read_spec_source(
             spec_candidate.name or "spec", max_len=128
         )
 
-    content, digest = _decode_and_sanitize_text(raw, source_label=display_path)
+    content, digest = _decode_and_sanitize_text(raw)
     return {
         "kind": "spec",
         "source": source_kind,
@@ -429,7 +553,7 @@ def _fetch_issue_entry(
         clean_body = encoded.decode("utf-8", errors="ignore")
     combined = (
         f"Title: {clean_title}\n\n{clean_body}"
-        if clean_body
+        if clean_body.strip()
         else (f"Title: {clean_title}")
     )
     return (
@@ -453,17 +577,14 @@ def collect_intent_sources(
     pr_meta: trust.PRMetadata | None = None,
     changed_paths: Sequence[str] = (),
     target_ref: str | None = None,
-    trusted: bool = True,
+    trusted: bool | None = None,
     fetch_linked_issues: bool = False,
     max_file_bytes: int = MAX_RULE_FILE_BYTES,
 ) -> tuple[list[dict[str, Any]], list[int], list[str]]:
     """Collect optional intent sources (spec, PR body, design docs, issues)."""
-    if not isinstance(trusted, bool):
-        raise PacketError("trusted must be a boolean")
+    effective_trusted = _resolve_effective_trusted(trusted, pr_meta)
     if not isinstance(fetch_linked_issues, bool):
         raise PacketError("fetch_linked_issues must be a boolean")
-    if pr_meta is not None and not isinstance(pr_meta, trust.PRMetadata):
-        raise PacketError("pr_meta must be a PRMetadata instance or None")
     file_cap = _validate_max_file_bytes(max_file_bytes)
 
     try:
@@ -482,17 +603,19 @@ def collect_intent_sources(
 
     entries: list[dict[str, Any]] = []
     warnings: list[str] = []
+    repo_spec_rel: str | None = None
 
     if spec_path is not None:
-        entries.append(
-            _read_spec_source(
-                resolved_repo,
-                repo_root,
-                spec_path,
-                trusted=trusted,
-                file_cap=file_cap,
-            )
+        spec_entry = _read_spec_source(
+            resolved_repo,
+            repo_root,
+            spec_path,
+            trusted=effective_trusted,
+            file_cap=file_cap,
         )
+        if spec_entry["source"] == "repo":
+            repo_spec_rel = spec_entry["path"]
+        entries.append(spec_entry)
 
     linked_issues: list[int] = []
     if pr_meta is not None:
@@ -507,20 +630,21 @@ def collect_intent_sources(
             else f"Title: {clean_title}"
         )
         if clean_title.strip() or clean_body.strip():
-            pr_trusted = trust.can_run_repo_tools(pr_meta.trusted)
             entries.append(
                 {
                     "kind": "pr-body",
                     "source": f"pr:#{pr_meta.number}",
                     "path": None,
-                    "trustLevel": "trusted" if pr_trusted else "untrusted",
+                    "trustLevel": "trusted" if effective_trusted else "untrusted",
                     "sha256": _sha256_text(pr_text),
                     "totalChars": len(pr_text),
                     "content": pr_text,
                 }
             )
 
-    design_paths = sorted(p for p in clean_paths if is_design_doc_path(p))
+    design_paths = sorted(
+        p for p in clean_paths if is_design_doc_path(p) and p != repo_spec_rel
+    )
     if len(design_paths) > MAX_DESIGN_DOCS:
         _append_warning(
             warnings,
@@ -547,18 +671,25 @@ def collect_intent_sources(
                 _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
                 continue
         else:
-            raw_doc = checks._read_repo_regular_file(
-                resolved_repo, rel_path, max_bytes=file_cap
-            )
+            try:
+                raw_doc = checks._read_repo_regular_file(
+                    resolved_repo,
+                    rel_path,
+                    max_bytes=file_cap,
+                    raise_on_oversized=True,
+                )
+            except checks.ChecksError as exc:
+                _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
+                continue
         if raw_doc is None:
             continue
-        doc_text, doc_sha = _decode_and_sanitize_text(raw_doc, source_label=rel_path)
+        doc_text, doc_sha = _decode_and_sanitize_text(raw_doc)
         entries.append(
             {
                 "kind": "design-doc",
                 "source": "diff",
                 "path": rel_path,
-                "trustLevel": "trusted" if trusted else "untrusted",
+                "trustLevel": "trusted" if effective_trusted else "untrusted",
                 "sha256": doc_sha,
                 "totalChars": len(doc_text),
                 "content": doc_text,
@@ -610,11 +741,12 @@ def collect_evidence(
 
     accepted_files: list[str] = []
     rejected_files: list[dict[str, Any]] = []
-    tools: set[str] = set()
+    tools_set: set[str] = set()
     exclusions: list[str] = []
     seen_exclusions: set[str] = set()
     code_findings: list[dict[str, Any]] = []
-    seen_fingerprints: set[str] = set()
+    seen_sites: set[tuple[str, str, int, int, str, str]] = set()
+    findings_capped = False
     sarif_results: list[dict[str, Any]] = []
     warnings: list[str] = []
 
@@ -646,25 +778,46 @@ def collect_evidence(
 
         accepted_files.append(safe_base)
         for tool_name in ev_res.get("tools", []):
-            tools.add(tool_name)
+            tools_set.add(tool_name)
         for excl in ev_res.get("exclusions", []):
             if excl not in seen_exclusions:
                 seen_exclusions.add(excl)
-                if len(exclusions) < trust.MAX_EVIDENCE_ITEMS:
+                if len(exclusions) < MAX_EVIDENCE_EXCLUSIONS:
                     exclusions.append(excl)
         for item in ev_res.get("findings", []):
-            fp = item["fingerprint"]
-            if fp in seen_fingerprints:
+            site_key = report._site_identity(item)
+            if site_key in seen_sites:
                 continue
             if len(code_findings) >= findings.MAX_FINDINGS_COUNT:
-                _append_warning(
-                    warnings,
-                    f"evidence findings capped at {findings.MAX_FINDINGS_COUNT}",
-                )
+                if not findings_capped:
+                    findings_capped = True
+                    _append_warning(
+                        warnings,
+                        f"evidence findings capped at {findings.MAX_FINDINGS_COUNT}",
+                    )
                 break
-            seen_fingerprints.add(fp)
+            seen_sites.add(site_key)
             code_findings.append(item)
         sarif_results.extend(ev_res.get("sarifResults", []))
+
+    sorted_tools = sorted(tools_set)
+    total_tools = len(sorted_tools)
+    tools_truncated = total_tools > MAX_EVIDENCE_TOOLS
+    tools_out = sorted_tools[:MAX_EVIDENCE_TOOLS]
+    if tools_truncated:
+        _append_warning(
+            warnings,
+            f"evidence tools truncated to {MAX_EVIDENCE_TOOLS} of {total_tools}",
+        )
+
+    total_exclusions = len(seen_exclusions)
+    exclusions_truncated = total_exclusions > MAX_EVIDENCE_EXCLUSIONS
+    if exclusions_truncated:
+        _append_warning(
+            warnings,
+            f"evidence exclusions truncated to {MAX_EVIDENCE_EXCLUSIONS} "
+            f"of {total_exclusions}",
+        )
 
     total_sarif = len(sarif_results)
     sarif_truncated = total_sarif > MAX_SARIF_PACKET_RESULTS
@@ -679,7 +832,11 @@ def collect_evidence(
     evidence_summary = {
         "acceptedFiles": accepted_files,
         "rejectedFiles": rejected_files,
-        "tools": sorted(tools),
+        "toolsCount": total_tools,
+        "toolsTruncated": tools_truncated,
+        "tools": tools_out,
+        "exclusionsCount": total_exclusions,
+        "exclusionsTruncated": exclusions_truncated,
         "exclusions": exclusions,
         "findingsCount": len(code_findings),
         "sarifResultsCount": total_sarif,
@@ -717,6 +874,8 @@ def _allocate_budget(
                 included = content[: cap - len(_TRUNC_SUFFIX)] + _TRUNC_SUFFIX
             else:
                 included = ""
+                if reason == "budget-exceeded":
+                    remaining = 0
             if len(omitted) < MAX_WARNINGS:
                 omitted.append(
                     {
@@ -744,7 +903,7 @@ def build_context_packet(
     changed_paths: Sequence[str] = (),
     base_ref: str | None = None,
     target_ref: str | None = None,
-    trusted: bool = True,
+    trusted: bool | None = None,
     spec_path: str | Path | None = None,
     pr_meta: trust.PRMetadata | None = None,
     evidence_paths: str | Path | Sequence[str | Path] | None = None,
@@ -756,8 +915,7 @@ def build_context_packet(
         clean_tree_id = trust._validate_tree_id_value(tree_id)
     except trust.TrustError as exc:
         raise PacketError(str(exc)) from exc
-    if not isinstance(trusted, bool):
-        raise PacketError("trusted must be a boolean")
+    effective_trusted = _resolve_effective_trusted(trusted, pr_meta)
     if (
         not findings._is_strict_int(budget_chars)
         or budget_chars < MIN_PACKET_BUDGET_CHARS
@@ -772,7 +930,7 @@ def build_context_packet(
         repo_root,
         changed_paths,
         base_ref=base_ref,
-        trusted=trusted,
+        trusted=effective_trusted,
     )
     intent_raw, linked_issues, intent_warnings = collect_intent_sources(
         repo_root,
@@ -780,7 +938,7 @@ def build_context_packet(
         pr_meta=pr_meta,
         changed_paths=changed_paths,
         target_ref=target_ref,
-        trusted=trusted,
+        trusted=effective_trusted,
         fetch_linked_issues=fetch_linked_issues,
     )
     evidence_summary, code_findings, evidence_warnings = collect_evidence(
@@ -825,12 +983,15 @@ def build_context_packet(
     if evidence_summary["acceptedFiles"]:
         sources_used.append("evidence")
 
+    used_chars = sum(item["includedChars"] for item in rules_budgeted) + sum(
+        item["includedChars"] for item in intent_budgeted
+    )
     packet: dict[str, Any] = {
         "schemaVersion": SCHEMA_VERSION,
         "treeId": clean_tree_id,
         "budget": {
             "budgetChars": budget_chars,
-            "usedChars": budget_chars - rem,
+            "usedChars": used_chars,
             "partial": bool(rules_partial or intent_partial),
         },
         "sourcesUsed": sources_used,

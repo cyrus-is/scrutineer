@@ -247,13 +247,23 @@ def _run_command(
     return stdout
 
 
-def _read_fd_bounded(fd: int, *, max_bytes: int) -> bytes | None:
+def _read_fd_bounded(
+    fd: int,
+    *,
+    max_bytes: int,
+    raise_on_oversized: bool = False,
+    label: str = "file",
+) -> bytes | None:
     """Validate an open fd is a regular file within ``max_bytes`` and read it."""
     try:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode):
             return None
         if st.st_size > max_bytes:
+            if raise_on_oversized:
+                raise ChecksError(
+                    f"{label} ({st.st_size} bytes) exceeds max {max_bytes} bytes"
+                )
             return None
         with os.fdopen(fd, "rb") as handle:
             fd = -1
@@ -264,6 +274,8 @@ def _read_fd_bounded(fd: int, *, max_bytes: int) -> bytes | None:
         if fd != -1:
             os.close(fd)
     if len(raw) > max_bytes:
+        if raise_on_oversized:
+            raise ChecksError(f"{label} exceeds max {max_bytes} bytes")
         return None
     return raw
 
@@ -273,6 +285,7 @@ def _read_repo_regular_file(
     rel_path: str,
     *,
     max_bytes: int,
+    raise_on_oversized: bool = False,
 ) -> bytes | None:
     """Safely read a regular non-symlink file inside ``repo_root``."""
     validate_repo_relative_path(rel_path)
@@ -316,7 +329,12 @@ def _read_repo_regular_file(
         if cur_fd != -1:
             os.close(cur_fd)
 
-    return _read_fd_bounded(leaf_fd, max_bytes=max_bytes)
+    return _read_fd_bounded(
+        leaf_fd,
+        max_bytes=max_bytes,
+        raise_on_oversized=raise_on_oversized,
+        label=f"repo file {safe_error_text(rel_path)}",
+    )
 
 
 def _read_explicit_regular_file(
