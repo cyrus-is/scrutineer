@@ -253,7 +253,7 @@ def test_diff_mode_prompt_determinism_and_report_integration() -> None:
         )
 
 
-def test_pr_mode_trust_worktree_and_evidence() -> None:
+def test_pr_mode_trust_and_evidence() -> None:
     with tempfile.TemporaryDirectory(prefix="vld8-prep-pr-") as tmp:
         root = Path(tmp)
         upstream_bare = root / "upstream.git"
@@ -341,13 +341,13 @@ def test_pr_mode_trust_worktree_and_evidence() -> None:
             )
         tr_prompt = (tr_res.prompt_path or Path()).read_text(encoding="utf-8")
         check(
-            "trusted PR uses base-ref rules/config and cleans up temporary worktree",
+            "trusted PR uses base-ref rules/config and creates no worktree",
             tr_res.trusted is True
             and tr_res.prepare_doc["packet"]["budget"]["budgetChars"] == 4096
             and "Base rule line" in tr_prompt
             and "EVIL PR OVERRIDE" not in tr_prompt
             and "Linked issue #12" in tr_prompt
-            and "vld8-wt-" not in _git(clone_repo, "worktree", "list"),
+            and "\n" not in _git(clone_repo, "worktree", "list"),
         )
 
         # Fork PR: untrusted warning, rejects in-repo --spec, isolates evidence.
@@ -412,7 +412,7 @@ def test_pr_mode_trust_worktree_and_evidence() -> None:
             and fk_res.prepare_doc["packet"]["evidence"]["acceptedFiles"]
             == ["good.json"]
             and len(fk_res.prepare_doc["packet"]["evidence"]["rejectedFiles"]) == 1
-            and "vld8-wt-" not in _git(clone_repo, "worktree", "list"),
+            and "\n" not in _git(clone_repo, "worktree", "list"),
         )
 
         # Bot PR via --untrusted flag or bot author fails closed.
@@ -965,7 +965,7 @@ def test_scope_section_partitions_and_output_contract() -> None:
         state_dir = root / "state"
         _init_git_repo(repo)
         base_oid = _commit_files(repo, {"README.md": "x\n"})
-        _commit_files(
+        head_oid = _commit_files(
             repo,
             {
                 "api/handlers/a.py": "A = 1\n",
@@ -993,13 +993,13 @@ def test_scope_section_partitions_and_output_contract() -> None:
             sorted(scoped) == ["api/handlers/a.py", "api/handlers/b.py", "web/ui/c.ts"]
             and rebuilt == sorted(scoped)
             and all(part["pathCount"] == part["files"] for part in parts)
-            and cov["diffRange"] == f"{base_oid}...HEAD",
+            and cov["diffRange"] == f"{base_oid}...{head_oid}",
             json.dumps(cov["sizing"]),
         )
         prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
         check(
             "prompt gives the diff command and lists files by partition",
-            f"git diff {base_oid}...HEAD --" in prompt
+            f"git diff {base_oid}...{head_oid} --" in prompt
             and "**api/handlers** (2 file(s)):" in prompt
             and "- `web/ui/c.ts`" in prompt,
         )
@@ -1283,7 +1283,7 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
         work_repo = root / "work"
         clone_repo = root / "clone"
         state_dir = root / "state"
-        _git(root, "init", "--bare", "-q", str(upstream_bare))
+        _git(root, "init", "--bare", "-q", "-b", "main", str(upstream_bare))
         _init_git_repo(work_repo)
         _git(work_repo, "remote", "add", "origin", str(upstream_bare))
         _commit_files(work_repo, {"api/app.py": "def ok():\n    return 1\n"})
@@ -1308,11 +1308,14 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
         # A linked worktree whose directory is temporarily missing must survive.
         linked = root / "linked"
         parked = root / "linked-parked"
-        _git(clone_repo, "worktree", "add", "-q", "--detach", str(linked))
+        _git(
+            clone_repo, "worktree", "add", "-q", "--detach", str(linked), "origin/main"
+        )
         linked.rename(parked)
 
         orig_run = checks._run_command
         gh_calls: list[list[str]] = []
+        foreign_fetch_head: dict[str, str | None] = {"oid": pr_oid}
 
         def fake(argv: list[str], **kwargs: Any) -> bytes:
             if argv[:2] == ["gh", "pr"]:
@@ -1333,6 +1336,9 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
             if argv[:1] == ["gh"]:
                 gh_calls.append(list(argv))
                 raise checks.ChecksError("no network in tests")
+            if "FETCH_HEAD" in argv and foreign_fetch_head["oid"]:
+                # A concurrent fetch of the PR head owns FETCH_HEAD now.
+                return f"{foreign_fetch_head['oid']}\n".encode("ascii")
             return orig_run(argv, **kwargs)
 
         with (
@@ -1353,11 +1359,18 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
                 state_dir=state_dir,
                 run_id="pr-fast",
             )
+            foreign_fetch_head["oid"] = None
             orphan = prepare.prepare_review(
                 repo=clone_repo, pr_number=8, state_dir=state_dir, run_id="pr-orphan"
             )
         parked.rename(linked)
         cov = res.prepare_doc["coverage"]
+        check(
+            "a foreign FETCH_HEAD never becomes the base, and no temp refs remain",
+            res.prepare_doc["coverage"]["baseRef"] != pr_oid
+            and _git(clone_repo, "for-each-ref", "refs/vld8") == "",
+            res.prepare_doc["coverage"]["baseRef"],
+        )
         check(
             "PR mode diffs against the remote's base, not a stale local one",
             cov["scopedPaths"] == [".gitattributes", "mine.py"]
@@ -1420,7 +1433,11 @@ def test_pr_mode_reads_objects_and_fetches_base() -> None:
             "PR prompt says where to read files and which checkout report needs",
             "was fetched into this repository" in prompt
             and f"worktree add --detach <dir> {pr_oid}" in prompt
-            and "This tree is untrusted" in prompt,
+            and "This tree is untrusted" in prompt
+            and f"GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null worktree add "
+            f"--detach <dir> {pr_oid}"
+            in prompt
+            and "outside this repository" in prompt,
         )
 
 
@@ -1432,7 +1449,7 @@ def test_report_verifies_quotes_from_a_checkout_of_the_target() -> None:
         _init_git_repo(repo)
         _commit_files(repo, {"src/app.py": "def run():\n    return 1\n"})
         _git(repo, "checkout", "-qb", "feat")
-        _commit_files(
+        feat_oid = _commit_files(
             repo,
             {"src/app.py": "def run():\n    return 1\n\nDEBUG = True\n"},
             "feat",
@@ -1514,8 +1531,9 @@ def test_report_verifies_quotes_from_a_checkout_of_the_target() -> None:
         prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
         check(
             "two-ref prompt says to read files at the target",
-            "Read files as of the target `feat`" in prompt
-            and "worktree add --detach <dir> feat" in prompt,
+            f"Read files as of the target `{feat_oid}`" in prompt
+            and f"worktree add --detach <dir> {feat_oid}" in prompt
+            and "GIT_LFS_SKIP_SMUDGE" not in prompt,
         )
 
 
@@ -1579,10 +1597,55 @@ def test_working_tree_id_branches_and_contract_constants() -> None:
     )
 
 
+def test_rendered_commands_use_commit_ids_only() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-refs-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        state_dir = root / "state"
+        _init_git_repo(repo)
+        base_oid = _commit_files(repo, {"src/a.py": "A = 1\n"})
+        evil = "f;id>pwned|sh"
+        _git(repo, "checkout", "-qb", evil)
+        tip_oid = _commit_files(repo, {"src/a.py": "A = 2\n"}, "tip")
+        _git(repo, "checkout", "-q", "main")
+        res = prepare.prepare_review(
+            repo=repo,
+            diff_range=f"main...{evil}",
+            state_dir=state_dir,
+            run_id="refs",
+        )
+        prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
+        fenced: list[str] = []
+        inside = False
+        for line in prompt.splitlines():
+            if line.startswith("```sh"):
+                inside = True
+                continue
+            if inside and line.startswith("```"):
+                inside = False
+                continue
+            if inside:
+                fenced.append(line)
+        check(
+            "shell blocks hold commit ids, never the user's ref names",
+            fenced
+            and not any(evil in line for line in fenced)
+            and not any(ch in line for line in fenced for ch in ";|$")
+            and f"git diff {base_oid}...{tip_oid} --" in fenced,
+            "\n".join(fenced),
+        )
+        check(
+            "coverage records the resolved commits and keeps the label",
+            res.prepare_doc["coverage"]["targetRef"] == tip_oid
+            and res.prepare_doc["coverage"]["baseRef"] == base_oid
+            and res.prepare_doc["coverage"]["target"] == f"main...{evil}",
+        )
+
+
 def main() -> int:
     os.environ.pop("GIT_DIR", None)
     test_diff_mode_prompt_determinism_and_report_integration()
-    test_pr_mode_trust_worktree_and_evidence()
+    test_pr_mode_trust_and_evidence()
     test_component_deep_fast_tier_and_security_lens()
     test_cli_exit_codes_and_error_validation()
     test_single_ref_diff_names_the_working_tree()
@@ -1595,6 +1658,7 @@ def main() -> int:
     test_pr_mode_reads_objects_and_fetches_base()
     test_report_verifies_quotes_from_a_checkout_of_the_target()
     test_working_tree_id_branches_and_contract_constants()
+    test_rendered_commands_use_commit_ids_only()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

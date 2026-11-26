@@ -197,6 +197,7 @@ vld8 review report --findings m.json [--prepare p.json] [--prior old.json] [--re
 - **PRs:** `--pr` fetches the PR head and its base branch from the PR's remote and reads both as git objects, so the diff doesn't depend on a stale local `origin/<base>` and nothing from the PR is checked out.
 - **Untrusted trees:** on a fork's or a bot's PR, or with `--untrusted`, nothing from the PR's tree is run or read as config, and `--spec` and `--service-map` must be outside the repository. With `--untrusted`, `--component` and `--deep` read no rules or config unless you give `--base-ref`.
 - **Evidence:** each `--evidence` file is accepted only when it names the reviewed tree ID.
+- **Linked issues:** `--fetch-issues` (or `[prepare].fetch_linked_issues`) applies to `--pr` only, and `--tier fast` never fetches them.
 - **Checking findings:** `vld8 review report` checks citations against the files under `--repo`, so point it at a checkout of the reviewed tree. `prompt.md` gives the commands for each mode.
 - **Exit codes:** `0` prepared; `1` blocking code findings (`--tier fast` only, which writes `prepare.json` alone); `2` preparation failed.
 

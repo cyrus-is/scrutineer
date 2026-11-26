@@ -10,6 +10,7 @@ runner-neutral ``prompt.md`` outside the worktree, and exits cleanly for both
 from __future__ import annotations
 
 import json
+import secrets
 import shutil
 import subprocess
 import sys
@@ -163,21 +164,41 @@ def _parse_diff_range_refs(diff_range: str) -> tuple[str, str | None]:
     return clean_base, clean_target
 
 
-def _resolve_valid_base_ref(
+def _resolve_commit(
     repo_root: Path,
-    candidates: Sequence[str],
+    ref: str,
     *,
+    env: dict[str, str],
     label: str = "baseRef",
 ) -> str:
-    last_err: str | None = None
-    for raw in candidates:
-        clean = packet._validate_single_git_ref_no_colon(raw, label=label)
-        try:
-            trust.compute_tree_id(repo_root, clean)
-            return clean
-        except trust.TrustError as exc:
-            last_err = str(exc)
-    raise PrepareError(last_err or f"cannot resolve {label}")
+    """Resolve a ref to a commit id once, so later steps can't see it move.
+
+    Rendered commands use only these ids, never the user's ref names, which
+    git allows to contain shell metacharacters.
+    """
+    clean = packet._validate_single_git_ref_no_colon(ref, label=label)
+    try:
+        out = checks._run_command(
+            [
+                "git",
+                "-C",
+                str(repo_root),
+                "rev-parse",
+                "--verify",
+                "--quiet",
+                f"{clean}^{{commit}}",
+            ],
+            cwd=repo_root,
+            env=env,
+        )
+    except checks.ChecksError as exc:
+        raise PrepareError(
+            f"cannot resolve {label} {checks.safe_error_text(clean)} to a commit"
+        ) from exc
+    oid = out.decode("utf-8", "replace").strip()
+    if not checks._GIT_OID_RE.match(oid):
+        raise PrepareError(f"unexpected commit id for {label}")
+    return oid
 
 
 def _fetch_pr_base(
@@ -191,19 +212,26 @@ def _fetch_pr_base(
     """Return the commit of the PR's base branch, fetched from the PR's remote.
 
     The local ``origin/<base>`` can be behind, and diffing against a stale
-    base counts commits the PR merged or rebased onto as part of the PR.
-    ``--refmap=`` keeps the fetch from moving the user's remote-tracking refs.
+    base counts commits the PR merged or rebased onto as part of the PR. The
+    branch is fetched into a private, per-run ref that is deleted afterwards:
+    ``FETCH_HEAD`` is shared, so a concurrent fetch could otherwise swap in
+    another commit, such as the PR head, as the trusted base.
     """
     remote: str | None = (
         fetch_source if fetch_source in ("origin", "upstream") else None
     )
+    fetch_problem = "no remote served the PR head"
     if fetch_source == "gh-url":
         try:
             remote = trust._resolve_gh_repo_url(repo_root)
         except trust.TrustError:
             remote = None
+            fetch_problem = "could not resolve the PR repository's URL"
+    local_candidates = [f"origin/{base_name}", base_name]
+    if fetch_source == "upstream":
+        local_candidates.insert(0, f"upstream/{base_name}")
     local: str | None = None
-    for cand in (f"origin/{base_name}", base_name):
+    for cand in local_candidates:
         try:
             out = checks._run_command(
                 [
@@ -226,8 +254,8 @@ def _fetch_pr_base(
             break
 
     fetched: str | None = None
-    fetch_problem = "no remote served the PR head"
     if remote is not None and not remote.startswith("-"):
+        tmp_ref = f"refs/vld8/tmp/base-{secrets.token_hex(8)}"
         try:
             checks._run_command(
                 [
@@ -236,15 +264,24 @@ def _fetch_pr_base(
                     str(repo_root),
                     "fetch",
                     "--no-tags",
+                    "--no-write-fetch-head",
                     "--refmap=",
                     remote,
-                    f"refs/heads/{base_name}",
+                    f"+refs/heads/{base_name}:{tmp_ref}",
                 ],
                 cwd=repo_root,
                 env=env,
             )
             out = checks._run_command(
-                ["git", "-C", str(repo_root), "rev-parse", "--verify", "FETCH_HEAD"],
+                [
+                    "git",
+                    "-C",
+                    str(repo_root),
+                    "rev-parse",
+                    "--verify",
+                    "--quiet",
+                    f"{tmp_ref}^{{commit}}",
+                ],
                 cwd=repo_root,
                 env=env,
             )
@@ -252,9 +289,18 @@ def _fetch_pr_base(
             if checks._GIT_OID_RE.match(oid):
                 fetched = oid
             else:
-                fetch_problem = "unexpected FETCH_HEAD"
+                fetch_problem = "unexpected commit id for the fetched base"
         except checks.ChecksError as exc:
             fetch_problem = str(exc)
+        finally:
+            try:
+                checks._run_command(
+                    ["git", "-C", str(repo_root), "update-ref", "-d", tmp_ref],
+                    cwd=repo_root,
+                    env=env,
+                )
+            except checks.ChecksError:
+                pass
 
     if fetched is not None:
         if local is not None and local != fetched:
@@ -367,7 +413,7 @@ def _is_vendored(rel: str, *, prefix: str = "") -> bool:
     )
 
 
-def _list_tracked_head_paths(repo_root: Path) -> list[str]:
+def _list_tracked_paths(repo_root: Path, commit: str) -> list[str]:
     try:
         raw = trust._run_git_or_gh(
             [
@@ -379,7 +425,7 @@ def _list_tracked_head_paths(repo_root: Path) -> list[str]:
                 "-r",
                 "--name-only",
                 "-z",
-                "HEAD",
+                commit,
             ],
             cwd=repo_root,
         )
@@ -923,17 +969,19 @@ def _render_report_section(cov: dict[str, Any]) -> list[str]:
     if cov["mode"] == "diff" and cov.get("targetRef") is None:
         lines.append("- Use this repository as `--repo`, before making further edits.")
         return lines
-    target = cov.get("targetRef") or "HEAD"
+    target = cov["targetRef"]
+    skip_lfs = "" if cov["trusted"] else "GIT_LFS_SKIP_SMUDGE=1 "
     lines.extend(
         [
             "- If this repository's working tree is a clean checkout of "
             f"{report._md_code_span(target)}, use it as `--repo`.",
-            "- Otherwise check the target out into a temporary worktree, pass it "
-            "as `--repo`, and remove it afterwards:",
+            "- Otherwise check the target out into a new temporary directory "
+            "outside this repository, pass it as `--repo`, and remove it "
+            "afterwards:",
             "",
             packet.format_quoted_block(
-                f"git -c core.hooksPath=/dev/null worktree add --detach <dir> {target}"
-                "\ngit worktree remove --force <dir>",
+                f"{skip_lfs}git -c core.hooksPath=/dev/null worktree add --detach "
+                f"<dir> {target}\ngit worktree remove --force <dir>",
                 info="sh",
             ),
         ]
@@ -943,8 +991,8 @@ def _render_report_section(cov: dict[str, Any]) -> list[str]:
             [
                 "",
                 "This tree is untrusted. The checkout writes its files to disk and "
-                "applies its `.gitattributes` with your git configuration; don't "
-                "run anything from it.",
+                "applies its `.gitattributes` with your git configuration (Git LFS "
+                "downloads are skipped); don't run anything from it.",
             ]
         )
     return lines
@@ -1068,9 +1116,11 @@ def render_prompt_markdown(
         ),
     ]
     if meta.get("baseRef"):
-        lines.append(f"- **Base ref:** {report._md_code_span(meta['baseRef'])}")
+        lines.append(
+            f"- **Rules/config commit:** {report._md_code_span(meta['baseRef'])}"
+        )
     if meta.get("targetRef"):
-        lines.append(f"- **Target ref:** {report._md_code_span(meta['targetRef'])}")
+        lines.append(f"- **Target commit:** {report._md_code_span(meta['targetRef'])}")
     if prepare_doc["partial"]:
         lines.append(
             "- **Coverage status:** `partial: true` — inspect omitted items "
@@ -1424,7 +1474,6 @@ def _compute_run_outputs(
     vendored_skipped: int,
     effective_trusted: bool,
     trusted_packet_arg: bool | None,
-    scoped_repo: Path,
     scoped_tree_ref: str | None,
     all_scoped_paths: list[str],
     additions: int,
@@ -1459,7 +1508,7 @@ def _compute_run_outputs(
             routing = checks.select_checks(
                 changed=scoped_paths,
                 lens=lens,
-                repo=scoped_repo,
+                repo=resolved_repo,
                 tree_ref=scoped_tree_ref,
                 env=env,
             )
@@ -1801,7 +1850,7 @@ def prepare_review(
         # --base-ref chooses where rules and config come from; the diff always
         # starts from the PR's own base branch.
         clean_base: str | None = (
-            _resolve_valid_base_ref(resolved_repo, (base_ref,))
+            _resolve_commit(resolved_repo, base_ref, env=env)
             if base_ref is not None
             else diff_base
         )
@@ -1812,11 +1861,28 @@ def prepare_review(
         pr_meta = None
         effective_trusted = not untrusted
         trusted_packet_arg = effective_trusted
-        inferred_base, target_ref = _parse_diff_range_refs(diff_range)
+        inferred_base, target_name = _parse_diff_range_refs(diff_range)
+        if "..." in diff_range:
+            range_sep: str | None = "..."
+        elif ".." in diff_range:
+            range_sep = ".."
+        else:
+            range_sep = None
+        base_commit = _resolve_commit(resolved_repo, inferred_base, env=env)
+        target_ref = (
+            _resolve_commit(resolved_repo, target_name, env=env, label="targetRef")
+            if target_name is not None
+            else None
+        )
+        resolved_range = (
+            base_commit
+            if range_sep is None
+            else f"{base_commit}{range_sep}{target_ref}"
+        )
         clean_base = (
-            _resolve_valid_base_ref(resolved_repo, (base_ref,))
+            _resolve_commit(resolved_repo, base_ref, env=env)
             if base_ref is not None
-            else _resolve_valid_base_ref(resolved_repo, (inferred_base,))
+            else base_commit
         )
         target_label = diff_range
     elif component is not None:
@@ -1824,32 +1890,24 @@ def prepare_review(
         pr_meta = None
         effective_trusted = not untrusted
         trusted_packet_arg = effective_trusted
+        target_ref = _resolve_commit(resolved_repo, "HEAD", env=env, label="HEAD")
         clean_base = (
-            _resolve_valid_base_ref(resolved_repo, (base_ref,))
+            _resolve_commit(resolved_repo, base_ref, env=env)
             if base_ref is not None
-            else (
-                _resolve_valid_base_ref(resolved_repo, ("HEAD",))
-                if effective_trusted
-                else None
-            )
+            else (target_ref if effective_trusted else None)
         )
-        target_ref = "HEAD"
         target_label = _validate_component_name(component)
     else:
         mode = "deep"
         pr_meta = None
         effective_trusted = not untrusted
         trusted_packet_arg = effective_trusted
+        target_ref = _resolve_commit(resolved_repo, "HEAD", env=env, label="HEAD")
         clean_base = (
-            _resolve_valid_base_ref(resolved_repo, (base_ref,))
+            _resolve_commit(resolved_repo, base_ref, env=env)
             if base_ref is not None
-            else (
-                _resolve_valid_base_ref(resolved_repo, ("HEAD",))
-                if effective_trusted
-                else None
-            )
+            else (target_ref if effective_trusted else None)
         )
-        target_ref = "HEAD"
         target_label = "--deep"
 
     cfg, cfg_prov = _load_trusted_prepare_config(
@@ -1902,7 +1960,6 @@ def prepare_review(
             raise PrepareError(str(exc)) from exc
         additions = sum(e.additions for e in file_stats)
         deletions = sum(e.deletions for e in file_stats)
-        scoped_repo = resolved_repo
         scoped_tree_ref: str | None = head_oid
         diff_range_used: str | None = pr_range
         vendored_skipped = 0
@@ -1915,25 +1972,24 @@ def prepare_review(
                 else _working_tree_id(resolved_repo, env)
             )
             file_stats, commits = checks._git_diff_stats(
-                resolved_repo, diff_range, env=env
+                resolved_repo, resolved_range, env=env
             )
             all_scoped_paths = checks._git_changed_paths(
-                resolved_repo, diff_range, env=env
+                resolved_repo, resolved_range, env=env
             )
         except (checks.ChecksError, trust.TrustError) as exc:
             raise PrepareError(str(exc)) from exc
         additions = sum(e.additions for e in file_stats)
         deletions = sum(e.deletions for e in file_stats)
-        scoped_repo = resolved_repo
         scoped_tree_ref = target_ref
-        diff_range_used = diff_range
+        diff_range_used = resolved_range
         vendored_skipped = 0
     else:
         try:
-            tree_id = trust.compute_tree_id(resolved_repo, "HEAD")
+            tree_id = trust.compute_tree_id(resolved_repo, target_ref)
         except trust.TrustError as exc:
             raise PrepareError(str(exc)) from exc
-        all_tracked = _list_tracked_head_paths(resolved_repo)
+        all_tracked = _list_tracked_paths(resolved_repo, target_ref)
         all_scoped_paths = []
         vendored_skipped = 0
         if mode == "component":
@@ -1971,8 +2027,7 @@ def prepare_review(
         commits = 0
         additions = 0
         deletions = 0
-        scoped_repo = resolved_repo
-        scoped_tree_ref = "HEAD"
+        scoped_tree_ref = target_ref
         diff_range_used = None
 
     return _compute_run_outputs(
@@ -1988,7 +2043,6 @@ def prepare_review(
         vendored_skipped=vendored_skipped,
         effective_trusted=effective_trusted,
         trusted_packet_arg=trusted_packet_arg,
-        scoped_repo=scoped_repo,
         scoped_tree_ref=scoped_tree_ref,
         all_scoped_paths=all_scoped_paths,
         additions=additions,

@@ -381,7 +381,10 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
     prep.add_argument(
         "--fetch-issues",
         action="store_true",
-        help="Fetch GitHub issues referenced in PR metadata via gh issue view.",
+        help=(
+            "With --pr and --tier deep, fetch GitHub issues the PR body references "
+            "(gh issue view)."
+        ),
     )
     prep.add_argument(
         "--budget",
