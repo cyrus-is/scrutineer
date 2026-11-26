@@ -202,15 +202,23 @@ def _run_command(
     timeout: float = MAX_COMMAND_TIMEOUT_S,
     max_stdout_bytes: int = MAX_COMMAND_STDOUT_BYTES,
     max_stderr_bytes: int = MAX_COMMAND_STDERR_BYTES,
+    env: dict[str, str] | None = None,
 ) -> bytes:
     """Run a subprocess with list argv only, bounded output, and safe errors."""
-    if not argv or any("\x00" in part for part in argv):
+    if (
+        not isinstance(argv, list)
+        or not argv
+        or not all(isinstance(part, str) for part in argv)
+    ):
+        raise ChecksError("command arguments must be a non-empty list of strings")
+    if any("\x00" in part for part in argv):
         raise ChecksError("command arguments must not contain NUL bytes")
     cmd_name = safe_error_text(argv[0])
     try:
         proc = subprocess.run(
             argv,
             cwd=str(cwd),
+            env=env,
             capture_output=True,
             timeout=timeout,
             check=False,
@@ -470,6 +478,8 @@ def _read_git_tree_regular_file(
     rel_path: str,
     *,
     max_bytes: int,
+    raise_on_oversized: bool = False,
+    env: dict[str, str] | None = None,
 ) -> bytes | None:
     """Read a regular non-symlink blob from ``tree_ref`` bounded by ``max_bytes``."""
     validate_repo_relative_path(rel_path)
@@ -488,6 +498,7 @@ def _read_git_tree_regular_file(
             f":(literal){rel_path}",
         ],
         cwd=repo_root,
+        env=env,
     )
     if not ls_raw:
         return None
@@ -509,13 +520,20 @@ def _read_git_tree_regular_file(
             or obj_type != "blob"
             or not _GIT_OID_RE.match(oid)
             or not size_str.isdigit()
-            or int(size_str) > max_bytes
         ):
+            return None
+        if int(size_str) > max_bytes:
+            if raise_on_oversized:
+                raise ChecksError(
+                    f"git tree file {safe_error_text(rel_path)} "
+                    f"({size_str} bytes) exceeds max {max_bytes} bytes"
+                )
             return None
         return _run_command(
             ["git", "-C", str(repo_root), "cat-file", "blob", oid],
             cwd=repo_root,
             max_stdout_bytes=max_bytes,
+            env=env,
         )
     return None
 
