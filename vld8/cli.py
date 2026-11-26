@@ -15,7 +15,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import __version__, checks, installer, paths, report
+from . import __version__, checks, installer, paths, prepare, report
 
 
 def _run_script(script: Path, args: list[str]) -> int:
@@ -275,10 +275,134 @@ def _cmd_checks(args: argparse.Namespace) -> int:
 def _add_review_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "review",
-        help="Code-first review helpers (size, report).",
+        help="Code-first review helpers (prepare, size, report).",
         description="Deterministic review preparation and reporting helpers.",
     )
     actions = p.add_subparsers(dest="review_action", required=True)
+    prep = actions.add_parser(
+        "prepare",
+        help="Prepare bounded review context (prepare.json and prompt.md).",
+        description=(
+            "Resolve review scope, select applicable checks, assemble a budgeted "
+            "context packet, and write prepare.json (plus prompt.md in deep tier) "
+            "under the state directory."
+        ),
+    )
+    prep_target = prep.add_mutually_exclusive_group(required=True)
+    prep_target.add_argument(
+        "--diff",
+        metavar="RANGE",
+        help=(
+            "Git diff range (e.g. main...HEAD); a single ref compares it with "
+            "the working tree."
+        ),
+    )
+    prep_target.add_argument(
+        "--pr",
+        type=_positive_int,
+        metavar="NUMBER",
+        help="GitHub pull request number (>= 1).",
+    )
+    prep_target.add_argument(
+        "--component",
+        metavar="NAME",
+        help="Component name from servicemap.json or repo-relative directory prefix.",
+    )
+    prep_target.add_argument(
+        "--deep",
+        action="store_true",
+        help="Prepare a repository-wide review across tracked files.",
+    )
+    prep.add_argument(
+        "--lens",
+        choices=sorted(prepare.VALID_LENSES),
+        default="code",
+        help="Review lens: code or security (default: code).",
+    )
+    prep.add_argument(
+        "--tier",
+        choices=sorted(prepare.VALID_TIERS),
+        default="deep",
+        help="Execution tier: fast (code findings only) or deep (default: deep).",
+    )
+    prep.add_argument(
+        "--repo",
+        default=".",
+        metavar="PATH",
+        help=(
+            "Any directory in the working tree (default: current directory); its "
+            "top level is used."
+        ),
+    )
+    prep.add_argument(
+        "--state-dir",
+        default=None,
+        metavar="PATH",
+        help="External state directory (default: <git-common-dir>/vld8).",
+    )
+    prep.add_argument(
+        "--run-id",
+        default=None,
+        metavar="ID",
+        help=(
+            "Optional single-segment run identifier under runs/<treeId>/; "
+            "must not exist yet."
+        ),
+    )
+    prep.add_argument(
+        "--base-ref",
+        default=None,
+        metavar="REF",
+        help=("Trusted git ref for loading rules and config; doesn't change the diff."),
+    )
+    prep.add_argument(
+        "--config",
+        default=None,
+        metavar="PATH",
+        help="Optional external .vld8.toml path (overrides base-ref config).",
+    )
+    prep.add_argument(
+        "--service-map",
+        "-s",
+        default=None,
+        metavar="PATH",
+        help="Optional servicemap.json path.",
+    )
+    prep.add_argument(
+        "--spec",
+        default=None,
+        metavar="PATH",
+        help="Optional specification document path (must be external if untrusted).",
+    )
+    prep.add_argument(
+        "--evidence",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Evidence JSON or SARIF file matching the reviewed treeId (repeatable).",
+    )
+    prep.add_argument(
+        "--fetch-issues",
+        action="store_true",
+        help=(
+            "With --pr and --tier deep, fetch GitHub issues the PR body references "
+            "(gh issue view)."
+        ),
+    )
+    prep.add_argument(
+        "--budget",
+        type=_positive_int,
+        default=None,
+        metavar="CHARS",
+        help="Context packet character budget (1024..512000).",
+    )
+    prep.add_argument(
+        "--untrusted",
+        action="store_true",
+        help="Force untrusted posture (no repo tools or working-tree config).",
+    )
+    prep.set_defaults(func=_cmd_review_prepare)
+
     size_p = actions.add_parser(
         "size",
         help="Measure a diff or PR and suggest review partitions.",
@@ -360,6 +484,28 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
         help="Write rendered report atomically to FILE instead of stdout.",
     )
     rep.set_defaults(func=_cmd_review_report)
+
+
+def _cmd_review_prepare(args: argparse.Namespace) -> int:
+    return prepare.run_prepare(
+        repo=args.repo,
+        diff_range=args.diff,
+        pr_number=args.pr,
+        component=args.component,
+        deep=args.deep,
+        lens=args.lens,
+        tier=args.tier,
+        state_dir=args.state_dir,
+        run_id=args.run_id,
+        base_ref=args.base_ref,
+        config_path=args.config,
+        service_map_path=args.service_map,
+        spec_path=args.spec,
+        evidence_paths=args.evidence,
+        fetch_linked_issues=args.fetch_issues,
+        budget_chars=args.budget,
+        untrusted=args.untrusted,
+    )
 
 
 def _cmd_review_size(args: argparse.Namespace) -> int:

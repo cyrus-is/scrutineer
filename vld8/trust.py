@@ -189,20 +189,37 @@ def _safe_resolve(path: Path, *, label: str) -> Path:
         ) from exc
 
 
-def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> Path:
-    """Create ``parts`` under ``root`` while refusing any symlink component."""
+def _ensure_safe_dir_tree(
+    root: Path,
+    parts: tuple[str, ...],
+    *,
+    label: str,
+    exclusive_leaf: bool = False,
+) -> Path:
+    """Create ``parts`` under ``root`` while refusing any symlink component.
+
+    With ``exclusive_leaf``, the last segment must not exist yet.
+    """
     _reject_symlink(root, label=label)
     if root.exists() and not root.is_dir():
         raise TrustError(f"{label} is not a directory")
     try:
         root.mkdir(parents=True, exist_ok=True)
         cur = root
-        for segment in parts:
+        for idx, segment in enumerate(parts):
             cur = cur / segment
             _reject_symlink(cur, label=f"{label}/{segment}")
             if cur.exists() and not cur.is_dir():
                 raise TrustError(f"{label}/{segment} is not a directory")
-            cur.mkdir(exist_ok=True)
+            if exclusive_leaf and idx == len(parts) - 1:
+                try:
+                    cur.mkdir(exist_ok=False)
+                except FileExistsError:
+                    raise TrustError(
+                        f"{label}/{checks.safe_error_text(segment)} already exists"
+                    ) from None
+            else:
+                cur.mkdir(exist_ok=True)
     except (OSError, RuntimeError) as exc:
         raise TrustError(
             f"cannot prepare {label} directory: {checks.safe_error_text(exc)}"
@@ -212,6 +229,23 @@ def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> 
     if not resolved_cur.is_relative_to(resolved_root):
         raise TrustError(f"{label} escapes base directory")
     return resolved_cur
+
+
+def _path_reaches_repo(candidate: Path, resolved_repo: Path) -> bool:
+    """True when the path, or any directory on the way to it, resolves in the repo.
+
+    Catches what lexical and final-target checks miss: an in-repo symlink to
+    somewhere else (``<repo>/link -> /elsewhere``), reached through a
+    symlinked prefix of the repo itself (``/tmp`` -> ``/private/tmp``).
+    """
+    abs_candidate = Path(os.path.abspath(candidate))
+    for path in (abs_candidate, *abs_candidate.parents):
+        try:
+            if path.resolve().is_relative_to(resolved_repo):
+                return True
+        except OSError, RuntimeError:
+            continue
+    return False
 
 
 def _validate_external_path(
@@ -232,6 +266,7 @@ def _validate_external_path(
         resolved_candidate.is_relative_to(resolved_repo)
         or abs_candidate.is_relative_to(resolved_repo)
         or abs_candidate.is_relative_to(abs_repo)
+        or _path_reaches_repo(candidate, resolved_repo)
     ):
         raise TrustError(f"{label} must reside outside the reviewed repository")
     return candidate, resolved_candidate
@@ -354,8 +389,14 @@ def prepare_run_dir(
     state_dir: str | Path,
     tree_id: str,
     run_id: str | None = None,
+    *,
+    exclusive: bool = False,
 ) -> Path:
-    """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely."""
+    """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely.
+
+    With ``exclusive``, refuse a run directory that already exists, so two runs
+    never share an output directory.
+    """
     raw_state = _validate_path_string(state_dir, label="state-dir")
     clean_tree_id = _validate_tree_id_value(tree_id)
     clean_run_id = (
@@ -363,7 +404,10 @@ def prepare_run_dir(
     )
     base = Path(raw_state)
     return _ensure_safe_dir_tree(
-        base, ("runs", clean_tree_id, clean_run_id), label="state-dir"
+        base,
+        ("runs", clean_tree_id, clean_run_id),
+        label="state-dir",
+        exclusive_leaf=exclusive,
     )
 
 

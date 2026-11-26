@@ -240,7 +240,7 @@ Three private loops each wrote their own version of these, so they're vld8's fir
 **`vld8 review prepare`** (code):
 - **Modes:** `--diff <range>`, `--pr <n>`, `--component <name>`, `--deep`. Modes 3 and 4 survive.
 - **What it does:**
-  - PR checkout into a temporary worktree (the #93 behaviour, now in code), fork and bot detection, and diff sizing and partitioning;
+  - fetching the PR head and its base branch and reading them as git objects, with no checkout (#166), fork and bot detection, and diff sizing and partitioning;
   - routing and check selection (#61);
   - rules files and intent sources;
   - extracting facts and comparing them before and after;

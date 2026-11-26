@@ -188,6 +188,7 @@ def main() -> int:
     parser = cli.build_parser()
     ns = parser.parse_args(["mcp", "analyze", "--config", "x.json"])
     check("mcp parser accepts script options", ns.args == ["--config", "x.json"])
+    check("`vld8 review prepare --help` exits 0", run_cli("review", "prepare", "--help").returncode == 0)
 
     for n, ok in _results:
         print(("PASS " if ok else "FAIL ") + n)
