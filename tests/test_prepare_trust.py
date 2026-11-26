@@ -1292,7 +1292,7 @@ def test_extended_trust_and_edge_branches() -> None:
         check(
             "load_evidence rejects SARIF invocation with executionSuccessful=false",
             ev_failed_inv["accepted"] is False
-            and "executionSuccessful=false" in (ev_failed_inv["reason"] or ""),
+            and "executionSuccessful" in (ev_failed_inv["reason"] or ""),
         )
 
         blank_driver_sarif = root / "blank_driver.sarif"
@@ -1540,16 +1540,182 @@ def test_extended_trust_and_edge_branches() -> None:
         try:
             env_state = trust.resolve_state_dir(repo)
             env_tree = trust.compute_tree_id(repo, "HEAD")
+            env_git_dir = Path(
+                trust.run_trusted_command(
+                    ["git", "rev-parse", "--path-format=absolute", "--git-dir"],
+                    cwd=repo,
+                    trusted=True,
+                )
+                .decode("utf-8")
+                .strip()
+            ).resolve()
+            seen_gh_envs: list[dict[str, str] | None] = []
+
+            def _spy_gh(argv: list[str], **kwargs: Any) -> bytes:
+                seen_gh_envs.append(kwargs.get("env"))
+                if "pr" in argv:
+                    return json.dumps(
+                        {
+                            "number": 12,
+                            "title": "Env test",
+                            "body": "",
+                            "url": "https://github.com/org/repo/pull/12",
+                            "author": {"login": "alice"},
+                            "headRefName": "feat",
+                            "headRefOid": head_oid,
+                            "baseRefName": "main",
+                            "isCrossRepository": False,
+                        }
+                    ).encode("utf-8")
+                return json.dumps({"url": "https://github.com/org/repo"}).encode(
+                    "utf-8"
+                )
+
+            with mock.patch("vld8.checks._run_command", side_effect=_spy_gh):
+                trust.fetch_pr_metadata(repo, 12)
+                trust._resolve_gh_repo_url(repo)
+
             check(
-                "trust git calls ignore caller GIT_DIR override",
+                "git, gh, and run_trusted_command scrub caller GIT_DIR override",
                 env_state == (repo.resolve() / ".git" / "vld8")
-                and env_tree == expected_cur_tree,
+                and env_tree == expected_cur_tree
+                and env_git_dir == (repo.resolve() / ".git")
+                and len(seen_gh_envs) >= 2
+                and all(e is not None and "GIT_DIR" not in e for e in seen_gh_envs),
             )
         finally:
             if prev_git_dir is None:
                 os.environ.pop("GIT_DIR", None)
             else:
                 os.environ["GIT_DIR"] = prev_git_dir
+
+        # Round 2 review regression tests (#157 / #128).
+        real_parent = root / "real_parent"
+        real_parent.mkdir()
+        sub_repo = real_parent / "r"
+        _init_git_repo(sub_repo)
+        _commit_files(sub_repo, {"pyproject.toml": "[tool.z]\nv = 9\n"}, "init sub")
+        alias_parent = root / "alias_parent"
+        alias_parent.symlink_to(real_parent)
+        sub_tree = trust.compute_tree_id(sub_repo, "HEAD")
+        alias_dest = alias_parent / "r" / ".git" / "vld8" / "runs" / sub_tree / "r1"
+        alias_cfg = trust.extract_base_tool_config(
+            sub_repo.resolve(),
+            "HEAD",
+            "pyproject.toml",
+            alias_dest / "toolcfg",
+        )
+        check(
+            "extract_base_tool_config handles resolved repo + parent symlink dest",
+            alias_cfg is not None and alias_cfg.is_file(),
+        )
+
+        sym_run_target = std_state_dir / "runs" / tree_id / "target_run"
+        sym_run_target.mkdir(parents=True, exist_ok=True)
+        sym_run_link = std_state_dir / "runs" / tree_id / "sym_run"
+        sym_run_link.symlink_to(sym_run_target)
+        _expect_error(
+            "extract_base_tool_config rejects intermediate symlink inside runs dir",
+            trust.extract_base_tool_config,
+            repo,
+            "HEAD",
+            "pyproject.toml",
+            sym_run_link / "toolcfg",
+        )
+
+        for label, bad_ev_arg in [("nul", "bad\x00ev.json"), ("blank", "   ")]:
+            try:
+                trust.load_evidence(bad_ev_arg, expected_tree_id=tree_id)
+                check(f"load_evidence raises TrustError on {label} path", False)
+            except Exception as exc:
+                check(
+                    f"load_evidence raises TrustError on {label} path",
+                    type(exc) is trust.TrustError,
+                )
+
+        omit_exec_sarif = root / "omit_exec.sarif"
+        omit_exec_sarif.write_text(
+            json.dumps(
+                {
+                    "version": "2.1.0",
+                    "runs": [
+                        {
+                            "properties": {"treeId": tree_id},
+                            "tool": {"driver": {"name": "ruff"}},
+                            "invocations": [{"exitCode": 1}],
+                            "results": [],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        ev_omit_exec = trust.load_evidence(omit_exec_sarif, expected_tree_id=tree_id)
+        check(
+            "load_evidence rejects SARIF invocation omitting executionSuccessful",
+            ev_omit_exec["accepted"] is False,
+        )
+
+        many_errs_ev = root / "many_errs.json"
+        many_errs_ev.write_text(
+            json.dumps({"treeId": tree_id, "findings": [{}]}),
+            encoding="utf-8",
+        )
+        try:
+            trust.load_evidence(many_errs_ev, expected_tree_id=tree_id)
+            check("load_evidence caps validate_finding error list", False)
+        except trust.TrustError as exc:
+            msg = str(exc)
+            check(
+                "load_evidence caps validate_finding error list",
+                "(+" in msg and "more)" in msg,
+            )
+
+        orig_checks_run = checks._run_command
+        for kind, spoof_trusted, is_bot in [
+            ("truthy non-bool trusted", 1, False),
+            ("bot flag with trusted=True", True, True),
+        ]:
+            spoof_meta = trust.PRMetadata(
+                number=13,
+                title=kind,
+                body="",
+                url="https://github.com/org/repo/pull/13",
+                author_login="bot" if is_bot else "alice",
+                author_is_bot=is_bot,
+                head_ref_name="feat",
+                head_ref_oid=gm_oid,
+                base_ref_name="main",
+                is_cross_repository=False,
+                trusted=spoof_trusted,  # type: ignore[arg-type]
+                untrusted_reasons=(),
+            )
+            seen_spoof_cmds: list[list[str]] = []
+
+            def _make_spoof_spy(cmd_log: list[list[str]]) -> Any:
+                def _spy(argv: list[str], **kwargs: Any) -> bytes:
+                    cmd_log.append(list(argv))
+                    return orig_checks_run(argv, **kwargs)
+
+                return _spy
+
+            with (
+                mock.patch("vld8.trust._try_fetch_pr_ref", return_value=(True, None)),
+                mock.patch(
+                    "vld8.checks._run_command",
+                    side_effect=_make_spoof_spy(seen_spoof_cmds),
+                ),
+            ):
+                with trust.checkout_pr_worktree(repo, spoof_meta) as wt_sp:
+                    check(
+                        f"checkout_pr_worktree skips submodules for {kind}",
+                        wt_sp.available is True
+                        and wt_sp.submodules_initialized is False,
+                    )
+            check(
+                f"checkout_pr_worktree avoids git submodule for {kind}",
+                not any("submodule" in cmd for cmd in seen_spoof_cmds),
+            )
 
 
 def main() -> int:

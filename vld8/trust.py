@@ -117,14 +117,13 @@ def _run_git_or_gh(
     timeout: float = checks.MAX_COMMAND_TIMEOUT_S,
     max_stdout_bytes: int = checks.MAX_COMMAND_STDOUT_BYTES,
 ) -> bytes:
-    env = _scrubbed_git_env() if argv and argv[0] == "git" else None
     try:
         return checks._run_command(
             argv,
             cwd=cwd,
             timeout=timeout,
             max_stdout_bytes=max_stdout_bytes,
-            env=env,
+            env=_scrubbed_git_env(),
         )
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
@@ -172,6 +171,24 @@ def _reject_symlink(path: Path, *, label: str) -> None:
         raise TrustError(f"{label} must not be a symlink")
 
 
+def _validate_path_string(raw_path: str | Path, *, label: str) -> str:
+    raw = os.fspath(raw_path) if isinstance(raw_path, Path) else raw_path
+    if not isinstance(raw, str) or not raw.strip():
+        raise TrustError(f"{label} must be a non-empty path")
+    if findings._has_control_char(raw) or findings._has_surrogate(raw):
+        raise TrustError(f"{label} contains invalid control characters or surrogates")
+    return raw
+
+
+def _safe_resolve(path: Path, *, label: str) -> Path:
+    try:
+        return path.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise TrustError(
+            f"cannot resolve {label}: {checks.safe_error_text(exc)}"
+        ) from exc
+
+
 def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> Path:
     """Create ``parts`` under ``root`` while refusing any symlink component."""
     _reject_symlink(root, label=label)
@@ -186,12 +203,12 @@ def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> 
             if cur.exists() and not cur.is_dir():
                 raise TrustError(f"{label}/{segment} is not a directory")
             cur.mkdir(exist_ok=True)
-        resolved_root = root.resolve()
-        resolved_cur = cur.resolve()
     except (OSError, RuntimeError) as exc:
         raise TrustError(
             f"cannot prepare {label} directory: {checks.safe_error_text(exc)}"
         ) from exc
+    resolved_root = _safe_resolve(root, label=label)
+    resolved_cur = _safe_resolve(cur, label=label)
     if not resolved_cur.is_relative_to(resolved_root):
         raise TrustError(f"{label} escapes base directory")
     return resolved_cur
@@ -205,14 +222,10 @@ def _validate_external_path(
     label: str,
 ) -> tuple[Path, Path]:
     """Validate an external path, reject symlinks, and keep it outside repo."""
-    raw = os.fspath(raw_path) if isinstance(raw_path, Path) else raw_path
-    if not isinstance(raw, str) or not raw.strip():
-        raise TrustError(f"{label} must be a non-empty path")
-    if findings._has_control_char(raw) or findings._has_surrogate(raw):
-        raise TrustError(f"{label} contains invalid control characters or surrogates")
+    raw = _validate_path_string(raw_path, label=label)
     candidate = Path(raw)
     _reject_symlink(candidate, label=label)
-    resolved_candidate = candidate.resolve()
+    resolved_candidate = _safe_resolve(candidate, label=label)
     abs_candidate = Path(os.path.abspath(candidate))
     abs_repo = Path(os.path.abspath(raw_repo_root))
     if (
@@ -326,7 +339,7 @@ def resolve_state_dir(
             common_path if common_path.is_absolute() else resolved_repo / common_path
         )
         _reject_symlink(raw_common, label="git-common-dir")
-        resolved_common = raw_common.resolve()
+        resolved_common = _safe_resolve(raw_common, label="git-common-dir")
         target = resolved_common / "vld8"
         _reject_symlink(target, label="state-dir")
         return target
@@ -343,11 +356,7 @@ def prepare_run_dir(
     run_id: str | None = None,
 ) -> Path:
     """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely."""
-    raw_state = os.fspath(state_dir) if isinstance(state_dir, Path) else state_dir
-    if not isinstance(raw_state, str) or not raw_state.strip():
-        raise TrustError("state-dir must be a non-empty path")
-    if findings._has_control_char(raw_state) or findings._has_surrogate(raw_state):
-        raise TrustError("state-dir contains invalid control characters or surrogates")
+    raw_state = _validate_path_string(state_dir, label="state-dir")
     clean_tree_id = _validate_tree_id_value(tree_id)
     clean_run_id = (
         secrets.token_hex(8) if run_id is None else _validate_run_id_value(run_id)
@@ -716,12 +725,13 @@ def checkout_pr_worktree(
         return
 
     tmp_root = tempfile.mkdtemp(prefix="vld8-wt-")
-    wt_dir = Path(tmp_root).resolve() / "tree"
     submodules_ok = False
     reason: str | None = None
     added = False
+    wt_dir: Path | None = None
 
     try:
+        wt_dir = _safe_resolve(Path(tmp_root), label="worktree") / "tree"
         try:
             subprocess.run(
                 ["git", "-C", str(resolved_repo), "worktree", "prune"],
@@ -760,7 +770,11 @@ def checkout_pr_worktree(
             return
 
         tree_id = compute_tree_id(wt_dir, meta.head_ref_oid)
-        if meta.trusted and not meta.is_cross_repository:
+        if (
+            can_run_repo_tools(meta.trusted)
+            and meta.is_cross_repository is False
+            and meta.author_is_bot is False
+        ):
             try:
                 status_raw = _run_git_or_gh(
                     ["git", "-C", str(wt_dir), "submodule", "status"],
@@ -937,19 +951,10 @@ def _validate_dest_dir(
     raw_repo_root: str | Path,
 ) -> Path:
     """Allow external dest dirs or validated ``<git-common-dir>/vld8/runs/...``."""
-    raw = os.fspath(dest_dir) if isinstance(dest_dir, Path) else dest_dir
-    if not isinstance(raw, str) or not raw.strip():
-        raise TrustError("dest-dir must be a non-empty path")
-    if findings._has_control_char(raw) or findings._has_surrogate(raw):
-        raise TrustError("dest-dir contains invalid control characters or surrogates")
+    raw = _validate_path_string(dest_dir, label="dest-dir")
     dest_path = Path(raw)
     _reject_symlink(dest_path, label="dest-dir")
-    try:
-        resolved_dest = dest_path.resolve()
-    except (OSError, RuntimeError) as exc:
-        raise TrustError(
-            f"cannot resolve dest-dir: {checks.safe_error_text(exc)}"
-        ) from exc
+    resolved_dest = _safe_resolve(dest_path, label="dest-dir")
     abs_dest = Path(os.path.abspath(dest_path))
     abs_repo = Path(os.path.abspath(raw_repo_root))
     in_repo = (
@@ -963,20 +968,43 @@ def _validate_dest_dir(
     default_state_dir = resolve_state_dir(resolved_repo, state_dir=None)
     runs_dir = default_state_dir / "runs"
     _reject_symlink(runs_dir, label="runs-dir")
-    runs_root = runs_dir.resolve()
-    unres_git = abs_repo / ".git"
-    allowed_abs_bases = [runs_dir, runs_root]
-    if unres_git.exists() and not unres_git.is_symlink() and unres_git.is_dir():
-        allowed_abs_bases.append(unres_git / "vld8" / "runs")
-    if not resolved_dest.is_relative_to(runs_root) or not any(
-        abs_dest.is_relative_to(base) for base in allowed_abs_bases
-    ):
+    runs_root = _safe_resolve(runs_dir, label="runs-dir")
+    if not resolved_dest.is_relative_to(runs_root):
         raise TrustError(
             "dest-dir must reside outside repo_root or under <git-common-dir>/vld8/runs"
         )
-    rel = resolved_dest.relative_to(runs_root)
-    cur = runs_root
-    for segment in rel.parts:
+
+    runs_anc = next(
+        (
+            cand
+            for cand in (abs_dest, *abs_dest.parents)
+            if _safe_resolve(cand, label="dest-dir") == runs_root
+        ),
+        None,
+    )
+    if runs_anc is None or len(runs_anc.parts) < 3:
+        raise TrustError(
+            "dest-dir must reside outside repo_root or under <git-common-dir>/vld8/runs"
+        )
+    vld8_anc = runs_anc.parent
+    common_anc = vld8_anc.parent
+    _reject_symlink(runs_anc, label="runs-dir")
+    _reject_symlink(vld8_anc, label="state-dir")
+    _reject_symlink(common_anc, label="git-common-dir")
+    if (
+        _safe_resolve(vld8_anc, label="state-dir") != runs_root.parent
+        or _safe_resolve(common_anc, label="git-common-dir") != runs_root.parent.parent
+    ):
+        raise TrustError("dest-dir traverses invalid state-dir components")
+    repo_anc = common_anc.parent
+    if _safe_resolve(repo_anc, label="repo") == resolved_repo and (
+        (repo_anc != abs_repo and repo_anc.is_relative_to(abs_repo))
+        or (repo_anc != resolved_repo and repo_anc.is_relative_to(resolved_repo))
+    ):
+        raise TrustError("dest-dir traverses invalid repository subpath")
+
+    cur = runs_anc
+    for segment in abs_dest.relative_to(runs_anc).parts:
         cur = cur / segment
         _reject_symlink(cur, label=f"dest-dir/{segment}")
     return resolved_dest
@@ -1069,7 +1097,9 @@ def _parse_sarif_evidence(
                         f"evidence SARIF runs[{idx}].invocations[{inv_idx}] "
                         "must be an object"
                     )
-                if "executionSuccessful" in inv:
+                if "executionSuccessful" not in inv:
+                    execution_failed = True
+                else:
                     exec_ok = inv["executionSuccessful"]
                     if not isinstance(exec_ok, bool):
                         raise TrustError(
@@ -1164,7 +1194,8 @@ def load_evidence(
 ) -> dict[str, Any]:
     """Load ``--evidence`` JSON/SARIF and accept exclusions only on matching treeId."""
     clean_expected = _validate_tree_id_value(expected_tree_id)
-    ev_path = Path(evidence_path)
+    raw_ev_path = _validate_path_string(evidence_path, label="evidence file")
+    ev_path = Path(raw_ev_path)
     try:
         raw = checks._read_explicit_regular_file(
             ev_path, max_bytes=MAX_EVIDENCE_BYTES, label="evidence file"
@@ -1209,7 +1240,9 @@ def load_evidence(
         for idx, item in enumerate(findings_raw):
             errs = findings.validate_finding(item, prefix=f"evidence.findings[{idx}]")
             if errs:
-                raise TrustError("; ".join(errs))
+                preview = "; ".join(errs[:3])
+                extra = f" (+{len(errs) - 3} more)" if len(errs) > 3 else ""
+                raise TrustError(f"{preview}{extra}")
             if item["source"] != "code":
                 raise TrustError(
                     f"evidence.findings[{idx}].source must be 'code', "
@@ -1235,7 +1268,7 @@ def load_evidence(
             "findings": [],
             "sarifResults": [],
             "reason": (
-                "evidence SARIF includes an invocation with executionSuccessful=false"
+                "evidence SARIF includes an invocation without executionSuccessful=true"
             ),
         }
 
@@ -1307,6 +1340,7 @@ def run_trusted_command(
             timeout=timeout,
             max_stdout_bytes=max_stdout_bytes,
             max_stderr_bytes=max_stderr_bytes,
+            env=_scrubbed_git_env(),
         )
     except checks.ChecksError as exc:
         raise TrustError(str(exc)) from exc
