@@ -503,6 +503,7 @@ def _read_spec_source(
         resolved_spec.is_relative_to(resolved_repo)
         or abs_spec.is_relative_to(resolved_repo)
         or abs_spec.is_relative_to(abs_repo)
+        or trust._path_reaches_repo(spec_candidate, resolved_repo)
     )
 
     if in_repo:

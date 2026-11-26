@@ -231,6 +231,23 @@ def _ensure_safe_dir_tree(
     return resolved_cur
 
 
+def _path_reaches_repo(candidate: Path, resolved_repo: Path) -> bool:
+    """True when the path, or any directory on the way to it, resolves in the repo.
+
+    Catches what lexical and final-target checks miss: an in-repo symlink to
+    somewhere else (``<repo>/link -> /elsewhere``), reached through a
+    symlinked prefix of the repo itself (``/tmp`` -> ``/private/tmp``).
+    """
+    abs_candidate = Path(os.path.abspath(candidate))
+    for path in (abs_candidate, *abs_candidate.parents):
+        try:
+            if path.resolve().is_relative_to(resolved_repo):
+                return True
+        except OSError, RuntimeError:
+            continue
+    return False
+
+
 def _validate_external_path(
     raw_path: str | Path,
     resolved_repo: Path,
@@ -249,6 +266,7 @@ def _validate_external_path(
         resolved_candidate.is_relative_to(resolved_repo)
         or abs_candidate.is_relative_to(resolved_repo)
         or abs_candidate.is_relative_to(abs_repo)
+        or _path_reaches_repo(candidate, resolved_repo)
     ):
         raise TrustError(f"{label} must reside outside the reviewed repository")
     return candidate, resolved_candidate

@@ -861,6 +861,8 @@ def test_single_ref_diff_names_the_working_tree() -> None:
         check(
             "evidence for HEAD's tree is rejected when the working tree differs",
             ev["acceptedFiles"] == []
+            and dirty.summary["evidenceAccepted"] == 0
+            and dirty.summary["evidenceRejected"] == 1
             and len(ev["rejectedFiles"]) == 1
             and ev.get("exclusions", []) == [],
             json.dumps(ev)[:400],
@@ -1777,10 +1779,16 @@ def test_subdirectory_repo_and_run_dir_cleanup() -> None:
             ),
         )
 
-        with mock.patch(
-            "vld8.trust.atomic_write_text",
-            side_effect=trust.TrustError("disk full"),
-        ):
+        real_write = trust.atomic_write_text
+        written: list[str] = []
+
+        def fail_prompt(path: Path, text: str) -> None:
+            if path.name == "prompt.md":
+                raise trust.TrustError("disk full")
+            real_write(path, text)
+            written.append(path.name)
+
+        with mock.patch("vld8.trust.atomic_write_text", side_effect=fail_prompt):
             _expect_error(
                 "a failed prompt.md write is an error",
                 prepare.prepare_review,
@@ -1791,7 +1799,11 @@ def test_subdirectory_repo_and_run_dir_cleanup() -> None:
                 needle="disk full",
             )
         retry_dirs = list((outside / "runs").glob("*/retry"))
-        check("the half-written run directory is removed", retry_dirs == [])
+        check(
+            "a run dir holding only prepare.json is removed",
+            written == ["prepare.json"] and retry_dirs == [],
+            json.dumps(written),
+        )
         again = prepare.prepare_review(
             repo=repo, deep=True, state_dir=outside, run_id="retry"
         )
@@ -1852,6 +1864,60 @@ def test_shallow_clone_without_merge_base_fails() -> None:
             )
 
 
+def test_symlinked_repo_prefix_keeps_external_checks() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-symlink-") as tmp:
+        root = Path(tmp)
+        real_repo = root / "real" / "repo"
+        outside = root / "outside"
+        state_dir = root / "state"
+        _init_git_repo(real_repo)
+        base_oid = _commit_files(real_repo, {"src/a.py": "A = 1\n"})
+        _commit_files(real_repo, {"src/a.py": "A = 2\n"}, "change")
+        outside.mkdir()
+        (outside / "map.json").write_text('{"components": []}', encoding="utf-8")
+        (outside / "spec.md").write_text("Spec.\n", encoding="utf-8")
+        (root / "link").symlink_to(root / "real", target_is_directory=True)
+        (real_repo / "lnk").symlink_to(outside, target_is_directory=True)
+        via_link = root / "link" / "repo"
+        _expect_error(
+            "an untrusted --service-map through a symlinked --repo prefix is refused",
+            prepare.prepare_review,
+            repo=via_link,
+            deep=True,
+            untrusted=True,
+            service_map_path=via_link / "lnk" / "map.json",
+            state_dir=state_dir,
+            needle="outside",
+        )
+        _expect_error(
+            "an untrusted --spec through a symlinked --repo prefix is refused",
+            prepare.prepare_review,
+            repo=via_link,
+            diff_range=f"{base_oid}..HEAD",
+            untrusted=True,
+            spec_path=via_link / "lnk" / "spec.md",
+            state_dir=state_dir,
+            needle="outside",
+        )
+        ok = prepare.prepare_review(
+            repo=via_link,
+            deep=True,
+            untrusted=True,
+            service_map_path=outside / "map.json",
+            spec_path=outside / "spec.md",
+            state_dir=state_dir,
+            run_id="external-ok",
+        )
+        check(
+            "genuinely external files are still accepted",
+            ok.prepare_doc["coverage"]["serviceMap"]["source"] == "external"
+            and any(
+                e["kind"] == "spec" and e["source"] == "external"
+                for e in ok.prepare_doc["packet"]["intentSources"]
+            ),
+        )
+
+
 def main() -> int:
     os.environ.pop("GIT_DIR", None)
     test_diff_mode_prompt_determinism_and_report_integration()
@@ -1871,6 +1937,7 @@ def main() -> int:
     test_rendered_commands_use_commit_ids_only()
     test_subdirectory_repo_and_run_dir_cleanup()
     test_shallow_clone_without_merge_base_fails()
+    test_symlinked_repo_prefix_keeps_external_checks()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

@@ -1766,6 +1766,12 @@ def _compute_run_outputs(
         "blocksSelected": len(routing.get("blocks", [])),
         "codeFindings": len(filtered_findings),
         "blockingFindings": blocking_findings,
+        "evidenceAccepted": len(
+            packet_doc.get("evidence", {}).get("acceptedFiles", [])
+        ),
+        "evidenceRejected": len(
+            packet_doc.get("evidence", {}).get("rejectedFiles", [])
+        ),
         "preparePath": str(prepare_path),
         "promptPath": str(prompt_path) if prompt_path is not None else None,
         "exitCode": exit_code,
@@ -1960,7 +1966,7 @@ def prepare_review(
 
     service_map_data, service_map_prov = _load_prepare_service_map(
         resolved_repo,
-        resolved_repo,
+        repo,
         service_map_path=service_map_path,
         clean_base=clean_base,
         trusted=effective_trusted,
