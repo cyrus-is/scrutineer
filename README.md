@@ -225,6 +225,13 @@ Three YAML files drive the tools:
 
 Edit them in a clone installed with `pip install -e .`, then run `vld8 install --force` to regenerate the review commands. The generators only detect platforms these files describe. Drafts from a review's coverage gaps aren't written back automatically, so add the ones worth keeping here. If a change would help everyone, open a PR.
 
+To check generated skills against the checked-in golden snapshots (or intentionally regenerate them after output changes):
+
+```bash
+python tests/test_snapshots.py           # verify generated skills match tests/snapshots/golden/
+python tests/test_snapshots.py --update  # regenerate checked-in golden files
+```
+
 ## Agent support
 
 vld8 supports **Claude Code** only. Support for Cursor, Gemini CLI and OpenAI Codex CLI is planned but not started; it's tracked in the [Multi-tool support milestone](https://github.com/cyrus-is/vld8/milestone/1).
