@@ -318,6 +318,42 @@ def _deleted_paths(
         raise PrepareError(str(exc)) from exc
 
 
+def _toplevel(repo_dir: Path) -> Path:
+    """The working tree's top level, whatever directory ``--repo`` named.
+
+    Every "outside the repository" check and every repo-relative read is made
+    against this path; a subdirectory would let in-repo files pass as external.
+    """
+    try:
+        out = trust._run_git_or_gh(
+            ["git", "-C", str(repo_dir), "rev-parse", "--show-toplevel"],
+            cwd=repo_dir,
+        )
+    except trust.TrustError as exc:
+        raise PrepareError(f"--repo must be inside a git working tree: {exc}") from exc
+    raw = out.decode("utf-8", "surrogateescape").strip()
+    if not raw:
+        raise PrepareError("--repo must be inside a git working tree")
+    try:
+        return Path(raw).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise PrepareError(
+            f"cannot resolve the repository's top level: {checks.safe_error_text(exc)}"
+        ) from exc
+
+
+def _is_shallow(repo_root: Path, *, env: dict[str, str]) -> bool:
+    try:
+        out = checks._run_command(
+            ["git", "-C", str(repo_root), "rev-parse", "--is-shallow-repository"],
+            cwd=repo_root,
+            env=env,
+        )
+    except checks.ChecksError as exc:
+        raise PrepareError(str(exc)) from exc
+    return out.decode("utf-8", "replace").strip() == "true"
+
+
 def _has_merge_base(
     repo_root: Path, base_oid: str, head_oid: str, *, env: dict[str, str]
 ) -> bool:
@@ -674,8 +710,8 @@ def _build_risk_list(
             {
                 "kind": "untrusted-pr",
                 "note": (
-                    "PR tree is untrusted (fork, bot, or --untrusted): repo config, "
-                    "hooks, and linters did not execute"
+                    "reviewed tree is untrusted (fork, bot, or --untrusted): repo "
+                    "config, hooks, and linters did not execute"
                 ),
             }
         )
@@ -1293,24 +1329,12 @@ def render_prompt_markdown(
                 ]
             )
 
-    candidates = prepare_doc.get("candidates", [])
     lines.extend(["", "## Candidates & Open-Ended Risk List", ""])
-    if not candidates:
-        lines.append(
-            "No candidate sites in `prepare` v0; focus judgment on the change, rules, "
-            "and open-ended risks below."
-        )
-    else:
-        lines.append(
-            f"Account for every one of these {len(candidates)} candidate(s) in "
-            "`findings` or `dismissals`:"
-        )
-        for cand in candidates:
-            lines.append(
-                f"- `{cand['candidateId']}` ({report._md_code_span(cand['file'])}:"
-                f"{cand['lineStart']}-{cand['lineEnd']}): "
-                f"{report._md_escape_inline(cand['reason'])}"
-            )
+    # prepare v0 has no fact extraction, so candidates is always empty (§9).
+    lines.append(
+        "No candidate sites in `prepare` v0; focus judgment on the change, rules, "
+        "and open-ended risks below."
+    )
 
     risks = prepare_doc.get("riskList", [])
     if risks:
@@ -1337,18 +1361,15 @@ def render_prompt_markdown(
     if unruled:
         lines.extend(["", "### Unruled & Budget Omissions", ""])
         for item in unruled:
-            if isinstance(item, str):
-                lines.append(f"- {report._md_escape_inline(item)}")
-            else:
-                lines.append(
-                    f"- **{report._md_code_span(item.get('kind', 'unruled'))}:** "
-                    f"{report._md_escape_inline(item.get('reason', ''))}"
-                    + (
-                        f" ({report._md_code_span(item['path'])})"
-                        if item.get("path")
-                        else ""
-                    )
+            lines.append(
+                f"- **{report._md_code_span(item.get('kind', 'unruled'))}:** "
+                f"{report._md_escape_inline(item.get('reason', ''))}"
+                + (
+                    f" ({report._md_code_span(item['path'])})"
+                    if item.get("path")
+                    else ""
                 )
+            )
 
     lines.extend(["", "## Applicable Checks", ""])
     blocks = routing.get("blocks", [])
@@ -1708,6 +1729,9 @@ def _compute_run_outputs(
         run_dir = trust.prepare_run_dir(
             state_dir_path, tree_id, run_id=run_id, exclusive=True
         )
+    except trust.TrustError as exc:
+        raise PrepareError(str(exc)) from exc
+    try:
         prepare_path = run_dir / "prepare.json"
         trust.atomic_write_json(prepare_path, prepare_doc)
         prompt_path: Path | None = None
@@ -1715,6 +1739,9 @@ def _compute_run_outputs(
             prompt_path = run_dir / "prompt.md"
             trust.atomic_write_text(prompt_path, prompt_md)
     except trust.TrustError as exc:
+        # A run dir holding only prepare.json would look like a finished
+        # fast-tier run; remove it so a retry with the same --run-id works.
+        shutil.rmtree(run_dir, ignore_errors=True)
         raise PrepareError(str(exc)) from exc
 
     blocking_findings = sum(
@@ -1823,7 +1850,8 @@ def prepare_review(
         raise PrepareError("evidence_paths must be a sequence of paths")
 
     try:
-        resolved_repo, _ = checks.resolve_repo_root(repo)
+        given_repo, _ = checks.resolve_repo_root(repo)
+        resolved_repo = _toplevel(given_repo)
         state_dir_path = trust.resolve_state_dir(resolved_repo, state_dir=state_dir)
         if run_id is not None:
             trust._validate_run_id_value(run_id)
@@ -1932,7 +1960,7 @@ def prepare_review(
 
     service_map_data, service_map_prov = _load_prepare_service_map(
         resolved_repo,
-        repo,
+        resolved_repo,
         service_map_path=service_map_path,
         clean_base=clean_base,
         trusted=effective_trusted,
@@ -1945,6 +1973,11 @@ def prepare_review(
         target_ref = head_oid
         if _has_merge_base(resolved_repo, diff_base, head_oid, env=env):
             pr_range = f"{diff_base}...{head_oid}"
+        elif _is_shallow(resolved_repo, env=env):
+            raise PrepareError(
+                "the clone is shallow and has no common history with the PR; "
+                "deepen it (git fetch --unshallow, or --deepen=<n>) and retry"
+            )
         else:
             pr_range = f"{diff_base}..{head_oid}"
             packet._append_warning(

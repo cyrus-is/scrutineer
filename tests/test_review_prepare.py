@@ -1706,6 +1706,152 @@ def test_rendered_commands_use_commit_ids_only() -> None:
         )
 
 
+def test_subdirectory_repo_and_run_dir_cleanup() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-subdir-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        outside = root / "state"
+        _init_git_repo(repo)
+        base_oid = _commit_files(
+            repo, {"src/a.py": "A = 1\n", "docs/spec.md": "Spec.\n"}
+        )
+        _commit_files(
+            repo, {"src/a.py": "A = 2\n", "docs/plans/p.md": "Plan.\n"}, "change"
+        )
+        sub = repo / "src"
+        from_root = prepare.prepare_review(
+            repo=repo,
+            diff_range=f"{base_oid}..HEAD",
+            state_dir=outside,
+            run_id="root",
+        )
+        from_sub = prepare.prepare_review(
+            repo=sub,
+            diff_range=f"{base_oid}..HEAD",
+            state_dir=outside,
+            run_id="sub",
+        )
+        intents = [e["path"] for e in from_sub.prepare_doc["packet"]["intentSources"]]
+        check(
+            "running from a subdirectory reviews the same tree and docs as the root",
+            from_sub.tree_id == from_root.tree_id
+            and from_sub.prepare_doc["coverage"]["scopedPaths"]
+            == from_root.prepare_doc["coverage"]["scopedPaths"]
+            and intents == ["docs/plans/p.md"],
+            json.dumps(intents),
+        )
+        _expect_error(
+            "a --state-dir inside the worktree is refused from a subdirectory",
+            prepare.prepare_review,
+            repo=sub,
+            deep=True,
+            state_dir=repo / "docs" / "state-in-tree",
+        )
+        check(
+            "nothing was written into the worktree",
+            not (repo / "docs" / "state-in-tree").exists(),
+        )
+        _expect_error(
+            "an in-repo --spec is refused for an untrusted run from a subdirectory",
+            prepare.prepare_review,
+            repo=sub,
+            diff_range=f"{base_oid}..HEAD",
+            untrusted=True,
+            spec_path=repo / "docs" / "spec.md",
+            state_dir=outside,
+            needle="outside",
+        )
+        untrusted = prepare.prepare_review(
+            repo=sub,
+            diff_range=f"{base_oid}..HEAD",
+            untrusted=True,
+            state_dir=outside,
+            run_id="untrusted",
+        )
+        check(
+            "the untrusted risk note doesn't claim a PR outside PR mode",
+            any(
+                r["kind"] == "untrusted-pr"
+                and r["note"].startswith("reviewed tree is untrusted")
+                for r in untrusted.prepare_doc["riskList"]
+            ),
+        )
+
+        with mock.patch(
+            "vld8.trust.atomic_write_text",
+            side_effect=trust.TrustError("disk full"),
+        ):
+            _expect_error(
+                "a failed prompt.md write is an error",
+                prepare.prepare_review,
+                repo=repo,
+                deep=True,
+                state_dir=outside,
+                run_id="retry",
+                needle="disk full",
+            )
+        retry_dirs = list((outside / "runs").glob("*/retry"))
+        check("the half-written run directory is removed", retry_dirs == [])
+        again = prepare.prepare_review(
+            repo=repo, deep=True, state_dir=outside, run_id="retry"
+        )
+        check(
+            "a retry with the same --run-id succeeds",
+            again.prompt_path is not None and again.prompt_path.is_file(),
+        )
+
+
+def test_shallow_clone_without_merge_base_fails() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-shallow-") as tmp:
+        root = Path(tmp)
+        bare = root / "up.git"
+        work = root / "work"
+        clone = root / "clone"
+        state_dir = root / "state"
+        _git(root, "init", "--bare", "-q", "-b", "main", str(bare))
+        _init_git_repo(work)
+        _git(work, "remote", "add", "origin", str(bare))
+        _commit_files(work, {"f1": "1\n"}, "c1")
+        c2 = _commit_files(work, {"f2": "2\n"}, "c2")
+        _commit_files(work, {"f3": "3\n"}, "c3")
+        _commit_files(work, {"f4": "4\n"}, "c4")
+        _git(work, "push", "-q", "origin", "main")
+        _git(work, "checkout", "-q", "-b", "pr", c2)
+        pr_oid = _commit_files(work, {"p": "p\n"}, "pr")
+        _git(work, "push", "-q", "origin", f"{pr_oid}:refs/pull/1/head")
+        _git(root, "clone", "-q", "--depth", "1", bare.as_uri(), str(clone))
+        orig_run = checks._run_command
+
+        def fake(argv: list[str], **kwargs: Any) -> bytes:
+            if argv[:2] == ["gh", "pr"]:
+                return json.dumps(
+                    {
+                        "number": 1,
+                        "title": "t",
+                        "body": "",
+                        "url": "https://github.com/org/repo/pull/1",
+                        "author": {"login": "eve", "is_bot": False},
+                        "headRefName": "pr",
+                        "headRefOid": pr_oid,
+                        "baseRefName": "main",
+                        "isCrossRepository": False,
+                    }
+                ).encode("utf-8")
+            if argv[:1] == ["gh"]:
+                raise checks.ChecksError("no network in tests")
+            return orig_run(argv, **kwargs)
+
+        with mock.patch("vld8.checks._run_command", side_effect=fake):
+            _expect_error(
+                "a shallow clone with no merge base fails instead of a two-dot diff",
+                prepare.prepare_review,
+                repo=clone,
+                pr_number=1,
+                state_dir=state_dir,
+                needle="shallow",
+            )
+
+
 def main() -> int:
     os.environ.pop("GIT_DIR", None)
     test_diff_mode_prompt_determinism_and_report_integration()
@@ -1723,6 +1869,8 @@ def main() -> int:
     test_report_verifies_quotes_from_a_checkout_of_the_target()
     test_working_tree_id_branches_and_contract_constants()
     test_rendered_commands_use_commit_ids_only()
+    test_subdirectory_repo_and_run_dir_cleanup()
+    test_shallow_clone_without_merge_base_fails()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

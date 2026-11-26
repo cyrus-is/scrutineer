@@ -329,7 +329,10 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
         "--repo",
         default=".",
         metavar="PATH",
-        help="Repository root directory (default: current directory).",
+        help=(
+            "Any directory in the working tree (default: current directory); its "
+            "top level is used."
+        ),
     )
     prep.add_argument(
         "--state-dir",
