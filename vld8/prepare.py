@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 from collections.abc import Sequence
-from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,6 +33,19 @@ MAX_RISK_ITEMS = 64
 MAX_RISK_SAMPLE_PATHS = 10
 MAX_PROMPT_PATHS = 1000
 MAX_PROMPT_CODE_FINDINGS = 100
+
+# Rubric order for the code lens; tests check it covers findings.CODE_CATEGORIES.
+RUBRIC_CATEGORIES: tuple[str, ...] = (
+    "production-reliability",
+    "correctness",
+    "data-integrity",
+    "error-handling",
+    "architecture",
+    "operability",
+    "performance",
+    "maintainability",
+)
+SECURITY_SEVERITY_ORDER: tuple[str, ...] = ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
 
 TRACKED_SKIP_DIRS = frozenset({"node_modules", "bower_components", "Pods", "Carthage"})
 
@@ -165,6 +178,129 @@ def _resolve_valid_base_ref(
         except trust.TrustError as exc:
             last_err = str(exc)
     raise PrepareError(last_err or f"cannot resolve {label}")
+
+
+def _fetch_pr_base(
+    repo_root: Path,
+    fetch_source: str | None,
+    base_name: str,
+    *,
+    env: dict[str, str],
+    warnings: list[str],
+) -> str:
+    """Return the commit of the PR's base branch, fetched from the PR's remote.
+
+    The local ``origin/<base>`` can be behind, and diffing against a stale
+    base counts commits the PR merged or rebased onto as part of the PR.
+    ``--refmap=`` keeps the fetch from moving the user's remote-tracking refs.
+    """
+    remote: str | None = (
+        fetch_source if fetch_source in ("origin", "upstream") else None
+    )
+    if fetch_source == "gh-url":
+        try:
+            remote = trust._resolve_gh_repo_url(repo_root)
+        except trust.TrustError:
+            remote = None
+    local: str | None = None
+    for cand in (f"origin/{base_name}", base_name):
+        try:
+            out = checks._run_command(
+                [
+                    "git",
+                    "-C",
+                    str(repo_root),
+                    "rev-parse",
+                    "--verify",
+                    "--quiet",
+                    f"{cand}^{{commit}}",
+                ],
+                cwd=repo_root,
+                env=env,
+            )
+        except checks.ChecksError:
+            continue
+        oid = out.decode("utf-8", "replace").strip()
+        if checks._GIT_OID_RE.match(oid):
+            local = oid
+            break
+
+    fetched: str | None = None
+    fetch_problem = "no remote served the PR head"
+    if remote is not None and not remote.startswith("-"):
+        try:
+            checks._run_command(
+                [
+                    "git",
+                    "-C",
+                    str(repo_root),
+                    "fetch",
+                    "--no-tags",
+                    "--refmap=",
+                    remote,
+                    f"refs/heads/{base_name}",
+                ],
+                cwd=repo_root,
+                env=env,
+            )
+            out = checks._run_command(
+                ["git", "-C", str(repo_root), "rev-parse", "--verify", "FETCH_HEAD"],
+                cwd=repo_root,
+                env=env,
+            )
+            oid = out.decode("utf-8", "replace").strip()
+            if checks._GIT_OID_RE.match(oid):
+                fetched = oid
+            else:
+                fetch_problem = "unexpected FETCH_HEAD"
+        except checks.ChecksError as exc:
+            fetch_problem = str(exc)
+
+    if fetched is not None:
+        if local is not None and local != fetched:
+            packet._append_warning(
+                warnings,
+                f"local base {base_name} ({local[:12]}) differs from the remote's "
+                f"({fetched[:12]}); diffed against the remote's",
+            )
+        return fetched
+    if local is None:
+        raise PrepareError(
+            f"cannot resolve the PR base branch {checks.safe_error_text(base_name)}: "
+            f"{checks.safe_error_text(fetch_problem)}"
+        )
+    packet._append_warning(
+        warnings,
+        f"could not fetch the PR base branch ({fetch_problem}); diffed against "
+        f"the local {base_name}, which may be behind",
+    )
+    return local
+
+
+def _has_merge_base(
+    repo_root: Path, base_oid: str, head_oid: str, *, env: dict[str, str]
+) -> bool:
+    """True when the commits share history; False only when git finds none."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo_root), "merge-base", base_oid, head_oid],
+            env=env,
+            capture_output=True,
+            timeout=checks.MAX_COMMAND_TIMEOUT_S,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise PrepareError(
+            f"git merge-base failed: {checks.safe_error_text(exc)}"
+        ) from exc
+    if proc.returncode == 0:
+        return True
+    if proc.returncode == 1 and not proc.stdout.strip():
+        return False
+    raise PrepareError(
+        "git merge-base failed: "
+        + checks.safe_error_text(proc.stderr.decode("utf-8", "replace"))
+    )
 
 
 def _working_tree_id(repo_root: Path, env: dict[str, str]) -> str:
@@ -715,7 +851,7 @@ def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
                     "",
                     "This compares the base with the working tree, including "
                     "uncommitted changes to tracked files. The reviewed tree ID "
-                    "covers those changes.",
+                    "covers those changes, so read files from the working tree.",
                 ]
             )
         elif mode == "pr":
@@ -725,6 +861,15 @@ def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
                     f"The PR head commit {report._md_code_span(cov['targetRef'])} "
                     "was fetched into this repository but is not checked out. "
                     "Read its files with `git show <commit>:<path>`.",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "",
+                    "Read files as of the target "
+                    f"{report._md_code_span(cov['targetRef'])}: "
+                    "`git show <target>:<path>`.",
                 ]
             )
     else:
@@ -765,6 +910,46 @@ def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _render_report_section(cov: dict[str, Any]) -> list[str]:
+    """Say which checkout ``vld8 review report --repo`` must point at."""
+    lines = [
+        "",
+        "## Checking Your Findings",
+        "",
+        "`vld8 review report` checks each citation against the files on disk "
+        "under `--repo`, so run it on a checkout of the reviewed tree. Quotes "
+        "copied from another version of a file fail as bad citations.",
+    ]
+    if cov["mode"] == "diff" and cov.get("targetRef") is None:
+        lines.append("- Use this repository as `--repo`, before making further edits.")
+        return lines
+    target = cov.get("targetRef") or "HEAD"
+    lines.extend(
+        [
+            "- If this repository's working tree is a clean checkout of "
+            f"{report._md_code_span(target)}, use it as `--repo`.",
+            "- Otherwise check the target out into a temporary worktree, pass it "
+            "as `--repo`, and remove it afterwards:",
+            "",
+            packet.format_quoted_block(
+                f"git -c core.hooksPath=/dev/null worktree add --detach <dir> {target}"
+                "\ngit worktree remove --force <dir>",
+                info="sh",
+            ),
+        ]
+    )
+    if not cov["trusted"]:
+        lines.extend(
+            [
+                "",
+                "This tree is untrusted. The checkout writes its files to disk and "
+                "applies its `.gitattributes` with your git configuration; don't "
+                "run anything from it.",
+            ]
+        )
+    return lines
+
+
 def _render_output_contract(lens: str, tree_id: str) -> list[str]:
     """State the Findings v1 rules that ``vld8 review report`` enforces."""
     if lens == "code":
@@ -775,15 +960,11 @@ def _render_output_contract(lens: str, tree_id: str) -> list[str]:
         )
         category_rule = (
             "`category` (optional): one of "
-            + ", ".join(f"`{c}`" for c in sorted(findings.CODE_CATEGORIES))
+            + ", ".join(f"`{c}`" for c in RUBRIC_CATEGORIES)
             + "."
         )
     else:
-        severities = ", ".join(
-            f"`{s}`"
-            for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
-            if s in findings.SECURITY_SEVERITIES
-        )
+        severities = ", ".join(f"`{sev}`" for sev in SECURITY_SEVERITY_ORDER)
         blocking_rule = (
             "`blocking`: `true` for a finding that must be fixed before merge."
         )
@@ -877,9 +1058,13 @@ def render_prompt_markdown(
         f"- **Trust posture:** {trust_note}",
         (
             f"- **Size & strategy:** `{sizing['tier']}` (`{sizing['strategy']}`), "
-            f"{sizing['filesTotal']} file(s) total ({sizing['scopedFiles']} scoped), "
-            f"+{sizing['additions']}/-{sizing['deletions']} lines, "
-            f"{sizing['commits']} commit(s)"
+            f"{sizing['filesTotal']} file(s) total ({sizing['scopedFiles']} scoped)"
+            + (
+                f", +{sizing['additions']}/-{sizing['deletions']} lines, "
+                f"{sizing['commits']} commit(s)"
+                if mode in ("diff", "pr")
+                else ""
+            )
         ),
     ]
     if meta.get("baseRef"):
@@ -1027,7 +1212,9 @@ def render_prompt_markdown(
             [
                 "",
                 "Do not duplicate these pre-computed findings; only dispute one with "
-                "a concrete technical reason:",
+                "a concrete technical reason. Their quotes and fingerprints are in "
+                "`prepare.json`, in the same directory as this prompt, under "
+                "`codeFindings`:",
                 "",
                 "| File | Lines | Check | Severity | Blocking | Claim |",
                 "|---|---:|---|---|---:|---|",
@@ -1177,18 +1364,14 @@ def render_prompt_markdown(
             [
                 "## Evaluation Lenses & Rubric",
                 "",
-                "1. Production Reliability (`production-reliability`)",
-                "2. Correctness (`correctness`)",
-                "3. Data Integrity (`data-integrity`)",
-                "4. Error Handling (`error-handling`)",
-                "5. Architecture (`architecture`)",
-                "6. Operability (`operability`)",
-                "7. Performance (`performance`)",
-                "8. Maintainability (`maintainability`)",
+                *(
+                    f"{idx}. {cat.replace('-', ' ').title()} (`{cat}`)"
+                    for idx, cat in enumerate(RUBRIC_CATEGORIES, 1)
+                ),
                 "",
-                "Every `ISSUE` must cite one valid `basis`: `written rule`, "
-                "`confirmed map rule`, `stated requirement`, `followed contract`, "
-                "`reachable trigger`, or `security invariant`.",
+                "Every `ISSUE` must cite one valid `basis`: "
+                + ", ".join(f"`{b}`" for b in sorted(findings.VALID_BASES))
+                + ".",
             ]
         )
     else:
@@ -1209,12 +1392,14 @@ def render_prompt_markdown(
                 "safety.",
                 "- **Never print real secrets, tokens, keys, or credential values** in "
                 "findings, quotes, or logs; redact or show synthetic structure only.",
-                "- Rate security findings using `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, "
-                "or `INFO`, and cite one valid `basis` when blocking.",
+                "- Rate security findings using "
+                + ", ".join(f"`{sev}`" for sev in SECURITY_SEVERITY_ORDER)
+                + ", and cite one valid `basis` when blocking.",
             ]
         )
 
     lines.extend(_render_output_contract(lens, tree_id))
+    lines.extend(_render_report_section(cov))
 
     warnings = cov.get("warnings", [])
     if warnings:
@@ -1598,24 +1783,30 @@ def prepare_review(
         except (checks.ChecksError, trust.TrustError, packet.PacketError) as exc:
             raise PrepareError(str(exc)) from exc
 
-        if base_ref is not None:
-            clean_base: str | None = _resolve_valid_base_ref(resolved_repo, (base_ref,))
-        else:
-            pr_base = packet._validate_single_git_ref_no_colon(
-                pr_meta.base_ref_name, label="baseRef"
-            )
-            clean_base = _resolve_valid_base_ref(
-                resolved_repo, (f"origin/{pr_base}", pr_base)
-            )
+        # prepare reads the PR only as git objects: no worktree, so nothing
+        # from its tree is written to disk and no checkout filters or hooks run.
+        if not checks._GIT_OID_RE.match(pr_meta.head_ref_oid):
+            raise PrepareError("PR headRefOid is not a git object id")
+        fetched, fetch_source, fetch_err = trust._fetch_pr_head(
+            resolved_repo, valid_pr, pr_meta.head_ref_oid
+        )
+        if not fetched:
+            raise PrepareError(f"cannot fetch the PR head: {fetch_err}")
+        pr_base = packet._validate_single_git_ref_no_colon(
+            pr_meta.base_ref_name, label="baseRef"
+        )
+        diff_base = _fetch_pr_base(
+            resolved_repo, fetch_source, pr_base, env=env, warnings=pre_warnings
+        )
+        # --base-ref chooses where rules and config come from; the diff always
+        # starts from the PR's own base branch.
+        clean_base: str | None = (
+            _resolve_valid_base_ref(resolved_repo, (base_ref,))
+            if base_ref is not None
+            else diff_base
+        )
         target_label = f"PR #{valid_pr}"
         trusted_packet_arg: bool | None = False if untrusted else None
-
-        try:
-            # prepare reads git objects only, so nothing from the PR's tree is
-            # written to disk and no checkout filters or hooks run on it.
-            wt_ctx = trust.checkout_pr_worktree(resolved_repo, pr_meta, checkout=False)
-        except trust.TrustError as exc:
-            raise PrepareError(str(exc)) from exc
     elif diff_range is not None:
         mode = "diff"
         pr_meta = None
@@ -1628,7 +1819,6 @@ def prepare_review(
             else _resolve_valid_base_ref(resolved_repo, (inferred_base,))
         )
         target_label = diff_range
-        wt_ctx = nullcontext(None)
     elif component is not None:
         mode = "component"
         pr_meta = None
@@ -1645,7 +1835,6 @@ def prepare_review(
         )
         target_ref = "HEAD"
         target_label = _validate_component_name(component)
-        wt_ctx = nullcontext(None)
     else:
         mode = "deep"
         pr_meta = None
@@ -1662,175 +1851,163 @@ def prepare_review(
         )
         target_ref = "HEAD"
         target_label = "--deep"
-        wt_ctx = nullcontext(None)
 
-    with wt_ctx as wt:
-        cfg, cfg_prov = _load_trusted_prepare_config(
-            resolved_repo,
-            clean_base=clean_base,
-            config_path=config_path,
-        )
-        prep_cfg = cfg.get("prepare", {})
-        effective_budget = (
-            budget_chars
-            if budget_chars is not None
-            else prep_cfg.get("budget_chars", packet.DEFAULT_PACKET_BUDGET_CHARS)
-        )
-        effective_fetch_issues = (
-            True
-            if fetch_linked_issues
-            else bool(prep_cfg.get("fetch_linked_issues", False))
-        )
+    cfg, cfg_prov = _load_trusted_prepare_config(
+        resolved_repo,
+        clean_base=clean_base,
+        config_path=config_path,
+    )
+    prep_cfg = cfg.get("prepare", {})
+    effective_budget = (
+        budget_chars
+        if budget_chars is not None
+        else prep_cfg.get("budget_chars", packet.DEFAULT_PACKET_BUDGET_CHARS)
+    )
+    # Fast tier writes no prompt, so it never fetches linked issues.
+    effective_fetch_issues = tier == "deep" and (
+        fetch_linked_issues or bool(prep_cfg.get("fetch_linked_issues", False))
+    )
 
-        service_map_data, service_map_prov = _load_prepare_service_map(
-            resolved_repo,
-            repo,
-            service_map_path=service_map_path,
-            clean_base=clean_base,
-            trusted=effective_trusted,
-            warnings=pre_warnings,
-        )
+    service_map_data, service_map_prov = _load_prepare_service_map(
+        resolved_repo,
+        repo,
+        service_map_path=service_map_path,
+        clean_base=clean_base,
+        trusted=effective_trusted,
+        warnings=pre_warnings,
+    )
 
-        if mode == "pr":
-            assert pr_meta is not None
-            if wt is None or not wt.available or wt.path is None or wt.tree_id is None:
-                reason = wt.reason if wt is not None and wt.reason else "unavailable"
-                raise PrepareError(f"cannot prepare PR worktree: {reason}")
-            wt_path = wt.path
-            assert clean_base is not None
-            tree_id = wt.tree_id
-            target_ref = pr_meta.head_ref_oid
-            pr_range = f"{clean_base}...{pr_meta.head_ref_oid}"
-            try:
-                file_stats, commits = checks._git_diff_stats(wt_path, pr_range, env=env)
-                all_scoped_paths = checks._git_changed_paths(wt_path, pr_range, env=env)
-            except checks.ChecksError:
-                # No merge base: the two-dot diff also shows base-side changes.
-                pr_range = f"{clean_base}..{pr_meta.head_ref_oid}"
-                packet._append_warning(
-                    pre_warnings,
-                    "no merge base between the PR and its base; the diff is "
-                    "two-dot and also includes changes made on the base side",
-                )
-                try:
-                    file_stats, commits = checks._git_diff_stats(
-                        wt_path, pr_range, env=env
-                    )
-                    all_scoped_paths = checks._git_changed_paths(
-                        wt_path, pr_range, env=env
-                    )
-                except checks.ChecksError as exc:
-                    raise PrepareError(str(exc)) from exc
-            additions = sum(e.additions for e in file_stats)
-            deletions = sum(e.deletions for e in file_stats)
-            scoped_repo = wt_path
-            scoped_tree_ref: str | None = pr_meta.head_ref_oid
-            diff_range_used: str | None = pr_range
-            vendored_skipped = 0
-        elif mode == "diff":
-            assert diff_range is not None
-            try:
-                tree_id = (
-                    trust.compute_tree_id(resolved_repo, target_ref)
-                    if target_ref is not None
-                    else _working_tree_id(resolved_repo, env)
-                )
-                file_stats, commits = checks._git_diff_stats(
-                    resolved_repo, diff_range, env=env
-                )
-                all_scoped_paths = checks._git_changed_paths(
-                    resolved_repo, diff_range, env=env
-                )
-            except (checks.ChecksError, trust.TrustError) as exc:
-                raise PrepareError(str(exc)) from exc
-            additions = sum(e.additions for e in file_stats)
-            deletions = sum(e.deletions for e in file_stats)
-            scoped_repo = resolved_repo
-            scoped_tree_ref = target_ref
-            diff_range_used = diff_range
-            vendored_skipped = 0
+    if mode == "pr":
+        assert pr_meta is not None
+        head_oid = pr_meta.head_ref_oid
+        target_ref = head_oid
+        if _has_merge_base(resolved_repo, diff_base, head_oid, env=env):
+            pr_range = f"{diff_base}...{head_oid}"
         else:
-            try:
-                tree_id = trust.compute_tree_id(resolved_repo, "HEAD")
-            except trust.TrustError as exc:
-                raise PrepareError(str(exc)) from exc
-            all_tracked = _list_tracked_head_paths(resolved_repo)
-            all_scoped_paths = []
-            vendored_skipped = 0
-            if mode == "component":
-                prefixes, _ = _resolve_component_prefixes(
-                    target_label, service_map_data
+            pr_range = f"{diff_base}..{head_oid}"
+            packet._append_warning(
+                pre_warnings,
+                "no merge base between the PR and its base; the diff is "
+                "two-dot and also includes changes made on the base side",
+            )
+        try:
+            tree_id = trust.compute_tree_id(resolved_repo, head_oid)
+            file_stats, commits = checks._git_diff_stats(
+                resolved_repo, pr_range, env=env
+            )
+            all_scoped_paths = checks._git_changed_paths(
+                resolved_repo, pr_range, env=env
+            )
+        except (checks.ChecksError, trust.TrustError) as exc:
+            raise PrepareError(str(exc)) from exc
+        additions = sum(e.additions for e in file_stats)
+        deletions = sum(e.deletions for e in file_stats)
+        scoped_repo = resolved_repo
+        scoped_tree_ref: str | None = head_oid
+        diff_range_used: str | None = pr_range
+        vendored_skipped = 0
+    elif mode == "diff":
+        assert diff_range is not None
+        try:
+            tree_id = (
+                trust.compute_tree_id(resolved_repo, target_ref)
+                if target_ref is not None
+                else _working_tree_id(resolved_repo, env)
+            )
+            file_stats, commits = checks._git_diff_stats(
+                resolved_repo, diff_range, env=env
+            )
+            all_scoped_paths = checks._git_changed_paths(
+                resolved_repo, diff_range, env=env
+            )
+        except (checks.ChecksError, trust.TrustError) as exc:
+            raise PrepareError(str(exc)) from exc
+        additions = sum(e.additions for e in file_stats)
+        deletions = sum(e.deletions for e in file_stats)
+        scoped_repo = resolved_repo
+        scoped_tree_ref = target_ref
+        diff_range_used = diff_range
+        vendored_skipped = 0
+    else:
+        try:
+            tree_id = trust.compute_tree_id(resolved_repo, "HEAD")
+        except trust.TrustError as exc:
+            raise PrepareError(str(exc)) from exc
+        all_tracked = _list_tracked_head_paths(resolved_repo)
+        all_scoped_paths = []
+        vendored_skipped = 0
+        if mode == "component":
+            prefixes, _ = _resolve_component_prefixes(target_label, service_map_data)
+            for rel in all_tracked:
+                owner = next(
+                    (
+                        prefix
+                        for prefix in prefixes
+                        if rel == prefix or rel.startswith(prefix + "/")
+                    ),
+                    None,
                 )
-                for rel in all_tracked:
-                    owner = next(
-                        (
-                            prefix
-                            for prefix in prefixes
-                            if rel == prefix or rel.startswith(prefix + "/")
-                        ),
-                        None,
-                    )
-                    if owner is None:
-                        continue
-                    if _is_vendored(rel, prefix=owner):
-                        vendored_skipped += 1
-                    else:
-                        all_scoped_paths.append(rel)
-                if not all_scoped_paths:
-                    raise PrepareError(
-                        f"component matched no tracked files: "
-                        f"{checks.safe_error_text(target_label)}"
-                    )
-            else:
-                for rel in all_tracked:
-                    if _is_vendored(rel):
-                        vendored_skipped += 1
-                    else:
-                        all_scoped_paths.append(rel)
-            file_stats = [
-                checks._FileStat(path=rel, additions=0, deletions=0, binary=False)
-                for rel in all_scoped_paths
-            ]
-            commits = 0
-            additions = 0
-            deletions = 0
-            scoped_repo = resolved_repo
-            scoped_tree_ref = "HEAD"
-            diff_range_used = None
+                if owner is None:
+                    continue
+                if _is_vendored(rel, prefix=owner):
+                    vendored_skipped += 1
+                else:
+                    all_scoped_paths.append(rel)
+            if not all_scoped_paths:
+                raise PrepareError(
+                    f"component matched no tracked files: "
+                    f"{checks.safe_error_text(target_label)}"
+                )
+        else:
+            for rel in all_tracked:
+                if _is_vendored(rel):
+                    vendored_skipped += 1
+                else:
+                    all_scoped_paths.append(rel)
+        file_stats = [
+            checks._FileStat(path=rel, additions=0, deletions=0, binary=False)
+            for rel in all_scoped_paths
+        ]
+        commits = 0
+        additions = 0
+        deletions = 0
+        scoped_repo = resolved_repo
+        scoped_tree_ref = "HEAD"
+        diff_range_used = None
 
-        return _compute_run_outputs(
-            resolved_repo=resolved_repo,
-            mode=mode,
-            target_label=target_label,
-            lens=lens,
-            tier=tier,
-            tree_id=tree_id,
-            clean_base=clean_base,
-            target_ref=target_ref,
-            diff_range_used=diff_range_used,
-            vendored_skipped=vendored_skipped,
-            effective_trusted=effective_trusted,
-            trusted_packet_arg=trusted_packet_arg,
-            scoped_repo=scoped_repo,
-            scoped_tree_ref=scoped_tree_ref,
-            all_scoped_paths=all_scoped_paths,
-            additions=additions,
-            deletions=deletions,
-            commits=commits,
-            file_stats=file_stats,
-            pr_meta=pr_meta,
-            config_prov=cfg_prov,
-            service_map_data=service_map_data,
-            service_map_prov=service_map_prov,
-            spec_path=spec_path,
-            evidence_paths=evidence_paths,
-            fetch_linked_issues=effective_fetch_issues,
-            budget_chars=effective_budget,
-            state_dir_path=state_dir_path,
-            run_id=run_id,
-            pre_warnings=pre_warnings,
-            env=env,
-        )
+    return _compute_run_outputs(
+        resolved_repo=resolved_repo,
+        mode=mode,
+        target_label=target_label,
+        lens=lens,
+        tier=tier,
+        tree_id=tree_id,
+        clean_base=clean_base,
+        target_ref=target_ref,
+        diff_range_used=diff_range_used,
+        vendored_skipped=vendored_skipped,
+        effective_trusted=effective_trusted,
+        trusted_packet_arg=trusted_packet_arg,
+        scoped_repo=scoped_repo,
+        scoped_tree_ref=scoped_tree_ref,
+        all_scoped_paths=all_scoped_paths,
+        additions=additions,
+        deletions=deletions,
+        commits=commits,
+        file_stats=file_stats,
+        pr_meta=pr_meta,
+        config_prov=cfg_prov,
+        service_map_data=service_map_data,
+        service_map_prov=service_map_prov,
+        spec_path=spec_path,
+        evidence_paths=evidence_paths,
+        fetch_linked_issues=effective_fetch_issues,
+        budget_chars=effective_budget,
+        state_dir_path=state_dir_path,
+        run_id=run_id,
+        pre_warnings=pre_warnings,
+        env=env,
+    )
 
 
 def run_prepare(

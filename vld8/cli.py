@@ -350,7 +350,7 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
         "--base-ref",
         default=None,
         metavar="REF",
-        help="Trusted git ref for loading base rules and config.",
+        help=("Trusted git ref for loading rules and config; doesn't change the diff."),
     )
     prep.add_argument(
         "--config",

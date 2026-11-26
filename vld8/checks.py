@@ -102,6 +102,10 @@ class ChecksError(ValueError):
     """Raised when check selection or diff sizing input or execution fails."""
 
 
+class OversizedFileError(ChecksError):
+    """Raised when a file is larger than the caller's byte cap."""
+
+
 @dataclass(frozen=True)
 class _FileStat:
     path: str
@@ -261,7 +265,7 @@ def _read_fd_bounded(
             return None
         if st.st_size > max_bytes:
             if raise_on_oversized:
-                raise ChecksError(
+                raise OversizedFileError(
                     f"{label} ({st.st_size} bytes) exceeds max {max_bytes} bytes"
                 )
             return None
@@ -275,7 +279,7 @@ def _read_fd_bounded(
             os.close(fd)
     if len(raw) > max_bytes:
         if raise_on_oversized:
-            raise ChecksError(f"{label} exceeds max {max_bytes} bytes")
+            raise OversizedFileError(f"{label} exceeds max {max_bytes} bytes")
         return None
     return raw
 
@@ -369,7 +373,7 @@ def _read_explicit_regular_file(
         if not stat.S_ISREG(f_st.st_mode):
             raise ChecksError(f"{label} is not a regular file: {safe_name}")
         if f_st.st_size > max_bytes:
-            raise ChecksError(
+            raise OversizedFileError(
                 f"{label} {safe_name} ({f_st.st_size} bytes) "
                 f"exceeds max {max_bytes} bytes"
             )
@@ -385,7 +389,7 @@ def _read_explicit_regular_file(
             os.close(fd)
 
     if len(raw) > max_bytes:
-        raise ChecksError(f"{label} {safe_name} exceeds max {max_bytes} bytes")
+        raise OversizedFileError(f"{label} {safe_name} exceeds max {max_bytes} bytes")
     return raw
 
 
@@ -542,7 +546,7 @@ def _read_git_tree_regular_file(
             return None
         if int(size_str) > max_bytes:
             if raise_on_oversized:
-                raise ChecksError(
+                raise OversizedFileError(
                     f"git tree file {safe_error_text(rel_path)} "
                     f"({size_str} bytes) exceeds max {max_bytes} bytes"
                 )

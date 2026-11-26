@@ -720,16 +720,11 @@ def _fetch_pr_head(
 def checkout_pr_worktree(
     repo_root: str | Path,
     meta: PRMetadata,
-    *,
-    checkout: bool = True,
 ) -> Iterator[WorktreeHandle]:
     """Check out ``meta.head_ref_oid`` into an isolated temporary worktree.
 
     Never falls back to the user's checkout when fetch fails, initializes
     submodules only for trusted same-repo PRs, and guarantees cleanup on exit.
-    With ``checkout=False`` the worktree is added with ``--no-checkout``: no
-    files are written, so no checkout filters or hooks run on the PR's content
-    and no submodules are initialized. Callers then read git objects only.
     """
     try:
         resolved_repo, _ = checks.resolve_repo_root(repo_root)
@@ -782,7 +777,6 @@ def checkout_pr_worktree(
                     "worktree",
                     "add",
                     "--detach",
-                    *([] if checkout else ["--no-checkout"]),
                     str(wt_dir),
                     meta.head_ref_oid,
                 ],
@@ -803,8 +797,7 @@ def checkout_pr_worktree(
 
         tree_id = compute_tree_id(wt_dir, meta.head_ref_oid)
         if (
-            checkout
-            and can_run_repo_tools(meta.trusted)
+            can_run_repo_tools(meta.trusted)
             and meta.is_cross_repository is False
             and meta.author_is_bot is False
         ):

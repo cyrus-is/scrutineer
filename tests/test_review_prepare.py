@@ -18,7 +18,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from vld8 import checks, findings, prepare, report, trust  # noqa: E402
+from vld8 import checks, findings, packet, prepare, report, trust  # noqa: E402
 
 _results: list[tuple[str, bool]] = []
 
@@ -438,11 +438,11 @@ def test_pr_mode_trust_worktree_and_evidence() -> None:
             ),
         ):
             with mock.patch(
-                "vld8.trust.checkout_pr_worktree",
-                side_effect=trust.TrustError("fetch failed"),
+                "vld8.trust._fetch_pr_head",
+                return_value=(False, None, "fetch failed"),
             ):
                 _expect_error(
-                    "worktree checkout failure raises PrepareError without fallback",
+                    "PR head fetch failure raises PrepareError without fallback",
                     prepare.prepare_review,
                     repo=clone_repo,
                     pr_number=9,
@@ -1029,7 +1029,8 @@ def test_scope_section_partitions_and_output_contract() -> None:
         deep_prompt = (deep.prompt_path or Path()).read_text(encoding="utf-8")
         check(
             "deep mode has no diff command and reads files at HEAD",
-            deep.prepare_doc["coverage"]["diffRange"] is None
+            "commit(s)" not in deep_prompt
+            and deep.prepare_doc["coverage"]["diffRange"] is None
             and "`git show HEAD:<path>`" in deep_prompt
             and "git diff"
             not in deep_prompt.split("## What to Review")[1].split(
@@ -1060,7 +1061,11 @@ def test_skipped_context_marks_partial() -> None:
         base_oid = _commit_files(
             repo, {"CLAUDE.md": "rule line\n" * 34_000, "src/a.py": "A = 1\n"}
         )
-        _commit_files(repo, {"src/a.py": "A = 2\n"}, "change")
+        _commit_files(
+            repo,
+            {"src/a.py": "A = 2\n", "docs/plans/big.md": "plan line\n" * 34_000},
+            "change",
+        )
         res = prepare.prepare_review(
             repo=repo,
             diff_range=f"{base_oid}..HEAD",
@@ -1075,6 +1080,16 @@ def test_skipped_context_marks_partial() -> None:
                 u["kind"] == "packet-skipped-rules"
                 and u["reason"] == "oversized"
                 and u["path"] == "CLAUDE.md"
+                for u in unruled
+            ),
+            json.dumps(unruled),
+        )
+        check(
+            "an oversized design doc is recorded as oversized, not unreadable",
+            any(
+                u["kind"] == "packet-skipped-design-doc"
+                and u["reason"] == "oversized"
+                and u["path"] == "docs/plans/big.md"
                 for u in unruled
             ),
             json.dumps(unruled),
@@ -1261,7 +1276,7 @@ def test_config_service_map_and_component_branches() -> None:
         )
 
 
-def test_pr_mode_no_checkout_and_two_dot_fallback() -> None:
+def test_pr_mode_reads_objects_and_fetches_base() -> None:
     with tempfile.TemporaryDirectory(prefix="vld8-prep-pr2-") as tmp:
         root = Path(tmp)
         upstream_bare = root / "upstream.git"
@@ -1273,78 +1288,295 @@ def test_pr_mode_no_checkout_and_two_dot_fallback() -> None:
         _git(work_repo, "remote", "add", "origin", str(upstream_bare))
         _commit_files(work_repo, {"api/app.py": "def ok():\n    return 1\n"})
         _git(work_repo, "push", "-q", "origin", "main")
+        _git(root, "clone", "-q", str(upstream_bare), str(clone_repo))
+        stale_base = _git(clone_repo, "rev-parse", "origin/main")
+
+        # Upstream main moves on after the clone; the PR is built on the new main.
+        _commit_files(work_repo, {"others.py": "OTHER = 1\n"}, "base moves")
+        _git(work_repo, "push", "-q", "origin", "main")
         _git(work_repo, "checkout", "-qb", "pr-feat")
         pr_oid = _commit_files(
             work_repo,
-            {
-                "api/app.py": "def ok():\n    return 2\n",
-                ".gitattributes": "*.py filter=evil\n",
-            },
+            {"mine.py": "MINE = 1\n", ".gitattributes": "*.py filter=evil\n"},
             "pr",
         )
         _git(work_repo, "push", "-q", "origin", f"{pr_oid}:refs/pull/7/head")
-        _git(root, "clone", "-q", str(upstream_bare), str(clone_repo))
+        _git(work_repo, "checkout", "-q", "--orphan", "unrelated")
+        orphan_oid = _commit_files(work_repo, {"solo.py": "SOLO = 1\n"}, "orphan")
+        _git(work_repo, "push", "-q", "origin", f"{orphan_oid}:refs/pull/8/head")
+
+        # A linked worktree whose directory is temporarily missing must survive.
+        linked = root / "linked"
+        parked = root / "linked-parked"
+        _git(clone_repo, "worktree", "add", "-q", "--detach", str(linked))
+        linked.rename(parked)
+
         orig_run = checks._run_command
+        gh_calls: list[list[str]] = []
 
         def fake(argv: list[str], **kwargs: Any) -> bytes:
             if argv[:2] == ["gh", "pr"]:
+                number = int(argv[3])
                 return json.dumps(
                     {
-                        "number": 7,
+                        "number": number,
                         "title": "t",
-                        "body": "",
-                        "url": "https://github.com/org/repo/pull/7",
+                        "body": "Fixes #12",
+                        "url": f"https://github.com/org/repo/pull/{number}",
                         "author": {"login": "eve", "is_bot": False},
                         "headRefName": "pr-feat",
-                        "headRefOid": pr_oid,
+                        "headRefOid": pr_oid if number == 7 else orphan_oid,
                         "baseRefName": "main",
                         "isCrossRepository": True,
                     }
                 ).encode("utf-8")
+            if argv[:1] == ["gh"]:
+                gh_calls.append(list(argv))
+                raise checks.ChecksError("no network in tests")
             return orig_run(argv, **kwargs)
 
-        with mock.patch("vld8.checks._run_command", side_effect=fake):
-            meta = trust.fetch_pr_metadata(clone_repo, 7)
-            with trust.checkout_pr_worktree(clone_repo, meta, checkout=False) as wt:
-                no_files = wt.available and not (wt.path / "api" / "app.py").exists()
-            check("checkout=False adds the worktree without writing files", no_files)
-
-            seen: dict[str, Any] = {}
-            real_cpw = trust.checkout_pr_worktree
-
-            def spy(*args: Any, **kwargs: Any) -> Any:
-                seen.update(kwargs)
-                return real_cpw(*args, **kwargs)
-
-            real_stats = checks._git_diff_stats
-
-            def no_merge_base(repo_root: Path, diff_range: str, **kw: Any) -> Any:
-                if "..." in diff_range:
-                    raise checks.ChecksError("no merge base")
-                return real_stats(repo_root, diff_range, **kw)
-
-            with (
-                mock.patch("vld8.trust.checkout_pr_worktree", side_effect=spy),
-                mock.patch("vld8.checks._git_diff_stats", side_effect=no_merge_base),
-            ):
-                res = prepare.prepare_review(
-                    repo=clone_repo, pr_number=7, state_dir=state_dir, run_id="pr2"
-                )
+        with (
+            mock.patch("vld8.checks._run_command", side_effect=fake),
+            mock.patch(
+                "vld8.trust.checkout_pr_worktree",
+                side_effect=AssertionError("prepare must not check out the PR"),
+            ),
+        ):
+            res = prepare.prepare_review(
+                repo=clone_repo, pr_number=7, state_dir=state_dir, run_id="pr-a"
+            )
+            fast = prepare.prepare_review(
+                repo=clone_repo,
+                pr_number=7,
+                tier="fast",
+                fetch_linked_issues=True,
+                state_dir=state_dir,
+                run_id="pr-fast",
+            )
+            orphan = prepare.prepare_review(
+                repo=clone_repo, pr_number=8, state_dir=state_dir, run_id="pr-orphan"
+            )
+        parked.rename(linked)
         cov = res.prepare_doc["coverage"]
+        check(
+            "PR mode diffs against the remote's base, not a stale local one",
+            cov["scopedPaths"] == [".gitattributes", "mine.py"]
+            and any("differs from the remote's" in w for w in cov["warnings"])
+            and _git(clone_repo, "rev-parse", "origin/main") == stale_base,
+            json.dumps({"paths": cov["scopedPaths"], "warn": cov["warnings"]}),
+        )
+        check(
+            "PR mode creates no worktree and prunes nothing",
+            _git(clone_repo, "worktree", "list").count("\n") == 1
+            and _git(linked, "rev-parse", "--is-inside-work-tree") == "true",
+            _git(clone_repo, "worktree", "list"),
+        )
+        check(
+            "PR tree id names the PR head's tree",
+            res.tree_id == trust.compute_tree_id(clone_repo, pr_oid),
+        )
+        check(
+            "fast tier fetches no linked issues",
+            fast.exit_code == 0 and gh_calls == [],
+            json.dumps(gh_calls),
+        )
+        ocov = orphan.prepare_doc["coverage"]
+        check(
+            "a PR with no merge base uses a two-dot diff and says so",
+            ocov["diffRange"].endswith(f"..{orphan_oid}")
+            and "..." not in ocov["diffRange"]
+            and any("no merge base" in w for w in ocov["warnings"]),
+            json.dumps(ocov["warnings"]),
+        )
+        _expect_error(
+            "git merge-base errors other than 'none found' are raised",
+            prepare._has_merge_base,
+            clone_repo,
+            "0" * 40,
+            pr_oid,
+            env=trust._scrubbed_git_env(),
+            needle="merge-base failed",
+        )
+
+        def no_base_fetch(argv: list[str], **kwargs: Any) -> bytes:
+            if "--refmap=" in argv:
+                raise checks.ChecksError("offline")
+            return fake(argv, **kwargs)
+
+        with mock.patch("vld8.checks._run_command", side_effect=no_base_fetch):
+            offline = prepare.prepare_review(
+                repo=clone_repo, pr_number=7, state_dir=state_dir, run_id="pr-off"
+            )
+        check(
+            "an unfetchable base falls back to the local one with a warning",
+            any(
+                "could not fetch the PR base branch" in w
+                for w in offline.prepare_doc["coverage"]["warnings"]
+            )
+            and "others.py" in offline.prepare_doc["coverage"]["scopedPaths"],
+        )
         prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
         check(
-            "prepare checks out PR worktrees without files",
-            seen.get("checkout") is False,
-            json.dumps({k: str(v) for k, v in seen.items()}),
+            "PR prompt says where to read files and which checkout report needs",
+            "was fetched into this repository" in prompt
+            and f"worktree add --detach <dir> {pr_oid}" in prompt
+            and "This tree is untrusted" in prompt,
+        )
+
+
+def test_report_verifies_quotes_from_a_checkout_of_the_target() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-e2e-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        state_dir = root / "state"
+        _init_git_repo(repo)
+        _commit_files(repo, {"src/app.py": "def run():\n    return 1\n"})
+        _git(repo, "checkout", "-qb", "feat")
+        _commit_files(
+            repo,
+            {"src/app.py": "def run():\n    return 1\n\nDEBUG = True\n"},
+            "feat",
+        )
+        _git(repo, "checkout", "-q", "main")
+        res = prepare.prepare_review(
+            repo=repo, diff_range="main...feat", state_dir=state_dir, run_id="e2e"
+        )
+        quote = "DEBUG = True"
+        finding = {
+            "file": "src/app.py",
+            "lineStart": 4,
+            "lineEnd": 4,
+            "quote": quote,
+            "lens": "code",
+            "checkId": "debug-flag",
+            "claim": "Debug mode is left on.",
+            "evidence": "Line 4 sets DEBUG to True.",
+            "severity": "ISSUE",
+            "basis": "written rule",
+            "blocking": True,
+            "source": "model",
+            "fingerprint": findings.compute_fingerprint("debug-flag", quote),
+        }
+        model = root / "model.json"
+        model.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": "1.0",
+                    "lens": "code",
+                    "treeId": res.tree_id,
+                    "findings": [finding],
+                    "dismissals": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        import io
+
+        wrong = report.run_report(
+            findings_path=model,
+            prepare_path=res.prepare_path,
+            repo_path=repo,
+            fmt="json",
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+        target = root / "target"
+        _git(
+            repo,
+            "-c",
+            "core.hooksPath=/dev/null",
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            str(target),
+            "feat",
+        )
+        right = report.run_report(
+            findings_path=model,
+            prepare_path=res.prepare_path,
+            repo_path=target,
+            fmt="json",
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+        _git(repo, "worktree", "remove", "--force", str(target))
+        check(
+            "report rejects a correct quote checked against the wrong checkout",
+            wrong == 2,
+            str(wrong),
         )
         check(
-            "the two-dot fallback is used, recorded and warned about",
-            cov["diffRange"] == f"origin/main..{pr_oid}"
-            and any("no merge base" in w for w in cov["warnings"])
-            and f"git diff origin/main..{pr_oid} --" in prompt
-            and "was fetched into this repository" in prompt,
-            json.dumps(cov["warnings"]),
+            "report accepts it against a checkout of the target, as the prompt says",
+            right == 1,
+            str(right),
         )
+        prompt = (res.prompt_path or Path()).read_text(encoding="utf-8")
+        check(
+            "two-ref prompt says to read files at the target",
+            "Read files as of the target `feat`" in prompt
+            and "worktree add --detach <dir> feat" in prompt,
+        )
+
+
+def test_working_tree_id_branches_and_contract_constants() -> None:
+    with tempfile.TemporaryDirectory(prefix="vld8-prep-wtid-") as tmp:
+        root = Path(tmp)
+        repo = root / "repo"
+        _init_git_repo(repo)
+        _commit_files(repo, {"a.py": "A = 1\n", "b.py": "B = 1\n"})
+        env = trust._scrubbed_git_env()
+        (repo / "a.py").write_text("A = 2\n", encoding="utf-8")
+        stash_tree = _git(repo, "rev-parse", _git(repo, "stash", "create") + "^{tree}")
+        check(
+            "working tree id equals the tree git stash create records",
+            prepare._working_tree_id(repo, env) == stash_tree,
+        )
+        _git(repo, "checkout", "--", "a.py")
+        (repo / ".git" / "index").unlink()
+        check(
+            "with no index file, the tree is HEAD's plus working-tree edits",
+            prepare._working_tree_id(repo, env) == trust.compute_tree_id(repo, "HEAD"),
+        )
+        orig_run = checks._run_command
+
+        def fail_write_tree(argv: list[str], **kwargs: Any) -> bytes:
+            if "write-tree" in argv:
+                raise checks.ChecksError("write-tree failed")
+            return orig_run(argv, **kwargs)
+
+        with mock.patch("vld8.checks._run_command", side_effect=fail_write_tree):
+            _expect_error(
+                "a failing git step raises PrepareError",
+                prepare._working_tree_id,
+                repo,
+                env,
+                needle="cannot compute the working tree id",
+            )
+        try:
+            checks.select_checks(
+                changed=["a.py"], lens="code", repo=repo, tree_ref="-x"
+            )
+            rejected = False
+        except checks.ChecksError:
+            rejected = True
+        check("select_checks rejects an option-like tree_ref", rejected)
+
+    check(
+        "rubric categories match the findings contract",
+        set(prepare.RUBRIC_CATEGORIES) == findings.CODE_CATEGORIES
+        and len(prepare.RUBRIC_CATEGORIES) == len(findings.CODE_CATEGORIES),
+    )
+    check(
+        "security severity order matches the findings contract",
+        set(prepare.SECURITY_SEVERITY_ORDER) == findings.SECURITY_SEVERITIES,
+    )
+    many = " ".join(f"#{n}" for n in range(1, 21))
+    check(
+        "linked issue extraction can return every reference",
+        len(packet.extract_linked_issue_numbers(many, limit=None)) == 20
+        and len(packet.extract_linked_issue_numbers(many)) == packet.MAX_LINKED_ISSUES,
+    )
 
 
 def main() -> int:
@@ -1360,7 +1592,9 @@ def main() -> int:
     test_skipped_context_marks_partial()
     test_run_dir_reuse_and_internal_errors()
     test_config_service_map_and_component_branches()
-    test_pr_mode_no_checkout_and_two_dot_fallback()
+    test_pr_mode_reads_objects_and_fetches_base()
+    test_report_verifies_quotes_from_a_checkout_of_the_target()
+    test_working_tree_id_branches_and_contract_constants()
 
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)

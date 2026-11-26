@@ -195,6 +195,10 @@ def _record_skip(
     )
 
 
+def _skip_reason(exc: Exception) -> str:
+    return "oversized" if isinstance(exc, checks.OversizedFileError) else "unreadable"
+
+
 def format_quoted_block(text: str, *, info: str = "") -> str:
     """Wrap sanitized untrusted text in a dynamically sized backtick fence."""
     if not isinstance(text, str):
@@ -399,7 +403,9 @@ def collect_rules_files(
                 )
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped rules file {rel_path}: {exc}")
-                _record_skip(skipped, kind="rules", reason="unreadable", path=rel_path)
+                _record_skip(
+                    skipped, kind="rules", reason=_skip_reason(exc), path=rel_path
+                )
                 continue
             if raw is None:
                 continue
@@ -432,8 +438,12 @@ def extract_linked_issue_numbers(
     text: str,
     *,
     exclude_number: int | None = None,
+    limit: int | None = MAX_LINKED_ISSUES,
 ) -> list[int]:
-    """Extract sorted unique GitHub issue numbers outside fenced code blocks."""
+    """Extract sorted unique GitHub issue numbers outside fenced code blocks.
+
+    Returns at most ``limit`` numbers (all of them when ``limit`` is None).
+    """
     if not isinstance(text, str):
         raise PacketError(f"text must be str, got {type(text).__name__}")
     scrubbed = _FENCED_BLOCK_RE.sub(" ", text)
@@ -443,7 +453,8 @@ def extract_linked_issue_numbers(
         if exclude_number is not None and num == exclude_number:
             continue
         found.add(num)
-    return sorted(found)[:MAX_LINKED_ISSUES]
+    ordered = sorted(found)
+    return ordered if limit is None else ordered[:limit]
 
 
 def is_design_doc_path(rel_path: str) -> bool:
@@ -656,9 +667,16 @@ def collect_intent_sources(
 
     linked_issues: list[int] = []
     if pr_meta is not None:
-        linked_issues = extract_linked_issue_numbers(
-            pr_meta.body, exclude_number=pr_meta.number
+        all_linked = extract_linked_issue_numbers(
+            pr_meta.body, exclude_number=pr_meta.number, limit=None
         )
+        linked_issues = all_linked[:MAX_LINKED_ISSUES]
+        if fetch_linked_issues and len(all_linked) > MAX_LINKED_ISSUES:
+            _append_warning(
+                warnings,
+                f"linked issues capped at {MAX_LINKED_ISSUES} of {len(all_linked)}",
+            )
+            _record_skip(skipped, kind="linked-issue", reason="linked-issue-cap")
         clean_title = report._sanitize_text(pr_meta.title, allow_newlines=False)
         clean_body = report._sanitize_text(pr_meta.body, allow_newlines=True)
         pr_text = (
@@ -709,7 +727,10 @@ def collect_intent_sources(
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
                 _record_skip(
-                    skipped, kind="design-doc", reason="unreadable", path=rel_path
+                    skipped,
+                    kind="design-doc",
+                    reason=_skip_reason(exc),
+                    path=rel_path,
                 )
                 continue
         else:
@@ -723,7 +744,10 @@ def collect_intent_sources(
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
                 _record_skip(
-                    skipped, kind="design-doc", reason="unreadable", path=rel_path
+                    skipped,
+                    kind="design-doc",
+                    reason=_skip_reason(exc),
+                    path=rel_path,
                 )
                 continue
         if raw_doc is None:
