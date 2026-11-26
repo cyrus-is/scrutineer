@@ -185,12 +185,18 @@ vld8 mcp analyze|fetch|validate|capture [args]             # the MCP review scri
 vld8 map validate servicemap.json [--check-evidence]       # check a map (and optional evidence hashes)
 vld8 map schema                                            # print the schema's path
 vld8 checks (--changed PATH... | --diff RANGE) [--lens code|security|both] [--repo PATH]  # select guidance checks
-vld8 review prepare (--diff RANGE | --pr NUMBER | --component NAME | --deep) [--lens code|security] [--tier fast|deep] [--spec FILE] [--evidence FILE] [--state-dir DIR] [--repo PATH]  # prepare prepare.json and prompt.md
+vld8 review prepare (--diff RANGE | --pr NUMBER | --component NAME | --deep) [--lens code|security] [--tier fast|deep] [--base-ref REF] [--config FILE] [--service-map FILE] [--spec FILE] [--evidence FILE]... [--fetch-issues] [--budget CHARS] [--untrusted] [--state-dir DIR] [--run-id ID] [--repo PATH]  # write prepare.json and prompt.md
 vld8 review size (--diff RANGE | --pr NUMBER) [--repo PATH] [--service-map PATH]          # size a diff or PR
 vld8 review report --findings m.json [--prepare p.json] [--prior old.json] [--repo PATH] [--format md|json|sarif] [--out FILE]  # verify, merge, and render findings
 ```
 
-`vld8 review prepare` writes deterministic `prepare.json` and `prompt.md` outputs under `<git-common-dir>/vld8/runs/<tree-id>/<run-id>/` (or `--state-dir`), reading repo rules/config strictly from the trusted `--base-ref` or external files on fork/bot PRs (`--tier fast` skips `prompt.md` and exits `1` when blocking code findings exist; exit `2` indicates preparation failure).
+`vld8 review prepare` writes `prepare.json`, and `prompt.md` for `--tier deep`, to a new directory under `<git-common-dir>/vld8/runs/<tree-id>/<run-id>/` (or under `--state-dir`). It refuses a `--run-id` that already exists.
+
+- **What's reviewed:** `prepare.json` lists the files in scope, grouped by partition, and `prompt.md` gives the `git diff` command for the change. The tree ID names the reviewed tree. For `--diff REF` with a single ref, that is the index plus uncommitted changes to tracked files, because that's what `git diff REF` compares.
+- **Where rules and config come from:** rules files and `.vld8.toml` are read from a base ref, never from a PR's tree. That's `--base-ref` when given; otherwise the PR's base branch for `--pr`, the left side of the range for `--diff`, and `HEAD` of your own checkout for `--component` and `--deep`. `--config` reads a `.vld8.toml` outside the repository instead, and `--service-map` reads a map from a path you name.
+- **Untrusted trees:** on a fork's or a bot's PR, or with `--untrusted`, nothing from the PR's tree is run or read as config, and `--spec` and `--service-map` must be outside the repository. With `--untrusted`, `--component` and `--deep` read no rules or config unless you give `--base-ref`.
+- **Evidence:** each `--evidence` file is accepted only when it names the reviewed tree ID.
+- **Exit codes:** `0` prepared; `1` blocking code findings (`--tier fast` only, which writes `prepare.json` alone); `2` preparation failed.
 
 ### From a clone
 

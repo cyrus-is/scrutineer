@@ -292,7 +292,10 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
     prep_target.add_argument(
         "--diff",
         metavar="RANGE",
-        help="Git diff range (e.g. main...HEAD).",
+        help=(
+            "Git diff range (e.g. main...HEAD); a single ref compares it with "
+            "the working tree."
+        ),
     )
     prep_target.add_argument(
         "--pr",
@@ -338,7 +341,10 @@ def _add_review_parser(sub: argparse._SubParsersAction) -> None:
         "--run-id",
         default=None,
         metavar="ID",
-        help="Optional single-segment run identifier under runs/<treeId>/.",
+        help=(
+            "Optional single-segment run identifier under runs/<treeId>/; "
+            "must not exist yet."
+        ),
     )
     prep.add_argument(
         "--base-ref",

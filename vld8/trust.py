@@ -189,20 +189,37 @@ def _safe_resolve(path: Path, *, label: str) -> Path:
         ) from exc
 
 
-def _ensure_safe_dir_tree(root: Path, parts: tuple[str, ...], *, label: str) -> Path:
-    """Create ``parts`` under ``root`` while refusing any symlink component."""
+def _ensure_safe_dir_tree(
+    root: Path,
+    parts: tuple[str, ...],
+    *,
+    label: str,
+    exclusive_leaf: bool = False,
+) -> Path:
+    """Create ``parts`` under ``root`` while refusing any symlink component.
+
+    With ``exclusive_leaf``, the last segment must not exist yet.
+    """
     _reject_symlink(root, label=label)
     if root.exists() and not root.is_dir():
         raise TrustError(f"{label} is not a directory")
     try:
         root.mkdir(parents=True, exist_ok=True)
         cur = root
-        for segment in parts:
+        for idx, segment in enumerate(parts):
             cur = cur / segment
             _reject_symlink(cur, label=f"{label}/{segment}")
             if cur.exists() and not cur.is_dir():
                 raise TrustError(f"{label}/{segment} is not a directory")
-            cur.mkdir(exist_ok=True)
+            if exclusive_leaf and idx == len(parts) - 1:
+                try:
+                    cur.mkdir(exist_ok=False)
+                except FileExistsError:
+                    raise TrustError(
+                        f"{label}/{checks.safe_error_text(segment)} already exists"
+                    ) from None
+            else:
+                cur.mkdir(exist_ok=True)
     except (OSError, RuntimeError) as exc:
         raise TrustError(
             f"cannot prepare {label} directory: {checks.safe_error_text(exc)}"
@@ -354,8 +371,14 @@ def prepare_run_dir(
     state_dir: str | Path,
     tree_id: str,
     run_id: str | None = None,
+    *,
+    exclusive: bool = False,
 ) -> Path:
-    """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely."""
+    """Create ``<state-dir>/runs/<treeId>/<runId>/`` safely.
+
+    With ``exclusive``, refuse a run directory that already exists, so two runs
+    never share an output directory.
+    """
     raw_state = _validate_path_string(state_dir, label="state-dir")
     clean_tree_id = _validate_tree_id_value(tree_id)
     clean_run_id = (
@@ -363,7 +386,10 @@ def prepare_run_dir(
     )
     base = Path(raw_state)
     return _ensure_safe_dir_tree(
-        base, ("runs", clean_tree_id, clean_run_id), label="state-dir"
+        base,
+        ("runs", clean_tree_id, clean_run_id),
+        label="state-dir",
+        exclusive_leaf=exclusive,
     )
 
 
@@ -694,11 +720,16 @@ def _fetch_pr_head(
 def checkout_pr_worktree(
     repo_root: str | Path,
     meta: PRMetadata,
+    *,
+    checkout: bool = True,
 ) -> Iterator[WorktreeHandle]:
     """Check out ``meta.head_ref_oid`` into an isolated temporary worktree.
 
     Never falls back to the user's checkout when fetch fails, initializes
     submodules only for trusted same-repo PRs, and guarantees cleanup on exit.
+    With ``checkout=False`` the worktree is added with ``--no-checkout``: no
+    files are written, so no checkout filters or hooks run on the PR's content
+    and no submodules are initialized. Callers then read git objects only.
     """
     try:
         resolved_repo, _ = checks.resolve_repo_root(repo_root)
@@ -751,6 +782,7 @@ def checkout_pr_worktree(
                     "worktree",
                     "add",
                     "--detach",
+                    *([] if checkout else ["--no-checkout"]),
                     str(wt_dir),
                     meta.head_ref_oid,
                 ],
@@ -771,7 +803,8 @@ def checkout_pr_worktree(
 
         tree_id = compute_tree_id(wt_dir, meta.head_ref_oid)
         if (
-            can_run_repo_tools(meta.trusted)
+            checkout
+            and can_run_repo_tools(meta.trusted)
             and meta.is_cross_repository is False
             and meta.author_is_bot is False
         ):

@@ -176,6 +176,25 @@ def _append_warning(warnings: list[str], msg: str) -> None:
         warnings.append(clean)
 
 
+def _record_skip(
+    skipped: list[dict[str, Any]] | None,
+    *,
+    kind: str,
+    reason: str,
+    path: str | None = None,
+) -> None:
+    """Record context left out of the packet (not a budget truncation)."""
+    if skipped is None or len(skipped) >= MAX_WARNINGS:
+        return
+    skipped.append(
+        {
+            "kind": kind,
+            "path": checks.safe_error_text(path) if path is not None else None,
+            "reason": reason,
+        }
+    )
+
+
 def format_quoted_block(text: str, *, info: str = "") -> str:
     """Wrap sanitized untrusted text in a dynamically sized backtick fence."""
     if not isinstance(text, str):
@@ -263,8 +282,13 @@ def collect_rules_files(
     base_ref: str | None = None,
     trusted: bool = True,
     max_file_bytes: int = MAX_RULE_FILE_BYTES,
+    skipped: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    """Collect root and changed-subtree rules files in deterministic order."""
+    """Collect root and changed-subtree rules files in deterministic order.
+
+    Files and directories left out (oversized, unreadable, or past a cap) are
+    also recorded in ``skipped`` when a list is given.
+    """
     if not isinstance(trusted, bool):
         raise PacketError("trusted must be a boolean")
     file_cap = _validate_max_file_bytes(max_file_bytes)
@@ -302,6 +326,7 @@ def collect_rules_files(
             warnings,
             f"rules directory scan capped at {MAX_RULES_DIRS} directories",
         )
+        _record_skip(skipped, kind="rules", reason="directory-cap")
 
     candidates: list[tuple[str, str]] = [
         (scope_dir, f"{scope_dir}/{fname}" if scope_dir else fname)
@@ -330,6 +355,9 @@ def collect_rules_files(
                         f"skipped rules file {checks.safe_error_text(rel_path)} "
                         f"({blob_size} bytes): exceeds max {file_cap} bytes",
                     )
+                    _record_skip(
+                        skipped, kind="rules", reason="oversized", path=rel_path
+                    )
                     continue
                 if len(entries) >= MAX_RULES_FILES:
                     capped = True
@@ -342,6 +370,9 @@ def collect_rules_files(
                     )
                 except trust.TrustError as exc:
                     _append_warning(warnings, f"skipped rules file {rel_path}: {exc}")
+                    _record_skip(
+                        skipped, kind="rules", reason="unreadable", path=rel_path
+                    )
                     continue
                 content, digest = _decode_and_sanitize_text(raw)
                 entries.append(
@@ -368,6 +399,7 @@ def collect_rules_files(
                 )
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped rules file {rel_path}: {exc}")
+                _record_skip(skipped, kind="rules", reason="unreadable", path=rel_path)
                 continue
             if raw is None:
                 continue
@@ -392,6 +424,7 @@ def collect_rules_files(
             warnings,
             f"rules file discovery capped at {MAX_RULES_FILES} files",
         )
+        _record_skip(skipped, kind="rules", reason="file-cap")
     return entries, warnings
 
 
@@ -579,8 +612,13 @@ def collect_intent_sources(
     trusted: bool | None = None,
     fetch_linked_issues: bool = False,
     max_file_bytes: int = MAX_RULE_FILE_BYTES,
+    skipped: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[int], list[str]]:
-    """Collect optional intent sources (spec, PR body, design docs, issues)."""
+    """Collect optional intent sources (spec, PR body, design docs, issues).
+
+    Sources left out (unreadable, unavailable, or past a cap) are also recorded
+    in ``skipped`` when a list is given.
+    """
     effective_trusted = _resolve_effective_trusted(trusted, pr_meta)
     if not isinstance(fetch_linked_issues, bool):
         raise PacketError("fetch_linked_issues must be a boolean")
@@ -649,11 +687,13 @@ def collect_intent_sources(
             warnings,
             f"changed design docs capped at {MAX_DESIGN_DOCS} of {len(design_paths)}",
         )
+        _record_skip(skipped, kind="design-doc", reason="design-doc-cap")
         design_paths = design_paths[:MAX_DESIGN_DOCS]
 
     for rel_path in design_paths:
         if len(entries) >= MAX_INTENT_SOURCES:
             _append_warning(warnings, f"intent sources capped at {MAX_INTENT_SOURCES}")
+            _record_skip(skipped, kind="design-doc", reason="intent-cap")
             break
         raw_doc: bytes | None = None
         if clean_target is not None:
@@ -668,6 +708,9 @@ def collect_intent_sources(
                 )
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
+                _record_skip(
+                    skipped, kind="design-doc", reason="unreadable", path=rel_path
+                )
                 continue
         else:
             try:
@@ -679,6 +722,9 @@ def collect_intent_sources(
                 )
             except checks.ChecksError as exc:
                 _append_warning(warnings, f"skipped design doc {rel_path}: {exc}")
+                _record_skip(
+                    skipped, kind="design-doc", reason="unreadable", path=rel_path
+                )
                 continue
         if raw_doc is None:
             continue
@@ -701,12 +747,20 @@ def collect_intent_sources(
                 _append_warning(
                     warnings, f"intent sources capped at {MAX_INTENT_SOURCES}"
                 )
+                _record_skip(skipped, kind="linked-issue", reason="intent-cap")
                 break
             entry, warn = _fetch_issue_entry(
                 resolved_repo, issue_num, file_cap=file_cap
             )
             if warn:
                 _append_warning(warnings, warn)
+            if entry is None:
+                _record_skip(
+                    skipped,
+                    kind="linked-issue",
+                    reason="unavailable",
+                    path=f"#{issue_num}",
+                )
             if entry is not None:
                 entries.append(entry)
 
@@ -925,11 +979,13 @@ def build_context_packet(
             f"{MIN_PACKET_BUDGET_CHARS} and {MAX_PACKET_BUDGET_CHARS}"
         )
 
+    skipped: list[dict[str, Any]] = []
     rules_raw, rules_warnings = collect_rules_files(
         repo_root,
         changed_paths,
         base_ref=base_ref,
         trusted=effective_trusted,
+        skipped=skipped,
     )
     intent_raw, linked_issues, intent_warnings = collect_intent_sources(
         repo_root,
@@ -939,6 +995,7 @@ def build_context_packet(
         target_ref=target_ref,
         trusted=effective_trusted,
         fetch_linked_issues=fetch_linked_issues,
+        skipped=skipped,
     )
     evidence_summary, code_findings, evidence_warnings = collect_evidence(
         evidence_paths,
@@ -999,6 +1056,7 @@ def build_context_packet(
         "intentSources": intent_budgeted,
         "evidence": evidence_summary,
         "omitted": omitted,
+        "skipped": skipped,
         "warnings": warnings,
     }
     return PacketBuildResult(

@@ -1227,6 +1227,8 @@ def _default_partition_key(rel_path: str) -> str:
 def _build_partitions(
     entries: list[_FileStat],
     service_map_data: dict[str, Any] | None,
+    *,
+    include_paths: bool = False,
 ) -> list[dict[str, Any]]:
     if not entries:
         return []
@@ -1253,7 +1255,11 @@ def _build_partitions(
         bucket = buckets.get(name)
         if bucket is None:
             bucket = {"name": name, "files": 0, "additions": 0, "deletions": 0}
+            if include_paths:
+                bucket["paths"] = []
             buckets[name] = bucket
+        if include_paths:
+            bucket["paths"].append(entry.path)
         bucket["files"] += 1
         bucket["additions"] += entry.additions
         bucket["deletions"] += entry.deletions

@@ -10,8 +10,9 @@ runner-neutral ``prompt.md`` outside the worktree, and exits cleanly for both
 from __future__ import annotations
 
 import json
-import os
+import shutil
 import sys
+import tempfile
 from collections.abc import Sequence
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -23,7 +24,6 @@ from . import checks, findings, packet, paths, report, trust
 SCHEMA_VERSION = "1.0"
 VALID_LENSES = frozenset({"code", "security"})
 VALID_TIERS = frozenset({"fast", "deep"})
-VALID_MODES = frozenset({"diff", "pr", "component", "deep"})
 
 MAX_SCOPED_FILES = packet.MAX_CHANGED_PATHS
 MAX_PARTITIONS = 64
@@ -31,8 +31,38 @@ MAX_UNMATCHED_SAMPLE = 50
 MAX_APPLICABLE_CHECK_IDS = 500
 MAX_RISK_ITEMS = 64
 MAX_RISK_SAMPLE_PATHS = 10
+MAX_PROMPT_PATHS = 1000
+MAX_PROMPT_CODE_FINDINGS = 100
 
 TRACKED_SKIP_DIRS = frozenset({"node_modules", "bower_components", "Pods", "Carthage"})
+
+# Same table as the generator's change-type modifiers
+# (generate-peer-review/generate.py, ``modifier_map``); tests check they match.
+CHANGE_TYPE_SCRUTINY: dict[str, tuple[str, str]] = {
+    "database-migration": (
+        "Data Integrity, Operability",
+        "Rollback story, index impact, lock contention, data backfill safety",
+    ),
+    "api-contract": (
+        "Architecture, Production Reliability",
+        "Backward compatibility with deployed clients, breaking changes, versioning",
+    ),
+    "dependency-update": (
+        "Production Reliability, Maintainability",
+        "Breaking changes, CVEs, bundle size impact, transitive dependency risks",
+    ),
+    "config-change": (
+        "Operability, Production Reliability",
+        "Deployment risk, rollback path, environment-specific behavior, "
+        "secret exposure",
+    ),
+    "documented-claim": (
+        "Correctness, Maintainability",
+        "Does the document match the code it describes? Check the direction that "
+        "matters: every implemented behaviour documented, not just every "
+        "documented behaviour implemented",
+    ),
+}
 
 _SECURITY_UNIVERSAL_AREAS: tuple[str, ...] = (
     "Authentication and session boundaries (token signatures, expiry, validation)",
@@ -81,27 +111,6 @@ def _validate_component_name(component: Any) -> str:
             f"component exceeds max {findings.MAX_IDENTIFIER_LENGTH} characters"
         )
     return clean
-
-
-def _ensure_outside_worktree(
-    raw_path: str | Path | None,
-    wt_path: Path,
-    *,
-    label: str,
-) -> None:
-    if raw_path is None:
-        return
-    try:
-        raw_str = trust._validate_path_string(raw_path, label=label)
-        candidate = Path(raw_str)
-        trust._reject_symlink(candidate, label=label)
-        resolved = trust._safe_resolve(candidate, label=label)
-    except trust.TrustError as exc:
-        raise PrepareError(str(exc)) from exc
-    abs_cand = Path(os.path.abspath(candidate))
-    abs_wt = Path(os.path.abspath(wt_path))
-    if resolved.is_relative_to(wt_path) or abs_cand.is_relative_to(abs_wt):
-        raise PrepareError(f"{label} must not reside inside a checked-out PR worktree")
 
 
 def _parse_diff_range_refs(diff_range: str) -> tuple[str, str | None]:
@@ -158,6 +167,70 @@ def _resolve_valid_base_ref(
     raise PrepareError(last_err or f"cannot resolve {label}")
 
 
+def _working_tree_id(repo_root: Path, env: dict[str, str]) -> str:
+    """Return the tree id of the index plus working-tree edits to tracked files.
+
+    ``git diff <ref> --`` compares ``<ref>`` with exactly this content, so a
+    single-ref ``--diff`` must name this tree, not HEAD's (design §10, §12):
+    evidence is accepted only for the tree that is reviewed. A temporary copy
+    of the index is used, so the user's index and working tree are untouched.
+    """
+    try:
+        raw = trust._run_git_or_gh(
+            ["git", "-C", str(repo_root), "rev-parse", "--git-path", "index"],
+            cwd=repo_root,
+        )
+    except trust.TrustError as exc:
+        raise PrepareError(str(exc)) from exc
+    index_path = Path(raw.decode("utf-8", "surrogateescape").strip())
+    if not index_path.is_absolute():
+        index_path = repo_root / index_path
+
+    with tempfile.TemporaryDirectory(prefix="vld8-index-") as tmp:
+        tmp_index = Path(tmp) / "index"
+        index_env = dict(env)
+        index_env["GIT_INDEX_FILE"] = str(tmp_index)
+        steps: list[list[str]] = [["add", "--update"], ["write-tree"]]
+        try:
+            if index_path.is_file() and not index_path.is_symlink():
+                shutil.copyfile(index_path, tmp_index)
+            else:
+                steps.insert(0, ["read-tree", "HEAD"])
+        except OSError as exc:
+            raise PrepareError(
+                f"cannot copy the git index: {checks.safe_error_text(exc)}"
+            ) from exc
+        out = b""
+        try:
+            for step in steps:
+                out = checks._run_command(
+                    ["git", "-C", str(repo_root), *step],
+                    cwd=repo_root,
+                    env=index_env,
+                )
+        except checks.ChecksError as exc:
+            raise PrepareError(f"cannot compute the working tree id: {exc}") from exc
+    tree_oid = out.decode("utf-8", "replace").strip()
+    if not checks._GIT_OID_RE.match(tree_oid):
+        raise PrepareError(
+            f"unexpected git tree OID: {checks.safe_error_text(tree_oid)}"
+        )
+    return tree_oid
+
+
+def _is_vendored(rel: str, *, prefix: str = "") -> bool:
+    """True for files the generator skips: top-level vendor/ and package dirs.
+
+    With ``prefix`` (a component root), only the part below it is checked, so
+    a component that itself lives under vendor/ still has files.
+    """
+    tail = rel[len(prefix) + 1 :] if prefix and rel != prefix else rel
+    parts = tail.split("/")
+    return (not prefix and parts[0] == "vendor") or any(
+        seg in TRACKED_SKIP_DIRS for seg in parts[:-1]
+    )
+
+
 def _list_tracked_head_paths(repo_root: Path) -> list[str]:
     try:
         raw = trust._run_git_or_gh(
@@ -187,9 +260,6 @@ def _list_tracked_head_paths(repo_root: Path) -> list[str]:
             rel = checks.validate_repo_relative_path(rel_raw)
         except checks.ChecksError as exc:
             raise PrepareError(str(exc)) from exc
-        parts = rel.split("/")
-        if parts[0] == "vendor" or any(seg in TRACKED_SKIP_DIRS for seg in parts[:-1]):
-            continue
         if rel not in seen:
             seen.add(rel)
             paths_out.append(rel)
@@ -280,7 +350,7 @@ def _load_prepare_service_map(
         safe_name = checks.safe_error_text(sm_cand.name or "service-map", max_len=128)
         return _validate_service_map_dict(data, safe_name), {
             "source": "external"
-            if not resolved_matches(sm_cand, resolved_repo)
+            if not _resolved_matches(sm_cand, resolved_repo)
             else "repo",
             "ref": None,
             "path": safe_name,
@@ -309,36 +379,10 @@ def _load_prepare_service_map(
             packet._append_warning(warnings, f"ignored base-ref service map: {exc}")
             return None, {"source": "none", "ref": clean_base, "path": None}
 
-    if not trusted:
-        return None, {"source": "none", "ref": None, "path": None}
-
-    try:
-        raw_bytes = checks._read_repo_regular_file(
-            resolved_repo,
-            paths.SERVICEMAP_FILE,
-            max_bytes=checks.MAX_SERVICEMAP_BYTES,
-            raise_on_oversized=True,
-        )
-    except checks.ChecksError as exc:
-        packet._append_warning(warnings, f"ignored working-tree service map: {exc}")
-        return None, {"source": "none", "ref": None, "path": None}
-    if raw_bytes is None:
-        return None, {"source": "none", "ref": None, "path": None}
-    try:
-        data = trust._loads_strict_json_object(
-            raw_bytes, source_label=paths.SERVICEMAP_FILE
-        )
-        return _validate_service_map_dict(data, paths.SERVICEMAP_FILE), {
-            "source": "working-tree",
-            "ref": None,
-            "path": paths.SERVICEMAP_FILE,
-        }
-    except (trust.TrustError, PrepareError) as exc:
-        packet._append_warning(warnings, f"ignored working-tree service map: {exc}")
-        return None, {"source": "none", "ref": None, "path": None}
+    return None, {"source": "none", "ref": None, "path": None}
 
 
-def resolved_matches(candidate: Path, resolved_repo: Path) -> bool:
+def _resolved_matches(candidate: Path, resolved_repo: Path) -> bool:
     try:
         return candidate.resolve().is_relative_to(resolved_repo)
     except OSError, RuntimeError:
@@ -441,9 +485,11 @@ def _build_routing_summary(
 def _build_risk_list(
     *,
     lens: str,
+    mode: str,
     routing: dict[str, Any],
     sizing: dict[str, Any],
     trusted: bool,
+    scoped_paths: Sequence[str],
 ) -> list[dict[str, Any]]:
     risks: list[dict[str, Any]] = []
     if not trusted:
@@ -457,12 +503,17 @@ def _build_risk_list(
             }
         )
     if sizing.get("partitionRecommended"):
+        counts = (
+            f"{sizing['filesTotal']} files, {sizing['commits']} commits"
+            if mode in ("diff", "pr")
+            else f"{sizing['filesTotal']} files"
+        )
+        subject = "Diff" if mode in ("diff", "pr") else "Scope"
         risks.append(
             {
                 "kind": "large-change",
                 "note": (
-                    f"Diff classified as {sizing['tier']} "
-                    f"({sizing['filesTotal']} files, {sizing['commits']} commits); "
+                    f"{subject} classified as {sizing['tier']} ({counts}); "
                     f"strategy={sizing['strategy']}"
                 ),
             }
@@ -482,12 +533,24 @@ def _build_risk_list(
             if len(risks) >= MAX_RISK_ITEMS:
                 break
             patterns = sorted(signal_map[ct])
+            try:
+                matched = [
+                    rel
+                    for rel in scoped_paths
+                    if any(checks.glob_match(rel, pat) for pat in patterns)
+                ]
+            except checks.ChecksError as exc:
+                raise PrepareError(str(exc)) from exc
+            if not matched:
+                continue
+            lenses, scrutiny = CHANGE_TYPE_SCRUTINY.get(ct, (ct, "Review carefully"))
             risks.append(
                 {
                     "kind": "change-type",
                     "changeType": ct,
-                    "patterns": patterns[:MAX_RISK_SAMPLE_PATHS],
-                    "patternsCount": len(patterns),
+                    "note": f"Increase scrutiny on {lenses}: {scrutiny}",
+                    "matchedPathsCount": len(matched),
+                    "samplePaths": matched[:MAX_RISK_SAMPLE_PATHS],
                 }
             )
     unmatched = routing.get("unmatchedPaths", [])
@@ -523,6 +586,14 @@ def _build_unruled_entries(
                     "changed/tracked files"
                 ),
                 "omittedCount": total_files - scoped_files,
+            }
+        )
+    for item in packet_doc.get("skipped", []):
+        unruled.append(
+            {
+                "kind": f"packet-skipped-{item['kind']}",
+                "reason": item["reason"],
+                "path": item.get("path"),
             }
         )
     for item in packet_doc.get("omitted", []):
@@ -619,6 +690,153 @@ def _load_cross_cutting_sections() -> list[tuple[str, str, list[dict[str, Any]]]
     return sections
 
 
+def _guidance_text(value: Any) -> str:
+    """Bundled guidance is authored Markdown: sanitize it, don't escape it."""
+    return report._sanitize_text(value, allow_newlines=False)
+
+
+def _render_scope_section(prepare_doc: dict[str, Any]) -> list[str]:
+    """Tell the runner how to get the change and which files are in scope."""
+    cov = prepare_doc["coverage"]
+    mode = cov["mode"]
+    lines: list[str] = ["", "## What to Review", ""]
+    diff_range = cov.get("diffRange")
+    if diff_range:
+        lines.extend(
+            [
+                "Get the change from the repository root with:",
+                "",
+                packet.format_quoted_block(f"git diff {diff_range} --", info="sh"),
+            ]
+        )
+        if mode == "diff" and cov.get("targetRef") is None:
+            lines.extend(
+                [
+                    "",
+                    "This compares the base with the working tree, including "
+                    "uncommitted changes to tracked files. The reviewed tree ID "
+                    "covers those changes.",
+                ]
+            )
+        elif mode == "pr":
+            lines.extend(
+                [
+                    "",
+                    f"The PR head commit {report._md_code_span(cov['targetRef'])} "
+                    "was fetched into this repository but is not checked out. "
+                    "Read its files with `git show <commit>:<path>`.",
+                ]
+            )
+    else:
+        lines.append(
+            "Review the files below as of `HEAD`, the reviewed tree. Read them with "
+            "`git show HEAD:<path>`, so uncommitted edits don't change what you "
+            "review."
+        )
+
+    scoped = cov.get("scopedPaths", [])
+    lines.extend(["", "### Files in Scope", ""])
+    if not scoped:
+        lines.append("No files are in scope.")
+        return lines
+    groups = [
+        (part["name"], part["pathStart"], part["pathCount"])
+        for part in cov["sizing"].get("partitions", [])
+    ]
+    listed_end = max((start + count for _, start, count in groups), default=0)
+    if listed_end < len(scoped):
+        groups.append(("other partitions", listed_end, len(scoped) - listed_end))
+    listed = 0
+    for name, start, count in groups:
+        if listed >= MAX_PROMPT_PATHS:
+            break
+        lines.extend([f"**{report._md_escape_inline(name)}** ({count} file(s)):", ""])
+        for rel in scoped[start : start + count]:
+            if listed >= MAX_PROMPT_PATHS:
+                break
+            lines.append(f"- {report._md_code_span(rel)}")
+            listed += 1
+        lines.append("")
+    if listed < len(scoped):
+        lines.append(
+            f"*(+{len(scoped) - listed} more in `prepare.json` at "
+            "`coverage.scopedPaths`)*"
+        )
+    return lines
+
+
+def _render_output_contract(lens: str, tree_id: str) -> list[str]:
+    """State the Findings v1 rules that ``vld8 review report`` enforces."""
+    if lens == "code":
+        severities = ", ".join(f"`{s}`" for s in sorted(findings.CODE_SEVERITIES))
+        blocking_rule = (
+            "`blocking`: `true` for an `ISSUE` that must be fixed before merge; a "
+            "`CONCERN` never blocks."
+        )
+        category_rule = (
+            "`category` (optional): one of "
+            + ", ".join(f"`{c}`" for c in sorted(findings.CODE_CATEGORIES))
+            + "."
+        )
+    else:
+        severities = ", ".join(
+            f"`{s}`"
+            for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
+            if s in findings.SECURITY_SEVERITIES
+        )
+        blocking_rule = (
+            "`blocking`: `true` for a finding that must be fixed before merge."
+        )
+        category_rule = ""
+    bases = ", ".join(f"`{b}`" for b in sorted(findings.VALID_BASES))
+    basis_rule = (
+        "An `ISSUE` without a `basis` is downgraded to `CONCERN`;"
+        if lens == "code"
+        else "Give one for every blocking finding;"
+    )
+    lines = [
+        "",
+        "## Output Contract (Findings v1 JSON)",
+        "",
+        "Write one JSON object for `vld8 review report --findings`:",
+        '- `schemaVersion`: `"1.0"`',
+        f'- `lens`: `"{lens}"`',
+        f'- `treeId`: `"{tree_id}"`',
+        "- `findings`: an array. Each finding has:",
+        "  - `file`: a repo-relative path; `lineStart` and `lineEnd`: 1-based, "
+        "inclusive;",
+        "  - `quote`: the text of those lines, copied verbatim from the reviewed tree;",
+        f'  - `lens`: `"{lens}"`; `checkId`: an applicable check ID above, or a '
+        "short identifier of your own (letters, digits and `._:/-`, up to 128 "
+        "characters);",
+        "  - `claim` and `evidence`: what is wrong, and how you know;",
+        f"  - `severity`: one of {severities};",
+        f"  - `basis`: one of {bases}. {basis_rule}",
+        f"  - {blocking_rule}",
+        '  - `source`: `"model"`;',
+        "  - `fingerprint`: 64 lowercase hex characters: the SHA-256 of the UTF-8 "
+        'JSON array `["v1","finding",<checkId>,<normalized quote>]`, serialized '
+        "with no spaces and non-ASCII characters kept. To normalize the quote, "
+        "turn CRLF and CR into LF, strip trailing spaces and tabs from each line, "
+        "drop leading and trailing blank lines, then remove the common "
+        "indentation (Python's `textwrap.dedent`). Where vld8 is importable, "
+        "`vld8.findings.compute_fingerprint(checkId, quote)` computes it.",
+    ]
+    if category_rule:
+        lines.append(f"  - {category_rule}")
+    lines.extend(
+        [
+            "- To dispute a pre-computed code finding, repeat it with the same "
+            "`file`, `lineStart`, `lineEnd`, `lens`, `checkId` and `fingerprint`, "
+            'set `source` to `"model"` and `disposition` to `"disputed"`, and give '
+            'a `reason`. `"closed"` is refused.',
+            "- `dismissals`: an array of `{candidateId, reason}`, one for each "
+            "candidate you rule out.",
+        ]
+    )
+    return lines
+
+
 def render_prompt_markdown(
     prepare_doc: dict[str, Any],
     *,
@@ -685,6 +903,8 @@ def render_prompt_markdown(
                 f"{part['additions']} | {part['deletions']} |"
             )
 
+    lines.extend(_render_scope_section(prepare_doc))
+
     lines.extend(
         [
             "",
@@ -709,7 +929,8 @@ def render_prompt_markdown(
                 [
                     "",
                     f"### {report._md_code_span(entry['path'])} "
-                    f"(scope: `{entry['scope']}`, source: `{entry['source']}`)"
+                    f"(scope: {report._md_code_span(entry['scope'])}, "
+                    f"source: `{entry['source']}`)"
                     f"{trunc_note}",
                     "",
                     packet.format_quoted_block(entry["content"], info="markdown"),
@@ -812,13 +1033,21 @@ def render_prompt_markdown(
                 "|---|---:|---|---|---:|---|",
             ]
         )
-        for cf in code_findings[:100]:
+        for cf in code_findings[:MAX_PROMPT_CODE_FINDINGS]:
             lines.append(
                 f"| {report._md_code_span(cf['file'], in_table=True)} | "
                 f"{cf['lineStart']}-{cf['lineEnd']} | "
                 f"{report._md_code_span(cf['checkId'], in_table=True)} | "
                 f"`{cf['severity']}` | `{cf['blocking']}` | "
                 f"{report._md_escape_cell(cf['claim'])} |"
+            )
+        if len(code_findings) > MAX_PROMPT_CODE_FINDINGS:
+            lines.extend(
+                [
+                    "",
+                    f"*(+{len(code_findings) - MAX_PROMPT_CODE_FINDINGS} more in "
+                    "`prepare.json` at `codeFindings`)*",
+                ]
             )
 
     candidates = prepare_doc.get("candidates", [])
@@ -844,14 +1073,22 @@ def render_prompt_markdown(
     if risks:
         lines.extend(["", "### Risk Signals", ""])
         for rk in risks:
-            note = report._md_escape_inline(rk.get("note") or rk.get("changeType", ""))
-            pats = rk.get("patterns") or rk.get("samplePaths") or []
-            pat_str = (
-                " (" + ", ".join(report._md_code_span(p) for p in pats) + ")"
-                if pats
-                else ""
-            )
-            lines.append(f"- **`{rk['kind']}`:** {note}{pat_str}")
+            note = report._md_escape_inline(rk.get("note", ""))
+            label = f"`{rk['kind']}`"
+            if rk.get("changeType"):
+                label += f" {report._md_code_span(rk['changeType'])}"
+            sample = rk.get("samplePaths") or []
+            total = rk.get("matchedPathsCount", len(sample))
+            sample_str = ""
+            if sample:
+                more = f", +{total - len(sample)} more" if total > len(sample) else ""
+                sample_str = (
+                    " ("
+                    + ", ".join(report._md_code_span(p) for p in sample)
+                    + more
+                    + ")"
+                )
+            lines.append(f"- **{label}:** {note}{sample_str}")
 
     unruled = prepare_doc.get("unruled", [])
     if unruled:
@@ -861,8 +1098,13 @@ def render_prompt_markdown(
                 lines.append(f"- {report._md_escape_inline(item)}")
             else:
                 lines.append(
-                    f"- **`{report._md_escape_inline(item.get('kind', 'unruled'))}`:** "
+                    f"- **{report._md_code_span(item.get('kind', 'unruled'))}:** "
                     f"{report._md_escape_inline(item.get('reason', ''))}"
+                    + (
+                        f" ({report._md_code_span(item['path'])})"
+                        if item.get("path")
+                        else ""
+                    )
                 )
 
     lines.extend(["", "## Applicable Checks", ""])
@@ -871,52 +1113,46 @@ def render_prompt_markdown(
         lines.append("No platform-specific guidance blocks matched the scoped files.")
     elif lens == "code":
         for block in blocks:
-            lines.append(f"### {report._md_escape_inline(block['name'])}")
+            lines.append(f"### {_guidance_text(block['name'])}")
             chks = block.get("checks", [])
             if chks:
                 lines.extend(["", "**Pre-flight Checks:**", ""])
                 for chk in chks:
                     lines.append(
                         f"- {report._md_code_span(chk['id'])} — "
-                        f"**{report._md_escape_inline(chk['title'])}** "
+                        f"**{_guidance_text(chk['title'])}** "
                         f"(`{chk['lens']}`, `{chk['severity']}`)"
                     )
+                    lines.append(f"  - Pattern: {_guidance_text(chk['pattern'])}")
                     lines.append(
-                        f"  - Pattern: {report._md_escape_inline(chk['pattern'])}"
+                        f"  - Failure mode: {_guidance_text(chk['failureMode'])}"
                     )
-                    lines.append(
-                        "  - Failure mode: "
-                        f"{report._md_escape_inline(chk['failureMode'])}"
-                    )
-                    lines.append(f"  - Fix: {report._md_escape_inline(chk['fix'])}")
+                    lines.append(f"  - Fix: {_guidance_text(chk['fix'])}")
             areas = block.get("focusAreas", [])
             if areas:
                 lines.extend(["", "**Focus Areas:**", ""])
                 for area in areas:
                     lines.append(
-                        f"- **{report._md_escape_inline(area['area'])}**: "
-                        f"{report._md_escape_inline(area['description'])} "
+                        f"- **{_guidance_text(area['area'])}**: "
+                        f"{_guidance_text(area['description'])} "
                         f"*(Lens: `{area['lens']}`)*"
                     )
             lines.append("")
     else:
         for block in blocks:
-            lines.append(f"### {report._md_escape_inline(block['name'])}")
+            lines.append(f"### {_guidance_text(block['name'])}")
             chks = block.get("checks", [])
             if chks:
                 lines.extend(["", "**Security Verification Items:**", ""])
                 for chk in chks:
                     lines.append(
                         f"- {report._md_code_span(chk['id'])} — "
-                        f"**{report._md_escape_inline(chk['title'])}** "
+                        f"**{_guidance_text(chk['title'])}** "
                         f"(`{chk['severityIfFound']}`, `{chk['owasp']}`)"
                     )
+                    lines.append(f"  - Condition: {_guidance_text(chk['pattern'])}")
                     lines.append(
-                        f"  - Condition: {report._md_escape_inline(chk['pattern'])}"
-                    )
-                    lines.append(
-                        "  - Safer design: "
-                        f"{report._md_escape_inline(chk['secureAlternative'])}"
+                        f"  - Safer design: {_guidance_text(chk['secureAlternative'])}"
                     )
             lines.append("")
 
@@ -927,12 +1163,12 @@ def render_prompt_markdown(
             for heading, gate, areas in cc_sections:
                 lines.append(f"### {heading}")
                 if gate:
-                    lines.append(f"**Applies when:** {report._md_escape_inline(gate)}")
+                    lines.append(f"**Applies when:** {_guidance_text(gate)}")
                 lines.append("")
                 for area in areas:
                     lines.append(
-                        f"- **{report._md_escape_inline(area['area'])}**: "
-                        f"{report._md_escape_inline(area['description'])} "
+                        f"- **{_guidance_text(area['area'])}**: "
+                        f"{_guidance_text(area['description'])} "
                         f"*(Lens: `{area['lens']}`)*"
                     )
                 lines.append("")
@@ -978,22 +1214,7 @@ def render_prompt_markdown(
             ]
         )
 
-    lines.extend(
-        [
-            "",
-            "## Output Contract (Findings v1 JSON)",
-            "",
-            "Write model output matching `findings-v1.json` for `vld8 review report`:",
-            '- `schemaVersion`: `"1.0"`',
-            f'- `lens`: `"{lens}"`',
-            f'- `treeId`: `"{tree_id}"`',
-            "- `findings`: array of findings with `file`, `lineStart`, `lineEnd`, "
-            "`quote`, `lens`, `checkId`, `claim`, `evidence`, `severity`, `basis`, "
-            '`blocking`, `source` (`"model"`), `fingerprint`',
-            "- `dismissals`: array of `{candidateId, reason}` accounting for any "
-            "dismissed candidates",
-        ]
-    )
+    lines.extend(_render_output_contract(lens, tree_id))
 
     warnings = cov.get("warnings", [])
     if warnings:
@@ -1007,7 +1228,6 @@ def render_prompt_markdown(
 def _compute_run_outputs(
     *,
     resolved_repo: Path,
-    raw_repo_root: str | Path,
     mode: str,
     target_label: str,
     lens: str,
@@ -1015,6 +1235,8 @@ def _compute_run_outputs(
     tree_id: str,
     clean_base: str | None,
     target_ref: str | None,
+    diff_range_used: str | None,
+    vendored_skipped: int,
     effective_trusted: bool,
     trusted_packet_arg: bool | None,
     scoped_repo: Path,
@@ -1107,15 +1329,32 @@ def _compute_run_outputs(
             packet._append_warning(merged_warnings, msg)
     packet_doc["warnings"] = merged_warnings
 
+    stats_by_path = {entry.path: entry for entry in file_stats}
+    partition_entries = [
+        stats_by_path.get(rel)
+        or checks._FileStat(path=rel, additions=0, deletions=0, binary=False)
+        for rel in scoped_paths
+    ]
     try:
         size_tier, strategy, partition_rec, size_reasons = checks._classify_size(
             total_files, commits
         )
-        partitions = checks._build_partitions(
-            file_stats[:MAX_SCOPED_FILES], service_map_data
-        )[:MAX_PARTITIONS]
+        all_partitions = checks._build_partitions(
+            partition_entries, service_map_data, include_paths=True
+        )
     except checks.ChecksError as exc:
         raise PrepareError(str(exc)) from exc
+    # scopedPaths is grouped by partition; each listed partition names its
+    # slice, so membership costs no extra nodes in prepare.json.
+    ordered_paths: list[str] = []
+    partitions: list[dict[str, Any]] = []
+    for part in all_partitions:
+        members = sorted(part.pop("paths"))
+        if len(partitions) < MAX_PARTITIONS:
+            part["pathStart"] = len(ordered_paths)
+            part["pathCount"] = len(members)
+            partitions.append(part)
+        ordered_paths.extend(members)
 
     sizing = {
         "filesTotal": total_files,
@@ -1130,13 +1369,17 @@ def _compute_run_outputs(
         "partitionRecommended": partition_rec,
         "reasons": size_reasons,
         "partitions": partitions,
+        "partitionsTotal": len(all_partitions),
+        "partitionsTruncated": len(all_partitions) > MAX_PARTITIONS,
     }
     routing_summary = _build_routing_summary(routing)
     risk_list = _build_risk_list(
         lens=lens,
+        mode=mode,
         routing=routing,
         sizing=sizing,
         trusted=effective_trusted,
+        scoped_paths=scoped_paths,
     )
     unruled = _build_unruled_entries(
         total_files=total_files,
@@ -1149,6 +1392,7 @@ def _compute_run_outputs(
     ev = packet_doc.get("evidence", {})
     partial = bool(
         files_truncated
+        or packet_doc.get("skipped")
         or packet_doc.get("budget", {}).get("partial")
         or ev.get("toolsTruncated")
         or ev.get("exclusionsTruncated")
@@ -1163,7 +1407,10 @@ def _compute_run_outputs(
         "trusted": effective_trusted,
         "baseRef": clean_base,
         "targetRef": target_ref,
+        "diffRange": diff_range_used,
         "target": checks.safe_error_text(target_label, max_len=256),
+        "scopedPaths": ordered_paths,
+        "skippedVendoredFiles": vendored_skipped,
         "config": config_prov,
         "serviceMap": service_map_prov,
         "sizing": sizing,
@@ -1210,7 +1457,9 @@ def _compute_run_outputs(
         )
 
     try:
-        run_dir = trust.prepare_run_dir(state_dir_path, tree_id, run_id=run_id)
+        run_dir = trust.prepare_run_dir(
+            state_dir_path, tree_id, run_id=run_id, exclusive=True
+        )
         prepare_path = run_dir / "prepare.json"
         trust.atomic_write_json(prepare_path, prepare_doc)
         prompt_path: Path | None = None
@@ -1362,7 +1611,9 @@ def prepare_review(
         trusted_packet_arg: bool | None = False if untrusted else None
 
         try:
-            wt_ctx = trust.checkout_pr_worktree(resolved_repo, pr_meta)
+            # prepare reads git objects only, so nothing from the PR's tree is
+            # written to disk and no checkout filters or hooks run on it.
+            wt_ctx = trust.checkout_pr_worktree(resolved_repo, pr_meta, checkout=False)
         except trust.TrustError as exc:
             raise PrepareError(str(exc)) from exc
     elif diff_range is not None:
@@ -1376,9 +1627,6 @@ def prepare_review(
             if base_ref is not None
             else _resolve_valid_base_ref(resolved_repo, (inferred_base,))
         )
-        if not effective_trusted and base_ref is None:
-            # Working-tree reads stay disabled via trusted_packet_arg = False.
-            pass
         target_label = diff_range
         wt_ctx = nullcontext(None)
     elif component is not None:
@@ -1449,14 +1697,6 @@ def prepare_review(
                 reason = wt.reason if wt is not None and wt.reason else "unavailable"
                 raise PrepareError(f"cannot prepare PR worktree: {reason}")
             wt_path = wt.path
-            _ensure_outside_worktree(state_dir_path, wt_path, label="state-dir")
-            _ensure_outside_worktree(config_path, wt_path, label="config file")
-            _ensure_outside_worktree(service_map_path, wt_path, label="service map")
-            if not effective_trusted:
-                _ensure_outside_worktree(spec_path, wt_path, label="spec file")
-            for ev_item in evidence_paths:
-                _ensure_outside_worktree(ev_item, wt_path, label="evidence file")
-
             assert clean_base is not None
             tree_id = wt.tree_id
             target_ref = pr_meta.head_ref_oid
@@ -1465,7 +1705,13 @@ def prepare_review(
                 file_stats, commits = checks._git_diff_stats(wt_path, pr_range, env=env)
                 all_scoped_paths = checks._git_changed_paths(wt_path, pr_range, env=env)
             except checks.ChecksError:
+                # No merge base: the two-dot diff also shows base-side changes.
                 pr_range = f"{clean_base}..{pr_meta.head_ref_oid}"
+                packet._append_warning(
+                    pre_warnings,
+                    "no merge base between the PR and its base; the diff is "
+                    "two-dot and also includes changes made on the base side",
+                )
                 try:
                     file_stats, commits = checks._git_diff_stats(
                         wt_path, pr_range, env=env
@@ -1479,10 +1725,16 @@ def prepare_review(
             deletions = sum(e.deletions for e in file_stats)
             scoped_repo = wt_path
             scoped_tree_ref: str | None = pr_meta.head_ref_oid
+            diff_range_used: str | None = pr_range
+            vendored_skipped = 0
         elif mode == "diff":
             assert diff_range is not None
             try:
-                tree_id = trust.compute_tree_id(resolved_repo, target_ref or "HEAD")
+                tree_id = (
+                    trust.compute_tree_id(resolved_repo, target_ref)
+                    if target_ref is not None
+                    else _working_tree_id(resolved_repo, env)
+                )
                 file_stats, commits = checks._git_diff_stats(
                     resolved_repo, diff_range, env=env
                 )
@@ -1495,31 +1747,46 @@ def prepare_review(
             deletions = sum(e.deletions for e in file_stats)
             scoped_repo = resolved_repo
             scoped_tree_ref = target_ref
+            diff_range_used = diff_range
+            vendored_skipped = 0
         else:
             try:
                 tree_id = trust.compute_tree_id(resolved_repo, "HEAD")
             except trust.TrustError as exc:
                 raise PrepareError(str(exc)) from exc
             all_tracked = _list_tracked_head_paths(resolved_repo)
+            all_scoped_paths = []
+            vendored_skipped = 0
             if mode == "component":
                 prefixes, _ = _resolve_component_prefixes(
                     target_label, service_map_data
                 )
-                all_scoped_paths = [
-                    rel
-                    for rel in all_tracked
-                    if any(
-                        rel == prefix or rel.startswith(prefix + "/")
-                        for prefix in prefixes
+                for rel in all_tracked:
+                    owner = next(
+                        (
+                            prefix
+                            for prefix in prefixes
+                            if rel == prefix or rel.startswith(prefix + "/")
+                        ),
+                        None,
                     )
-                ]
+                    if owner is None:
+                        continue
+                    if _is_vendored(rel, prefix=owner):
+                        vendored_skipped += 1
+                    else:
+                        all_scoped_paths.append(rel)
                 if not all_scoped_paths:
                     raise PrepareError(
                         f"component matched no tracked files: "
                         f"{checks.safe_error_text(target_label)}"
                     )
             else:
-                all_scoped_paths = all_tracked
+                for rel in all_tracked:
+                    if _is_vendored(rel):
+                        vendored_skipped += 1
+                    else:
+                        all_scoped_paths.append(rel)
             file_stats = [
                 checks._FileStat(path=rel, additions=0, deletions=0, binary=False)
                 for rel in all_scoped_paths
@@ -1529,10 +1796,10 @@ def prepare_review(
             deletions = 0
             scoped_repo = resolved_repo
             scoped_tree_ref = "HEAD"
+            diff_range_used = None
 
         return _compute_run_outputs(
             resolved_repo=resolved_repo,
-            raw_repo_root=repo,
             mode=mode,
             target_label=target_label,
             lens=lens,
@@ -1540,6 +1807,8 @@ def prepare_review(
             tree_id=tree_id,
             clean_base=clean_base,
             target_ref=target_ref,
+            diff_range_used=diff_range_used,
+            vendored_skipped=vendored_skipped,
             effective_trusted=effective_trusted,
             trusted_packet_arg=trusted_packet_arg,
             scoped_repo=scoped_repo,
@@ -1612,6 +1881,13 @@ def run_prepare(
         checks.ChecksError,
     ) as exc:
         print(f"ERROR: {checks.safe_error_text(str(exc))}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # noqa: BLE001 - exit 1 means blocking findings
+        print(
+            f"ERROR: internal error ({type(exc).__name__}): "
+            f"{checks.safe_error_text(str(exc))}",
+            file=sys.stderr,
+        )
         return 2
 
     print(
