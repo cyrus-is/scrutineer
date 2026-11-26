@@ -559,9 +559,16 @@ def _read_git_tree_regular_file(
 class _BoundedTextCache:
     """Bounded LRU text cache for working-tree or git-tree content reads."""
 
-    def __init__(self, repo_root: Path, *, tree_ref: str | None = None) -> None:
+    def __init__(
+        self,
+        repo_root: Path,
+        *,
+        tree_ref: str | None = None,
+        env: dict[str, str] | None = None,
+    ) -> None:
         self.repo_root = repo_root.resolve()
         self.tree_ref = tree_ref
+        self.env = env
         self._cache: OrderedDict[str, tuple[str | None, int]] = OrderedDict()
         self._cached_bytes = 0
 
@@ -576,6 +583,7 @@ class _BoundedTextCache:
                 self.tree_ref,
                 rel_path,
                 max_bytes=MAX_CONTENT_FILE_BYTES,
+                env=self.env,
             )
         else:
             raw = _read_repo_regular_file(
@@ -767,7 +775,12 @@ def _evaluate_block(
     return block
 
 
-def _git_changed_paths(repo_root: Path, diff_range: str) -> list[str]:
+def _git_changed_paths(
+    repo_root: Path,
+    diff_range: str,
+    *,
+    env: dict[str, str] | None = None,
+) -> list[str]:
     validate_git_ref_or_range(diff_range)
     raw = _run_command(
         [
@@ -781,6 +794,7 @@ def _git_changed_paths(repo_root: Path, diff_range: str) -> list[str]:
             "--",
         ],
         cwd=repo_root,
+        env=env,
     )
     if not raw:
         return []
@@ -800,6 +814,8 @@ def select_checks(
     diff_range: str | None = None,
     lens: str = "both",
     repo: str | Path = ".",
+    tree_ref: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Select applicable peer-review and/or security guidance blocks."""
     if (changed is None) == (diff_range is None):
@@ -815,13 +831,18 @@ def select_checks(
         if not changed:
             raise ChecksError("changed must include at least one path")
         mode = "changed"
-        tree_ref: str | None = None
+        effective_tree_ref: str | None = None
+        if tree_ref is not None:
+            validate_git_ref_or_range(tree_ref)
+            effective_tree_ref = tree_ref
         changed_paths = sorted({validate_repo_relative_path(p) for p in changed})
     else:
         assert diff_range is not None
+        if tree_ref is not None:
+            raise ChecksError("tree_ref cannot be combined with diff_range")
         mode = "diff"
-        tree_ref = _diff_target_tree_ref(diff_range)
-        changed_paths = _git_changed_paths(repo_root, diff_range)
+        effective_tree_ref = _diff_target_tree_ref(diff_range)
+        changed_paths = _git_changed_paths(repo_root, diff_range, env=env)
 
     guidance_sources: list[tuple[str, Path]] = []
     if lens in ("code", "both"):
@@ -829,7 +850,7 @@ def select_checks(
     if lens in ("security", "both"):
         guidance_sources.append(("security", paths.SECURITY_GUIDANCE))
 
-    text_cache = _BoundedTextCache(repo_root, tree_ref=tree_ref)
+    text_cache = _BoundedTextCache(repo_root, tree_ref=effective_tree_ref, env=env)
     blocks: list[dict[str, Any]] = []
     all_matched: set[str] = set()
 
@@ -930,7 +951,12 @@ def _parse_git_numstat_z(raw: bytes) -> list[_FileStat]:
     return entries
 
 
-def _git_diff_stats(repo_root: Path, diff_range: str) -> tuple[list[_FileStat], int]:
+def _git_diff_stats(
+    repo_root: Path,
+    diff_range: str,
+    *,
+    env: dict[str, str] | None = None,
+) -> tuple[list[_FileStat], int]:
     validate_git_ref_or_range(diff_range)
     numstat_raw = _run_command(
         [
@@ -944,6 +970,7 @@ def _git_diff_stats(repo_root: Path, diff_range: str) -> tuple[list[_FileStat], 
             "--",
         ],
         cwd=repo_root,
+        env=env,
     )
     entries = _parse_git_numstat_z(numstat_raw)
 
@@ -955,7 +982,7 @@ def _git_diff_stats(repo_root: Path, diff_range: str) -> tuple[list[_FileStat], 
     else:
         rev_cmd.extend([f"{diff_range}..HEAD", "--"])
 
-    count_raw = _run_command(rev_cmd, cwd=repo_root)
+    count_raw = _run_command(rev_cmd, cwd=repo_root, env=env)
     count_str = count_raw.decode("utf-8", "replace").strip()
     try:
         commits = int(count_str)

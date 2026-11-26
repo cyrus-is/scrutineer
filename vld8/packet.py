@@ -327,9 +327,8 @@ def collect_rules_files(
                 if blob_size > file_cap:
                     _append_warning(
                         warnings,
-                        f"skipped rules file {rel_path}: git tree file "
-                        f"{checks.safe_error_text(rel_path)} ({blob_size} bytes) "
-                        f"exceeds max {file_cap} bytes",
+                        f"skipped rules file {checks.safe_error_text(rel_path)} "
+                        f"({blob_size} bytes): exceeds max {file_cap} bytes",
                     )
                     continue
                 if len(entries) >= MAX_RULES_FILES:

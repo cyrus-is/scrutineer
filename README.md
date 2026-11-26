@@ -185,9 +185,12 @@ vld8 mcp analyze|fetch|validate|capture [args]             # the MCP review scri
 vld8 map validate servicemap.json [--check-evidence]       # check a map (and optional evidence hashes)
 vld8 map schema                                            # print the schema's path
 vld8 checks (--changed PATH... | --diff RANGE) [--lens code|security|both] [--repo PATH]  # select guidance checks
+vld8 review prepare (--diff RANGE | --pr NUMBER | --component NAME | --deep) [--lens code|security] [--tier fast|deep] [--spec FILE] [--evidence FILE] [--state-dir DIR] [--repo PATH]  # prepare prepare.json and prompt.md
 vld8 review size (--diff RANGE | --pr NUMBER) [--repo PATH] [--service-map PATH]          # size a diff or PR
 vld8 review report --findings m.json [--prepare p.json] [--prior old.json] [--repo PATH] [--format md|json|sarif] [--out FILE]  # verify, merge, and render findings
 ```
+
+`vld8 review prepare` writes deterministic `prepare.json` and `prompt.md` outputs under `<git-common-dir>/vld8/runs/<tree-id>/<run-id>/` (or `--state-dir`), reading repo rules/config strictly from the trusted `--base-ref` or external files on fork/bot PRs (`--tier fast` skips `prompt.md` and exits `1` when blocking code findings exist; exit `2` indicates preparation failure).
 
 ### From a clone
 
