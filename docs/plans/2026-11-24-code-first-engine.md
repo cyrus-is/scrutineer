@@ -130,7 +130,7 @@ vld8 review prepare  ──▶  vld8's lens prompt, run by any model  ──▶ 
 - A finding reached by both halves is labelled `source: both`, which is strong evidence.
 - The model can dispute a code finding only with a stated reason, and the dispute stays visible.
 - Code checks every model citation (that the file, line and quoted text exist) and rejects one that doesn't.
-- Code checks the rubric's form: an ISSUE with none of the four bases is downgraded to a CONCERN.
+- Code checks the rubric's form: an ISSUE with no `basis` (one of the six the findings contract defines) is downgraded to a CONCERN.
 - **Accounting:** every candidate must come back as part of a finding or dismissed with a reason. Output that leaves a candidate unaccounted is rejected, and the run says so. That turns "rule on every candidate" from a request into a check.
 - **Candidate scope and cap, by mode:**
   - Modes 1 and 2 (a diff): candidates in the changed hunks plus the callers of changed symbols.
@@ -261,7 +261,7 @@ Three private loops each wrote their own version of these, so they're vld8's fir
 - A loop formats its own lines from the JSON. vld8 doesn't hard-code one consumer's protocol.
 
 **Two contracts:** `prepare.json` and findings JSON (#58, extended):
-- a `class` with its rule, `sites[]`, `fix_site` and "closes N of N";
+- a `class` with its rule, `sites[]`, `fixSite` and "closes N of N";
 - `source`;
 - `proof`;
 - `blocking`;
